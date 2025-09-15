@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FEV</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                                <a href="home_page.html">FEC</a>
+            </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav class="nav">
+                <div class="navbar-right">
+                    <button onclick="openModal()" class="login-nav-btn">Login</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Sidebar -->
+    <div class="overlay" onclick="toggleMobileMenu()"></div>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3>Menu</h3>
+            <button class="sidebar-close" onclick="toggleMobileMenu()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#">Home</a>
+            <a href="#">Cars</a>
+            <a href="#">About</a>
+            <div class="sidebar-region">
+                <span class="region-icon">📍</span>
+                <select class="region-select">
+                    <option value="">Select Region</option>
+                    <option value="north">North</option>
+                    <option value="central">Central</option>
+                    <option value="south">South</option>
+                </select>
+            </div>
+            <a href="#" onclick="openModal(); toggleMobileMenu();">Login</a>
+        </nav>
+    </div>
+
+    <div id="sidebar" class="sidebar">
+        <a href="javascript:void(0)" class="close-btn" onclick="closeSidebar()">×</a>
+        <a href="#">Trang chủ</a>
+        <a href="#">Blog</a>
+        <a href="#">Đăng nhập</a>
+    </div>
+    <section class="search-form">
+        <div class="container">
+            <div class="search-form-wrapper">
+                <h2 style="white-space: nowrap;">Find Your Perfect Rental Car</h2>
+                <form id="car-search-form" action="car_list_page.html" method="get">
+                    <div class="search-grid" style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <div class="form-group" style="flex: 2;">
+                            <label for="location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Pick-up Location
+                            </label>
+                            <select id="location" name="location" required>
+                                <option value="">Select location</option>
+                                <option value="district1">District 1</option>
+                                <option value="district2">District 2</option>
+                                <option value="district3">District 3</option>
+                                <option value="district4">District 4</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="flex: 1;">
+                            <label for="pickup-date">
+                                <i class="fas fa-calendar"></i>
+                                Pick-up Date
+                            </label>
+                            <input type="date" id="pickup-date" name="pickup-date" required style="width: 140px;" />
+                        </div>
+
+                        <div class="form-group" style="flex: 1;">
+                            <label for="pickup-time">
+                                <i class="fas fa-clock"></i>
+                                Pick-up Time
+                            </label>
+                            <input type="time" id="pickup-time" name="pickup-time" required style="width: 120px;" />
+                        </div>
+
+                        <div class="form-group" style="flex: 1;">
+                            <label for="return-date">
+                                <i class="fas fa-calendar-check"></i>
+                                Return Date
+                            </label>
+                            <input type="date" id="return-date" name="return-date" required style="width: 140px;" />
+                        </div>
+
+                        <div class="form-group" style="flex: 1;">
+                            <label for="return-time">
+                                <i class="fas fa-clock"></i>
+                                Return Time
+                            </label>
+                            <input type="time" id="return-time" name="return-time" required style="width: 120px;" />
+                        </div>
+
+                        <button type="submit" class="btn-search" style="height: 42px; margin-bottom: 0.5rem; white-space: nowrap;">
+                            <i class="fas fa-search"></i>
+                            Search 
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+        function toggleFilters() {
+            const filters = document.getElementById('advanced-filters');
+            filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+
+    <section class="car-section" data-type="models">
+        <div class="container">
+            <div class="car-section-header">
+                <h2>Our Electric Car Models</h2>
+            </div>
+
+            <div class="car-grid">
+                <!-- Car Card 1 -->
+                <div class="car-card">
+                    <div class="car-image">
+                        <img src="assets/placeholder.jpg" alt="Tesla Model 3" />
+                        <span class="car-tag">Electric</span>
+                    </div>
+                    <div class="car-info">
+                        <div class="car-header">
+                            <h3 class="car-name">Tesla Model 3</h3>
+                        </div>
+                        <div class="car-features">
+                            <span><i class="fas fa-battery-three-quarters"></i> 350km Range</span>
+                            <span><i class="fas fa-bolt"></i> Fast Charging</span>
+                            <span><i class="fas fa-user"></i> 5 seats</span>
+                        </div>
+                        <div class="car-description">
+                            <p>Premium electric sedan with cutting-edge technology and impressive performance.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Car Card 2 -->
+                <div class="car-card">
+                    <div class="car-image">
+                        <img src="assets/placeholder.jpg" alt="Nissan Leaf" />
+                        <span class="car-tag">Electric</span>
+                    </div>
+                    <div class="car-info">
+                        <div class="car-header">
+                            <h3 class="car-name">Nissan Leaf</h3>
+                        </div>
+                        <div class="car-features">
+                            <span><i class="fas fa-battery-three-quarters"></i> 300km Range</span>
+                            <span><i class="fas fa-bolt"></i> Fast Charging</span>
+                            <span><i class="fas fa-user"></i> 5 seats</span>
+                        </div>
+                        <div class="car-description">
+                            <p>Reliable and efficient electric car perfect for city driving.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Car Card 3 -->
+                <div class="car-card">
+                    <div class="car-image">
+                        <img src="assets/placeholder.jpg" alt="BMW i4" />
+                        <span class="car-tag">Electric</span>
+                    </div>
+                    <div class="car-info">
+                        <div class="car-header">
+                            <h3 class="car-name">BMW i4</h3>
+                        </div>
+                        <div class="car-features">
+                            <span><i class="fas fa-battery-three-quarters"></i> 400km Range</span>
+                            <span><i class="fas fa-bolt"></i> Fast Charging</span>
+                            <span><i class="fas fa-user"></i> 5 seats</span>
+                        </div>
+                        <div class="car-description">
+                            <p>Luxury electric sedan combining performance with elegant design.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="brand-section">
+        <div class="container">
+            <h2>Thương hiệu phổ biến</h2>
+            <div class="brand-carousel">
+                <div class="brand-logo">Logo 1</div>
+                <div class="brand-logo">Logo 2</div>
+                <!-- repeatable -->
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 FEC. All rights reserved.</p>
+        </div>
+    </footer>
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>LOGIN</h2>
+            <form>
+                <input type="text" placeholder="Enter Username" required>
+                <input type="password" placeholder="Enter Password" required>
+                <a href="#">Forgot Password?</a>
+                <button type="submit">Login</button>
+                <a href="#" onclick="openRegisterModal()">Create Account</a>
+            </form>
+        </div>
+    </div>
+    <div id="registerModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeRegisterModal()">&times;</span>
+            <h2>Register</h2>
+            <form>
+                <input type="text" placeholder="Enter Username" required>
+                <input type="email" placeholder="Enter Email" required>
+                <input type="password" placeholder="Enter Password" required>
+                <input type="password" placeholder="Confirm Password" required>
+                <button type="submit">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+
+    </script>
+    <script>
+        // Modal functions
+        function openModal() {
+            document.getElementById("modal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("modal").style.display = "none";
+        }
+
+        function openRegisterModal() {
+            closeModal();
+            document.getElementById("registerModal").style.display = "flex";
+        }
+
+        function closeRegisterModal() {
+            document.getElementById("registerModal").style.display = "none";
+        }
+
+        // Mobile menu functions
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.overlay');
+            
+            if (sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            } else {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // Close mobile menu on window resize (if open)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.querySelector('.overlay');
+                
+                if (sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                }
+            }
+        });
+
+        // Car details modal functions
+        function openCarModal() {
+            document.getElementById("carDetailsModal").style.display = "flex";
+        }
+
+        function closeCarModal() {
+            document.getElementById("carDetailsModal").style.display = "none";
+        }
+
+        function changeMainImage(src) {
+            document.getElementById("mainCarImage").src = src;
+        }
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Car card click events
+            const carCards = document.querySelectorAll('.car-card');
+            carCards.forEach(card => {
+                card.addEventListener('click', openCarModal);
+            });
+
+            // Login form validation
+            const user = document.getElementById("username");
+            const pass = document.getElementById("password");
+            const loginBtn = document.getElementById("loginBtn");
+
+            if (user && pass && loginBtn) {
+                function toggleLoginButton() {
+                    loginBtn.disabled = !(user.value && pass.value);
+                }
+
+                user.addEventListener("input", toggleLoginButton);
+                pass.addEventListener("input", toggleLoginButton);
+            }
+        });
+    </script>
+    </body>
+
+</html>

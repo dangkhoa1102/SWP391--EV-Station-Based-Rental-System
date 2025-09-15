@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Available Cars - FEC</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <a href="home_page.html">FEC</a>
+            </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav class="nav">
+                <div class="navbar-right">
+                    <button onclick="openModal()" class="login-nav-btn">Login</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="car-list-main" style="margin-top: 2rem;">
+        <section class="search-form" style="background: #ff571a; width: 100%; margin-bottom: 2rem; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); padding: 2rem 0;">
+            <div class="container">
+                <form id="car-search-form" action="car_list_page.html" method="get">
+                    <div class="search-grid" style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <div class="form-group" style="flex: 2;">
+                            <label for="location" style="color: white; display: block; margin-bottom: 0.5rem;">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Pick-up Location
+                            </label>
+                            <select id="location" name="location" required>
+                                <option value="">Select location</option>
+                                <option value="district1">District 1</option>
+                                <option value="district2">District 2</option>
+                                <option value="district3">District 3</option>
+                                <option value="district4">District 4</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="flex: 1;">
+                            <label for="pickup-date" style="color: white; display: block; margin-bottom: 0.5rem;">
+                                <i class="fas fa-calendar"></i>
+                                Pick-up Date
+                            </label>
+                            <input type="date" id="pickup-date" name="pickup-date" required style="width: 100%;" />
+                        </div>
+
+                        <div class="form-group" style="flex: 1;">
+                            <label for="pickup-time" style="color: white; display: block; margin-bottom: 0.5rem;">
+                                <i class="fas fa-clock"></i>
+                                Pick-up Time
+                            </label>
+                            <input type="time" id="pickup-time" name="pickup-time" required style="width: 100%;" />
+                        </div>
+
+                        <div class="form-group" style="flex: 1;">
+                            <label for="return-date" style="color: white; display: block; margin-bottom: 0.5rem;">
+                                <i class="fas fa-calendar-check"></i>
+                                Return Date
+                            </label>
+                            <input type="date" id="return-date" name="return-date" required style="width: 100%;" />
+                        </div>
+
+                        <div class="form-group" style="flex: 1;">
+                            <label for="return-time" style="color: white; display: block; margin-bottom: 0.5rem;">
+                                <i class="fas fa-clock"></i>
+                                Return Time
+                            </label>
+                            <input type="time" id="return-time" name="return-time" required style="width: 100%;" />
+                        </div>
+
+                        <button type="submit" class="btn-search" style="height: 42px; white-space: nowrap; padding: 0 2rem; background: white; color: #ff571a; border: none; border-radius: 4px;">
+                            Search
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <div class="container">
+            <div class="filter-section" style="background: #fff; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <h3 style="margin: 0;">Filters</h3>
+                    <button type="submit" form="filter-form" class="btn-apply-filters" style="background: #ff571a; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer;">Apply Filters</button>
+                </div>
+                <form id="filter-form" style="display: flex; gap: 1rem; align-items: flex-end;">
+                    <div class="filter-group" style="flex: 1;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #555;">Price Range</label>
+                        <select name="price-range" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">All Prices</option>
+                            <option value="0-50">$0 - $50/day</option>
+                            <option value="51-100">$51 - $100/day</option>
+                            <option value="101-200">$101 - $200/day</option>
+                            <option value="201+">$201+/day</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" style="flex: 1;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #555;">Car Type</label>
+                        <select name="car-type" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">All Types</option>
+                            <option value="sedan">Sedan</option>
+                            <option value="suv">SUV</option>
+                            <option value="luxury">Luxury</option>
+                            <option value="sports">Sports</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" style="flex: 1;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #555;">Seats</label>
+                        <select name="seats" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">All Seats</option>
+                            <option value="2">2 Seats</option>
+                            <option value="4">4 Seats</option>
+                            <option value="5">5 Seats</option>
+                            <option value="7">7 Seats</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" style="flex: 1;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #555;">Battery Range</label>
+                        <select name="battery-range" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">All Ranges</option>
+                            <option value="200">200+ km</option>
+                            <option value="300">300+ km</option>
+                            <option value="400">400+ km</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <div class="car-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+                <!-- Car Cards -->
+                <div class="car-card" onclick="window.location.href='car_detail.html?id=1'" style="flex: 0 0 calc(33.333% - 2rem);">
+                    <div class="car-image">
+                        <img src="assets/placeholder.jpg" alt="Tesla Model 3" />
+                        <span class="car-tag">Electric</span>
+                    </div>
+                    <div class="car-info">
+                        <div class="car-header">
+                            <h3 class="car-name">Tesla Model 3</h3>
+                            <div class="car-price">$15/hour</div>
+                        </div>
+                        <div class="car-features">
+                            <span><i class="fas fa-battery-three-quarters"></i> 350km Range</span>
+                            <span><i class="fas fa-bolt"></i> Fast Charging</span>
+                            <span><i class="fas fa-user"></i> 5 seats</span>
+                        </div>
+                        <div class="car-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half"></i>
+                            <span>(32 reviews)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="car-card" onclick="window.location.href='car_detail.html?id=2'" style="flex: 0 0 calc(33.333% - 2rem);">
+                    <div class="car-image">
+                        <img src="assets/placeholder.jpg" alt="Nissan Leaf" />
+                        <span class="car-tag">Electric</span>
+                    </div>
+                    <div class="car-info">
+                        <div class="car-header">
+                            <h3 class="car-name">Nissan Leaf</h3>
+                            <div class="car-price">$12/hour</div>
+                        </div>
+                        <div class="car-features">
+                            <span><i class="fas fa-battery-three-quarters"></i> 300km Range</span>
+                            <span><i class="fas fa-bolt"></i> Fast Charging</span>
+                            <span><i class="fas fa-user"></i> 5 seats</span>
+                        </div>
+                        <div class="car-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                            <span>(28 reviews)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional car cards for demonstration -->
+                <div class="car-card" onclick="window.location.href='car_detail.html?id=3'" style="flex: 0 0 calc(33.333% - 2rem);">
+                    <div class="car-image">
+                        <img src="assets/placeholder.jpg" alt="BMW i4" />
+                        <span class="car-tag">Electric</span>
+                    </div>
+                    <div class="car-info">
+                        <div class="car-header">
+                            <h3 class="car-name">BMW i4</h3>
+                            <div class="car-price">$18/hour</div>
+                        </div>
+                        <div class="car-features">
+                            <span><i class="fas fa-battery-three-quarters"></i> 400km Range</span>
+                            <span><i class="fas fa-bolt"></i> Fast Charging</span>
+                            <span><i class="fas fa-user"></i> 5 seats</span>
+                        </div>
+                        <div class="car-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <span>(45 reviews)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 FEC. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>LOGIN</h2>
+            <form>
+                <input type="text" placeholder="Enter Username" required>
+                <input type="password" placeholder="Enter Password" required>
+                <a href="#">Forgot Password?</a>
+                <button type="submit">Login</button>
+                <a href="#" onclick="openRegisterModal()">Create Account</a>
+            </form>
+        </div>
+    </div>
+
+    <div id="registerModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeRegisterModal()">&times;</span>
+            <h2>Register</h2>
+            <form>
+                <input type="text" placeholder="Enter Username" required>
+                <input type="email" placeholder="Enter Email" required>
+                <input type="password" placeholder="Enter Password" required>
+                <input type="password" placeholder="Confirm Password" required>
+                <button type="submit">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Modal functions
+        function openModal() {
+            document.getElementById("modal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("modal").style.display = "none";
+        }
+
+        function openRegisterModal() {
+            closeModal();
+            document.getElementById("registerModal").style.display = "flex";
+        }
+
+        function closeRegisterModal() {
+            document.getElementById("registerModal").style.display = "none";
+        }
+
+        // Mobile menu functions
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.overlay');
+            
+            if (sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            } else {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // Get search parameters from URL and update filters
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const location = params.get('location');
+            const pickupDate = params.get('pickup-date');
+            const pickupTime = params.get('pickup-time');
+            const returnDate = params.get('return-date');
+            const returnTime = params.get('return-time');
+
+            // Update search criteria display
+            document.getElementById('display-location').textContent = location || 'Any Location';
+            if (pickupDate && pickupTime) {
+                document.getElementById('display-pickup').textContent = `${pickupDate} ${pickupTime}`;
+            }
+            if (returnDate && returnTime) {
+                document.getElementById('display-return').textContent = `${returnDate} ${returnTime}`;
+            }
+            
+            // Calculate and display duration
+            if (pickupDate && pickupTime && returnDate && returnTime) {
+                const pickup = new Date(`${pickupDate} ${pickupTime}`);
+                const return_ = new Date(`${returnDate} ${returnTime}`);
+                const hours = Math.ceil((return_ - pickup) / (1000 * 60 * 60));
+                document.getElementById('display-duration').textContent = `${hours} hours`;
+            }
+        });
+    </script>
+</body>
+
+</html>

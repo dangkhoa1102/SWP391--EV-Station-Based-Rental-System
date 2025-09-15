@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment - FEC</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            margin-top: 5rem;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        .footer {
+            margin-top: auto;
+        }
+
+        .payment-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .rental-info {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .rental-info h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .price-info {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .payment-methods {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .payment-method-btn {
+            padding: 1rem 2rem;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-btn.active {
+            border-color: #007bff;
+            background-color: #e7f1ff;
+        }
+
+        .bank-info {
+            margin-bottom: 2rem;
+        }
+
+        .bank-info input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .invoice-options {
+            margin-bottom: 2rem;
+        }
+
+        .confirm-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .confirm-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <a href="home_page.html">FEC</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="payment-container">
+            <a href="car_detail.html" class="back-btn">← Back to Booking</a>
+
+            <div class="rental-info">
+                <h3>Rental Information</h3>
+                <p><strong>Location:</strong> <span id="rental-location"></span></p>
+                <p><strong>Pick-up:</strong> <span id="rental-pickup"></span></p>
+                <p><strong>Return:</strong> <span id="rental-return"></span></p>
+                <p><strong>Vehicle:</strong> <span id="rental-vehicle"></span></p>
+            </div>
+
+            <div class="price-info">
+                <h3>Price Information</h3>
+                <p><strong>Duration:</strong> <span id="rental-duration"></span> hours</p>
+                <p><strong>Rate:</strong> $<span id="hourly-rate"></span>/hour</p>
+                <p><strong>Total Amount:</strong> $<span id="total-amount"></span></p>
+            </div>
+
+            <div class="payment-methods">
+                <button type="button" class="payment-method-btn" onclick="selectPaymentMethod('bank')">
+                    <i class="fas fa-university"></i> Bank Transfer
+                </button>
+                <button type="button" class="payment-method-btn" onclick="selectPaymentMethod('cash')">
+                    <i class="fas fa-money-bill-wave"></i> Cash
+                </button>
+                <button type="button" class="payment-method-btn" onclick="selectPaymentMethod('deposit')">
+                    <i class="fas fa-piggy-bank"></i> Deposit
+                </button>
+            </div>
+
+            <div id="bank-info" class="bank-info" style="display: none;">
+                <input type="text" id="bank-name" placeholder="Bank's Name" required>
+                <input type="text" id="bank-number" placeholder="Bank Account Number" required>
+            </div>
+
+            <div class="invoice-options">
+                <label>
+                    <input type="radio" name="invoice-option" value="station"> Receive invoice at station
+                </label>
+                <br>
+                <label>
+                    <input type="radio" name="invoice-option" value="contract"> E-contract
+                </label>
+            </div>
+
+            <button type="button" class="confirm-btn" onclick="confirmPayment()">
+                Confirm Payment
+            </button>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 FEC. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Populate rental information from URL parameters
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            
+            // Update rental information
+            document.getElementById('rental-location').textContent = params.get('location') || 'District 1';
+            document.getElementById('rental-pickup').textContent = `${params.get('pickup-date') || '2025-09-14'} ${params.get('pickup-time') || '10:00'}`;
+            document.getElementById('rental-return').textContent = `${params.get('return-date') || '2025-09-14'} ${params.get('return-time') || '18:00'}`;
+            document.getElementById('rental-vehicle').textContent = params.get('vehicle') || 'Tesla Model 3';
+
+            // Calculate duration and total
+            const pickupTime = new Date(`${params.get('pickup-date')} ${params.get('pickup-time')}`);
+            const returnTime = new Date(`${params.get('return-date')} ${params.get('return-time')}`);
+            const hourlyRate = 15; // This should come from the car details
+
+            const durationHours = Math.ceil((returnTime - pickupTime) / (1000 * 60 * 60));
+            const totalAmount = durationHours * hourlyRate;
+
+            document.getElementById('rental-duration').textContent = durationHours;
+            document.getElementById('hourly-rate').textContent = hourlyRate;
+            document.getElementById('total-amount').textContent = totalAmount;
+        });
+
+        function selectPaymentMethod(method) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.payment-method-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Add active class to selected button
+            const selectedBtn = document.querySelector(`.payment-method-btn[onclick*="${method}"]`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('active');
+            }
+
+            // Show/hide bank info
+            const bankInfo = document.getElementById('bank-info');
+            bankInfo.style.display = method === 'bank' ? 'block' : 'none';
+        }
+
+        function confirmPayment() {
+            // Get selected payment method
+            const selectedMethod = document.querySelector('.payment-method-btn.active');
+            if (!selectedMethod) {
+                alert('Please select a payment method');
+                return;
+            }
+
+            // Get invoice option
+            const invoiceOption = document.querySelector('input[name="invoice-option"]:checked');
+            if (!invoiceOption) {
+                alert('Please select an invoice option');
+                return;
+            }
+
+            // If bank transfer is selected, validate bank info
+            if (selectedMethod.innerText.includes('Bank')) {
+                const bankName = document.getElementById('bank-name').value;
+                const bankNumber = document.getElementById('bank-number').value;
+                if (!bankName || !bankNumber) {
+                    alert('Please enter bank information');
+                    return;
+                }
+            }
+
+            // Here you would normally submit the payment information to your backend
+            alert('Payment confirmed! Redirecting to home page...');
+            window.location.href = 'home_page.html';
+        }
+    </script>
+</body>
+
+</html>

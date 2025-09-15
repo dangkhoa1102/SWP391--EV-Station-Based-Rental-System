@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking History - FEC</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <a href="home_page.html">FEC</a>
+            </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="search-container">
+                <form class="search-form-header">
+                    <input type="text" placeholder="Search for cars..." class="search-input">
+                    <button type="submit" class="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+
+            <nav class="nav">
+                <div class="navbar-right">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="#" class="nav-link">Cars</a>
+                    <a href="profile.html" class="nav-link">Profile</a>
+                    <a href="booking_history.html" class="nav-link active">Bookings</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="booking-history-page">
+        <div class="container">
+            <div class="booking-content">
+                <h1>My Bookings</h1>
+
+                <!-- Booking Filters -->
+                <div class="booking-filters">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-status="all">All Bookings</button>
+                        <button class="filter-tab" data-status="active">Active</button>
+                        <button class="filter-tab" data-status="completed">Completed</button>
+                        <button class="filter-tab" data-status="cancelled">Cancelled</button>
+                    </div>
+                    <div class="filter-sort">
+                        <select class="sort-select">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="price-low">Price: Low to High</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Booking List -->
+                <div class="booking-list">
+                    <!-- Active Booking -->
+                    <div class="booking-card active">
+                        <div class="booking-image">
+                            <img src="assets/placeholder.jpg" alt="Car Image">
+                        </div>
+                        <div class="booking-details">
+                            <div class="booking-header">
+                                <h3>Toyota Camry 2023</h3>
+                                <span class="booking-status active">Active</span>
+                            </div>
+                            <div class="booking-info">
+                                <div class="info-group">
+                                    <i class="fas fa-calendar"></i>
+                                    <div class="info-text">
+                                        <p>Pick-up: Sept 15, 2025 - 10:00 AM</p>
+                                        <p>Return: Sept 17, 2025 - 10:00 AM</p>
+                                    </div>
+                                </div>
+                                <div class="info-group">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <p>District 1, Ho Chi Minh City</p>
+                                </div>
+                            </div>
+                            <div class="booking-actions">
+                                <span class="booking-price">$150.00</span>
+                                <div class="action-buttons">
+                                    <button class="btn-extend">Extend Rental</button>
+                                    <button class="btn-cancel">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Booking -->
+                    <div class="booking-card completed">
+                        <div class="booking-image">
+                            <img src="assets/placeholder.jpg" alt="Car Image">
+                        </div>
+                        <div class="booking-details">
+                            <div class="booking-header">
+                                <h3>Honda CR-V 2023</h3>
+                                <span class="booking-status completed">Completed</span>
+                            </div>
+                            <div class="booking-info">
+                                <div class="info-group">
+                                    <i class="fas fa-calendar"></i>
+                                    <div class="info-text">
+                                        <p>Pick-up: Sept 1, 2025 - 9:00 AM</p>
+                                        <p>Return: Sept 3, 2025 - 9:00 AM</p>
+                                    </div>
+                                </div>
+                                <div class="info-group">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <p>District 2, Ho Chi Minh City</p>
+                                </div>
+                            </div>
+                            <div class="booking-actions">
+                                <span class="booking-price">$180.00</span>
+                                <div class="action-buttons">
+                                    <button class="btn-review">Write Review</button>
+                                    <button class="btn-book-again">Book Again</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cancelled Booking -->
+                    <div class="booking-card cancelled">
+                        <div class="booking-image">
+                            <img src="assets/placeholder.jpg" alt="Car Image">
+                        </div>
+                        <div class="booking-details">
+                            <div class="booking-header">
+                                <h3>BMW 3 Series 2023</h3>
+                                <span class="booking-status cancelled">Cancelled</span>
+                            </div>
+                            <div class="booking-info">
+                                <div class="info-group">
+                                    <i class="fas fa-calendar"></i>
+                                    <div class="info-text">
+                                        <p>Pick-up: Aug 25, 2025 - 2:00 PM</p>
+                                        <p>Return: Aug 27, 2025 - 2:00 PM</p>
+                                    </div>
+                                </div>
+                                <div class="info-group">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <p>District 3, Ho Chi Minh City</p>
+                                </div>
+                            </div>
+                            <div class="booking-actions">
+                                <span class="booking-price">$250.00</span>
+                                <div class="action-buttons">
+                                    <button class="btn-book-again">Book Again</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button class="page-prev">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="page-numbers">
+                        <button class="active">1</button>
+                        <button>2</button>
+                        <button>3</button>
+                        <span>...</span>
+                        <button>10</button>
+                    </div>
+                    <button class="page-next">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 FEC. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        // Filter tabs functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterTabs = document.querySelectorAll('.filter-tab');
+            const bookingCards = document.querySelectorAll('.booking-card');
+
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Update active tab
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const status = this.dataset.status;
+
+                    // Filter booking cards
+                    bookingCards.forEach(card => {
+                        if (status === 'all' || card.classList.contains(status)) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
