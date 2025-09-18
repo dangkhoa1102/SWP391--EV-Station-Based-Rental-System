@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FEV</title>
     <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
     <header class="header">
         <div class="container header-container">
@@ -219,9 +220,9 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
             <h2>LOGIN</h2>
-            <form>
-                <input type="text" placeholder="Enter Username" required>
-                <input type="password" placeholder="Enter Password" required>
+            <form id="loginForm">
+                <input type="text" id="loginUsername" placeholder="Enter Username" required>
+                <input type="password" id="loginPassword" placeholder="Enter Password" required>
                 <a href="#">Forgot Password?</a>
                 <button type="submit">Login</button>
                 <a href="#" onclick="openRegisterModal()">Create Account</a>
@@ -232,11 +233,11 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeRegisterModal()">&times;</span>
             <h2>Register</h2>
-            <form>
-                <input type="text" placeholder="Enter Username" required>
-                <input type="email" placeholder="Enter Email" required>
-                <input type="password" placeholder="Enter Password" required>
-                <input type="password" placeholder="Confirm Password" required>
+            <form id="registerForm">
+                <input type="text" id="registerUsername" placeholder="Enter Username" required>
+                <input type="email" id="registerEmail" placeholder="Enter Email" required>
+                <input type="password" id="registerPassword" placeholder="Enter Password" required>
+                <input type="password" id="registerConfirm" placeholder="Confirm Password" required>
                 <button type="submit">Create Account</button>
             </form>
         </div>
@@ -314,18 +315,46 @@
                 card.addEventListener('click', openCarModal);
             });
 
-            // Login form validation
-            const user = document.getElementById("username");
-            const pass = document.getElementById("password");
-            const loginBtn = document.getElementById("loginBtn");
+            // Login form submit
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const username = document.getElementById('loginUsername').value;
+                    const password = document.getElementById('loginPassword').value;
+                    axios.post('/api/login', { username, password })
+                        .then(function(res) {
+                            alert('Login successful!');
+                            closeModal();
+                        })
+                        .catch(function(err) {
+                            alert('Login failed!');
+                        });
+                });
+            }
 
-            if (user && pass && loginBtn) {
-                function toggleLoginButton() {
-                    loginBtn.disabled = !(user.value && pass.value);
-                }
-
-                user.addEventListener("input", toggleLoginButton);
-                pass.addEventListener("input", toggleLoginButton);
+            // Register form submit
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const username = document.getElementById('registerUsername').value;
+                    const email = document.getElementById('registerEmail').value;
+                    const password = document.getElementById('registerPassword').value;
+                    const confirm = document.getElementById('registerConfirm').value;
+                    if (password !== confirm) {
+                        alert('Passwords do not match!');
+                        return;
+                    }
+                    axios.post('/api/register', { username, email, password })
+                        .then(function(res) {
+                            alert('Register successful!');
+                            closeRegisterModal();
+                        })
+                        .catch(function(err) {
+                            alert('Register failed!');
+                        });
+                });
             }
         });
     </script>
