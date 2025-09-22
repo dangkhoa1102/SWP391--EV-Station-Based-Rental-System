@@ -1,23 +1,56 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FEV</title>
+    <title>FEC - Electric Car Rental</title>
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .notification.success {
+            background-color: #4CAF50;
+            border-left: 5px solid #45a049;
+        }
+        .notification.error {
+            background-color: #f44336;
+            border-left: 5px solid #da190b;
+        }
+        .notification .close-btn {
+            margin-left: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
 
+<body>
     <header class="header">
         <div class="container header-container">
             <div class="logo">
-                                <a href="home_page.html">FEC</a>
+                <a href="home_page.html">FEC</a>
             </div>
-
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-
             <nav class="nav">
                 <div class="navbar-right">
                     <button onclick="openModal()" class="login-nav-btn">Login</button>
@@ -26,42 +59,11 @@
         </div>
     </header>
 
-    <!-- Mobile Navigation Sidebar -->
-    <div class="overlay" onclick="toggleMobileMenu()"></div>
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h3>Menu</h3>
-            <button class="sidebar-close" onclick="toggleMobileMenu()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="#">Home</a>
-            <a href="#">Cars</a>
-            <a href="#">About</a>
-            <div class="sidebar-region">
-                <span class="region-icon">📍</span>
-                <select class="region-select">
-                    <option value="">Select Region</option>
-                    <option value="north">North</option>
-                    <option value="central">Central</option>
-                    <option value="south">South</option>
-                </select>
-            </div>
-            <a href="#" onclick="openModal(); toggleMobileMenu();">Login</a>
-        </nav>
-    </div>
-
-    <div id="sidebar" class="sidebar">
-        <a href="javascript:void(0)" class="close-btn" onclick="closeSidebar()">×</a>
-        <a href="#">Trang chủ</a>
-        <a href="#">Blog</a>
-        <a href="#">Đăng nhập</a>
-    </div>
+    <!-- Search Form Section -->
     <section class="search-form">
         <div class="container">
             <div class="search-form-wrapper">
-                <h2 style="white-space: nowrap;">Find Your Perfect Rental Car</h2>
+                <h2>Find Your Perfect Rental Car</h2>
                 <form id="car-search-form" action="car_list_page.html" method="get">
                     <div class="search-grid" style="display: flex; gap: 1rem; align-items: flex-end;">
                         <div class="form-group" style="flex: 2;">
@@ -77,7 +79,6 @@
                                 <option value="district4">District 4</option>
                             </select>
                         </div>
-
                         <div class="form-group" style="flex: 1;">
                             <label for="pickup-date">
                                 <i class="fas fa-calendar"></i>
@@ -85,7 +86,6 @@
                             </label>
                             <input type="date" id="pickup-date" name="pickup-date" required style="width: 140px;" />
                         </div>
-
                         <div class="form-group" style="flex: 1;">
                             <label for="pickup-time">
                                 <i class="fas fa-clock"></i>
@@ -93,7 +93,6 @@
                             </label>
                             <input type="time" id="pickup-time" name="pickup-time" required style="width: 120px;" />
                         </div>
-
                         <div class="form-group" style="flex: 1;">
                             <label for="return-date">
                                 <i class="fas fa-calendar-check"></i>
@@ -101,7 +100,6 @@
                             </label>
                             <input type="date" id="return-date" name="return-date" required style="width: 140px;" />
                         </div>
-
                         <div class="form-group" style="flex: 1;">
                             <label for="return-time">
                                 <i class="fas fa-clock"></i>
@@ -109,7 +107,6 @@
                             </label>
                             <input type="time" id="return-time" name="return-time" required style="width: 120px;" />
                         </div>
-
                         <button type="submit" class="btn-search" style="height: 42px; margin-bottom: 0.5rem; white-space: nowrap;">
                             <i class="fas fa-search"></i>
                             Search 
@@ -119,22 +116,15 @@
             </div>
         </div>
     </section>
-    
-    <script>
-        function toggleFilters() {
-            const filters = document.getElementById('advanced-filters');
-            filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
-        }
-    </script>
 
+    <!-- Car Models Section -->
     <section class="car-section" data-type="models">
         <div class="container">
             <div class="car-section-header">
                 <h2>Our Electric Car Models</h2>
             </div>
-
             <div class="car-grid">
-                <!-- Car Card 1 -->
+                <!-- Car Cards -->
                 <div class="car-card">
                     <div class="car-image">
                         <img src="assets/placeholder.jpg" alt="Tesla Model 3" />
@@ -154,59 +144,7 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Car Card 2 -->
-                <div class="car-card">
-                    <div class="car-image">
-                        <img src="assets/placeholder.jpg" alt="Nissan Leaf" />
-                        <span class="car-tag">Electric</span>
-                    </div>
-                    <div class="car-info">
-                        <div class="car-header">
-                            <h3 class="car-name">Nissan Leaf</h3>
-                        </div>
-                        <div class="car-features">
-                            <span><i class="fas fa-battery-three-quarters"></i> 300km Range</span>
-                            <span><i class="fas fa-bolt"></i> Fast Charging</span>
-                            <span><i class="fas fa-user"></i> 5 seats</span>
-                        </div>
-                        <div class="car-description">
-                            <p>Reliable and efficient electric car perfect for city driving.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Car Card 3 -->
-                <div class="car-card">
-                    <div class="car-image">
-                        <img src="assets/placeholder.jpg" alt="BMW i4" />
-                        <span class="car-tag">Electric</span>
-                    </div>
-                    <div class="car-info">
-                        <div class="car-header">
-                            <h3 class="car-name">BMW i4</h3>
-                        </div>
-                        <div class="car-features">
-                            <span><i class="fas fa-battery-three-quarters"></i> 400km Range</span>
-                            <span><i class="fas fa-bolt"></i> Fast Charging</span>
-                            <span><i class="fas fa-user"></i> 5 seats</span>
-                        </div>
-                        <div class="car-description">
-                            <p>Luxury electric sedan combining performance with elegant design.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="brand-section">
-        <div class="container">
-            <h2>Thương hiệu phổ biến</h2>
-            <div class="brand-carousel">
-                <div class="brand-logo">Logo 1</div>
-                <div class="brand-logo">Logo 2</div>
-                <!-- repeatable -->
+                <!-- More car cards... -->
             </div>
         </div>
     </section>
@@ -216,12 +154,14 @@
             <p>&copy; 2025 FEC. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Login Modal -->
     <div id="modal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
             <h2>LOGIN</h2>
             <form id="loginForm">
-                <input type="text" id="loginUsername" placeholder="Enter Username" required>
+                <input type="email" id="loginEmail" placeholder="Enter Email" required>
                 <input type="password" id="loginPassword" placeholder="Enter Password" required>
                 <a href="#">Forgot Password?</a>
                 <button type="submit">Login</button>
@@ -229,23 +169,43 @@
             </form>
         </div>
     </div>
+
+    <!-- Register Modal -->
     <div id="registerModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeRegisterModal()">&times;</span>
             <h2>Register</h2>
             <form id="registerForm">
-                <input type="text" id="registerUsername" placeholder="Enter Username" required>
                 <input type="email" id="registerEmail" placeholder="Enter Email" required>
                 <input type="password" id="registerPassword" placeholder="Enter Password" required>
-                <input type="password" id="registerConfirm" placeholder="Confirm Password" required>
                 <button type="submit">Create Account</button>
             </form>
         </div>
     </div>
 
-
-    </script>
     <script>
+        // Notification function
+        function showNotification(message, type = 'success') {
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <span>${message}</span>
+                <span class="close-btn" onclick="this.parentElement.remove()">&times;</span>
+            `;
+
+            document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 5000);
+        }
+
         // Modal functions
         function openModal() {
             document.getElementById("modal").style.display = "flex";
@@ -264,100 +224,138 @@
             document.getElementById("registerModal").style.display = "none";
         }
 
-        // Mobile menu functions
         function toggleMobileMenu() {
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.overlay');
-            
-            if (sidebar.classList.contains('active')) {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            } else {
-                sidebar.classList.add('active');
-                overlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        // Close mobile menu on window resize (if open)
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 768) {
-                const sidebar = document.querySelector('.sidebar');
-                const overlay = document.querySelector('.overlay');
-                
-                if (sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                    document.body.style.overflow = 'auto';
-                }
-            }
-        });
-
-        // Car details modal functions
-        function openCarModal() {
-            document.getElementById("carDetailsModal").style.display = "flex";
-        }
-
-        function closeCarModal() {
-            document.getElementById("carDetailsModal").style.display = "none";
-        }
-
-        function changeMainImage(src) {
-            document.getElementById("mainCarImage").src = src;
+            // Mobile menu logic
         }
 
         // Initialize event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Car card click events
-            const carCards = document.querySelectorAll('.car-card');
-            carCards.forEach(card => {
-                card.addEventListener('click', openCarModal);
-            });
-
             // Login form submit
             const loginForm = document.getElementById('loginForm');
             if (loginForm) {
-                loginForm.addEventListener('submit', function(e) {
+                loginForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
-                    const username = document.getElementById('loginUsername').value;
+                    const email = document.getElementById('loginEmail').value;
                     const password = document.getElementById('loginPassword').value;
-                    axios.post('/api/login', { username, password })
-                        .then(function(res) {
-                            alert('Login successful!');
-                            closeModal();
-                        })
-                        .catch(function(err) {
-                            alert('Login failed!');
+                    
+                    console.log('Attempting login with email:', email);
+                    
+                    try {
+                        const response = await axios.post('https://localhost:7080/login', {
+                            email: email,       // Sử dụng email thay vì username
+                            password: password
+                        }, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            timeout: 10000
                         });
+                        
+                        // Lưu token nếu có
+                        if (response.data.token || response.data.accessToken) {
+                            localStorage.setItem('token', response.data.token || response.data.accessToken);
+                        }
+                        
+                        showNotification('🎉 Đăng nhập thành công! Chào mừng bạn trở lại.', 'success');
+                        closeModal();
+                        
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        console.log('Error response:', error.response);
+                        console.log('Error response data:', error.response?.data);
+                        
+                        if (error.response) {
+                            // Server responded with error status
+                            const errorData = error.response.data;
+                            let errorMessage = 'Lỗi không xác định';
+                            
+                            if (typeof errorData === 'string') {
+                                errorMessage = errorData;
+                            } else if (errorData && errorData.message) {
+                                errorMessage = errorData.message;
+                            } else if (errorData && errorData.error) {
+                                errorMessage = errorData.error;
+                            } else if (errorData && errorData.title) {
+                                errorMessage = errorData.title;
+                            } else if (error.response.statusText) {
+                                errorMessage = error.response.statusText;
+                            }
+                            
+                            showNotification(`❌ Đăng nhập thất bại (${error.response.status}): ${errorMessage}`, 'error');
+                        } else if (error.request) {
+                            showNotification('🌐 Không thể kết nối đến server. Kiểm tra CORS config!', 'error');
+                        } else {
+                            showNotification('⚠️ Lỗi: ' + error.message, 'error');
+                        }
+                    }
                 });
             }
 
             // Register form submit
             const registerForm = document.getElementById('registerForm');
             if (registerForm) {
-                registerForm.addEventListener('submit', function(e) {
+                registerForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
-                    const username = document.getElementById('registerUsername').value;
                     const email = document.getElementById('registerEmail').value;
                     const password = document.getElementById('registerPassword').value;
-                    const confirm = document.getElementById('registerConfirm').value;
-                    if (password !== confirm) {
-                        alert('Passwords do not match!');
-                        return;
-                    }
-                    axios.post('/api/register', { username, email, password })
-                        .then(function(res) {
-                            alert('Register successful!');
-                            closeRegisterModal();
-                        })
-                        .catch(function(err) {
-                            alert('Register failed!');
+                    
+                    console.log('Attempting register with email:', email);
+                    
+                    try {
+                        const requestData = {
+                            email: email,
+                            password: password
+                        };
+                        
+                        console.log('Sending register request:', requestData);
+                        
+                        const response = await axios.post('https://localhost:7080/register', requestData, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
                         });
+                        
+                        showNotification('🎊 Đăng ký thành công! Chào mừng bạn đến với hệ thống.', 'success');
+                        closeRegisterModal();
+                        
+                        setTimeout(() => {
+                            openModal();
+                            showNotification('💡 Bạn có thể đăng nhập ngay bây giờ!', 'success');
+                        }, 2000);
+                        
+                    } catch (error) {
+                        console.error('Register error:', error);
+                        console.log('Error response:', error.response);
+                        console.log('Error response data:', error.response?.data);
+                        
+                        if (error.response) {
+                            // Server responded with error status
+                            const errorData = error.response.data;
+                            let errorMessage = 'Lỗi không xác định';
+                            
+                            if (typeof errorData === 'string') {
+                                errorMessage = errorData;
+                            } else if (errorData && errorData.message) {
+                                errorMessage = errorData.message;
+                            } else if (errorData && errorData.error) {
+                                errorMessage = errorData.error;
+                            } else if (errorData && errorData.title) {
+                                errorMessage = errorData.title;
+                            } else if (error.response.statusText) {
+                                errorMessage = error.response.statusText;
+                            }
+                            
+                            showNotification(`❌ Đăng ký thất bại (${error.response.status}): ${errorMessage}`, 'error');
+                        } else if (error.request) {
+                            showNotification('🌐 Không thể kết nối đến server. Kiểm tra CORS config!', 'error');
+                        } else {
+                            showNotification('⚠️ Lỗi: ' + error.message, 'error');
+                        }
+                    }
                 });
             }
         });
     </script>
-    </body>
-
+</body>
 </html>
