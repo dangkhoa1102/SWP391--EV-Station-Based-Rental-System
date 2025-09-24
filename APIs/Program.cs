@@ -1,5 +1,10 @@
 
+using APIs.Configurations;
 using APIs.Data;
+using APIs.Entities;
+using APIs.Extensions;
+using APIs.Services;
+using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -12,6 +17,9 @@ namespace APIs
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+
 
             // Add services to the container.
 
@@ -35,7 +43,25 @@ namespace APIs
 
             builder.Services.AddAuthorization();
 
-            builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<DataContext>();
+            //builder.Services.AddIdentityApiEndpoints<ApplicationUser>().AddEntityFrameworkStores<DataContext>();
+
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 6;
+                options.User.RequireUniqueEmail = true;
+            })
+                .AddEntityFrameworkStores<DataContext>()
+                .AddDefaultTokenProviders();
+
+            builder.Services.AddScoped<JWTTokenGenerator>();
+
+            builder.Services.AddJwtAuthentication(builder.Configuration);
+
+            builder.Services.AddAppAuthentication();            
 
             var app = builder.Build();
 
@@ -46,9 +72,13 @@ namespace APIs
                 app.UseSwaggerUI();
             }
 
-            app.MapIdentityApi<IdentityUser>();
+            //var identityGroup = app.MapGroup("/api");
+
+            //identityGroup.MapIdentityApi<ApplicationUser>();
 
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
