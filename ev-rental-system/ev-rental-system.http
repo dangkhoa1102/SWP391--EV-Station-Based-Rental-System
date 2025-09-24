@@ -1,6 +1,0 @@
-@ev_rental_system_HostAddress = http://localhost:5153
-
-GET {{ev_rental_system_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
