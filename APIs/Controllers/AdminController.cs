@@ -8,7 +8,14 @@ namespace APIs.Controllers
     [ApiController]
     public class AdminController : ControllerBase
     {
-        //[HttpGet, Authorize]
-        
+        //[HttpPost, Authorize]
+        //public async Task<ActionResult<List><Car>> AddCar([FromQuery] string userId)
+        //{
+        //    // In a real application, you would add logic to make the user an admin.
+        //    // For example, you might update a database record to set an "IsAdmin" flag.
+        //    // Here, we'll just return a success message for demonstration purposes.
+        //    return Ok(new { message = $"User with ID {userId} has been made an admin." });
+        //}
+
     }
 }
