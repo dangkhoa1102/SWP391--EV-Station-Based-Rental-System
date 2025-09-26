@@ -16,7 +16,7 @@ namespace ev_rental_system.Services
 
         public async Task SeedAsync()
         {
-            var roles = new[] { "Renter", "Staff", "Admin" };
+            var roles = new[] { "RENTER", "STAFF", "ADMIN" };
             foreach (var role in roles)
             {
                 if (!await _roleManager.RoleExistsAsync(role))
@@ -27,13 +27,14 @@ namespace ev_rental_system.Services
             {
                 UserName = "admin@ev.com",
                 Email = "admin@ev.com",
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                FullName = "Administrator"
             };
 
             if (await _userManager.FindByEmailAsync(adminUser.Email) == null)
             {
                 await _userManager.CreateAsync(adminUser, "Admin@123");
-                await _userManager.AddToRoleAsync(adminUser, "Admin");
+                await _userManager.AddToRoleAsync(adminUser, "ADMIN");
             }
         }
     }

@@ -57,19 +57,21 @@ namespace APIs.Controllers
             var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
             if (!result.Succeeded) return Unauthorized("Invalid password");
 
-            var accessToken = _jwtTokenGenerator.CreateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var accessToken = _jwtTokenGenerator.CreateToken(user, roles);
             var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
             user.RefreshTokens ??= new List<RefreshToken>();
             user.RefreshTokens.Add(refreshToken);
-            await _userManager.UpdateAsync(user);
+            await _userManager.UpdateAsync(user);            
 
             return Ok(new
             {
                 accessToken,
-                refreshToken = refreshToken.Token,
-                username = user.UserName,
-                email = user.Email,
+                refreshToken = refreshToken.Token,                
+                email = user.Email,           
+                roles
             });
         }
 
@@ -85,14 +87,16 @@ namespace APIs.Controllers
             var storedToken = user.RefreshTokens.Single(t => t.Token == token);
             if (!storedToken.IsActive) return Unauthorized("Invalid refresh token");
 
+            var roles = await _userManager.GetRolesAsync(user);
+
             // Tạo token mới
-            var accessToken = _jwtTokenGenerator.CreateToken(user);
+            var accessToken = _jwtTokenGenerator.CreateToken(user, roles);
             var newRefreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
             // revoke old refresh token
             storedToken.Revoked = DateTime.UtcNow;
             user.RefreshTokens.Add(newRefreshToken);
-            await _userManager.UpdateAsync(user);
+            await _userManager.UpdateAsync(user);            
 
             return Ok(new
             {
