@@ -1,5 +1,6 @@
 ﻿using APIs.Entities;
 using APIs.Services;
+using APIs.Services;
 using ev_rental_system.DTOs.Request;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -21,13 +22,15 @@ namespace APIs.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly JWTTokenGenerator _jwtTokenGenerator;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _environment;
 
-        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, JWTTokenGenerator jwtTokkenGenerator, IConfiguration configuration)
+        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, JWTTokenGenerator jwtTokkenGenerator, IConfiguration configuration, IWebHostEnvironment environment)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtTokenGenerator = jwtTokkenGenerator;
             _configuration = configuration;
+            _environment = environment;
         }
 
         [HttpPost("register")]
@@ -166,6 +169,34 @@ namespace APIs.Controllers
             // redirect tới 1 trang frontend báo success
             // return Redirect("https://yourfrontend.com/confirm-success");
             return Ok("Your email has been confirmed. You are now a RENTER.");
+        }
+
+        [HttpPost("upload-cccd/gplx"), Authorize]
+        public async Task<IActionResult> UploadImages(List<IFormFile> files)
+        {
+            if (files == null || files.Count == 0)
+                return BadRequest("Không có file nào được upload");
+
+            var uploadPath = Path.Combine(_environment.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadPath))
+                Directory.CreateDirectory(uploadPath);
+
+            var urls = new List<string>();
+
+            foreach (var file in files)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                urls.Add($"{Request.Scheme}://{Request.Host}/uploads/{fileName}");
+            }
+
+            return Ok(new { urls });
         }
     }
 }

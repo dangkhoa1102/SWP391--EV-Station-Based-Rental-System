@@ -9,6 +9,7 @@ using DotNetEnv;
 using ev_rental_system.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -64,6 +65,8 @@ namespace APIs
 
             builder.Services.AddScoped<JWTTokenGenerator>();
 
+            builder.Services.AddScoped<IEmailService, MailKitEmailService>();
+
             builder.Services.AddJwtAuthentication(builder.Configuration);
 
             builder.Services.AddAppAuthentication();
@@ -79,7 +82,7 @@ namespace APIs
 
             builder.Services.AddScoped<DataSeeder>(); // Register DataSeeder to the DI container
 
-            builder.Services.AddTransient<IEmailService, SmtpEmailService>();
+            //builder.Services.AddTransient<IEmailService, SmtpEmailService>(); => C? r?i, b? thôi :)))
 
             var app = builder.Build();
 
@@ -95,6 +98,15 @@ namespace APIs
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseStaticFiles(); // B?t static files
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.WebRootPath, "uploads")),
+                RequestPath = "/uploads"
+            });
 
             //var identityGroup = app.MapGroup("/api");
 

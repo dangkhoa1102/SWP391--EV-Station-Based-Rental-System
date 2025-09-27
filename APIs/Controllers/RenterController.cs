@@ -8,6 +8,7 @@ namespace APIs.Controllers
     [ApiController]
     [Authorize(Roles = "RENTER")]
     public class RenterController : ControllerBase
-    {
+    {        
+       
     }
 }
