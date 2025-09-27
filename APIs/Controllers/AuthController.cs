@@ -1,8 +1,10 @@
 ﻿using APIs.Entities;
 using APIs.Services;
+using APIs.Services;
 using ev_rental_system.DTOs.Request;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,13 +22,15 @@ namespace APIs.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly JWTTokenGenerator _jwtTokenGenerator;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _environment;
 
-        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, JWTTokenGenerator jwtTokkenGenerator, IConfiguration configuration)
+        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, JWTTokenGenerator jwtTokkenGenerator, IConfiguration configuration, IWebHostEnvironment environment)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtTokenGenerator = jwtTokkenGenerator;
             _configuration = configuration;
+            _environment = environment;
         }
 
         [HttpPost("register")]
@@ -138,6 +142,61 @@ namespace APIs.Controllers
             return Ok(new { url });
         }
 
+        [HttpGet("confirm-renter")]
+        [AllowAnonymous] // link email có thể được click không cần login
+        public async Task<IActionResult> ConfirmRenter(string userId, string token)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+                return BadRequest("UserId and Token are required");
 
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+
+            // decode token
+            var decodedToken = System.Net.WebUtility.UrlDecode(token);
+
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+            if (!result.Succeeded) return BadRequest("Invalid token");
+
+            // Chỉ gán role nếu chưa có role nào
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            if (!currentRoles.Any())
+            {
+                var addRoleResult = await _userManager.AddToRoleAsync(user, "RENTER");
+                if (!addRoleResult.Succeeded) return StatusCode(500, "Failed to assign RENTER role");
+            }
+
+            // redirect tới 1 trang frontend báo success
+            // return Redirect("https://yourfrontend.com/confirm-success");
+            return Ok("Your email has been confirmed. You are now a RENTER.");
+        }
+
+        [HttpPost("upload-cccd/gplx"), Authorize]
+        public async Task<IActionResult> UploadImages(List<IFormFile> files)
+        {
+            if (files == null || files.Count == 0)
+                return BadRequest("Không có file nào được upload");
+
+            var uploadPath = Path.Combine(_environment.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadPath))
+                Directory.CreateDirectory(uploadPath);
+
+            var urls = new List<string>();
+
+            foreach (var file in files)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                urls.Add($"{Request.Scheme}://{Request.Host}/uploads/{fileName}");
+            }
+
+            return Ok(new { urls });
+        }
     }
 }

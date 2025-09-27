@@ -1,8 +1,10 @@
 ﻿using APIs.Entities;
+using APIs.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace APIs.Controllers
 {
@@ -12,10 +14,12 @@ namespace APIs.Controllers
     public class StaffController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IEmailService _emailService;
 
-        public StaffController(UserManager<ApplicationUser> userManager)
+        public StaffController(UserManager<ApplicationUser> userManager, IEmailService emailService)
         {
             _userManager = userManager;
+            _emailService = emailService;
         }
 
         [HttpPost("assign-role")]
@@ -57,5 +61,35 @@ namespace APIs.Controllers
 
             return Ok(new { message = $"Removed role '{roles}' from {user.Email}" });
         }
+
+        [HttpPost("send-renter-confirm/{userId}")]        
+        public async Task<IActionResult> SendRenterConfirm(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            //var confirmationLink = Url.Action(
+            //    nameof(ConfirmRenter),
+            //    "Auth",
+            //    new { userId = user.Id, token },
+            //    Request.Scheme);
+
+            // encode token để đưa vào URL
+            var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+
+            // Tạo link tuyệt đối: /api/Auth/confirm-renter?userId=...&token=...
+            var confirmationLink = $"{Request.Scheme}://{Request.Host}/api/auth/confirm-renter?userId={WebUtility.UrlEncode(user.Id)}&token={encodedToken}";
+
+            var html = $"Chào {user.FullName ?? user.Email},<br/>" +
+                       $"Bấm vào link sau để xác nhận email và được cấp role RENTER:<br/>" +
+                       $"<a href=\"{confirmationLink}\">Xác nhận đăng ký (RENTER)</a>";
+
+            // Gửi email
+            await _emailService.SendEmailAsync(user.Email, "Confirm your RENTER role", html);
+
+            return Ok("Confirmation email sent");
+        }
+
     }
 }
