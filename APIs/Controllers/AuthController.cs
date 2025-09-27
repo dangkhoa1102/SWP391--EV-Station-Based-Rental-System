@@ -3,6 +3,7 @@ using APIs.Services;
 using ev_rental_system.DTOs.Request;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -138,6 +139,33 @@ namespace APIs.Controllers
             return Ok(new { url });
         }
 
+        [HttpGet("confirm-renter")]
+        [AllowAnonymous] // link email có thể được click không cần login
+        public async Task<IActionResult> ConfirmRenter(string userId, string token)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+                return BadRequest("UserId and Token are required");
 
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+
+            // decode token
+            var decodedToken = System.Net.WebUtility.UrlDecode(token);
+
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+            if (!result.Succeeded) return BadRequest("Invalid token");
+
+            // Chỉ gán role nếu chưa có role nào
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            if (!currentRoles.Any())
+            {
+                var addRoleResult = await _userManager.AddToRoleAsync(user, "RENTER");
+                if (!addRoleResult.Succeeded) return StatusCode(500, "Failed to assign RENTER role");
+            }
+
+            // redirect tới 1 trang frontend báo success
+            // return Redirect("https://yourfrontend.com/confirm-success");
+            return Ok("Your email has been confirmed. You are now a RENTER.");
+        }
     }
 }

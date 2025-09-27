@@ -3,6 +3,7 @@ using APIs.Configurations;
 using APIs.Data;
 using APIs.Entities;
 using APIs.Extensions;
+using APIs.Repositories;
 using APIs.Services;
 using DotNetEnv;
 using ev_rental_system.Services;
@@ -10,7 +11,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
-using System.Threading.Tasks;
 
 namespace APIs
 {
@@ -22,6 +22,9 @@ namespace APIs
 
             Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
+            var connString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+            builder.Services.AddDbContext<DataContext>(options =>
+                options.UseSqlServer(connString));
 
             // Add services to the container.
 
@@ -41,7 +44,7 @@ namespace APIs
 
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "EV Station-based Rental System", Version = "v1" });
             });
-            builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            //builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddAuthorization();
 
@@ -76,6 +79,8 @@ namespace APIs
 
             builder.Services.AddScoped<DataSeeder>(); // Register DataSeeder to the DI container
 
+            builder.Services.AddTransient<IEmailService, SmtpEmailService>();
+
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())
@@ -108,37 +113,5 @@ namespace APIs
 
             app.Run();
         }
-
-        //async static Task SeedRolesAndAdminAsync(WebApplication app)
-        //{
-        //    using var scope = app.Services.CreateScope();
-        //    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        //    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        //    string[] roles = { "ADMIN", "STAFF", "RENTER" };
-        //    foreach (var role in roles)
-        //    {
-        //        if (!await roleManager.RoleExistsAsync(role))
-        //        {
-        //            await roleManager.CreateAsync(new IdentityRole(role));
-        //        }
-        //    }
-        //    // Create a default admin user if not exists
-        //    var adminEmail = "admin@fec.com";
-        //    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        //    if (adminUser is null)
-        //    {
-        //        var admin = new ApplicationUser
-        //        {
-        //            UserName = "admin",
-        //            Email = adminEmail,
-        //            FullName = "Default Admin"
-        //        };
-        //        var result = await userManager.CreateAsync(admin, "Admin@123");
-        //        if (result.Succeeded)
-        //        {
-        //            await userManager.AddToRoleAsync(admin, "ADMIN");
-        //        }
-        //    }
-        //}
     }
 }
