@@ -38,6 +38,217 @@
             cursor: pointer;
             font-weight: bold;
         }
+
+        /* User Menu Styles */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-menu-btn {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .user-menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .user-menu-btn:hover::before {
+            left: 100%;
+        }
+
+        .user-menu-btn:hover {
+            background: linear-gradient(135deg, #f7931e, #ff6b35);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .user-menu-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(255, 107, 53, 0.4);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.2), 0 4px 20px rgba(0, 0, 0, 0.1);
+            min-width: 220px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-15px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            z-index: 1000;
+            border: 2px solid rgba(255, 107, 53, 0.1);
+            overflow: hidden;
+        }
+
+        .user-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .dropdown-header {
+            padding: 18px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e, #ff8c42);
+            color: white;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropdown-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), transparent);
+            pointer-events: none;
+        }
+
+        .dropdown-header i {
+            font-size: 1.6rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-header span {
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-dropdown hr {
+            margin: 0;
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.3), transparent);
+        }
+
+        .user-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 18px;
+            text-decoration: none;
+            color: #444;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .user-dropdown a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(247, 147, 30, 0.1));
+            transition: width 0.3s ease;
+        }
+
+        .user-dropdown a:hover {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(247, 147, 30, 0.08));
+            color: #ff6b35;
+            transform: translateX(5px);
+        }
+
+        .user-dropdown a:hover::before {
+            width: 4px;
+        }
+
+        .user-dropdown a:hover i {
+            color: #ff6b35;
+            transform: scale(1.1);
+        }
+
+        .user-dropdown a i {
+            width: 20px;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .user-dropdown a:first-of-type:hover {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.08), rgba(155, 89, 182, 0.08));
+            color: #3498db;
+        }
+
+        .user-dropdown a:first-of-type:hover i {
+            color: #3498db;
+        }
+
+        .user-dropdown a:nth-of-type(2):hover {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.08), rgba(39, 174, 96, 0.08));
+            color: #2ecc71;
+        }
+
+        .user-dropdown a:nth-of-type(2):hover i {
+            color: #2ecc71;
+        }
+
+        .user-dropdown a:last-child {
+            border-radius: 0 0 10px 10px;
+            border-top: 1px solid rgba(255, 107, 53, 0.1);
+            margin-top: 4px;
+        }
+
+        .user-dropdown a:last-child:hover {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.08), rgba(192, 57, 43, 0.08));
+            color: #e74c3c;
+        }
+
+        .user-dropdown a:last-child:hover i {
+            color: #e74c3c;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0) scale(1.1); }
+            25% { transform: translateX(-2px) scale(1.1); }
+            75% { transform: translateX(2px) scale(1.1); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3); }
+            50% { box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5); }
+            100% { box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3); }
+        }
+
+        .user-menu-btn {
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        .user-menu-btn:hover {
+            animation: none;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
@@ -53,7 +264,32 @@
             </button>
             <nav class="nav">
                 <div class="navbar-right">
-                    <button onclick="openModal()" class="login-nav-btn">Login</button>
+                    <!-- Login button for non-authenticated users -->
+                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn">Login</button>
+                    
+                    <!-- User menu for authenticated users -->
+                    <div id="userMenu" class="user-menu" style="display: none;">
+                        <button class="user-menu-btn" onclick="toggleUserMenu()">
+                            <i class="fas fa-user-circle"></i>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div id="userDropdown" class="user-dropdown">
+                            <div class="dropdown-header">
+                                <i class="fas fa-user-circle"></i>
+                                <span id="userEmail">User Account</span>
+                            </div>
+                            <hr>
+                            <a href="#" onclick="openUserProfile()">
+                                <i class="fas fa-user-cog"></i> User Profile
+                            </a>
+                            <a href="#" onclick="openBookingHistory()">
+                                <i class="fas fa-history"></i> Booking History
+                            </a>
+                            <a href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -91,7 +327,27 @@
                                 <i class="fas fa-clock"></i>
                                 Pick-up Time
                             </label>
-                            <input type="time" id="pickup-time" name="pickup-time" required style="width: 120px;" />
+                            <select id="pickup-time" name="pickup-time" required style="width: 120px; max-height: 200px; overflow-y: auto;">
+                                <option value="">Select hour</option>
+                                <option value="06:00">06:00</option>
+                                <option value="07:00">07:00</option>
+                                <option value="08:00">08:00</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="12:00">12:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                                <option value="17:00">17:00</option>
+                                <option value="18:00">18:00</option>
+                                <option value="19:00">19:00</option>
+                                <option value="20:00">20:00</option>
+                                <option value="21:00">21:00</option>
+                                <option value="22:00">22:00</option>
+                                <option value="23:00">23:00</option>
+                            </select>
                         </div>
                         <div class="form-group" style="flex: 1;">
                             <label for="return-date">
@@ -105,7 +361,27 @@
                                 <i class="fas fa-clock"></i>
                                 Return Time
                             </label>
-                            <input type="time" id="return-time" name="return-time" required style="width: 120px;" />
+                            <select id="return-time" name="return-time" required style="width: 120px; max-height: 200px; overflow-y: auto;">
+                                <option value="">Select hour</option>
+                                <option value="06:00">06:00</option>
+                                <option value="07:00">07:00</option>
+                                <option value="08:00">08:00</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="12:00">12:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                                <option value="17:00">17:00</option>
+                                <option value="18:00">18:00</option>
+                                <option value="19:00">19:00</option>
+                                <option value="20:00">20:00</option>
+                                <option value="21:00">21:00</option>
+                                <option value="22:00">22:00</option>
+                                <option value="23:00">23:00</option>
+                            </select>
                         </div>
                         <button type="submit" class="btn-search" style="height: 42px; margin-bottom: 0.5rem; white-space: nowrap;">
                             <i class="fas fa-search"></i>
@@ -206,6 +482,91 @@
             }, 5000);
         }
 
+        // Authentication functions
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            const loginBtn = document.getElementById('loginBtn');
+            const userMenu = document.getElementById('userMenu');
+            const userEmail = document.getElementById('userEmail');
+            
+            console.log('Checking auth status. Token:', token); // Debug log
+            
+            if (token && token !== 'null' && token !== '') {
+                // User is logged in
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (userMenu) userMenu.style.display = 'block';
+                
+                // Try to get user email from localStorage or token
+                const savedEmail = localStorage.getItem('userEmail');
+                if (savedEmail && userEmail) {
+                    userEmail.textContent = savedEmail;
+                } else if (userEmail) {
+                    userEmail.textContent = 'User Account';
+                }
+            } else {
+                // User is not logged in - Clear any invalid tokens
+                localStorage.removeItem('token');
+                localStorage.removeItem('userEmail');
+                
+                if (loginBtn) loginBtn.style.display = 'inline-block';
+                if (userMenu) userMenu.style.display = 'none';
+            }
+        }
+
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function openUserProfile() {
+            // Close dropdown
+            document.getElementById('userDropdown').classList.remove('show');
+            
+            // Check if user is logged in
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') {
+                showNotification('⚠️ Vui lòng đăng nhập để xem profile!', 'error');
+                return;
+            }
+            
+            // Navigate to user profile page
+            window.location.href = 'user_profile.html';
+        }
+
+        function openBookingHistory() {
+            // Close dropdown
+            document.getElementById('userDropdown').classList.remove('show');
+            
+            // Check if user is logged in
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') {
+                showNotification('⚠️ Vui lòng đăng nhập để xem lịch sử booking!', 'error');
+                return;
+            }
+            
+            // Navigate to booking history page
+            window.location.href = 'booking_history.html';
+        }
+
+        function logout() {
+            // Close dropdown first
+            document.getElementById('userDropdown').classList.remove('show');
+            
+            // Remove token and user data from localStorage
+            localStorage.removeItem('token');
+            localStorage.removeItem('userEmail');
+            
+            // Update UI
+            checkAuthStatus();
+            
+            // Show notification
+            showNotification('👋 Bạn đã đăng xuất thành công!', 'success');
+            
+            // Close any open modals
+            closeModal();
+            closeRegisterModal();
+        }
+
         // Modal functions
         function openModal() {
             document.getElementById("modal").style.display = "flex";
@@ -228,8 +589,117 @@
             // Mobile menu logic
         }
 
+        // Time validation function
+        function validateDateTime() {
+            const pickupDate = document.getElementById('pickup-date').value;
+            const pickupTime = document.getElementById('pickup-time').value;
+            const returnDate = document.getElementById('return-date').value;
+            const returnTime = document.getElementById('return-time').value;
+            
+            if (!pickupDate || !pickupTime || !returnDate || !returnTime) {
+                showNotification('⚠️ Vui lòng chọn đầy đủ ngày và giờ!', 'error');
+                return false;
+            }
+            
+            const now = new Date();
+            const pickup = new Date(`${pickupDate}T${pickupTime}`);
+            const returnDateTime = new Date(`${returnDate}T${returnTime}`);
+            
+            // Check if pickup time is in the past
+            if (pickup <= now) {
+                showNotification('⏰ Thời gian nhận xe phải sau thời điểm hiện tại!', 'error');
+                return false;
+            }
+            
+            // Check if return time is after pickup time
+            if (returnDateTime <= pickup) {
+                showNotification('⏰ Thời gian trả xe phải sau thời gian nhận xe!', 'error');
+                return false;
+            }
+            
+            // Check minimum rental duration (1 hour)
+            const timeDiff = returnDateTime - pickup;
+            const hoursDiff = timeDiff / (1000 * 60 * 60);
+            
+            if (hoursDiff < 1) {
+                showNotification('⏰ Thời gian thuê tối thiểu là 1 giờ!', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+
         // Initialize event listeners
         document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication status on page load
+            checkAuthStatus();
+            
+            // Car search form validation
+            const carSearchForm = document.getElementById('car-search-form');
+            if (carSearchForm) {
+                carSearchForm.addEventListener('submit', function(e) {
+                    if (!validateDateTime()) {
+                        e.preventDefault(); // Stop form submission if validation fails
+                        return false;
+                    }
+                    // If validation passes, form will submit normally
+                });
+            }
+            
+            // Set minimum date to today for date inputs
+            const today = new Date().toISOString().split('T')[0];
+            const pickupDateInput = document.getElementById('pickup-date');
+            const returnDateInput = document.getElementById('return-date');
+            
+            if (pickupDateInput) {
+                pickupDateInput.min = today;
+                pickupDateInput.value = today; // Set default to today
+            }
+            
+            if (returnDateInput) {
+                returnDateInput.min = today;
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                returnDateInput.value = tomorrow.toISOString().split('T')[0]; // Set default to tomorrow
+            }
+            
+            // Real-time validation when date/time changes
+            const timeInputs = ['pickup-date', 'pickup-time', 'return-date', 'return-time'];
+            timeInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('change', function() {
+                        // Auto-adjust return date if pickup date is changed
+                        if (inputId === 'pickup-date' && returnDateInput) {
+                            const selectedDate = new Date(this.value);
+                            if (returnDateInput.value <= this.value) {
+                                selectedDate.setDate(selectedDate.getDate() + 1);
+                                returnDateInput.value = selectedDate.toISOString().split('T')[0];
+                            }
+                        }
+                        
+                        // Show helpful hints when all fields are filled
+                        const allFilled = timeInputs.every(id => document.getElementById(id).value);
+                        if (allFilled) {
+                            const pickup = new Date(`${document.getElementById('pickup-date').value}T${document.getElementById('pickup-time').value}`);
+                            const returnDateTime = new Date(`${document.getElementById('return-date').value}T${document.getElementById('return-time').value}`);
+                            const timeDiff = returnDateTime - pickup;
+                            const hoursDiff = Math.round(timeDiff / (1000 * 60 * 60));
+                            
+                            if (hoursDiff > 0) {
+                                const days = Math.floor(hoursDiff / 24);
+                                const hours = hoursDiff % 24;
+                                let durationText = '';
+                                if (days > 0) durationText += `${days} ngày `;
+                                if (hours > 0) durationText += `${hours} giờ`;
+                                
+                                showNotification(`✅ Thời gian thuê: ${durationText}`, 'success');
+                            }
+                        }
+                    });
+                }
+            });
+            
             // Login form submit
             const loginForm = document.getElementById('loginForm');
             if (loginForm) {
@@ -257,8 +727,14 @@
                             localStorage.setItem('token', response.data.token || response.data.accessToken);
                         }
                         
+                        // Lưu email của user để hiển thị trong menu
+                        localStorage.setItem('userEmail', email);
+                        
                         showNotification('🎉 Đăng nhập thành công! Chào mừng bạn trở lại.', 'success');
                         closeModal();
+                        
+                        // Update UI to show user menu
+                        checkAuthStatus();
                         
                     } catch (error) {
                         console.error('Login error:', error);
@@ -355,6 +831,16 @@
                     }
                 });
             }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const userMenu = document.querySelector('.user-menu');
+                const dropdown = document.getElementById('userDropdown');
+                
+                if (userMenu && !userMenu.contains(event.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
         });
     </script>
 </body>

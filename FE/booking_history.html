@@ -6,6 +6,36 @@
     <title>Booking History - FEC</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        /* Notification styles */
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 5px; color: white; font-weight: bold; z-index: 10000; opacity: 0; transform: translateX(100%); transition: all 0.3s ease; }
+        .notification.show { opacity: 1; transform: translateX(0); }
+        .notification.success { background-color: #4CAF50; border-left: 5px solid #45a049; }
+        .notification.error { background-color: #f44336; border-left: 5px solid #da190b; }
+        /* User Menu Styles */
+        .user-menu { position: relative; }
+        .user-menu-btn { background: linear-gradient(135deg, #ff6b35, #f7931e); border: 2px solid rgba(255, 255, 255, 0.3); color: white; font-size: 1.2rem; cursor: pointer; padding: 10px 15px; border-radius: 50px; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3); position: relative; overflow: hidden; animation: pulse 3s ease-in-out infinite; }
+        .user-menu-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent); transition: left 0.5s; }
+        .user-menu-btn:hover::before { left: 100%; }
+        .user-menu-btn:hover { background: linear-gradient(135deg, #f7931e, #ff6b35); box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4); transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.5); animation: none; }
+        .user-dropdown { position: absolute; top: 100%; right: 0; background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(255, 107, 53, 0.2), 0 4px 20px rgba(0, 0, 0, 0.1); min-width: 220px; opacity: 0; visibility: hidden; transform: translateY(-15px) scale(0.95); transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); z-index: 1000; border: 2px solid rgba(255, 107, 53, 0.1); overflow: hidden; }
+        .user-dropdown.show { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+        .dropdown-header { padding: 18px; background: linear-gradient(135deg, #ff6b35, #f7931e, #ff8c42); color: white; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 12px; position: relative; overflow: hidden; }
+        .dropdown-header i { font-size: 1.6rem; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
+        .dropdown-header span { font-weight: 600; font-size: 0.95rem; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+        .user-dropdown hr { margin: 0; border: none; height: 2px; background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.3), transparent); }
+        .user-dropdown a { display: flex; align-items: center; gap: 15px; padding: 14px 18px; text-decoration: none; color: #444; transition: all 0.3s ease; position: relative; font-weight: 500; }
+        .user-dropdown a:hover { background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(247, 147, 30, 0.08)); color: #ff6b35; transform: translateX(5px); }
+        .user-dropdown a:hover i { color: #ff6b35; transform: scale(1.1); }
+        .user-dropdown a i { width: 20px; color: #666; transition: all 0.3s ease; }
+        .user-dropdown a:first-of-type:hover { background: linear-gradient(135deg, rgba(52, 152, 219, 0.08), rgba(155, 89, 182, 0.08)); color: #3498db; }
+        .user-dropdown a:first-of-type:hover i { color: #3498db; }
+        .user-dropdown a:last-child:hover { background: linear-gradient(135deg, rgba(231, 76, 60, 0.08), rgba(192, 57, 43, 0.08)); color: #e74c3c; }
+        .user-dropdown a:last-child:hover i { color: #e74c3c; animation: shake 0.5s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0) scale(1.1); } 25% { transform: translateX(-2px) scale(1.1); } 75% { transform: translateX(2px) scale(1.1); } }
+        @keyframes pulse { 0% { box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3); } 50% { box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5); } 100% { box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3); } }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -30,10 +60,26 @@
 
             <nav class="nav">
                 <div class="navbar-right">
-                    <a href="index.html" class="nav-link">Home</a>
-                    <a href="#" class="nav-link">Cars</a>
-                    <a href="profile.html" class="nav-link">Profile</a>
-                    <a href="booking_history.html" class="nav-link active">Bookings</a>
+                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn">Login</button>
+                    <div id="userMenu" class="user-menu" style="display: none;">
+                        <button class="user-menu-btn" onclick="toggleUserMenu()">
+                            <i class="fas fa-user-circle"></i>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div id="userDropdown" class="user-dropdown">
+                            <div class="dropdown-header">
+                                <i class="fas fa-user-circle"></i>
+                                <span id="userEmail">User Account</span>
+                            </div>
+                            <hr>
+                            <a href="#" onclick="openUserProfile()">
+                                <i class="fas fa-user-cog"></i> User Profile
+                            </a>
+                            <a href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -221,6 +267,73 @@
                         }
                     });
                 });
+            });
+        });
+
+        // Common functions for all pages
+        function showNotification(message, type = 'success') {
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<span>${message}</span><span class="close-btn" onclick="this.parentElement.remove()">&times;</span>`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => { if (notification.parentElement) { notification.classList.remove('show'); setTimeout(() => notification.remove(), 300); } }, 5000);
+        }
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            const loginBtn = document.getElementById('loginBtn');
+            const userMenu = document.getElementById('userMenu');
+            const userEmail = document.getElementById('userEmail');
+            if (token && token !== 'null' && token !== '') {
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (userMenu) userMenu.style.display = 'block';
+                const savedEmail = localStorage.getItem('userEmail');
+                if (savedEmail && userEmail) { userEmail.textContent = savedEmail; } else if (userEmail) { userEmail.textContent = 'User Account'; }
+            } else {
+                localStorage.removeItem('token'); localStorage.removeItem('userEmail');
+                if (loginBtn) loginBtn.style.display = 'inline-block';
+                if (userMenu) userMenu.style.display = 'none';
+            }
+        }
+
+        function toggleUserMenu() { document.getElementById('userDropdown').classList.toggle('show'); }
+
+        function openUserProfile() {
+            document.getElementById('userDropdown').classList.remove('show');
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') { showNotification('⚠️ Vui lòng đăng nhập để xem profile!', 'error'); return; }
+            window.location.href = 'user_profile.html';
+        }
+
+        function logout() {
+            document.getElementById('userDropdown').classList.remove('show');
+            localStorage.removeItem('token'); localStorage.removeItem('userEmail');
+            checkAuthStatus(); showNotification('👋 Bạn đã đăng xuất thành công!', 'success');
+        }
+
+        function openModal() { showNotification('🔧 Login modal - chuyển về home page để đăng nhập!', 'error'); }
+        function toggleMobileMenu() { /* Mobile menu logic */ }
+
+        // Initialize on page load - check auth and redirect if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in for booking history
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') {
+                showNotification('⚠️ Vui lòng đăng nhập để xem lịch sử booking!', 'error');
+                setTimeout(() => {
+                    window.location.href = 'home_page.html';
+                }, 2000);
+                return;
+            }
+            
+            checkAuthStatus();
+            document.addEventListener('click', function(event) {
+                const userMenu = document.querySelector('.user-menu');
+                const dropdown = document.getElementById('userDropdown');
+                if (userMenu && !userMenu.contains(event.target)) { dropdown.classList.remove('show'); }
             });
         });
     </script>
