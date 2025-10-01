@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "g2BZ7YFlgXtjAIb6U25ZQP8P81AnTc9P21DNqpkFnS4=",
+  "Source": "EVStation-basedRentalSystem.Services.AuthAPI",
+  "BasePath": "_content/EVStation-basedRentalSystem.Services.AuthAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

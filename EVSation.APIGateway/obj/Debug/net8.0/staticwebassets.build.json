@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "wxh31eC7uN+Cw9N7C2eSMcGbrRYVQWoNUCa5JFGnGS8=",
+  "Source": "EVSation.APIGateway",
+  "BasePath": "_content/EVSation.APIGateway",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

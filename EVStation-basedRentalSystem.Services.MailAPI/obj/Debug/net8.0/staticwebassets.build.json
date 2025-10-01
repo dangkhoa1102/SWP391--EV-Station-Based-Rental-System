@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "EVWD6GVE2m9Bbjp64/muzYHnZpaxUt9AM33VsORIKCc=",
+  "Source": "EVStation-basedRentalSystem.Services.MailAPI",
+  "BasePath": "_content/EVStation-basedRentalSystem.Services.MailAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
