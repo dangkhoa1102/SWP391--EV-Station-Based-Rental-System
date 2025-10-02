@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "kgtDx+lEiIE=",
+  "dgSpecHash": "JrADa10b9Dk=",
   "success": true,
-  "projectFilePath": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
+  "projectFilePath": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\MINH KHOI\\.nuget\\packages\\microsoft.extensions.apidescription.server\\6.0.5\\microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
     "C:\\Users\\MINH KHOI\\.nuget\\packages\\microsoft.openapi\\1.6.14\\microsoft.openapi.1.6.14.nupkg.sha512",

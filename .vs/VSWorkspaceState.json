@@ -1,6 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\EVStation-basedRentalSystem.Services.AuthAPI\\bin",
+    "\\EVStation-basedRentalSystem.Services.AuthAPI\\Controllers",
+    "\\EVStation-basedRentalSystem.Services.AuthAPI\\Data"
   ],
   "PreviewInSolutionExplorer": false
 }

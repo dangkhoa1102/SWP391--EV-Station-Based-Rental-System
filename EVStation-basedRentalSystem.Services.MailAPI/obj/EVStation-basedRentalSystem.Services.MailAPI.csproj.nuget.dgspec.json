@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.MailAPI\\EVStation-basedRentalSystem.Services.MailAPI.csproj": {}
+    "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.MailAPI\\EVStation-basedRentalSystem.Services.MailAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.MailAPI\\EVStation-basedRentalSystem.Services.MailAPI.csproj": {
+    "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.MailAPI\\EVStation-basedRentalSystem.Services.MailAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.MailAPI\\EVStation-basedRentalSystem.Services.MailAPI.csproj",
+        "projectUniqueName": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.MailAPI\\EVStation-basedRentalSystem.Services.MailAPI.csproj",
         "projectName": "EVStation-basedRentalSystem.Services.MailAPI",
-        "projectPath": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.MailAPI\\EVStation-basedRentalSystem.Services.MailAPI.csproj",
+        "projectPath": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.MailAPI\\EVStation-basedRentalSystem.Services.MailAPI.csproj",
         "packagesPath": "C:\\Users\\MINH KHOI\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.MailAPI\\obj\\",
+        "outputPath": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.MailAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

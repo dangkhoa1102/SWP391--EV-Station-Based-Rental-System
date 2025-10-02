@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj": {}
+    "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj": {
+    "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj",
+        "projectUniqueName": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj",
         "projectName": "EVStation-basedRentalSystem.Services.UserAPI",
-        "projectPath": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj",
+        "projectPath": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj",
         "packagesPath": "C:\\Users\\MINH KHOI\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSystem.Services.UserAPI\\obj\\",
+        "outputPath": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.UserAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

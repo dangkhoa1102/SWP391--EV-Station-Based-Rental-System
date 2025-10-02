@@ -453,11 +453,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
+      "projectUniqueName": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
       "projectName": "EVStation-basedRentalSysteEM.Services.CarAPI",
-      "projectPath": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
+      "projectPath": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
       "packagesPath": "C:\\Users\\MINH KHOI\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\MINH KHOI\\source\\repos\\EV Station-based Rental System\\EVStation-basedRentalSysteEM.Services.CarAPI\\obj\\",
+      "outputPath": "C:\\Users\\MINH KHOI\\source\\repos\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.CarAPI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
