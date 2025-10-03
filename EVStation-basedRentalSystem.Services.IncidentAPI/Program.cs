@@ -1,6 +1,8 @@
 using EvRental.IncidentService.Data;
 using EvRental.IncidentService.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace EVStation_basedRentalSystem.Services.IncidentAPI
 {
@@ -15,6 +17,16 @@ namespace EVStation_basedRentalSystem.Services.IncidentAPI
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
             builder.Services.AddScoped<IIncidentService, IncidentService>();
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            RoleClaimType = "role" // ho?c "roles" n?u dùng array
+        };
+    });
+
 
             // Add services to the container.
 
