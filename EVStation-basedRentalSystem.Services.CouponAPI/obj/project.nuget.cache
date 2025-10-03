@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "WTN/4dPUZyk=",
+  "dgSpecHash": "lfO1SFh6H0o=",
   "success": true,
-  "projectFilePath": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\EVStation-basedRentalSystem.Services.CouponAPI\\EVStation-basedRentalSystem.Services.AuthAPI.csproj",
+  "projectFilePath": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.CouponAPI\\EVStation-basedRentalSystem.Services.AuthAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\HP\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\HP\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",

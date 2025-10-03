@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EVStation-basedRentalSystem.Services.MailAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+01ce2925ffe45743344a38ea087fca8281a34e40")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+86394101359afca3f1c7707c36e66a6d45c6ced9")]
 [assembly: System.Reflection.AssemblyProductAttribute("EVStation-basedRentalSystem.Services.MailAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EVStation-basedRentalSystem.Services.MailAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

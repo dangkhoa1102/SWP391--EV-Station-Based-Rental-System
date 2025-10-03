@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\IncidentAPI\\IncidentAPI.csproj": {}
+    "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\IncidentAPI\\IncidentAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\IncidentAPI\\IncidentAPI.csproj": {
+    "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\IncidentAPI\\IncidentAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\IncidentAPI\\IncidentAPI.csproj",
+        "projectUniqueName": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\IncidentAPI\\IncidentAPI.csproj",
         "projectName": "IncidentAPI",
-        "projectPath": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\IncidentAPI\\IncidentAPI.csproj",
+        "projectPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\IncidentAPI\\IncidentAPI.csproj",
         "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\IncidentAPI\\obj\\",
+        "outputPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\IncidentAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
