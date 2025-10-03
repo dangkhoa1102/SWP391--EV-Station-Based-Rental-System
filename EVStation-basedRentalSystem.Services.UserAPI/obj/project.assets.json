@@ -453,11 +453,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj",
+      "projectUniqueName": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj",
       "projectName": "EVStation-basedRentalSystem.Services.UserAPI",
-      "projectPath": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj",
+      "projectPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.UserAPI\\EVStation-basedRentalSystem.Services.UserAPI.csproj",
       "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\EVStation-basedRentalSystem.Services.UserAPI\\obj\\",
+      "outputPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSystem.Services.UserAPI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

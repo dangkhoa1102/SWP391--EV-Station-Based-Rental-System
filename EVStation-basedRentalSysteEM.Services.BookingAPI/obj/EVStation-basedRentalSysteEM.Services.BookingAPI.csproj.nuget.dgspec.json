@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\EVStation-basedRentalSysteEM.Services.BookingAPI\\EVStation-basedRentalSysteEM.Services.BookingAPI.csproj": {}
+    "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.BookingAPI\\EVStation-basedRentalSysteEM.Services.BookingAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\EVStation-basedRentalSysteEM.Services.BookingAPI\\EVStation-basedRentalSysteEM.Services.BookingAPI.csproj": {
+    "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.BookingAPI\\EVStation-basedRentalSysteEM.Services.BookingAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\EVStation-basedRentalSysteEM.Services.BookingAPI\\EVStation-basedRentalSysteEM.Services.BookingAPI.csproj",
+        "projectUniqueName": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.BookingAPI\\EVStation-basedRentalSysteEM.Services.BookingAPI.csproj",
         "projectName": "EVStation-basedRentalSysteEM.Services.BookingAPI",
-        "projectPath": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\EVStation-basedRentalSysteEM.Services.BookingAPI\\EVStation-basedRentalSysteEM.Services.BookingAPI.csproj",
+        "projectPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.BookingAPI\\EVStation-basedRentalSysteEM.Services.BookingAPI.csproj",
         "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\HP\\Desktop\\hochoi\\EV-RENTAL\\EVStation-basedRentalSysteEM.Services.BookingAPI\\obj\\",
+        "outputPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.BookingAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
