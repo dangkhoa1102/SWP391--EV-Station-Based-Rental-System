@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\EVStation-basedRentalSystem.Services.MailAPI.props" />
+</Project>

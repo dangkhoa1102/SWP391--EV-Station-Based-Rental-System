@@ -1,0 +1,6 @@
+@EVSation.APIGateway_HostAddress = http://localhost:5296
+
+GET {{EVSation.APIGateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

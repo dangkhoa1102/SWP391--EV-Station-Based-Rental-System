@@ -1,0 +1,6 @@
+@EVStation_basedRentalSystem.Services.MailAPI_HostAddress = http://localhost:5233
+
+GET {{EVStation_basedRentalSystem.Services.MailAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
