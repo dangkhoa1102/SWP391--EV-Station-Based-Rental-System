@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car Details - FEC</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../CSS/shared.css" />
+    <link rel="stylesheet" href="../CSS/car_detail.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <a href="home_page.html">FEC</a>
+            </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav class="nav">
+                <div class="navbar-right">
+                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn">Login</button>
+                    <div id="userMenu" class="user-menu" style="display: none;">
+                        <button class="user-menu-btn" onclick="toggleUserMenu()">
+                            <i class="fas fa-user-circle"></i>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div id="userDropdown" class="user-dropdown">
+                            <div class="dropdown-header">
+                                <i class="fas fa-user-circle"></i>
+                                <span id="userEmail">User Account</span>
+                            </div>
+                            <hr>
+                            <a href="#" onclick="openUserProfile()">
+                                <i class="fas fa-user-cog"></i> User Profile
+                            </a>
+                            <a href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="car-detail-main">
+        <div class="container">
+            <div class="car-detail-content">
+                <!-- Left Column -->
+                <div class="car-media-section">
+                    <div class="car-gallery">
+                        <div class="main-image">
+                            <img src="assets/placeholder.jpg" alt="Car Image" id="mainCarImage">
+                        </div>
+                        <div class="thumbnail-list">
+                            <img src="assets/placeholder.jpg" alt="Car Thumbnail 1" onclick="changeMainImage(this.src)">
+                            <img src="assets/placeholder.jpg" alt="Car Thumbnail 2" onclick="changeMainImage(this.src)">
+                            <img src="assets/placeholder.jpg" alt="Car Thumbnail 3" onclick="changeMainImage(this.src)">
+                        </div>
+                    </div>
+
+                    <div class="car-details-header">
+                        <h2>Tesla Model 3</h2>
+                        <div class="car-rating">
+                            <i class="fas fa-star"></i>
+                            <span>4.8 (124 reviews)</span>
+                        </div>
+                    </div>
+
+                    <div class="car-specs">
+                        <div class="spec-item">
+                            <i class="fas fa-user"></i>
+                            <span>5 Seats</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fas fa-bolt"></i>
+                            <span>350km Range</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fas fa-charging-station"></i>
+                            <span>Fast Charging</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fas fa-road"></i>
+                            <span>25,000 km</span>
+                        </div>
+                    </div>
+
+                    <div class="car-features-list">
+                        <h3>Features</h3>
+                        <div>
+                            <div><i class="fas fa-check"></i> Air Conditioning</div>
+                            <div><i class="fas fa-check"></i> Bluetooth</div>
+                            <div><i class="fas fa-check"></i> Backup Camera</div>
+                            <div><i class="fas fa-check"></i> Navigation System</div>
+                            <div><i class="fas fa-check"></i> USB Port</div>
+                            <div><i class="fas fa-check"></i> Smart Key</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="booking-section">
+                    <div class="rental-pricing">
+                        <h3>Rental Rate</h3>
+                        <div class="price-display">
+                            <span class="price">$15/hour</span>
+                        </div>
+                    </div>
+
+                    <div class="booking-summary">
+                        <h3>Booking Summary</h3>
+                        <div class="booking-details">
+                            <div class="booking-detail-item">
+                                <span>Pick-up Location:</span>
+                                <span id="summary-location">Loading...</span>
+                            </div>
+                            <div class="booking-detail-item">
+                                <span>Pick-up:</span>
+                                <span id="summary-pickup-date">Loading...</span>
+                            </div>
+                            <div class="booking-detail-item">
+                                <span>Return:</span>
+                                <span id="summary-return-date">Loading...</span>
+                            </div>
+                            <div class="booking-detail-item">
+                                <span>Duration:</span>
+                                <span id="summary-duration">Loading...</span>
+                            </div>
+                            <div class="booking-detail-item total">
+                                <span>Total Price:</span>
+                                <span id="summary-total-price">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="proceedToPayment()" class="btn-book-now">
+                        Book Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 FEC. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>LOGIN</h2>
+            <form>
+                <input type="text" placeholder="Enter Username" required>
+                <input type="password" placeholder="Enter Password" required>
+                <a href="#">Forgot Password?</a>
+                <button type="submit">Login</button>
+                <a href="#" onclick="openRegisterModal()">Create Account</a>
+            </form>
+        </div>
+    </div>
+
+    <div id="registerModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeRegisterModal()">&times;</span>
+            <h2>Register</h2>
+            <form>
+                <input type="text" placeholder="Enter Username" required>
+                <input type="email" placeholder="Enter Email" required>
+                <input type="password" placeholder="Enter Password" required>
+                <input type="password" placeholder="Confirm Password" required>
+                <button type="submit">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Modal functions
+        function openModal() {
+            document.getElementById("modal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("modal").style.display = "none";
+        }
+
+        function openRegisterModal() {
+            closeModal();
+            document.getElementById("registerModal").style.display = "flex";
+        }
+
+        function closeRegisterModal() {
+            document.getElementById("registerModal").style.display = "none";
+        }
+
+        function changeMainImage(src) {
+            document.getElementById("mainCarImage").src = src;
+        }
+
+        // Get booking details from URL and calculate prices
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const location = params.get('location');
+            const pickupDate = params.get('pickup-date');
+            const pickupTime = params.get('pickup-time');
+            const returnDate = params.get('return-date');
+            const returnTime = params.get('return-time');
+
+            // Update booking summary
+            if (location) {
+                document.getElementById('summary-location').textContent = location;
+            }
+            if (pickupDate && pickupTime) {
+                document.getElementById('summary-pickup-date').textContent = 
+                    `${pickupDate} ${pickupTime}`;
+            }
+            if (returnDate && returnTime) {
+                document.getElementById('summary-return-date').textContent = 
+                    `${returnDate} ${returnTime}`;
+            }
+
+            // Calculate total hours and price if dates are available
+            if (pickupDate && pickupTime && returnDate && returnTime) {
+                const pickup = new Date(`${pickupDate} ${pickupTime}`);
+                const return_ = new Date(`${returnDate} ${returnTime}`);
+                const hours = Math.ceil((return_ - pickup) / (1000 * 60 * 60));
+                
+                document.getElementById('summary-duration').textContent = `${hours} hours`;
+                const hourlyRate = 15; // This should come from your backend
+                const totalPrice = hours * hourlyRate;
+                document.getElementById('summary-total-price').textContent = `$${totalPrice}`;
+            }
+        });
+
+        // Function to handle booking and redirect to payment page
+        function proceedToPayment() {
+            const params = new URLSearchParams(window.location.search);
+            const carId = new URLSearchParams(window.location.search).get('id') || '1';
+            const vehicle = 'Tesla Model 3'; // This should come from your backend based on carId
+
+            // Create payment URL with all necessary parameters
+            const paymentUrl = `payment_page.html?${params.toString()}&vehicle=${encodeURIComponent(vehicle)}&carId=${carId}`;
+            window.location.href = paymentUrl;
+        }
+
+        // Common functions for all pages
+        function showNotification(message, type = 'success') {
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<span>${message}</span><span class="close-btn" onclick="this.parentElement.remove()">&times;</span>`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => { if (notification.parentElement) { notification.classList.remove('show'); setTimeout(() => notification.remove(), 300); } }, 5000);
+        }
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            const loginBtn = document.getElementById('loginBtn');
+            const userMenu = document.getElementById('userMenu');
+            const userEmail = document.getElementById('userEmail');
+            if (token && token !== 'null' && token !== '') {
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (userMenu) userMenu.style.display = 'block';
+                const savedEmail = localStorage.getItem('userEmail');
+                if (savedEmail && userEmail) { userEmail.textContent = savedEmail; } else if (userEmail) { userEmail.textContent = 'User Account'; }
+            } else {
+                localStorage.removeItem('token'); localStorage.removeItem('userEmail');
+                if (loginBtn) loginBtn.style.display = 'inline-block';
+                if (userMenu) userMenu.style.display = 'none';
+            }
+        }
+
+        function toggleUserMenu() { document.getElementById('userDropdown').classList.toggle('show'); }
+
+        function openUserProfile() {
+            document.getElementById('userDropdown').classList.remove('show');
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') { showNotification('⚠️ Vui lòng đăng nhập để xem profile!', 'error'); return; }
+            window.location.href = 'user_profile.html';
+        }
+
+        function logout() {
+            document.getElementById('userDropdown').classList.remove('show');
+            localStorage.removeItem('token'); localStorage.removeItem('userEmail');
+            checkAuthStatus(); showNotification('👋 Bạn đã đăng xuất thành công!', 'success');
+        }
+
+        function openModal() { showNotification('🔧 Login modal - chuyển về home page để đăng nhập!', 'error'); }
+        function toggleMobileMenu() { /* Mobile menu logic */ }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            document.addEventListener('click', function(event) {
+                const userMenu = document.querySelector('.user-menu');
+                const dropdown = document.getElementById('userDropdown');
+                if (userMenu && !userMenu.contains(event.target)) { dropdown.classList.remove('show'); }
+            });
+        });
+    </script>
+</body>
+
+</html>

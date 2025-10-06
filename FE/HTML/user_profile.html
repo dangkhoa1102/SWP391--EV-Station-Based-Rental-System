@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Profile - FEC</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../CSS/user_profile.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <a href="home_page.html">FEC</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="profile-container">
+            <h2>USER PROFILE</h2>
+
+            <div class="profile-field">
+                <input type="text" id="username" placeholder="Username" value="JohnDoe" readonly>
+            </div>
+
+            <div class="profile-field">
+                <input type="email" id="email" placeholder="Email" value="john.doe@example.com">
+            </div>
+
+            <div class="profile-field">
+                <input type="tel" id="phone" placeholder="Phone Number" value="+1234567890">
+            </div>
+
+            <div class="document-upload">
+                <label>Driver's License</label>
+                <div class="document-upload-wrapper">
+                    <input type="file" id="driver-license" accept="image/*">
+                    <div class="document-placeholder">
+                        driver_license.PNG
+                    </div>
+                    <button class="upload-btn" onclick="document.getElementById('driver-license').click()">Upload</button>
+                </div>
+            </div>
+
+            <div class="document-upload">
+                <label>ID Card</label>
+                <div class="document-upload-wrapper">
+                    <input type="file" id="id-card" accept="image/*">
+                    <div class="document-placeholder">
+                        ID_card.PNG
+                    </div>
+                    <button class="upload-btn" onclick="document.getElementById('id-card').click()">Upload</button>
+                </div>
+            </div>
+
+            <button class="change-password-btn" onclick="openChangePasswordModal()">Change Password</button>
+        </div>
+    </main>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeChangePasswordModal()">&times;</span>
+            <h2>Change Password</h2>
+            <form id="changePasswordForm">
+                <div class="form-group">
+                    <div class="password-input-wrapper">
+                        <input type="password" id="currentPassword" placeholder="Current Password" required>
+                        <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('currentPassword')"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="password-input-wrapper">
+                        <input type="password" id="newPassword" placeholder="New Password" required>
+                        <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('newPassword')"></i>
+                    </div>
+                    <small>Password must contain uppercase, lowercase, digit, and special character</small>
+                </div>
+                <div class="form-group">
+                    <div class="password-input-wrapper">
+                        <input type="password" id="confirmPassword" placeholder="Confirm New Password" required>
+                        <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('confirmPassword')"></i>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Change Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 FEC. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../api.js"></script>
+    <script>
+        // Load user data on page load
+        window.addEventListener('DOMContentLoaded', async function() {
+            // Check if user is logged in
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showNotification('⚠️ Please login first!', 'error');
+                setTimeout(() => {
+                    window.location.href = 'home_page.html';
+                }, 2000);
+                return;
+            }
+
+            // Fetch current user data from API
+            try {
+                console.log('Fetching user data from /api/Auth/me...');
+                const userData = await window.API.getMe();
+                
+                console.log('User data received:', userData);
+                
+                // Update localStorage with fresh data
+                if (userData.userId) {
+                    localStorage.setItem('userId', userData.userId);
+                    console.log('✅ Updated userId:', userData.userId);
+                }
+                
+                if (userData.email) {
+                    localStorage.setItem('userEmail', userData.email);
+                    document.getElementById('email').value = userData.email;
+                    console.log('✅ Updated email:', userData.email);
+                }
+                
+                // Display user data in form fields
+                if (userData.userId) {
+                    // Username might be in different fields
+                    const displayName = userData.username || userData.name || userData.email;
+                    if (displayName) {
+                        document.getElementById('username').value = displayName;
+                        localStorage.setItem('username', displayName);
+                    }
+                }
+                
+                // Note: Backend /api/Auth/me only returns userId and email
+                // Phone number needs to come from user profile endpoint if available
+                
+            } catch (error) {
+                console.error('Failed to fetch user data:', error);
+                
+                // Fallback to localStorage if API fails
+                console.log('Falling back to localStorage...');
+                const userEmail = localStorage.getItem('userEmail');
+                const username = localStorage.getItem('username');
+                const userPhone = localStorage.getItem('userPhone');
+                
+                if (userEmail) {
+                    document.getElementById('email').value = userEmail;
+                }
+                if (username) {
+                    document.getElementById('username').value = username;
+                }
+                if (userPhone) {
+                    document.getElementById('phone').value = userPhone;
+                }
+                
+                showNotification('⚠️ Could not fetch latest user data. Showing cached data.', 'error');
+            }
+        });
+
+        // Handle file uploads
+        document.getElementById('driver-license').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'No file selected';
+            this.previousElementSibling.textContent = fileName;
+        });
+
+        document.getElementById('id-card').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'No file selected';
+            this.previousElementSibling.textContent = fileName;
+        });
+
+        // Change Password Modal Functions
+        function openChangePasswordModal() {
+            document.getElementById('changePasswordModal').style.display = 'block';
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('changePasswordModal').style.display = 'none';
+            document.getElementById('changePasswordForm').reset();
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('changePasswordModal');
+            if (event.target == modal) {
+                closeChangePasswordModal();
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Toggle password visibility
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling;
+            
+            console.log('=== Toggle Password Debug ===');
+            console.log('Input ID:', inputId);
+            console.log('Input element:', input);
+            console.log('Current type:', input.type);
+            console.log('Current value:', input.value);
+            console.log('Icon element:', icon);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                console.log('✓ Changed to TEXT type');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                console.log('✓ Changed to PASSWORD type');
+            }
+            
+            console.log('New type:', input.type);
+            console.log('========================');
+        }
+
+        // Handle change password form submission
+        document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validate password match
+            if (newPassword !== confirmPassword) {
+                showNotification('⚠️ New passwords do not match!', 'error');
+                return;
+            }
+
+            // Validate password strength
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+            if (!passwordRegex.test(newPassword)) {
+                showNotification('⚠️ Password must contain uppercase, lowercase, digit, and special character', 'error');
+                return;
+            }
+
+            try {
+                // Check if API is loaded
+                if (!window.API || !window.API.changePassword) {
+                    showNotification('❌ API not loaded. Please refresh the page.', 'error');
+                    console.error('window.API:', window.API);
+                    return;
+                }
+
+                // Get userId from localStorage first
+                let userId = localStorage.getItem('userId');
+                
+                // If no userId in localStorage, fetch from API
+                if (!userId) {
+                    console.log('UserId not in localStorage. Fetching from API...');
+                    try {
+                        const userData = await window.API.getMe();
+                        userId = userData.userId;
+                        
+                        if (userId) {
+                            localStorage.setItem('userId', userId);
+                            console.log('✅ Fetched and saved userId:', userId);
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch userId:', error);
+                    }
+                }
+                
+                // Final check
+                if (!userId) {
+                    showNotification('❌ User ID not found. Please logout and login again.', 'error');
+                    console.error('userId not found. User needs to login again.');
+                    return;
+                }
+                
+                console.log('Calling API.changePassword with userId:', userId);
+                const response = await window.API.changePassword(userId, currentPassword, newPassword);
+
+                if (response) {
+                    showNotification('✅ Password changed successfully!', 'success');
+                    closeChangePasswordModal();
+                }
+            } catch (error) {
+                console.error('Change password error:', error);
+                const errorMessage = error.message || 
+                                   'Failed to change password. Please check your current password.';
+                showNotification(`❌ ${errorMessage}`, 'error');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,319 @@
+/* Car Detail Page Styles */
+
+.car-detail-page {
+    padding-top: 80px;
+}
+
+.car-detail-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.car-gallery-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.main-gallery img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.gallery-thumbnails {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.gallery-thumbnails img {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.gallery-thumbnails img:hover {
+    opacity: 0.8;
+}
+
+.car-info-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.car-header {
+    margin-bottom: 1.5rem;
+}
+
+.car-header h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.car-description {
+    margin: 1.5rem 0;
+    color: #666;
+    line-height: 1.6;
+}
+
+.booking-form {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Car Details Modal */
+.car-details-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 800px;
+    margin: 2rem auto;
+}
+
+.car-details-modal h2 {
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.car-specs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.spec-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.spec-item i {
+    color: #ff6600;
+    font-size: 1.25rem;
+}
+
+.spec-info h4 {
+    margin: 0 0 0.25rem 0;
+    color: #666;
+    font-size: 0.875rem;
+    font-weight: normal;
+}
+
+.spec-info p {
+    margin: 0;
+    color: #333;
+    font-weight: 500;
+}
+
+/* Car Detail Main Content */
+.car-detail-main {
+    margin-top: 5rem;
+}
+
+.car-detail-main > .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.car-detail-main .car-detail-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Car Gallery */
+.car-gallery {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.main-image img {
+    width: 100%;
+    border-radius: 4px;
+}
+
+.thumbnail-list {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.thumbnail-list img {
+    width: 80px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: opacity 0.3s;
+}
+
+.thumbnail-list img:hover {
+    opacity: 0.7;
+}
+
+/* Car Details Header */
+.car-details-header {
+    margin: 2rem 0;
+}
+
+.car-details-header h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.car-rating i.fa-star {
+    color: #ffc107;
+}
+
+/* Car Specs Grid */
+.car-specs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.car-specs .spec-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+/* Car Features List */
+.car-features-list {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.car-features-list h3 {
+    margin-bottom: 1rem;
+}
+
+.car-features-list > div {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.car-features-list i.fa-check {
+    color: #28a745;
+    margin-right: 0.5rem;
+}
+
+/* Booking Section */
+.booking-section {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 8px;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.rental-pricing {
+    margin-bottom: 2rem;
+}
+
+.rental-pricing h3 {
+    margin-bottom: 1rem;
+}
+
+.price-display {
+    font-size: 2rem;
+    color: #007bff;
+}
+
+/* Booking Summary */
+.booking-summary {
+    margin-bottom: 2rem;
+}
+
+.booking-summary h3 {
+    margin-bottom: 1rem;
+}
+
+.booking-details {
+    display: grid;
+    gap: 1rem;
+}
+
+.booking-detail-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+.booking-detail-item.total {
+    font-size: 1.25rem;
+    font-weight: bold;
+    border-top: 1px solid #ddd;
+    padding-top: 1rem;
+}
+
+/* Book Now Button */
+.btn-book-now {
+    width: 100%;
+    padding: 1rem;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-book-now:hover {
+    background: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .car-detail-main .car-detail-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .gallery-thumbnails {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .car-specs {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .booking-section {
+        position: static;
+    }
+}
