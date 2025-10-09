@@ -1,59 +1,80 @@
-﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EVStation_basedRentalSystem.Services.CarAPI.Models
 {
+    /// <summary>
+    /// Represents an Electric Vehicle available for rent in the system
+    /// </summary>
     public class Car
     {
         [Key]
-        public int Id { get; set; }
+        public int CarId { get; set; }
 
         [Required]
-        public int StationId { get; set; }  // FK → Station
-
+        public int StationId { get; set; }
         [Required]
         [MaxLength(20)]
-        public string LicensePlate { get; set; }
+        public string LicensePlate { get; set; } = string.Empty;
 
-        [Range(1, 20)]
-        public int Seat { get; set; }
+        [Required]
+        [MaxLength(100)]
+        public string Brand { get; set; } = string.Empty;
 
-        [MaxLength(50)]
-        public string Model { get; set; }
+        [Required]
+        [MaxLength(100)]
+        public string Model { get; set; } = string.Empty;
 
-        [MaxLength(50)]
-        public string Brand { get; set; }
-
-        [Range(1900, 2100)]
+        [Range(2000, 2100)]
         public int Year { get; set; }
 
-        [MaxLength(30)]
-        public string Color { get; set; }
+        [MaxLength(50)]
+        public string? Color { get; set; }
 
-        [Range(0, double.MaxValue)]
-        public decimal BatteryCapacity { get; set; }    // kWh
+        [Range(2, 20)]
+        public int SeatCapacity { get; set; } = 4;
 
-        [Range(0, double.MaxValue)]
-        public decimal CurrentBatteryLevel { get; set; } // percentage or kWh
+        // ==================== VEHICLE SPECIFICATIONS ====================
+        [Range(0, 500)]
+        public decimal BatteryCapacity { get; set; }  // in kWh (e.g., 60 kWh)
 
-        [Range(0, double.MaxValue)]
-        public decimal HourlyRate { get; set; }
+        [Range(0, 100)]
+        public decimal CurrentBatteryLevel { get; set; } = 100;  // Percentage (0-100%)
 
-        [Range(0, double.MaxValue)]
-        public decimal DailyRate { get; set; }
+        [Range(0, 1000)]
+        public int MaxRange { get; set; }  // Maximum range in km on full charge
 
-        public DateTime? LastMaintenanceDay { get; set; }
+        [MaxLength(50)]
+        public string? ChargerType { get; set; }  // e.g., "Type 2", "CCS", "CHAdeMO"
 
-        [MaxLength(30)]
-        public string State { get; set; }    // e.g., "Available", "In Use", "Maintenance"
+        // ==================== PRICING ====================
+        [Range(0, 10000000)]
+        public decimal HourlyRate { get; set; }  // Price per hour in VND
 
-        [MaxLength(30)]
-        public string Status { get; set; }   // general status flag
+        [Range(0, 100000000)]
+        public decimal DailyRate { get; set; }  // Price per day in VND
 
-        // --- Relationships (optional) ---
-        // public Station Station { get; set; }
-        // public ICollection<Booking> Bookings { get; set; }
-        // public ICollection<Rating> Ratings { get; set; }
+        [Range(0, 1000000)]
+        public decimal DepositAmount { get; set; }  // Security deposit in VND
+
+        // ==================== VEHICLE STATUS ====================
+        [Required]
+        [MaxLength(50)]
+        public string Status { get; set; } = "Available";  
+        // Available, Rented, Maintenance, Charging, OutOfService
+
+        [MaxLength(500)]
+        public string? ImageUrl { get; set; }  // URL to car image
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
+        [Required]
+        public bool IsActive { get; set; } = true;  // Soft delete flag
+
+        // ==================== ADDITIONAL INFO ====================
+        [MaxLength(1000)]
+        public string? Description { get; set; }  // Detailed description
     }
 }
+

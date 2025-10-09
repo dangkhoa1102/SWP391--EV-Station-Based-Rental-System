@@ -1,14 +1,14 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 
-namespace EVStation_basedRentalSystem.Services.AuthAPI.Models
+namespace Monolithic.Models
 {
     public class ApplicationUser : IdentityUser
     {
-        public string Name { get; set; }
-        public DateTime? LastLogin { get; set; }
-       public bool IsApproved { get; set; } = false; // default: not approved
-
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpiry { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public override string? PhoneNumber { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

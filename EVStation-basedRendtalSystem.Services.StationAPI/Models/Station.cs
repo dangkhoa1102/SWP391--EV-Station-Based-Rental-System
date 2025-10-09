@@ -1,28 +1,38 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace EVStation_basedRentalSystem.Services.StationAPI.Models
+namespace EVStation_basedRendtalSystem.Services.StationAPI.Models
 {
     public class Station
     {
         [Key]
-        public int Id { get; set; }
-
-        [Required]
-        [MaxLength(100)]
-        public string Name { get; set; }
+        public int StationId { get; set; }
 
         [Required]
         [MaxLength(200)]
-        public string Address { get; set; }
+        public string StationName { get; set; } = string.Empty;
 
-        [MaxLength(100)]
-        public string City { get; set; }
+        [Required]
+        [MaxLength(500)]
+        public string Address { get; set; } = string.Empty;
 
-        [MaxLength(30)]
-        public string Status { get; set; }  // e.g., "Active", "Inactive", "Under Maintenance"
+        [MaxLength(20)]
+        public string? PhoneNumber { get; set; }
 
-        // Optional relationships
-        // public ICollection<Car> Cars { get; set; }
-        // public ICollection<Rating> Ratings { get; set; }
+        public int TotalParkingSlots { get; set; } = 0;
+
+        public int AvailableSlots { get; set; } = 0;
+
+        [MaxLength(50)]
+        public string Status { get; set; } = "Active"; // Active, Inactive, Under Maintenance
+
+        [MaxLength(1000)]
+        public string? Description { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
+        [Required]
+        public bool IsActive { get; set; } = true;
     }
 }
