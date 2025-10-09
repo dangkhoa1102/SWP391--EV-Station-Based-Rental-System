@@ -1,27 +1,35 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace EVStation_basedRentalSystem.Services.RatingAPI.Models
+namespace EVStation_basedRendtalSystem.Services.FeedbackAPI.Models
 {
-    public class Rating
+    public class Feedback
     {
         [Key]
-        public int Id { get; set; }
+        public int FeedbackId { get; set; }
 
         [Required]
-        public int UserId { get; set; }   // who rated
+        [MaxLength(450)]
+        public string UserId { get; set; } = string.Empty;
 
         [Required]
-        public int CarId { get; set; }    // which car was rated
+        public int BookingId { get; set; }
 
         [Required]
-        [Range(1, 5)]
-        public int Score { get; set; }    // renamed from 'rating' column
+        public int CarId { get; set; }
 
-        [MaxLength(500)]
-        public string Feedback { get; set; }
+        [Required]
+        [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5")]
+        public int Rating { get; set; }
 
-        // Optional relationships
-        // public User User { get; set; }
-        // public Car Car { get; set; }
+        [MaxLength(1000)]
+        public string? Comment { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
+        [Required]
+        public bool IsActive { get; set; } = true;
     }
 }
