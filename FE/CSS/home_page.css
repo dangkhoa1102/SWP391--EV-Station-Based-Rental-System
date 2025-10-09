@@ -1,6 +1,320 @@
 /* Home Page Specific Styles */
 
-/* Notification styles */
+/* ========================================
+   HERO SLIDESHOW WITH OVERLAY SEARCH
+   ======================================== */
+
+.hero-slideshow {
+    margin-top: 76px; /* Height of fixed header */
+    position: relative;
+    width: 100%;
+    background: #000;
+}
+
+.slideshow-container {
+    position: relative;
+    max-width: 100%;
+    height: 600px;
+    overflow: hidden;
+}
+
+/* Slides - No manual controls */
+.slide {
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.slide.active {
+    display: block;
+    animation: fadeIn 1.5s ease-in;
+}
+
+.slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.fade {
+    animation-name: fadeIn;
+    animation-duration: 1.5s;
+}
+
+/* ========================================
+   SEARCH FORM OVERLAY
+   ======================================== */
+
+.search-form-overlay {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 1400px;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+/* Sticky search form when scrolling */
+.search-form-overlay.sticky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    z-index: 9999;
+    background: #ffffff;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.search-form-overlay .search-form-wrapper {
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.search-form-overlay.sticky .search-form-wrapper {
+    background: transparent;
+    backdrop-filter: none;
+    border-radius: 0;
+    padding: 1rem 0;
+    box-shadow: none;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+}
+
+.search-form-overlay h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-shadow: none;
+    display: none; /* Ẩn tiêu đề luôn */
+}
+
+.search-form-overlay.sticky h2 {
+    display: none;
+}
+
+/* Style cho form - luôn dùng màu đen */
+.search-form-overlay .form-group label {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.search-form-overlay .form-group label i {
+    color: #ff6600;
+    font-size: 1rem;
+}
+
+.search-form-overlay .form-group select,
+.search-form-overlay .form-group input {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    color: #333;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.search-form-overlay .form-group select:focus,
+.search-form-overlay .form-group input:focus {
+    outline: none;
+    border-color: #ff6600;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+}
+
+.search-form-overlay .form-group select option {
+    background: white;
+    color: #333;
+}
+
+.search-form-overlay .form-group input::-webkit-calendar-picker-indicator {
+    filter: invert(0);
+    cursor: pointer;
+}
+
+.search-form-overlay .btn-search {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.search-form-overlay .btn-search i {
+    font-size: 1.1rem;
+}
+
+.search-form-overlay .btn-search:hover {
+    background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.search-form-overlay .btn-search:active {
+    transform: translateY(0);
+}
+
+/* Layout cho search grid */
+.search-form-overlay .search-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.3fr 1fr 1.3fr 1fr 1.2fr;
+    gap: 1.2rem;
+    align-items: end;
+    margin-bottom: 0;
+}
+
+.search-form-overlay .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-form-overlay .form-group select,
+.search-form-overlay .form-group input {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    height: 48px;
+}
+
+/* Sticky style - giữ nguyên như ban đầu */
+.search-form-overlay.sticky .form-group label {
+    color: #333;
+}
+
+.search-form-overlay.sticky .form-group label i {
+    color: #ff6600;
+}
+
+.search-form-overlay.sticky .form-group select,
+.search-form-overlay.sticky .form-group input {
+    background: white;
+    border: 1px solid #ddd;
+    color: #333;
+}
+
+.search-form-overlay.sticky .form-group select option {
+    background: white;
+    color: #333;
+}
+
+.search-form-overlay.sticky .form-group input::-webkit-calendar-picker-indicator {
+    filter: invert(0);
+}
+
+.search-form-overlay.sticky .btn-search {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .search-form-overlay .search-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .search-form-overlay .btn-search {
+        grid-column: span 3;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-form-overlay {
+        top: 10px;
+        width: calc(100% - 20px);
+    }
+    
+    .search-form-overlay .search-form-wrapper {
+        padding: 1rem;
+    }
+    
+    .search-form-overlay .search-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .search-form-overlay .btn-search {
+        grid-column: 1;
+        width: 100%;
+        padding: 0.85rem;
+    }
+}
+@media (max-width: 768px) {
+    .slideshow-container {
+        height: 400px;
+    }
+    
+    .search-form-overlay {
+        bottom: 20px;
+    }
+    
+    .search-form-overlay .search-form-wrapper {
+        padding: 1.5rem;
+    }
+    
+    .search-form-overlay h2 {
+        font-size: 1.5rem;
+    }
+    
+    .search-form-overlay.sticky h2 {
+        font-size: 1.2rem;
+    }
+}
+
+/* ========================================
+   NOTIFICATION STYLES
+   ======================================== */
+
 .notification {
     position: fixed;
     top: 20px;

@@ -54,11 +54,28 @@
         </div>
     </header>
 
-    <!-- Search Form Section -->
-    <section class="search-form">
-        <div class="container">
-            <div class="search-form-wrapper">
-                <h2>Find Your Perfect Rental Car</h2>
+    <!-- Hero Slideshow Section with Overlay Search -->
+    <section class="hero-slideshow">
+        <div class="slideshow-container">
+            <!-- Slides sẽ được tự động load từ folder Picture -->
+            <div class="slide fade active">
+                <img src="../Picture/E car 1.jpg" alt="Electric Car 1">
+            </div>
+            <div class="slide fade">
+                <img src="../Picture/E car 3.png" alt="Electric Car 3">
+                <img src="../Picture/E car 2.png" alt="Electric Car 2">
+            </div>
+            <div class="slide fade">
+
+                <img src="../Picture/E car 2.png" alt="Electric Car 2">
+            </div>
+        </div>
+        
+        <!-- Search Form Overlay - Đặt trên slideshow -->
+        <div class="search-form-overlay" id="searchFormOverlay">
+            <div class="container">
+                <div class="search-form-wrapper">
+                    <h2>Find Your Perfect Rental Car</h2>
                 <form id="car-search-form" action="car_list_page.html" method="get">
                     <div class="search-grid">
                         <div class="form-group">
@@ -144,10 +161,11 @@
                         </div>
                         <button type="submit" class="btn-search">
                             <i class="fas fa-search"></i>
-                            Search 
+                            SEARCH
                         </button>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </section>
@@ -224,7 +242,124 @@
     </div>
 
     <script>
-        // Notification function
+        // ========================================
+        // SLIDESHOW FUNCTIONS
+        // ======================================== 
+        
+        /**
+         * slideIndex: Vị trí slide hiện tại (bắt đầu từ 0)
+         * slides: Danh sách tất cả các slide
+         * dots: Danh sách các dot indicators
+         * autoSlideTimer: Timer cho việc tự động chuyển slide
+         */
+        let slideIndex = 0;
+        let autoSlideTimer;
+        const SLIDE_INTERVAL = 6000; // 10 giây
+
+        /**
+         * Hàm khởi động slideshow
+         * - Tự động hiển thị slide đầu tiên
+         * - Bắt đầu timer tự động chuyển slide
+         */
+        function initSlideshow() {
+            showSlide(slideIndex);
+            startAutoSlide();
+        }
+
+        /**
+         * Hiển thị slide tại vị trí index
+         * @param {number} index - Vị trí slide cần hiển thị
+         */
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.slide');
+            const dots = document.querySelectorAll('.dot');
+            
+            // Nếu không có slide nào, thoát
+            if (slides.length === 0) return;
+            
+            // Xử lý vòng lặp: nếu vượt quá cuối, quay về đầu
+            if (index >= slides.length) {
+                slideIndex = 0;
+            }
+            // Nếu về trước đầu, quay về cuối
+            if (index < 0) {
+                slideIndex = slides.length - 1;
+            }
+            
+            // Ẩn tất cả slides
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            // Bỏ active tất cả dots
+            dots.forEach(dot => {
+                dot.classList.remove('active');
+            });
+            
+            // Hiển thị slide hiện tại
+            slides[slideIndex].classList.add('active');
+            
+            // Highlight dot tương ứng
+            if (dots[slideIndex]) {
+                dots[slideIndex].classList.add('active');
+            }
+        }
+
+        /**
+         * Chuyển slide theo hướng (tiếp theo hoặc trước đó)
+         * @param {number} direction - Hướng chuyển: 1 (tiếp) hoặc -1 (lùi)
+         */
+        function changeSlide(direction) {
+            slideIndex += direction;
+            showSlide(slideIndex);
+            resetAutoSlide(); // Reset timer khi user tương tác
+        }
+
+        /**
+         * Chuyển đến slide cụ thể
+         * @param {number} index - Vị trí slide (bắt đầu từ 1)
+         */
+        function currentSlide(index) {
+            slideIndex = index - 1; // Chuyển từ 1-based sang 0-based
+            showSlide(slideIndex);
+            resetAutoSlide();
+        }
+
+        /**
+         * Bắt đầu tự động chuyển slide
+         */
+        function startAutoSlide() {
+            autoSlideTimer = setInterval(() => {
+                slideIndex++;
+                showSlide(slideIndex);
+            }, SLIDE_INTERVAL);
+        }
+
+        /**
+         * Dừng và khởi động lại timer tự động
+         * Gọi khi user click vào arrows hoặc dots
+         */
+        function resetAutoSlide() {
+            clearInterval(autoSlideTimer);
+            startAutoSlide();
+        }
+
+        /**
+         * Hàm dừng slideshow (nếu cần)
+         */
+        function stopAutoSlide() {
+            clearInterval(autoSlideTimer);
+        }
+
+        // ========================================
+        // NOTIFICATION FUNCTIONS
+        // ========================================
+        
+        /**
+         * Hiển thị thông báo cho user
+         * @param {string} message - Nội dung thông báo
+         * @param {string} type - Loại: 'success' hoặc 'error'
+         */
         function showNotification(message, type = 'success') {
             const existingNotifications = document.querySelectorAll('.notification');
             existingNotifications.forEach(notification => notification.remove());
@@ -368,14 +503,29 @@
             }
             
             const now = new Date();
-            const pickup = new Date(`${pickupDate}T${pickupTime}`);
-            const returnDateTime = new Date(`${returnDate}T${returnTime}`);
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const selectedPickupDate = new Date(pickupDate);
             
-            // Check if pickup time is in the past
-            if (pickup <= now) {
-                showNotification('⏰ Pick-up time must be in the future!', 'error');
+            const pickup = new Date(`${pickupDate}T${pickupTime}:00`);
+            const returnDateTime = new Date(`${returnDate}T${returnTime}:00`);
+            
+            // Chỉ kiểm tra thời gian nếu pickup date là HÔM NAY
+            if (selectedPickupDate.getTime() === today.getTime()) {
+                // Nếu chọn ngày hôm nay, kiểm tra xem giờ đã qua chưa
+                // Cho buffer 1 giờ để tránh đặt xe quá gấp
+                const oneHourLater = new Date(now.getTime() + (60 * 60 * 1000));
+                
+                if (pickup < oneHourLater) {
+                    showNotification('⏰ Pick-up time must be at least 1 hour from now!', 'error');
+                    return false;
+                }
+            }
+            // Nếu chọn ngày trong quá khứ
+            else if (selectedPickupDate < today) {
+                showNotification('⏰ Pick-up date cannot be in the past!', 'error');
                 return false;
             }
+            // Nếu chọn ngày mai hoặc sau: OK, không cần kiểm tra giờ
             
             // Check if return time is after pickup time
             if (returnDateTime <= pickup) {
@@ -395,8 +545,50 @@
             return true;
         }
 
-        // Initialize event listeners
+        // ========================================
+        // PAGE INITIALIZATION
+        // ========================================
+        
+        // ========================================
+        // STICKY SEARCH FORM
+        // ========================================
+        
+        /**
+         * Xử lý sticky search form khi scroll
+         */
+        function handleStickySearchForm() {
+            const searchFormOverlay = document.getElementById('searchFormOverlay');
+            const heroSlideshow = document.querySelector('.hero-slideshow');
+            
+            if (!searchFormOverlay || !heroSlideshow) return;
+            
+            window.addEventListener('scroll', function() {
+                const slideshowBottom = heroSlideshow.offsetTop + heroSlideshow.offsetHeight;
+                const scrollPosition = window.scrollY;
+                
+                // Khi scroll vượt qua slideshow, làm sticky
+                if (scrollPosition >= slideshowBottom - 100) {
+                    searchFormOverlay.classList.add('sticky');
+                } else {
+                    searchFormOverlay.classList.remove('sticky');
+                }
+            });
+        }
+        
+        // ========================================
+        // PAGE INITIALIZATION
+        // ========================================
+        
+        /**
+         * Khởi tạo tất cả chức năng khi trang load xong
+         */
         document.addEventListener('DOMContentLoaded', function() {
+            // Khởi động slideshow
+            initSlideshow();
+            
+            // Khởi động sticky search form
+            handleStickySearchForm();
+            
             // Check authentication status on page load
             checkAuthStatus();
             
