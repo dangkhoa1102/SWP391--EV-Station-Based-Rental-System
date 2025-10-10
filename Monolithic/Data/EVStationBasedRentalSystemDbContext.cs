@@ -40,8 +40,6 @@ namespace Monolithic.Data
                 entity.Property(s => s.StationId).HasDefaultValueSql("NEWID()");
                 entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
                 entity.Property(s => s.Address).IsRequired().HasMaxLength(255);
-                entity.Property(s => s.Latitude).HasPrecision(10, 8);
-                entity.Property(s => s.Longitude).HasPrecision(11, 8);
                 entity.Property(s => s.IsActive).HasDefaultValue(true);
                 entity.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(s => s.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
@@ -152,9 +150,6 @@ namespace Monolithic.Data
 
             builder.Entity<Feedback>()
                 .HasIndex(f => f.CarId);
-
-            builder.Entity<Station>()
-                .HasIndex(s => new { s.Latitude, s.Longitude });
 
             // Add indexes for User table
             builder.Entity<User>()

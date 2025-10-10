@@ -80,8 +80,6 @@ namespace Monolithic.Services.Implementation
 
             if (!string.IsNullOrWhiteSpace(request.Name)) station.Name = request.Name;
             if (!string.IsNullOrWhiteSpace(request.Address)) station.Address = request.Address;
-            if (request.Latitude.HasValue) station.Latitude = request.Latitude.Value;
-            if (request.Longitude.HasValue) station.Longitude = request.Longitude.Value;
             if (request.TotalSlots.HasValue)
             {
                 var diff = request.TotalSlots.Value - station.TotalSlots;
@@ -107,13 +105,6 @@ namespace Monolithic.Services.Implementation
             station.UpdatedAt = DateTime.UtcNow;
             await _stationRepository.UpdateAsync(station);
             return ResponseDto<string>.Success(string.Empty, "Station deleted");
-        }
-
-        public async Task<ResponseDto<List<StationDto>>> GetNearbyStationsAsync(decimal latitude, decimal longitude, double radiusKm = 10)
-        {
-            var stations = await _stationRepository.GetNearbyStationsAsync(latitude, longitude, radiusKm);
-            var dto = _mapper.Map<List<StationDto>>(stations);
-            return ResponseDto<List<StationDto>>.Success(dto);
         }
 
         public async Task<ResponseDto<List<StationCarDto>>> GetAvailableCarsAtStationAsync(Guid stationId)

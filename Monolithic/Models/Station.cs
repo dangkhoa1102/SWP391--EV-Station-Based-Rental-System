@@ -17,14 +17,6 @@ namespace Monolithic.Models
         public string Address { get; set; } = string.Empty;
 
         [Required]
-        [Column(TypeName = "decimal(10,8)")]
-        public decimal Latitude { get; set; }
-
-        [Required]
-        [Column(TypeName = "decimal(11,8)")]
-        public decimal Longitude { get; set; }
-
-        [Required]
         public int TotalSlots { get; set; }
 
         [Required]
