@@ -1,12 +1,12 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Monolithic.Data;
-using Monolithic.Models;
 using Monolithic.Services.Interfaces;
 using Monolithic.Repositories.Interfaces;
+using Monolithic.Repositories.Implementation;
+using Monolithic.Services.Implementation;
 using Monolithic.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,32 +19,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Database configuration
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<EVStationBasedRentalSystemDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-
-// Identity configuration
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-{
-    // Password settings
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequiredLength = 6;
-    
-    // Lockout settings
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.AllowedForNewUsers = true;
-    
-    // User settings
-    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-    options.User.RequireUniqueEmail = true;
-})
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -83,20 +61,20 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Repository pattern - Will implement these later
-// builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-// builder.Services.AddScoped<ICarRepository, CarRepository>();
-// builder.Services.AddScoped<IStationRepository, StationRepository>();
-// builder.Services.AddScoped<IBookingRepository, BookingRepository>();
-// builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+// Repository pattern - Using separate implementation classes
+builder.Services.AddScoped<IStationRepository, StationRepositoryImpl>();
+builder.Services.AddScoped<ICarRepository, CarRepositoryImpl>();
+builder.Services.AddScoped<IBookingRepository, BookingRepositoryImpl>();
+builder.Services.AddScoped<IFeedbackRepository, FeedbackRepositoryImpl>();
 
-// Services - Will implement these later  
-// builder.Services.AddScoped<IAuthService, AuthService>();
-// builder.Services.AddScoped<ICarService, CarService>();
-// builder.Services.AddScoped<IStationService, StationService>();
-// builder.Services.AddScoped<IBookingService, BookingService>();
-// builder.Services.AddScoped<IFeedbackService, FeedbackService>();
-// builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+// Services - Using separate implementation classes
+builder.Services.AddScoped<IStationService, StationServiceImpl>();
+builder.Services.AddScoped<ICarService, CarServiceImpl>();
+builder.Services.AddScoped<IBookingService, BookingServiceImpl>();
+builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
+
+// Custom User Service
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
@@ -104,7 +82,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Monolithic API V1");
+        options.RoutePrefix = "swagger"; // Swagger UI will be at /swagger
+    });
 }
 
 app.UseHttpsRedirection();
@@ -115,5 +97,35 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Auto-open browser in development
+if (app.Environment.IsDevelopment())
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        var urls = app.Urls;
+        if (urls.Any())
+        {
+            var httpsUrl = urls.FirstOrDefault(u => u.StartsWith("https")) ?? urls.First();
+            var swaggerUrl = $"{httpsUrl}/swagger";
+            logger.LogInformation("Opening Swagger UI at: {SwaggerUrl}", swaggerUrl);
+            
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = swaggerUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning("Could not automatically open browser: {Error}", ex.Message);
+                logger.LogInformation("Please manually navigate to: {SwaggerUrl}", swaggerUrl);
+            }
+        }
+    });
+}
 
 app.Run();

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Monolithic.DTOs.Car;
 using Monolithic.DTOs.Common;
+using Monolithic.Services.Interfaces;
 
 namespace Monolithic.Controllers
 {
@@ -8,30 +9,33 @@ namespace Monolithic.Controllers
     [Route("api/[controller]")]
     public class CarsController : ControllerBase
     {
-        public CarsController()
+        private readonly ICarService _carService;
+
+        public CarsController(ICarService carService)
         {
+            _carService = carService;
         }
 
         [HttpGet]
         public async Task<ActionResult<ResponseDto<PaginationDto<CarDto>>>> GetCars([FromQuery] PaginationRequestDto request)
         {
-            // TODO: Implement get cars logic
-            var emptyPagination = new PaginationDto<CarDto>(new List<CarDto>(), request.Page, request.PageSize, 0);
-            return Ok(ResponseDto<PaginationDto<CarDto>>.Success(emptyPagination, "Cars retrieved successfully (implementation pending)"));
+            var result = await _carService.GetCarsAsync(request);
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ResponseDto<CarDto>>> GetCar(Guid id)
         {
-            // TODO: Implement get car by id logic
-            return Ok(ResponseDto<CarDto>.Failure("Not implemented yet"));
+            var result = await _carService.GetCarByIdAsync(id);
+            if (!result.IsSuccess) return NotFound(result);
+            return Ok(result);
         }
 
         [HttpPost]
         public async Task<ActionResult<ResponseDto<CarDto>>> CreateCar([FromBody] CreateCarDto request)
         {
-            // TODO: Implement create car logic
-            return Ok(ResponseDto<CarDto>.Failure("Not implemented yet"));
+            var result = await _carService.CreateCarAsync(request);
+            return Ok(result);
         }
     }
 }

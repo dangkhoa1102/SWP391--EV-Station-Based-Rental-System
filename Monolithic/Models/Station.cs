@@ -6,7 +6,7 @@ namespace Monolithic.Models
     public class Station
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid StationId { get; set; }
 
         [Required]
         [StringLength(100)]
