@@ -6,10 +6,10 @@ namespace Monolithic.Models
     public class Booking
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid BookingId { get; set; }
 
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; } // Changed from string to Guid
 
         [Required]
         public Guid CarId { get; set; }
@@ -38,7 +38,7 @@ namespace Monolithic.Models
 
         // Navigation properties
         [ForeignKey("UserId")]
-        public virtual ApplicationUser User { get; set; } = null!;
+        public virtual User User { get; set; } = null!;
 
         [ForeignKey("CarId")]
         public virtual Car Car { get; set; } = null!;

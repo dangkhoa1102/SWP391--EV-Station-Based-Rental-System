@@ -13,43 +13,46 @@ namespace Monolithic.Mappings
         public AutoMapperProfile()
         {
             // User mappings
-            CreateMap<ApplicationUser, UserDto>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            CreateMap<User, UserDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.UserId.ToString())) // Use UserId
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
-                .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
-                .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FullName))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive));
 
-            CreateMap<RegisterRequestDto, ApplicationUser>()
+            CreateMap<RegisterRequestDto, User>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
-                .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
-                .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))
+                .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => GetFirstName(src.FullName)))
+                .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => GetLastName(src.FullName)))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.UserRole, opt => opt.MapFrom(src => "Customer"));
 
             // Car mappings
             CreateMap<Car, CarDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.CarId)) // Use CarId
                 .ForMember(dest => dest.CurrentStationName, opt => opt.MapFrom(src => src.CurrentStation != null ? src.CurrentStation.Name : ""));
 
             CreateMap<CreateCarDto, Car>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
+                .ForMember(dest => dest.CarId, opt => opt.MapFrom(src => Guid.NewGuid())) // Use CarId
                 .ForMember(dest => dest.IsAvailable, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
 
-            CreateMap<Car, StationCarDto>();
+            CreateMap<Car, StationCarDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.CarId)); // Use CarId
 
             // Station mappings
             CreateMap<Station, StationDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.StationId)) // Use StationId
                 .ForMember(dest => dest.AvailableCars, opt => opt.MapFrom(src => src.Cars.Where(c => c.IsAvailable && c.IsActive)));
 
             CreateMap<CreateStationDto, Station>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
+                .ForMember(dest => dest.StationId, opt => opt.MapFrom(src => Guid.NewGuid())) // Use StationId
                 .ForMember(dest => dest.AvailableSlots, opt => opt.MapFrom(src => src.TotalSlots))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
@@ -57,13 +60,14 @@ namespace Monolithic.Mappings
 
             // Booking mappings
             CreateMap<Booking, BookingDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.BookingId)) // Use BookingId
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => $"{src.User.FirstName} {src.User.LastName}"))
                 .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => $"{src.Car.Brand} {src.Car.Model} ({src.Car.LicensePlate})"))
                 .ForMember(dest => dest.PickupStationName, opt => opt.MapFrom(src => src.PickupStation.Name))
                 .ForMember(dest => dest.DropoffStationName, opt => opt.MapFrom(src => src.DropoffStation != null ? src.DropoffStation.Name : null));
 
             CreateMap<CreateBookingDto, Booking>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
+                .ForMember(dest => dest.BookingId, opt => opt.MapFrom(src => Guid.NewGuid())) // Use BookingId
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Pending"))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
@@ -76,14 +80,33 @@ namespace Monolithic.Mappings
 
             // Feedback mappings
             CreateMap<Feedback, FeedbackDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.FeedbackId)) // Use FeedbackId
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => $"{src.User.FirstName} {src.User.LastName}"))
                 .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => $"{src.Car.Brand} {src.Car.Model} ({src.Car.LicensePlate})"));
 
             CreateMap<CreateFeedbackDto, Feedback>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
+                .ForMember(dest => dest.FeedbackId, opt => opt.MapFrom(src => Guid.NewGuid())) // Use FeedbackId
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+        }
+
+        private static string GetFirstName(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+                return "";
+
+            var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length > 0 ? parts[0] : "";
+        }
+
+        private static string GetLastName(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+                return "";
+
+            var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length > 1 ? string.Join(" ", parts.Skip(1)) : "";
         }
     }
 }

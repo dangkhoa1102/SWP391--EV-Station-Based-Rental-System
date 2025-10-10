@@ -6,7 +6,7 @@ namespace Monolithic.Models
     public class Car
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid CarId { get; set; }
 
         [Required]
         [StringLength(50)]
