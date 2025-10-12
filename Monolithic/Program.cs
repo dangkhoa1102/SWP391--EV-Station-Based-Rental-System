@@ -72,6 +72,8 @@ builder.Services.AddScoped<IStationService, StationServiceImpl>();
 builder.Services.AddScoped<ICarService, CarServiceImpl>();
 builder.Services.AddScoped<IBookingService, BookingServiceImpl>();
 builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
+// Services
+builder.Services.AddScoped<IIncidentService, IncidentService>();
 
 // Custom User Service
 builder.Services.AddScoped<IUserService, UserService>();

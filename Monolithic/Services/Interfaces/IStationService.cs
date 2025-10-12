@@ -10,7 +10,6 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<StationDto>> CreateStationAsync(CreateStationDto request);
         Task<ResponseDto<StationDto>> UpdateStationAsync(Guid id, UpdateStationDto request);
         Task<ResponseDto<string>> DeleteStationAsync(Guid id);
-        Task<ResponseDto<List<StationDto>>> GetNearbyStationsAsync(decimal latitude, decimal longitude, double radiusKm = 10);
         Task<ResponseDto<List<StationCarDto>>> GetAvailableCarsAtStationAsync(Guid stationId);
         Task<ResponseDto<string>> UpdateStationSlotsAsync(Guid id, int totalSlots);
     }

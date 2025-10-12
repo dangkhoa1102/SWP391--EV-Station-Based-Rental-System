@@ -57,14 +57,6 @@ namespace Monolithic.Controllers
             if (!result.IsSuccess) return NotFound(result);
             return Ok(result);
         }
-
-        [HttpGet("nearby")]
-        public async Task<ActionResult<ResponseDto<List<StationDto>>>> GetNearby([FromQuery] decimal lat, [FromQuery] decimal lng, [FromQuery] double radiusKm = 10)
-        {
-            var result = await _stationService.GetNearbyStationsAsync(lat, lng, radiusKm);
-            return Ok(result);
-        }
-
         [HttpGet("{id}/cars")]
         public async Task<ActionResult<ResponseDto<List<StationCarDto>>>> GetAvailableCars(Guid id)
         {

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Monolithic.Models;
+using System.Reflection.Emit;
 
 namespace Monolithic.Data
 {
@@ -14,6 +15,7 @@ namespace Monolithic.Data
         public DbSet<Station> Stations { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Feedback> Feedbacks { get; set; }
+        public DbSet<Incident> Incidents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -40,8 +42,6 @@ namespace Monolithic.Data
                 entity.Property(s => s.StationId).HasDefaultValueSql("NEWID()");
                 entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
                 entity.Property(s => s.Address).IsRequired().HasMaxLength(255);
-                entity.Property(s => s.Latitude).HasPrecision(10, 8);
-                entity.Property(s => s.Longitude).HasPrecision(11, 8);
                 entity.Property(s => s.IsActive).HasDefaultValue(true);
                 entity.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(s => s.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
@@ -133,6 +133,27 @@ namespace Monolithic.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // Incident configuration
+            builder.Entity<Incident>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.ResolutionNotes).HasMaxLength(500);
+
+                // Relationship with Booking
+                entity.HasOne(e => e.Booking)
+                      .WithMany()
+                      .HasForeignKey(e => e.BookingId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Indexes for better performance
+                entity.HasIndex(e => e.BookingId);
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.StationId);
+                entity.HasIndex(e => e.ReportedAt);
+            });
+
             // Configure indexes for better performance
             builder.Entity<Car>()
                 .HasIndex(c => c.LicensePlate)
@@ -152,9 +173,6 @@ namespace Monolithic.Data
 
             builder.Entity<Feedback>()
                 .HasIndex(f => f.CarId);
-
-            builder.Entity<Station>()
-                .HasIndex(s => new { s.Latitude, s.Longitude });
 
             // Add indexes for User table
             builder.Entity<User>()

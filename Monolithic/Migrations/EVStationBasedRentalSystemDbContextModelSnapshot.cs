@@ -214,6 +214,65 @@ namespace Monolithic.Migrations
                     b.ToTable("Feedbacks");
                 });
 
+            modelBuilder.Entity("Monolithic.Models.Incident", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("CostIncurred")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Images")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ReportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReportedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ResolvedBy")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("StationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("ReportedAt");
+
+                    b.HasIndex("StationId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Incidents");
+                });
+
             modelBuilder.Entity("Monolithic.Models.Station", b =>
                 {
                     b.Property<Guid>("StationId")
@@ -239,14 +298,6 @@ namespace Monolithic.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
-                    b.Property<decimal>("Latitude")
-                        .HasPrecision(10, 8)
-                        .HasColumnType("decimal(10,8)");
-
-                    b.Property<decimal>("Longitude")
-                        .HasPrecision(11, 8)
-                        .HasColumnType("decimal(11,8)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -261,8 +312,6 @@ namespace Monolithic.Migrations
                         .HasDefaultValueSql("GETUTCDATE()");
 
                     b.HasKey("StationId");
-
-                    b.HasIndex("Latitude", "Longitude");
 
                     b.ToTable("Stations");
                 });
@@ -406,6 +455,17 @@ namespace Monolithic.Migrations
                     b.Navigation("Car");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Monolithic.Models.Incident", b =>
+                {
+                    b.HasOne("Monolithic.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
                 });
 
             modelBuilder.Entity("Monolithic.Models.Booking", b =>

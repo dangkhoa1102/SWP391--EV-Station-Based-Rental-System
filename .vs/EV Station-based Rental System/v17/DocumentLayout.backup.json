@@ -1,0 +1,373 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\services\\implementation\\incidentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\services\\implementation\\incidentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\controllers\\incidentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\controllers\\incidentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\services\\interfaces\\iincidentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\services\\interfaces\\iincidentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\models\\incident.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\models\\incident.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\data\\evstationbasedrentalsystemdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\data\\evstationbasedrentalsystemdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\repositories\\interfaces\\ibookingrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\repositories\\interfaces\\ibookingrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\repositories\\interfaces\\icarrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\repositories\\interfaces\\icarrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\repositories\\interfaces\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\repositories\\interfaces\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\controllers\\bookingscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\controllers\\bookingscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\dtos\\station\\stationdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\dtos\\station\\stationdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\controllers\\feedbackcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\controllers\\feedbackcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\dtos\\incident\\response\\incidentresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\dtos\\incident\\response\\incidentresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\dtos\\incident\\response\\incidentlistresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\dtos\\incident\\response\\incidentlistresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\dtos\\incident\\request\\updateincidentrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\dtos\\incident\\request\\updateincidentrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\dtos\\incident\\request\\updateincidentformrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\dtos\\incident\\request\\updateincidentformrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\dtos\\incident\\request\\incidentrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\dtos\\incident\\request\\incidentrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\dtos\\incident\\request\\createincidentformrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\dtos\\incident\\request\\createincidentformrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\models\\booking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\models\\booking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\controllers\\carscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\controllers\\carscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|e:\\fptu\\s5\\swp391\\swp.new\\branch-of-khoa\\swp391--ev-station-based-rental-system\\monolithic\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789ABC}|Monolithic\\Monolithic.csproj|solutionrelative:monolithic\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 329,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Program.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Program.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Program.cs",
+              "RelativeToolTip": "Monolithic\\Program.cs",
+              "ViewState": "AgIAAFgAAAAAAAAAAADwv0sAAABAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-12T06:16:19.889Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "IncidentsController.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\IncidentsController.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Controllers\\IncidentsController.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\IncidentsController.cs",
+              "RelativeToolTip": "Monolithic\\Controllers\\IncidentsController.cs",
+              "ViewState": "AgIAADEAAAAAAAAAAAAAwDoAAABHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-12T06:11:59.858Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "IncidentService.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Services\\Implementation\\IncidentService.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Services\\Implementation\\IncidentService.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Services\\Implementation\\IncidentService.cs",
+              "RelativeToolTip": "Monolithic\\Services\\Implementation\\IncidentService.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAIA/wBwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-12T06:00:32.116Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "IIncidentService.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Services\\Interfaces\\IIncidentService.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Services\\Interfaces\\IIncidentService.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Services\\Interfaces\\IIncidentService.cs",
+              "RelativeToolTip": "Monolithic\\Services\\Interfaces\\IIncidentService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-12T05:59:39.115Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "EVStationBasedRentalSystemDbContext.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Data\\EVStationBasedRentalSystemDbContext.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Data\\EVStationBasedRentalSystemDbContext.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Data\\EVStationBasedRentalSystemDbContext.cs",
+              "RelativeToolTip": "Monolithic\\Data\\EVStationBasedRentalSystemDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T08:11:59.194Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "IBookingRepository.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Repositories\\Interfaces\\IBookingRepository.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Repositories\\Interfaces\\IBookingRepository.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Repositories\\Interfaces\\IBookingRepository.cs",
+              "RelativeToolTip": "Monolithic\\Repositories\\Interfaces\\IBookingRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-12T05:46:31.152Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "ICarRepository.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Repositories\\Interfaces\\ICarRepository.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Repositories\\Interfaces\\ICarRepository.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Repositories\\Interfaces\\ICarRepository.cs",
+              "RelativeToolTip": "Monolithic\\Repositories\\Interfaces\\ICarRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-12T05:53:04.404Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "IGenericRepository.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Repositories\\Interfaces\\IGenericRepository.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Repositories\\Interfaces\\IGenericRepository.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Repositories\\Interfaces\\IGenericRepository.cs",
+              "RelativeToolTip": "Monolithic\\Repositories\\Interfaces\\IGenericRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-12T05:52:58.423Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "StationDtos.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Station\\StationDtos.cs",
+              "RelativeDocumentMoniker": "Monolithic\\DTOs\\Station\\StationDtos.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Station\\StationDtos.cs",
+              "RelativeToolTip": "Monolithic\\DTOs\\Station\\StationDtos.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-12T05:49:23.688Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "FeedbackController.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\FeedbackController.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Controllers\\FeedbackController.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\FeedbackController.cs",
+              "RelativeToolTip": "Monolithic\\Controllers\\FeedbackController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-12T05:49:18.323Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Incident.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Models\\Incident.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Models\\Incident.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Models\\Incident.cs",
+              "RelativeToolTip": "Monolithic\\Models\\Incident.cs",
+              "ViewState": "AgIAABoAAAAAAAAAAAAmwAwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T08:59:38.534Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "UpdateIncidentRequest.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Request\\UpdateIncidentRequest.cs",
+              "RelativeDocumentMoniker": "Monolithic\\DTOs\\Incident\\Request\\UpdateIncidentRequest.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Request\\UpdateIncidentRequest.cs",
+              "RelativeToolTip": "Monolithic\\DTOs\\Incident\\Request\\UpdateIncidentRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAA5AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T09:08:36.599Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "UpdateIncidentFormRequest.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Request\\UpdateIncidentFormRequest.cs",
+              "RelativeDocumentMoniker": "Monolithic\\DTOs\\Incident\\Request\\UpdateIncidentFormRequest.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Request\\UpdateIncidentFormRequest.cs",
+              "RelativeToolTip": "Monolithic\\DTOs\\Incident\\Request\\UpdateIncidentFormRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvxQAAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T09:08:15.485Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "IncidentRequest.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Request\\IncidentRequest.cs",
+              "RelativeDocumentMoniker": "Monolithic\\DTOs\\Incident\\Request\\IncidentRequest.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Request\\IncidentRequest.cs",
+              "RelativeToolTip": "Monolithic\\DTOs\\Incident\\Request\\IncidentRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAA1AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T09:07:59.424Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "CreateIncidentFormRequest.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Request\\CreateIncidentFormRequest.cs",
+              "RelativeDocumentMoniker": "Monolithic\\DTOs\\Incident\\Request\\CreateIncidentFormRequest.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Request\\CreateIncidentFormRequest.cs",
+              "RelativeToolTip": "Monolithic\\DTOs\\Incident\\Request\\CreateIncidentFormRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T09:07:43.517Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "BookingsController.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\BookingsController.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Controllers\\BookingsController.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\BookingsController.cs",
+              "RelativeToolTip": "Monolithic\\Controllers\\BookingsController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T08:12:24.166Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "IncidentListResponse.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Response\\IncidentListResponse.cs",
+              "RelativeDocumentMoniker": "Monolithic\\DTOs\\Incident\\Response\\IncidentListResponse.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Response\\IncidentListResponse.cs",
+              "RelativeToolTip": "Monolithic\\DTOs\\Incident\\Response\\IncidentListResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T09:09:19.067Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Controllers\\AuthController.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "Monolithic\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAADMAAAAAAAAAAAAywLIAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T07:52:17.853Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "IncidentResponse.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Response\\IncidentResponse.cs",
+              "RelativeDocumentMoniker": "Monolithic\\DTOs\\Incident\\Response\\IncidentResponse.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\DTOs\\Incident\\Response\\IncidentResponse.cs",
+              "RelativeToolTip": "Monolithic\\DTOs\\Incident\\Response\\IncidentResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T09:09:55.764Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "Booking.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Models\\Booking.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Models\\Booking.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Models\\Booking.cs",
+              "RelativeToolTip": "Monolithic\\Models\\Booking.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T08:59:21.121Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "CarsController.cs",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\CarsController.cs",
+              "RelativeDocumentMoniker": "Monolithic\\Controllers\\CarsController.cs",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Controllers\\CarsController.cs",
+              "RelativeToolTip": "Monolithic\\Controllers\\CarsController.cs",
+              "ViewState": "AgIAABMAAAAAAAAAAAAiwBUAAABBAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T08:12:27.789Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\appsettings.json",
+              "RelativeDocumentMoniker": "Monolithic\\appsettings.json",
+              "ToolTip": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\appsettings.json",
+              "RelativeToolTip": "Monolithic\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-10-11T08:11:54.844Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

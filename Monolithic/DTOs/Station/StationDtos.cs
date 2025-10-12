@@ -8,8 +8,6 @@ namespace Monolithic.DTOs.Station
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
-        public decimal Latitude { get; set; }
-        public decimal Longitude { get; set; }
         public int TotalSlots { get; set; }
         public int AvailableSlots { get; set; }
         public bool IsActive { get; set; }
@@ -27,14 +25,6 @@ namespace Monolithic.DTOs.Station
         public string Address { get; set; } = string.Empty;
 
         [Required]
-        [Range(-90, 90)]
-        public decimal Latitude { get; set; }
-
-        [Required]
-        [Range(-180, 180)]
-        public decimal Longitude { get; set; }
-
-        [Required]
         [Range(1, 1000)]
         public int TotalSlots { get; set; }
     }
@@ -43,8 +33,6 @@ namespace Monolithic.DTOs.Station
     {
         public string? Name { get; set; }
         public string? Address { get; set; }
-        public decimal? Latitude { get; set; }
-        public decimal? Longitude { get; set; }
         public int? TotalSlots { get; set; }
     }
 
