@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FEC - Station Staff Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="staff.css">
+</head>
+<body>
+<div class="sidebar-collider" onmouseover="document.querySelector('.sidebar').classList.add('active'); document.body.classList.add('sidebar-open');" onmouseout="document.querySelector('.sidebar').classList.remove('active'); document.body.classList.remove('sidebar-open');"></div>
+<div class="sidebar">
+    <h2 style="text-align:left; margin-left:20px; margin-top:20px; position: absolute; top: 0; left: 0;">FEC Staff</h2>
+    <div style="margin-top:60px;"></div>
+    <button onclick="showSection('booking')"><i class="fas fa-calendar-alt"></i> Booking</button>
+    <button onclick="showSection('vehicle')"><i class="fas fa-car"></i> Vehicle</button>
+    <button onclick="showSection('profile')"><i class="fas fa-user-circle"></i> Profile</button>
+</div>
+<span class="header-title">Staff Page</span>
+<div class="main-content">
+    <!-- Booking Section -->
+    <div id="booking" class="section">
+        <div class="filter-bar">
+            <input type="text" id="searchBooking" placeholder="Search by customer or car...">
+            <select id="statusFilter">
+                <option value="">All Status</option>
+                <option value="booked">Booked</option>
+                <option value="denied">Denied</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+        <div class="booking-grid" id="bookingGrid">
+            <!-- Booking cards will be generated here -->
+        </div>
+    </div>
+    <div id="vehicle" class="section" style="display:none; position: relative;">
+        <button class="vehicle-add-btn" onclick="openAddVehicleModal()"><i class="fas fa-plus"></i> Add Vehicle</button>
+        <div class="vehicle-grid" id="vehicleGrid" style="margin-top: 0;">
+            <!-- Vehicle cards will be generated here -->
+        </div>
+    </div>
+    <div id="profile" class="section" style="display:none; position: relative;">
+        <div class="profile-content" style="padding: 32px 0; text-align: center;">
+            <button class="profile-add-btn" onclick="openProfileModal()" style="background:#2196f3;color:white;padding:12px 32px;border:none;border-radius:24px;font-weight:600;font-size:1.1rem;">View Staff Profile</button>
+        </div>
+    </div>
+</div>
+<!-- Booking detail modal -->
+<div id="bookingModal" class="modal-overlay">
+    <div class="modal-content" style="display: flex; flex-direction: column; align-items: flex-start; width: min(920px,95vw); max-height:90vh; overflow:auto; box-sizing:border-box; padding:20px;">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div style="display: flex; flex-direction: row; width: 100%; gap: 24px; flex-wrap:wrap;">
+            <div style="flex: 0 0 220px; display: flex; flex-direction: column; align-items: flex-start; min-width:0;">
+                <img id="modalImage" src="" alt="" style="width:100%; max-width:220px; height:auto; border-radius: 8px; margin-bottom:16px; object-fit:cover;">
+                <h3 id="modalTitle" style="margin-bottom:10px;">Booking Details</h3>
+                <div id="modalStatus" style="margin-bottom:6px;font-size:1.05rem;"></div>
+                <div id="modalCustomer" style="margin-bottom:6px;font-size:1.05rem;"></div>
+                <div id="modalDate" style="margin-bottom:6px;font-size:1.05rem;"></div>
+            </div>
+            <div style="flex: 1 1 380px; display: flex; flex-direction: column; gap: 14px; margin-left: 0; min-width:0;">
+                <div style="background:#f5f5f5;padding:14px 16px;border-radius:10px;width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;box-sizing:border-box;">
+                    <span style="font-weight:600;">ID Card (CMND/CCCD):</span>
+                    <label style="display:flex;align-items:center;margin-left:12px;"><input type="checkbox" id="checkID" style="margin-right:8px;"> Verified</label>
+                </div>
+                <div style="background:#f5f5f5;padding:14px 16px;border-radius:10px;width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;box-sizing:border-box;">
+                    <span style="font-weight:600;">Face Photo:</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="file" id="uploadFace" accept="image/*" style="margin-right:12px;">
+                        <label style="display:flex;align-items:center;"><input type="checkbox" id="checkFace" style="margin-right:8px;"> Verified</label>
+                    </div>
+                </div>
+                <div style="background:#f5f5f5;padding:14px 16px;border-radius:10px;width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;box-sizing:border-box;">
+                    <span style="font-weight:600;">Phone Number:</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="text" id="customerPhone" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;margin-right:12px;max-width:160px;">
+                        <label style="display:flex;align-items:center;"><input type="checkbox" id="checkPhone" style="margin-right:8px;"> Verified</label>
+                    </div>
+                </div>
+                <div style="background:#f5f5f5;padding:14px 16px;border-radius:10px;width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;box-sizing:border-box;">
+                    <span style="font-weight:600;">Other Info:</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="text" id="customerOther" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;margin-right:12px;max-width:220px;">
+                        <label style="display:flex;align-items:center;"><input type="checkbox" id="checkOther" style="margin-right:8px;"> Verified</label>
+                    </div>
+                </div>
+                <div style="background:#e3f2fd;padding:14px 16px;border-radius:10px;width:100%;display:flex;flex-direction:row;justify-content:center;gap:12px;align-items:center;flex-wrap:wrap;box-sizing:border-box;">
+                    <button id="confirmBookingBtn" style="background:#43a047;color:white;padding:8px 16px;border:none;border-radius:14px;font-weight:600;font-size:0.95rem;flex:0 0 auto;">Confirm Booking</button>
+                    <button id="completeBookingBtn" style="background:#1565c0;color:white;padding:8px 16px;border:none;border-radius:14px;font-weight:600;font-size:0.95rem;display:none;flex:0 0 auto;">Mark as Completed</button>
+                    <button id="denyBookingBtn" style="background:#e53935;color:white;padding:8px 16px;border:none;border-radius:14px;font-weight:600;font-size:0.95rem;flex:0 0 auto;">Deny Booking</button>
+                </div>
+            </div>
+        </div>
+        <div id="modalTransactionInfo" style="margin-top:24px;width:100%;display:none;">
+            <h4 style="margin-bottom:10px;">Transaction Details</h4>
+            <ul style="margin-bottom:8px;font-size:1rem;">
+                <li>Find rental location on map</li>
+                <li>View available vehicles (type, battery, price)</li>
+                <li>Book in advance or on-site</li>
+                <li>Check-in at counter/app</li>
+                <li>Sign electronic contract</li>
+                <li>Confirm handover with staff (vehicle check, photo)</li>
+                <li>Return vehicle at rental location</li>
+                <li>Staff checks and confirms vehicle condition</li>
+                <li>Pay any additional fees</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div id="vehicleModal" class="vehicle-modal-overlay">
+    <div class="vehicle-modal-content" id="vehicleModalContent">
+        <span class="vehicle-modal-close" onclick="closeVehicleModal()">&times;</span>
+        <!-- Details will be injected here -->
+    </div>
+</div>
+<div id="addVehicleModal" class="vehicle-modal-overlay">
+    <div class="vehicle-modal-content">
+        <span class="vehicle-modal-close" onclick="closeAddVehicleModal()">&times;</span>
+        <h3>Add Vehicle</h3>
+        <input type="text" id="addVehicleName" placeholder="Vehicle Name" style="width:100%;margin-bottom:10px;padding:8px 12px;border-radius:8px;border:1px solid #ccc;">
+        <input type="text" id="addVehicleDesc" placeholder="Description" style="width:100%;margin-bottom:10px;padding:8px 12px;border-radius:8px;border:1px solid #ccc;">
+        <input type="text" id="addVehicleDetail" placeholder="Detail" style="width:100%;margin-bottom:10px;padding:8px 12px;border-radius:8px;border:1px solid #ccc;">
+        <input type="text" id="addVehicleImg" placeholder="Image URL" style="width:100%;margin-bottom:10px;padding:8px 12px;border-radius:8px;border:1px solid #ccc;">
+        <button onclick="submitAddVehicle()" style="background:#43a047;color:white;padding:8px 24px;border:none;border-radius:16px;font-weight:600;">Add</button>
+    </div>
+</div>
+<div id="profileModal" class="profile-modal-overlay">
+    <div class="profile-modal-content">
+        <span class="profile-modal-close" onclick="closeProfileModal()">&times;</span>
+        <h2>Staff Profile</h2>
+        <img src="https://via.placeholder.com/180x180?text=Staff" alt="Staff" style="border-radius:50%;margin-bottom:18px;">
+        <p><strong>Name:</strong> Nguyen Van Staff</p>
+        <p><strong>Email:</strong> staff@fec.com</p>
+        <p><strong>Role:</strong> Station Staff</p>
+        <p><strong>Phone:</strong> 0123-456-789</p>
+        <p><strong>Address:</strong> 123 Main St, City</p>
+        <p><strong>Joined:</strong> 2024-01-15</p>
+    </div>
+</div>
+<div id="vehicleUpdateModal" class="vehicle-modal-overlay">
+    <div class="vehicle-modal-content">
+        <span class="vehicle-modal-close" onclick="closeVehicleUpdateModal()">&times;</span>
+        <h3>Update Vehicle Status / Report Issue</h3>
+        <input type="text" id="updateBatteryStatus" placeholder="Battery Status (e.g. 80%)" style="width:100%;margin-bottom:14px;padding:8px 12px;border-radius:8px;border:1px solid #ccc;">
+        <input type="text" id="updateTechStatus" placeholder="Technical Condition (e.g. Good)" style="width:100%;margin-bottom:14px;padding:8px 12px;border-radius:8px;border:1px solid #ccc;">
+        <textarea id="updateIssueReport" placeholder="Report issue or malfunction..." style="width:100%;margin-bottom:14px;padding:8px 12px;border-radius:8px;border:1px solid #ccc;min-height:80px;"></textarea>
+        <button onclick="submitVehicleUpdate()" style="background:#43a047;color:white;padding:8px 24px;border:none;border-radius:16px;font-weight:600;">Submit Update</button>
+    </div>
+</div>
+ 
+<script src="staff.js"></script>
+</body>
+</html>
