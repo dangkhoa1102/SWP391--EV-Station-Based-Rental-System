@@ -1,0 +1,6 @@
+@EVStation_basedRendtalSystem.Services.FeedbackAPI_HostAddress = http://localhost:5068
+
+GET {{EVStation_basedRendtalSystem.Services.FeedbackAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

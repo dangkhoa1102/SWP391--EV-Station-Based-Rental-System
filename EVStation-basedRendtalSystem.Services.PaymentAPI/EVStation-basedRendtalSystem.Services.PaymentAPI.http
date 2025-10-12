@@ -1,0 +1,6 @@
+@EVStation_basedRendtalSystem.Services.PaymentAPI_HostAddress = http://localhost:5195
+
+GET {{EVStation_basedRendtalSystem.Services.PaymentAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

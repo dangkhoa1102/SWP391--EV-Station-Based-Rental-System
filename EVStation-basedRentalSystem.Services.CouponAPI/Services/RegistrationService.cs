@@ -1,4 +1,5 @@
-﻿using EVStation_basedRentalSystem.Services.AuthAPI.Data;
+﻿using EVStation_basedRentalSystem.Services.AuthAPI.Clients;
+using EVStation_basedRentalSystem.Services.AuthAPI.Data;
 using EVStation_basedRentalSystem.Services.AuthAPI.Models;
 using EVStation_basedRentalSystem.Services.AuthAPI.Models.Dto;
 using EVStation_basedRentalSystem.Services.AuthAPI.Models.Dto.Request;
@@ -15,19 +16,23 @@ namespace EVStation_basedRentalSystem.Services.AuthAPI.Service
     {
         private readonly AppDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserServiceClient _userServiceClient;
 
-        public RegistrationService(AppDbContext db, UserManager<ApplicationUser> userManager)
+        public RegistrationService(AppDbContext db, UserManager<ApplicationUser> userManager, UserServiceClient userServiceClient)
         {
             _db = db;
             _userManager = userManager;
+            _userServiceClient = userServiceClient;
         }
+
+
 
         /// <summary>
         /// Register a new user
         /// </summary>
         public async Task<RegistrationResponseDto> RegisterUserAsync(RegistrationRequestDto registrationRequestDto)
         {
-            // Check if user already exists
+            // 1️⃣ Check if user already exists
             var existingUser = await _userManager.FindByEmailAsync(registrationRequestDto.Email);
             if (existingUser != null)
                 return new RegistrationResponseDto
@@ -36,7 +41,7 @@ namespace EVStation_basedRentalSystem.Services.AuthAPI.Service
                     Message = "Email is already registered."
                 };
 
-            // Create new user
+            // 2️⃣ Create new user in Identity
             var user = new ApplicationUser
             {
                 UserName = registrationRequestDto.Email,
@@ -45,10 +50,9 @@ namespace EVStation_basedRentalSystem.Services.AuthAPI.Service
                 Name = registrationRequestDto.Name,
                 PhoneNumber = registrationRequestDto.PhoneNumber,
                 SecurityStamp = Guid.NewGuid().ToString(),
-                IsApproved = false // NEW: user not approved yet
+                IsApproved = false
             };
 
-            // Create user in Identity
             var result = await _userManager.CreateAsync(user, registrationRequestDto.Password);
             if (!result.Succeeded)
                 return new RegistrationResponseDto
@@ -57,18 +61,30 @@ namespace EVStation_basedRentalSystem.Services.AuthAPI.Service
                     Message = result.Errors.FirstOrDefault()?.Description ?? "Registration failed"
                 };
 
-            // Assign default role "Renter"
+            // 3️⃣ Assign default role
             await _userManager.AddToRoleAsync(user, "Renter");
 
-            // Map to DTO
+            // 4️⃣ Sync new user to UserAPI using the same ID
             var userDto = new UserDto
             {
-                ID = user.Id,
+                ID = user.Id, // same ID from Auth
                 Email = user.Email,
                 Name = user.Name,
                 PhoneNumber = user.PhoneNumber
             };
 
+            try
+            {
+                // send to UserAPI through HttpClient
+                await _userServiceClient.CreateUserAsync(userDto);
+            }
+            catch (Exception ex)
+            {
+                // optional: log the error
+                Console.WriteLine($"⚠️ Failed to sync user to UserAPI: {ex.Message}");
+            }
+
+            // 5️⃣ Return success response
             return new RegistrationResponseDto
             {
                 User = userDto,
@@ -76,9 +92,7 @@ namespace EVStation_basedRentalSystem.Services.AuthAPI.Service
             };
         }
 
-        /// <summary>
-        /// Initiate forgot password flow
-        /// </summary>
+
         public async Task<string> ForgotPasswordAsync(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
@@ -93,18 +107,11 @@ namespace EVStation_basedRentalSystem.Services.AuthAPI.Service
             return "Password reset link sent";
         }
 
-        /// <summary>
-        /// Reset password using a reset token
-        /// </summary>
         public async Task<string> ResetPasswordAsync(string resetKey)
         {
-            // In production, you need DTO: { Email, Token, NewPassword }
             throw new NotImplementedException("Use ResetPassword with Email, Token, and NewPassword DTO for security.");
         }
 
-        /// <summary>
-        /// Change password for a logged-in user
-        /// </summary>
         public async Task<string> ChangePasswordAsync(ChangePasswordRequestDto changePasswordRequest)
         {
             var user = await _userManager.FindByIdAsync(changePasswordRequest.UserId);

@@ -1,4 +1,5 @@
-﻿using EVStation_basedRentalSystem.Services.AuthAPI.Data;
+﻿using EVStation_basedRentalSystem.Services.AuthAPI.Clients;
+using EVStation_basedRentalSystem.Services.AuthAPI.Data;
 using EVStation_basedRentalSystem.Services.AuthAPI.Models;
 using EVStation_basedRentalSystem.Services.AuthAPI.Service;
 using EVStation_basedRentalSystem.Services.AuthAPI.Service.IService;
@@ -57,6 +58,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+
 // ----------------------------
 // 4️⃣ Add services
 // ----------------------------
@@ -68,6 +70,12 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<ITokenIntrospectionService, TokenIntrospectionService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IAuthorizeService, AuthorizeService>();
+
+// ✅ Properly register UserServiceClient with base URL
+builder.Services.AddHttpClient<UserServiceClient>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7002"); // <-- Change to your UserAPI port
+});
 
 // ----------------------------
 // 5️⃣ Configure Swagger with Bearer

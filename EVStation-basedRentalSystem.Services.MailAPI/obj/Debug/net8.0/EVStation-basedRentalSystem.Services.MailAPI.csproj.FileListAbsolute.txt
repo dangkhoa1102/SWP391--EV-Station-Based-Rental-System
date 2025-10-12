@@ -1,65 +1,36 @@
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\appsettings.Development.json
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\appsettings.json
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.exe
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.deps.json
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.runtimeconfig.json
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.dll
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.pdb
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Microsoft.OpenApi.dll
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.csproj.AssemblyReference.cache
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.AssemblyInfoInputs.cache
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.AssemblyInfo.cs
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.csproj.CoreCompileInputs.cache
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.sourcelink.json
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.build.json
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.development.json
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets\msbuild.EVStation-basedRentalSystem.Services.MailAPI.Microsoft.AspNetCore.StaticWebAssets.props
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets\msbuild.build.EVStation-basedRentalSystem.Services.MailAPI.props
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.EVStation-basedRentalSystem.Services.MailAPI.props
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.EVStation-basedRentalSystem.Services.MailAPI.props
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.pack.json
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\scopedcss\bundle\EVStation-basedRentalSystem.Services.MailAPI.styles.css
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStatio.6950F7F5.Up2Date
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.dll
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\refint\EVStation-basedRentalSystem.Services.MailAPI.dll
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.pdb
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.genruntimeconfig.cache
-C:\Users\MINH KHOI\source\repos\EV Station-based Rental System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\ref\EVStation-basedRentalSystem.Services.MailAPI.dll
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\appsettings.Development.json
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\appsettings.json
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.staticwebassets.endpoints.json
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.exe
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.deps.json
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.runtimeconfig.json
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.dll
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.pdb
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Microsoft.OpenApi.dll
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.csproj.AssemblyReference.cache
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.AssemblyInfoInputs.cache
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.AssemblyInfo.cs
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.csproj.CoreCompileInputs.cache
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.sourcelink.json
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\scopedcss\bundle\EVStation-basedRentalSystem.Services.MailAPI.styles.css
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.build.json
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.build.json.cache
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.development.json
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStatio.6950F7F5.Up2Date
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.dll
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\refint\EVStation-basedRentalSystem.Services.MailAPI.dll
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.pdb
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.genruntimeconfig.cache
-C:\Users\HP\Desktop\hochoi\EV-RENTAL\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\ref\EVStation-basedRentalSystem.Services.MailAPI.dll
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\appsettings.Development.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\appsettings.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.staticwebassets.endpoints.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.exe
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.deps.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.runtimeconfig.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.dll
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.pdb
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Microsoft.OpenApi.dll
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.csproj.AssemblyReference.cache
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\rpswa.dswa.cache.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.GeneratedMSBuildEditorConfig.editorconfig
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.AssemblyInfoInputs.cache
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.AssemblyInfo.cs
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.csproj.CoreCompileInputs.cache
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.MvcApplicationPartsAssemblyInfo.cs
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.MvcApplicationPartsAssemblyInfo.cache
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.sourcelink.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\rjimswa.dswa.cache.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\scopedcss\bundle\EVStation-basedRentalSystem.Services.MailAPI.styles.css
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.build.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.build.json.cache
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.development.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStatio.6950F7F5.Up2Date
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.dll
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\refint\EVStation-basedRentalSystem.Services.MailAPI.dll
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.pdb
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\EVStation-basedRentalSystem.Services.MailAPI.genruntimeconfig.cache
+E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.MailAPI\obj\Debug\net8.0\ref\EVStation-basedRentalSystem.Services.MailAPI.dll

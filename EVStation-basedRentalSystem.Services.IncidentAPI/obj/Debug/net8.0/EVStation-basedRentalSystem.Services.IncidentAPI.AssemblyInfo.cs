@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EVStation-basedRentalSystem.Services.IncidentAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+86394101359afca3f1c7707c36e66a6d45c6ced9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e07e1460d2c39b259849a937e14e999329aa9c75")]
 [assembly: System.Reflection.AssemblyProductAttribute("EVStation-basedRentalSystem.Services.IncidentAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EVStation-basedRentalSystem.Services.IncidentAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
