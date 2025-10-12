@@ -138,3 +138,6 @@ E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-based
 E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSysteEM.Services.BookingAPI\obj\Debug\net8.0\EVStation-basedRentalSysteEM.Services.BookingAPI.pdb
 E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSysteEM.Services.BookingAPI\obj\Debug\net8.0\EVStation-basedRentalSysteEM.Services.BookingAPI.genruntimeconfig.cache
 E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSysteEM.Services.BookingAPI\obj\Debug\net8.0\ref\EVStation-basedRentalSysteEM.Services.BookingAPI.dll
+E:\FPTU\s5\SWP391\swp.new\branch-of-mine\SWP391--EV-Station-Based-Rental-System-v.1.p\EVStation-basedRentalSysteEM.Services.BookingAPI\obj\Debug\net8.0\EVStation-basedRentalSysteEM.Services.BookingAPI.dll
+E:\FPTU\s5\SWP391\swp.new\branch-of-mine\SWP391--EV-Station-Based-Rental-System-v.1.p\EVStation-basedRentalSysteEM.Services.BookingAPI\obj\Debug\net8.0\refint\EVStation-basedRentalSysteEM.Services.BookingAPI.dll
+E:\FPTU\s5\SWP391\swp.new\branch-of-mine\SWP391--EV-Station-Based-Rental-System-v.1.p\EVStation-basedRentalSysteEM.Services.BookingAPI\obj\Debug\net8.0\EVStation-basedRentalSysteEM.Services.BookingAPI.pdb

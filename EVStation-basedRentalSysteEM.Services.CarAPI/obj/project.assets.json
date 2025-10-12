@@ -4573,11 +4573,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
+      "projectUniqueName": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-mine\\SWP391--EV-Station-Based-Rental-System-v.1.p\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
       "projectName": "EVStation-basedRentalSysteEM.Services.CarAPI",
-      "projectPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
+      "projectPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-mine\\SWP391--EV-Station-Based-Rental-System-v.1.p\\EVStation-basedRentalSysteEM.Services.CarAPI\\EVStation-basedRentalSysteEM.Services.CarAPI.csproj",
       "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
-      "outputPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\EVStation-basedRentalSysteEM.Services.CarAPI\\obj\\",
+      "outputPath": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-mine\\SWP391--EV-Station-Based-Rental-System-v.1.p\\EVStation-basedRentalSysteEM.Services.CarAPI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
