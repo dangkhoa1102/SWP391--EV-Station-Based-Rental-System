@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "TVnPhv7S2JM=",
+  "dgSpecHash": "pS9N0es4x2M=",
   "success": true,
-  "projectFilePath": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-khoa\\SWP391--EV-Station-Based-Rental-System\\EVSation.APIGateway\\EVSation.APIGateway.csproj",
+  "projectFilePath": "E:\\FPTU\\s5\\SWP391\\swp.new\\branch-of-mine\\SWP391--EV-Station-Based-Rental-System-v.1.p\\EVSation.APIGateway\\EVSation.APIGateway.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\HP\\.nuget\\packages\\fluentvalidation\\11.11.0\\fluentvalidation.11.11.0.nupkg.sha512",
     "C:\\Users\\HP\\.nuget\\packages\\ipaddressrange\\6.2.0\\ipaddressrange.6.2.0.nupkg.sha512",

@@ -16,6 +16,7 @@ namespace Monolithic.Data
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<Incident> Incidents { get; set; }
+        public DbSet<Contract> Contracts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -33,6 +34,35 @@ namespace Monolithic.Data
                 entity.Property(u => u.UserRole).IsRequired().HasDefaultValue("Customer");
                 entity.Property(u => u.IsActive).HasDefaultValue(true);
                 entity.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Contract configuration
+            builder.Entity<Contract>(entity =>
+            {
+                entity.HasKey(c => c.ContractId);
+                entity.Property(c => c.ContractId).HasDefaultValueSql("NEWID()");
+                entity.Property(c => c.BookingId).IsRequired();
+                entity.Property(c => c.RenterId).IsRequired();
+                entity.Property(c => c.ContractContent).IsRequired().HasMaxLength(4000);
+                entity.Property(c => c.ContractContentHash).IsRequired().HasMaxLength(128);
+                entity.Property(c => c.SignatureType).IsRequired().HasMaxLength(50);
+                entity.Property(c => c.SignatureValue).HasMaxLength(256);
+                entity.Property(c => c.SignerEmail).HasMaxLength(256);
+                entity.Property(c => c.ConfirmationTokenHash).HasMaxLength(128);
+                entity.Property(c => c.TokenExpiresAt);
+                entity.Property(c => c.IsConfirmed).HasDefaultValue(false);
+                entity.Property(c => c.ConfirmedAt);
+                entity.Property(c => c.ConfirmedFromIp).HasMaxLength(100);
+                entity.Property(c => c.ConfirmedUserAgent).HasMaxLength(512);
+                entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne<Booking>()
+                      .WithMany()
+                      .HasForeignKey(c => c.BookingId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(c => c.BookingId);
+                entity.HasIndex(c => c.RenterId);
             });
 
             // Configure Station entity

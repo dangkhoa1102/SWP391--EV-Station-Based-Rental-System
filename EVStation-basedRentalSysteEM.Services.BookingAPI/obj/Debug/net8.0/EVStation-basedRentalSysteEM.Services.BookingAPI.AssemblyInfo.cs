@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EVStation-basedRentalSysteEM.Services.BookingAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e07e1460d2c39b259849a937e14e999329aa9c75")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3bdcf6ffc8b88733f77ebd42a672efba3ebc1337")]
 [assembly: System.Reflection.AssemblyProductAttribute("EVStation-basedRentalSysteEM.Services.BookingAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EVStation-basedRentalSysteEM.Services.BookingAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
