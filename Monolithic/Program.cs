@@ -76,7 +76,6 @@ builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
 // Services
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IContractService, ContractServiceImpl>();
-builder.Services.AddScoped<IContractService, ContractServiceImpl>();
 
 // Custom User Service
 builder.Services.AddScoped<IUserService, UserService>();
