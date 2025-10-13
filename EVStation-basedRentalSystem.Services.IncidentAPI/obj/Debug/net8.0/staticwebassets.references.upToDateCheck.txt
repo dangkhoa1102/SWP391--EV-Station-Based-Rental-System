@@ -1,7 +1,0 @@
-E:\FPTU\s5\SWP391\swp.new\SWP391--EV-Station-Based-Rental-System\EVStation-basedRentalSystem.Services.CouponAPI\obj\Debug\net8.0\staticwebassets.build.json
-E:\FPTU\s5\SWP391\swp.new\branch-of-mine\SWP391--EV-Station-Based-Rental-System-v.1.p\EVStation-basedRentalSystem.Services.CouponAPI\obj\Debug\net8.0\staticwebassets.build.json
-E:\FPTU\s5\SWP391\swp.new\branch-of-mine\SWP391--EV-Station-Based-Rental-System-v.1.p\EVStation-basedRentalSystem.Services.CouponAPI\obj\Debug\net8.0\staticwebassets.build.json
-E:\FPTU\s5\SWP391\swp.new\branch-of-mine\SWP391--EV-Station-Based-Rental-System-v.1.p\EVStation-basedRentalSystem.Services.CouponAPI\obj\Debug\net8.0\staticwebassets.build.json
-E:\FPTU\s5\SWP391\swp.new\branch-of-mine\SWP391--EV-Station-Based-Rental-System-v.1.p\EVStation-basedRentalSystem.Services.CouponAPI\obj\Debug\net8.0\staticwebassets.build.json
-E:\FPTU\s5\SWP391\swp.new\branch-of-mine\SWP391--EV-Station-Based-Rental-System-v.1.p\EVStation-basedRentalSystem.Services.CouponAPI\obj\Debug\net8.0\staticwebassets.build.json
-E:\FPTU\s5\SWP391\swp.new\branch-of-mine\SWP391--EV-Station-Based-Rental-System-v.1.p\EVStation-basedRentalSystem.Services.CouponAPI\obj\Debug\net8.0\staticwebassets.build.json
