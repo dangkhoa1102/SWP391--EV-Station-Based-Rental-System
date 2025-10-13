@@ -21,10 +21,16 @@ namespace Monolithic.Services.Implementation
         // token lifetime in hours
         private const int TokenLifetimeHours = 24;
 
-        public ContractServiceImpl(IContractRepository contractRepository, IBookingRepository bookingRepository, IMapper mapper, ILogger<ContractServiceImpl> logger)
+        public ContractServiceImpl(
+            IContractRepository contractRepository,
+            IBookingRepository bookingRepository,
+            ICarRepository carRepository,
+            IMapper mapper,
+            ILogger<ContractServiceImpl> logger)
         {
             _contractRepository = contractRepository;
             _bookingRepository = bookingRepository;
+            _carRepository = carRepository;
             _mapper = mapper;
             _logger = logger;
         }
@@ -191,7 +197,7 @@ namespace Monolithic.Services.Implementation
             };
 
             // Simple template
-            var template = "H?P ??NG THUÊ XE\nNg??i thuê: {{FullName}}\nCMND/CCCD: {{IdNumber}}\nB?ng lái: {{DriverLicenseNumber}}\nS?T: {{PhoneNumber}}\nXe: {{Car}}\nTh?i gian: {{StartTime}} - {{EndTime}}\nPhí ??c tính: {{EstimatedAmount}}\nGhi chú: {{AdditionalNotes}}\n";
+            var template = "H?P ??NG THUÃŠ XE\nNg??i thuÃª: {{FullName}}\nCMND/CCCD: {{IdNumber}}\nB?ng lÃ¡i: {{DriverLicenseNumber}}\nS?T: {{PhoneNumber}}\nXe: {{Car}}\nTh?i gian: {{StartTime}} - {{EndTime}}\nPhÃ­ ??c tÃ­nh: {{EstimatedAmount}}\nGhi chÃº: {{AdditionalNotes}}\n";
 
             foreach (var kv in map)
             {
