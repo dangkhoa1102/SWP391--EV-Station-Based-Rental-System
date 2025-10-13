@@ -108,7 +108,7 @@ namespace Monolithic.Data
                 entity.Property(b => b.BookingId).HasDefaultValueSql("NEWID()");
                 entity.Property(b => b.UserId).IsRequired();
                 entity.Property(b => b.TotalAmount).HasPrecision(10, 2);
-                entity.Property(b => b.Status).IsRequired().HasMaxLength(50).HasDefaultValue("Pending");
+                entity.Property(b => b.BookingStatus).IsRequired().HasMaxLength(50);
                 entity.Property(b => b.IsActive).HasDefaultValue(true);
                 entity.Property(b => b.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(b => b.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
@@ -132,9 +132,9 @@ namespace Monolithic.Data
                       .OnDelete(DeleteBehavior.Restrict);
 
                 // Booking-DropoffStation relationship (optional)
-                entity.HasOne(b => b.DropoffStation)
+                entity.HasOne(b => b.ReturnStation)
                       .WithMany(s => s.DropoffBookings)
-                      .HasForeignKey(b => b.DropoffStationId)
+                      .HasForeignKey(b => b.ReturnStationId)
                       .OnDelete(DeleteBehavior.SetNull);
             });
 

@@ -48,7 +48,7 @@ namespace Monolithic.DTOs.Car
         public decimal CurrentBatteryLevel { get; set; }
 
         [Required]
-        [Range(0.01, 10000)]
+        [Range(0.01, 1000000000000000000)]
         public decimal RentalPricePerHour { get; set; }
 
         [Required]
