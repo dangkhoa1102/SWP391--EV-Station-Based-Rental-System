@@ -24,6 +24,14 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
+        //[HttpPost]
+        //public async Task<ActionResult<VerificationRequestDto>> VerificationSign([FromBody] VerificationRequestDto request)
+        //{
+        //    // Implementation for verification sign endpoint
+   
+        //    return Ok();
+        //}
+
         [HttpPost("fill")]
         public async Task<ActionResult<ResponseDto<ContractDto>>> FillContract([FromBody] Monolithic.DTOs.Contract.FillContractFieldsDto request)
         {

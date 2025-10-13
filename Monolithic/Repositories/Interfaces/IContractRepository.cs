@@ -6,6 +6,6 @@ namespace Monolithic.Repositories.Interfaces
     {
         Task<Contract?> GetByBookingIdAsync(Guid bookingId);
         Task<IEnumerable<Contract>> GetByRenterIdAsync(Guid renterId);
-        Task<Contract> UpsertDraftAsync(Contract contract);
+        Task<Contract> UpsertDraftAsync(Contract contract);        
     }
 }
