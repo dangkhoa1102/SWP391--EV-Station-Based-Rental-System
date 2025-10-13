@@ -29,6 +29,13 @@ namespace Monolithic.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWID()");
 
+                    b.Property<DateTime?>("ActualReturnDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("BookingStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("int");
+
                     b.Property<Guid>("CarId")
                         .HasColumnType("uniqueidentifier");
 
@@ -37,29 +44,33 @@ namespace Monolithic.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<Guid?>("DropoffStationId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<decimal>("DailyRate")
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("HourlyRate")
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<Guid>("PickupStationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ReturnStationId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasDefaultValue("Pending");
 
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(10, 2)
@@ -77,9 +88,9 @@ namespace Monolithic.Migrations
 
                     b.HasIndex("CarId");
 
-                    b.HasIndex("DropoffStationId");
-
                     b.HasIndex("PickupStationId");
+
+                    b.HasIndex("ReturnStationId");
 
                     b.HasIndex("UserId");
 
@@ -230,6 +241,9 @@ namespace Monolithic.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("TokenExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("ContractId");
@@ -473,16 +487,16 @@ namespace Monolithic.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Monolithic.Models.Station", "DropoffStation")
-                        .WithMany("DropoffBookings")
-                        .HasForeignKey("DropoffStationId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Monolithic.Models.Station", "PickupStation")
                         .WithMany("PickupBookings")
                         .HasForeignKey("PickupStationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Monolithic.Models.Station", "ReturnStation")
+                        .WithMany("DropoffBookings")
+                        .HasForeignKey("ReturnStationId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Monolithic.Models.User", "User")
                         .WithMany("Bookings")
@@ -492,9 +506,9 @@ namespace Monolithic.Migrations
 
                     b.Navigation("Car");
 
-                    b.Navigation("DropoffStation");
-
                     b.Navigation("PickupStation");
+
+                    b.Navigation("ReturnStation");
 
                     b.Navigation("User");
                 });

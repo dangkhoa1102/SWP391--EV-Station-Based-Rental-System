@@ -18,7 +18,7 @@ namespace Monolithic.Repositories.Implementation
             return await _dbContext.Bookings.Where(b => b.IsActive && b.UserId == userGuid) // Use Guid for comparison
                 .Include(b => b.Car)
                 .Include(b => b.PickupStation)
-                .Include(b => b.DropoffStation)
+                .Include(b => b.ReturnStation)
                 .OrderByDescending(b => b.CreatedAt)
                 .AsNoTracking().ToListAsync();
         }
@@ -26,11 +26,13 @@ namespace Monolithic.Repositories.Implementation
         public async Task<Booking?> GetActiveBookingByUserAsync(string userId)
         {
             if (!Guid.TryParse(userId, out var userGuid)) return null;
-            
+
             return await _dbContext.Bookings.Include(b => b.Car)
                 .Include(b => b.PickupStation)
-                .Include(b => b.DropoffStation)
-                .FirstOrDefaultAsync(b => b.IsActive && b.UserId == userGuid && b.Status != "Completed" && b.Status != "Cancelled"); // Use Guid for comparison
+                .Include(b => b.ReturnStation)
+                .FirstOrDefaultAsync(b => b.IsActive && b.UserId == userGuid && 
+                    b.BookingStatus != BookingStatus.Completed && 
+                    b.BookingStatus != BookingStatus.Cancelled);
         }
 
         public async Task<Booking?> GetBookingWithDetailsAsync(Guid bookingId)
@@ -38,7 +40,7 @@ namespace Monolithic.Repositories.Implementation
             return await _dbContext.Bookings.Include(b => b.User)
                 .Include(b => b.Car)
                 .Include(b => b.PickupStation)
-                .Include(b => b.DropoffStation)
+                .Include(b => b.ReturnStation)
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId && b.IsActive); // Use BookingId
         }
 
@@ -50,13 +52,13 @@ namespace Monolithic.Repositories.Implementation
 
         public async Task<IEnumerable<Booking>> GetBookingsByStationAsync(Guid stationId)
         {
-            return await _dbContext.Bookings.Where(b => b.IsActive && (b.PickupStationId == stationId || b.DropoffStationId == stationId))
+            return await _dbContext.Bookings.Where(b => b.IsActive && (b.PickupStationId == stationId || b.ReturnStationId == stationId))
                 .AsNoTracking().ToListAsync();
         }
 
         public async Task<bool> HasActiveBookingForCarAsync(Guid carId)
         {
-            return await _dbContext.Bookings.AnyAsync(b => b.IsActive && b.CarId == carId && b.Status != "Completed" && b.Status != "Cancelled");
+            return await _dbContext.Bookings.AnyAsync(b => b.IsActive && b.CarId == carId && !b.BookingStatus.Equals("Completed") && !b.BookingStatus.Equals("Cancelled"));
         }
     }
 }

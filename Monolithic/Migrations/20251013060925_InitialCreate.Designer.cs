@@ -12,8 +12,8 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    [Migration("20251012062135_InitialIncident")]
-    partial class InitialIncident
+    [Migration("20251013060925_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -166,6 +166,85 @@ namespace Monolithic.Migrations
                         .IsUnique();
 
                     b.ToTable("Cars");
+                });
+
+            modelBuilder.Entity("Monolithic.Models.Contract", b =>
+                {
+                    b.Property<Guid>("ContractId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConfirmationTokenHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ConfirmedFromIp")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ConfirmedUserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("ContractContent")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("ContractContentHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsConfirmed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("RenterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SignatureType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SignatureValue")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("SignerEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("StaffId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("TokenExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ContractId");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("RenterId");
+
+                    b.ToTable("Contracts");
                 });
 
             modelBuilder.Entity("Monolithic.Models.Feedback", b =>
@@ -435,6 +514,15 @@ namespace Monolithic.Migrations
                         .IsRequired();
 
                     b.Navigation("CurrentStation");
+                });
+
+            modelBuilder.Entity("Monolithic.Models.Contract", b =>
+                {
+                    b.HasOne("Monolithic.Models.Booking", null)
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Monolithic.Models.Feedback", b =>

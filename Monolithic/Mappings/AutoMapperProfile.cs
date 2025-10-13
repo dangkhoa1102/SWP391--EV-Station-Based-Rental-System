@@ -61,15 +61,15 @@ namespace Monolithic.Mappings
 
             // Booking mappings
             CreateMap<Booking, BookingDto>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.BookingId)) // Use BookingId
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => $"{src.User.FirstName} {src.User.LastName}"))
-                .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => $"{src.Car.Brand} {src.Car.Model} ({src.Car.LicensePlate})"))
-                .ForMember(dest => dest.PickupStationName, opt => opt.MapFrom(src => src.PickupStation.Name))
-                .ForMember(dest => dest.DropoffStationName, opt => opt.MapFrom(src => src.DropoffStation != null ? src.DropoffStation.Name : null));
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}" : ""))
+                .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => src.Car != null ? $"{src.Car.Brand} {src.Car.Model} ({src.Car.LicensePlate})" : ""))
+                .ForMember(dest => dest.PickupStationName, opt => opt.MapFrom(src => src.PickupStation != null ? src.PickupStation.Name : ""))
+                .ForMember(dest => dest.ReturnStationName, opt => opt.MapFrom(src => src.ReturnStation != null ? src.ReturnStation.Name : null));
 
             CreateMap<CreateBookingDto, Booking>()
-                .ForMember(dest => dest.BookingId, opt => opt.MapFrom(src => Guid.NewGuid())) // Use BookingId
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Pending"))
+                .ForMember(dest => dest.BookingStatus, opt => opt.MapFrom(src => BookingStatus.Pending))
+                .ForMember(dest => dest.PaymentStatus, opt => opt.MapFrom(src => "Pending"))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
@@ -77,7 +77,12 @@ namespace Monolithic.Mappings
             CreateMap<Booking, BookingStatusDto>()
                 .ForMember(dest => dest.Car, opt => opt.MapFrom(src => src.Car))
                 .ForMember(dest => dest.PickupStation, opt => opt.MapFrom(src => src.PickupStation))
-                .ForMember(dest => dest.DropoffStation, opt => opt.MapFrom(src => src.DropoffStation));
+                .ForMember(dest => dest.ReturnStation, opt => opt.MapFrom(src => src.ReturnStation));
+
+            CreateMap<Booking, BookingHistoryDto>()
+                .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => src.Car != null ? $"{src.Car.Brand} {src.Car.Model}" : ""))
+                .ForMember(dest => dest.PickupStationName, opt => opt.MapFrom(src => src.PickupStation != null ? src.PickupStation.Name : ""))
+                .ForMember(dest => dest.ReturnStationName, opt => opt.MapFrom(src => src.ReturnStation != null ? src.ReturnStation.Name : ""));
 
             // Feedback mappings
             CreateMap<Feedback, FeedbackDto>()
