@@ -22,13 +22,9 @@ namespace Monolithic.Controllers
         #region Main Booking Flow
 
         /// <summary>
-        /// Đặt xe (Bước 1) - Hỗ trợ cả đặt trước và đặt trực tiếp (walk-in)
-        /// - Đặt trước: PickupDateTime trong tương lai
-        /// - Đặt trực tiếp: PickupDateTime = DateTime.UtcNow hoặc trong vòng 30 phút
+        /// Đặt xe    
         /// </summary>
-        /// <param name="userId">ID người dùng</param>
-        /// <param name="request">Thông tin đặt xe: CarId, PickupStationId, PickupDateTime, ExpectedReturnDateTime</param>
-        /// <returns>Thông tin booking đã tạo với trạng thái Pending (chờ thanh toán)</returns>
+
         [HttpPost("Create")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CreateBooking([FromQuery] string userId, [FromBody] CreateBookingDto request)
         {
@@ -40,12 +36,8 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Xác nhận booking sau khi thanh toán (Bước 2)
-        /// - Chuyển trạng thái từ Pending -> Confirmed
-        /// - Lưu thông tin thanh toán
+        /// Xác nhận booking sau khi thanh toán 
         /// </summary>
-        /// <param name="request">BookingId, PaymentMethod, PaymentTransactionId</param>
-        /// <returns>Booking đã confirmed</returns>
         [HttpPost("Confirm")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> ConfirmBooking([FromBody] ConfirmBookingDto request)
         {
@@ -57,15 +49,8 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Check-in - Nhận xe (Bước 3: Người dùng nhận xe)
-        /// - Xác nhận tại quầy/ứng dụng
-        /// - Ký hợp đồng điện tử (tạo Contract tự động)
-        /// - Xác nhận bàn giao cùng nhân viên
-        /// - Chụp ảnh tình trạng xe (tùy chọn)
-        /// - Chuyển trạng thái Confirmed -> CheckedIn
+        /// Check-in - Nhận xe 
         /// </summary>
-        /// <param name="request">BookingId, CheckInNotes (ghi chú), CheckInPhotoUrl (URL ảnh)</param>
-        /// <returns>Booking đã check-in và Contract đã được tạo</returns>
         [HttpPost("Check-In")]
         [Authorize(Roles = $"{AppRoles.EVRenter},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CheckIn([FromBody] CheckInDto request)
@@ -78,16 +63,8 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Check-out - Trả xe (Bước 4: Người dùng trả xe)
-        /// - Trả xe đúng điểm thuê (hoặc điểm khác nếu được phép)
-        /// - Nhân viên kiểm tra tình trạng xe
-        /// - Chụp ảnh tình trạng xe khi trả
-        /// - Tính phí trễ hạn (nếu có)
-        /// - Tính phí hư hỏng (nếu có)
-        /// - Chuyển trạng thái CheckedIn -> CheckedOut
+        /// Check-out - Trả xe 
         /// </summary>
-        /// <param name="request">BookingId, CheckOutNotes, CheckOutPhotoUrl, LateFee, DamageFee</param>
-        /// <returns>Booking đã check-out với tổng chi phí phát sinh</returns>
         [HttpPost("Check-Out")]
         [Authorize(Roles = $"{AppRoles.EVRenter},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CheckOut([FromBody] CheckOutDto request)
@@ -100,13 +77,8 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Hoàn tất booking (Bước 5: Thanh toán các chi phí phát sinh)
-        /// - Thanh toán các chi phí phát sinh (LateFee, DamageFee)
-        /// - Chuyển trạng thái CheckedOut -> Completed
-        /// - Cập nhật PaymentStatus = "Paid"
+        /// Hoàn tất booking 
         /// </summary>
-        /// <param name="bookingId">ID của booking</param>
-        /// <returns>Booking đã hoàn tất</returns>
         [HttpPost("Complete-By-{bookingId}")]
         [Authorize(Roles = $"{AppRoles.EVRenter},{AppRoles.StationStaff},{AppRoles.Admin}")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CompleteBooking(Guid bookingId)
