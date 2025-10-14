@@ -10,13 +10,13 @@ namespace Monolithic.Models
         [Required]
         [StringLength(256)]
         public string UserName { get; set; } = string.Empty;
+        
         [StringLength(256)]
         public string? Email { get; set; }
 
         public string? PasswordHash { get; set; }
 
         public string? PhoneNumber { get; set; }
-
 
         [Required]
         [StringLength(50)]
@@ -35,7 +35,11 @@ namespace Monolithic.Models
         public DateOnly? DriverLicenseExpiry { get; set; }
 
         [Required]
-        public string UserRole { get; set; } = "Customer";
+        public string UserRole { get; set; } = "EV Renter";
+
+        // JWT Refresh Token
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiry { get; set; }
 
         // Account status
         public bool IsActive { get; set; } = true;

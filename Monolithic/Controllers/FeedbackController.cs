@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Monolithic.DTOs.Common;
 using Monolithic.DTOs.Feedback;
@@ -46,6 +47,7 @@ namespace Monolithic.Controllers
         }
 
         [HttpPost("user/{userId}")]
+        [Authorize]
         public async Task<ActionResult<ResponseDto<FeedbackDto>>> CreateFeedback(string userId, [FromBody] CreateFeedbackDto request)
         {
             var result = await _feedbackService.CreateFeedbackAsync(userId, request);
@@ -53,6 +55,7 @@ namespace Monolithic.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<ResponseDto<FeedbackDto>>> UpdateFeedback(Guid id, [FromQuery] string userId, [FromBody] UpdateFeedbackDto request)
         {
             var result = await _feedbackService.UpdateFeedbackAsync(id, userId, request);
@@ -61,6 +64,7 @@ namespace Monolithic.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<ActionResult<ResponseDto<string>>> DeleteFeedback(Guid id, [FromQuery] string userId)
         {
             var result = await _feedbackService.DeleteFeedbackAsync(id, userId);

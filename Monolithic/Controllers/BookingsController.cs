@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Monolithic.Common;
 using Monolithic.DTOs.Booking;
 using Monolithic.DTOs.Common;
 using Monolithic.Services.Interfaces;
@@ -7,6 +9,7 @@ namespace Monolithic.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Tất cả endpoints yêu cầu đăng nhập
     public class BookingsController : ControllerBase
     {
         private readonly IBookingService _bookingService;

@@ -16,7 +16,41 @@ builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "EV Station-based Rental System API",
+        Version = "v1",
+        Description = "API for EV Station-based Rental System - Monolithic Architecture"
+    });
+
+    // Add JWT Authentication to Swagger
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Nhập JWT token vào đây. Ví dụ: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 // Database configuration
 builder.Services.AddDbContext<EVStationBasedRentalSystemDbContext>(options =>
@@ -44,6 +78,35 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+    };
+
+    // Cho phép nhận token từ query string hoặc header mà không cần "Bearer " prefix
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            // Lấy token từ header Authorization
+            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(authHeader))
+            {
+                // Nếu có "Bearer " thì loại bỏ
+                if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                }
+                else
+                {
+                    // Nếu không có "Bearer " thì lấy trực tiếp token
+                    context.Token = authHeader.Trim();
+                }
+            }
+            // Nếu không có trong header, thử lấy từ query string
+            else if (context.Request.Query.TryGetValue("token", out var token))
+            {
+                context.Token = token;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -73,12 +136,13 @@ builder.Services.AddScoped<IStationService, StationServiceImpl>();
 builder.Services.AddScoped<ICarService, CarServiceImpl>();
 builder.Services.AddScoped<IBookingService, BookingServiceImpl>();
 builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
-// Services
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IContractService, ContractServiceImpl>();
-
-// Custom User Service
 builder.Services.AddScoped<IUserService, UserService>();
+
+// Auth Services
+builder.Services.AddScoped<IJwtTokenService, JwtTokenServiceImpl>();
+builder.Services.AddScoped<IAuthService, AuthServiceImpl>();
 
 var app = builder.Build();
 
