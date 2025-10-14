@@ -121,7 +121,7 @@ builder.Services.AddAuthentication(options =>
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
-// CORS
+// CORS - Allow frontend to connect
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -129,6 +129,24 @@ builder.Services.AddCors(options =>
         builder.AllowAnyOrigin()
                .AllowAnyMethod()
                .AllowAnyHeader();
+    });
+    
+    // Alternative policy with credentials support (use this if frontend needs to send cookies)
+    options.AddPolicy("AllowSpecificOrigins", builder =>
+    {
+        builder.WithOrigins(
+                "http://localhost:3000",      // React default
+                "http://localhost:5173",      // Vite default
+                "http://localhost:4200",      // Angular default
+                "http://localhost:8080",      // Vue default
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:4200",
+                "http://127.0.0.1:8080"
+               )
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();  // Support credentials (cookies, auth headers)
     });
 });
 
@@ -165,9 +183,10 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-
+// CORS must be before UseHttpsRedirection for proper handling
 app.UseCors("AllowAll");
+
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
