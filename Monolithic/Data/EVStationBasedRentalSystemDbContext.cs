@@ -31,7 +31,7 @@ namespace Monolithic.Data
                 entity.Property(u => u.FirstName).IsRequired().HasMaxLength(50);
                 entity.Property(u => u.LastName).IsRequired().HasMaxLength(50);
                 entity.Property(u => u.Email).HasMaxLength(256);
-                entity.Property(u => u.UserRole).IsRequired().HasDefaultValue("Customer");
+                entity.Property(u => u.UserRole).IsRequired().HasDefaultValue("EV Renter");
                 entity.Property(u => u.IsActive).HasDefaultValue(true);
                 entity.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             });

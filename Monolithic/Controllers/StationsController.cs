@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Monolithic.Common;
 using Monolithic.DTOs.Common;
 using Monolithic.DTOs.Station;
 using Monolithic.Services.Interfaces;
@@ -32,6 +34,7 @@ namespace Monolithic.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<StationDto>>> CreateStation([FromBody] CreateStationDto request)
         {
             if (!ModelState.IsValid)
@@ -43,6 +46,7 @@ namespace Monolithic.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<StationDto>>> UpdateStation(Guid id, [FromBody] UpdateStationDto request)
         {
             var result = await _stationService.UpdateStationAsync(id, request);
@@ -51,6 +55,7 @@ namespace Monolithic.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = AppRoles.Admin)]
         public async Task<ActionResult<ResponseDto<string>>> DeleteStation(Guid id)
         {
             var result = await _stationService.DeleteStationAsync(id);

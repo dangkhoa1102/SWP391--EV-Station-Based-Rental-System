@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Monolithic.Common;
 using Monolithic.DTOs.Car;
 using Monolithic.DTOs.Common;
 using Monolithic.Services.Interfaces;
@@ -32,6 +34,7 @@ namespace Monolithic.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<CarDto>>> CreateCar([FromBody] CreateCarDto request)
         {
             var result = await _carService.CreateCarAsync(request);
