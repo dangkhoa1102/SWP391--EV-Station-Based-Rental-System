@@ -22,9 +22,14 @@ namespace Monolithic.Controllers
         #region Main Booking Flow
 
         /// <summary>
-        /// Create a new booking (Step 1)
+        /// Đặt xe (Bước 1) - Hỗ trợ cả đặt trước và đặt trực tiếp (walk-in)
+        /// - Đặt trước: PickupDateTime trong tương lai
+        /// - Đặt trực tiếp: PickupDateTime = DateTime.UtcNow hoặc trong vòng 30 phút
         /// </summary>
-        [HttpPost("create")]
+        /// <param name="userId">ID người dùng</param>
+        /// <param name="request">Thông tin đặt xe: CarId, PickupStationId, PickupDateTime, ExpectedReturnDateTime</param>
+        /// <returns>Thông tin booking đã tạo với trạng thái Pending (chờ thanh toán)</returns>
+        [HttpPost("Create")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CreateBooking([FromQuery] string userId, [FromBody] CreateBookingDto request)
         {
             var result = await _bookingService.CreateBookingAsync(userId, request);
@@ -35,9 +40,13 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Confirm booking after payment (Step 2)
+        /// Xác nhận booking sau khi thanh toán (Bước 2)
+        /// - Chuyển trạng thái từ Pending -> Confirmed
+        /// - Lưu thông tin thanh toán
         /// </summary>
-        [HttpPost("confirm")]
+        /// <param name="request">BookingId, PaymentMethod, PaymentTransactionId</param>
+        /// <returns>Booking đã confirmed</returns>
+        [HttpPost("Confirm")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> ConfirmBooking([FromBody] ConfirmBookingDto request)
         {
             var result = await _bookingService.ConfirmBookingAsync(request);
@@ -48,9 +57,17 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Check-in process (Step 3: User picks up the car)
+        /// Check-in - Nhận xe (Bước 3: Người dùng nhận xe)
+        /// - Xác nhận tại quầy/ứng dụng
+        /// - Ký hợp đồng điện tử (tạo Contract tự động)
+        /// - Xác nhận bàn giao cùng nhân viên
+        /// - Chụp ảnh tình trạng xe (tùy chọn)
+        /// - Chuyển trạng thái Confirmed -> CheckedIn
         /// </summary>
-        [HttpPost("check-in")]
+        /// <param name="request">BookingId, CheckInNotes (ghi chú), CheckInPhotoUrl (URL ảnh)</param>
+        /// <returns>Booking đã check-in và Contract đã được tạo</returns>
+        [HttpPost("Check-In")]
+        [Authorize(Roles = $"{AppRoles.EVRenter},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CheckIn([FromBody] CheckInDto request)
         {
             var result = await _bookingService.CheckInAsync(request);
@@ -61,9 +78,18 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Check-out process (Step 4: User returns the car)
+        /// Check-out - Trả xe (Bước 4: Người dùng trả xe)
+        /// - Trả xe đúng điểm thuê (hoặc điểm khác nếu được phép)
+        /// - Nhân viên kiểm tra tình trạng xe
+        /// - Chụp ảnh tình trạng xe khi trả
+        /// - Tính phí trễ hạn (nếu có)
+        /// - Tính phí hư hỏng (nếu có)
+        /// - Chuyển trạng thái CheckedIn -> CheckedOut
         /// </summary>
-        [HttpPost("check-out")]
+        /// <param name="request">BookingId, CheckOutNotes, CheckOutPhotoUrl, LateFee, DamageFee</param>
+        /// <returns>Booking đã check-out với tổng chi phí phát sinh</returns>
+        [HttpPost("Check-Out")]
+        [Authorize(Roles = $"{AppRoles.EVRenter},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CheckOut([FromBody] CheckOutDto request)
         {
             var result = await _bookingService.CheckOutAsync(request);
@@ -74,9 +100,15 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Complete booking (Step 5: Final completion)
+        /// Hoàn tất booking (Bước 5: Thanh toán các chi phí phát sinh)
+        /// - Thanh toán các chi phí phát sinh (LateFee, DamageFee)
+        /// - Chuyển trạng thái CheckedOut -> Completed
+        /// - Cập nhật PaymentStatus = "Paid"
         /// </summary>
-        [HttpPost("{bookingId}/complete")]
+        /// <param name="bookingId">ID của booking</param>
+        /// <returns>Booking đã hoàn tất</returns>
+        [HttpPost("Complete-By-{bookingId}")]
+        [Authorize(Roles = $"{AppRoles.EVRenter},{AppRoles.StationStaff},{AppRoles.Admin}")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CompleteBooking(Guid bookingId)
         {
             var result = await _bookingService.CompleteBookingAsync(bookingId);
@@ -93,7 +125,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Get all bookings with pagination
         /// </summary>
-        [HttpGet]
+        [HttpGet("Get-All")]
         public async Task<ActionResult<ResponseDto<PaginationDto<BookingDto>>>> GetBookings([FromQuery] PaginationRequestDto request)
         {
             var result = await _bookingService.GetBookingsAsync(request);
@@ -103,7 +135,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Get booking by ID
         /// </summary>
-        [HttpGet("{id}")]
+        [HttpGet("Get-By-{id}")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> GetBooking(Guid id)
         {
             var result = await _bookingService.GetBookingByIdAsync(id);
@@ -116,7 +148,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Get user's bookings
         /// </summary>
-        [HttpGet("user/{userId}")]
+        [HttpGet("Get-By-User/{userId}")]
         public async Task<ActionResult<ResponseDto<List<BookingDto>>>> GetUserBookings(string userId)
         {
             var result = await _bookingService.GetUserBookingsAsync(userId);
@@ -126,7 +158,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Update booking details
         /// </summary>
-        [HttpPut("{id}")]
+        [HttpPut("Update-By-{id}")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> UpdateBooking(Guid id, [FromBody] UpdateBookingDto request)
         {
             var result = await _bookingService.UpdateBookingAsync(id, request);
@@ -139,7 +171,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Cancel a booking
         /// </summary>
-        [HttpPost("{id}/cancel")]
+        [HttpPost("Cancel-By-{id}")]
         public async Task<ActionResult<ResponseDto<string>>> CancelBooking(Guid id, [FromQuery] string userId, [FromBody] string? reason = null)
         {
             var result = await _bookingService.CancelBookingAsync(id, userId, reason);
@@ -156,7 +188,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Check car availability for specific dates
         /// </summary>
-        [HttpPost("check-availability")]
+        [HttpPost("Check-Availability")]
         public async Task<ActionResult<ResponseDto<bool>>> CheckCarAvailability([FromBody] CheckAvailabilityDto request)
         {
             var result = await _bookingService.CheckCarAvailabilityAsync(request);
@@ -166,7 +198,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Calculate booking cost
         /// </summary>
-        [HttpGet("calculate-cost")]
+        [HttpGet("Calculate-Cost")]
         public async Task<ActionResult<ResponseDto<decimal>>> CalculateCost([FromQuery] Guid carId, [FromQuery] DateTime startTime, [FromQuery] DateTime endTime)
         {
             var result = await _bookingService.CalculateBookingCostAsync(carId, startTime, endTime);
@@ -176,7 +208,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Get user's active booking
         /// </summary>
-        [HttpGet("active/{userId}")]
+        [HttpGet("Get-Active-By-User/{userId}")]
         public async Task<ActionResult<ResponseDto<BookingStatusDto>>> GetActiveBooking(string userId)
         {
             var result = await _bookingService.GetActiveBookingAsync(userId);
@@ -189,7 +221,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Get user's booking history
         /// </summary>
-        [HttpGet("history/{userId}")]
+        [HttpGet("Get-History-By-User/{userId}")]
         public async Task<ActionResult<ResponseDto<List<BookingHistoryDto>>>> GetBookingHistory(string userId)
         {
             var result = await _bookingService.GetBookingHistoryAsync(userId);
@@ -199,7 +231,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Get upcoming bookings
         /// </summary>
-        [HttpGet("upcoming")]
+        [HttpGet("Get-Upcoming")]
         public async Task<ActionResult<ResponseDto<List<BookingDto>>>> GetUpcomingBookings()
         {
             var result = await _bookingService.GetUpcomingBookingsAsync();

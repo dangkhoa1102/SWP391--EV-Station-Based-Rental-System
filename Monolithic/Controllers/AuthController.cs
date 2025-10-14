@@ -18,7 +18,11 @@ namespace Monolithic.Controllers
             _authService = authService;
         }
 
-        [HttpPost("register")]
+        /// <summary>
+        /// Đăng ký tài khoản mới
+        /// </summary>
+        [HttpPost("Register")]
+        [ProducesResponseType(typeof(ResponseDto<UserDto>), 200)]
         public async Task<ActionResult<ResponseDto<UserDto>>> Register([FromBody] RegisterRequestDto request)
         {
             if (!ModelState.IsValid)
@@ -35,7 +39,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpPost("login")]
+        /// <summary>
+        /// Đăng nhập hệ thống
+        /// </summary>
+        [HttpPost("Login")]
         public async Task<ActionResult<ResponseDto<LoginResponseDto>>> Login([FromBody] LoginRequestDto request)
         {
             if (!ModelState.IsValid)
@@ -52,7 +59,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpPost("logout")]
+        /// <summary>
+        /// Đăng xuất khỏi hệ thống
+        /// </summary>
+        [HttpPost("Logout")]
         [Authorize]
         public async Task<ActionResult<ResponseDto<string>>> Logout()
         {
@@ -66,72 +76,13 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpPost("refresh-token")]
+        /// <summary>
+        /// Làm mới Access Token
+        /// </summary>
+        [HttpPost("Refresh-Token")]
         public async Task<ActionResult<ResponseDto<string>>> RefreshToken([FromBody] string refreshToken)
         {
             var result = await _authService.RefreshTokenAsync(refreshToken);
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result);
-            }
-
-            return Ok(result);
-        }
-
-        [HttpGet("profile")]
-        [Authorize]
-        public async Task<ActionResult<ResponseDto<UserDto>>> GetProfile()
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(ResponseDto<UserDto>.Failure("Unauthorized"));
-            }
-
-            var result = await _authService.GetCurrentUserAsync(userId);
-            if (!result.IsSuccess)
-            {
-                return NotFound(result);
-            }
-
-            return Ok(result);
-        }
-
-        [HttpPut("profile")]
-        [Authorize]
-        public async Task<ActionResult<ResponseDto<UserDto>>> UpdateProfile([FromBody] UpdateUserDto request)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(ResponseDto<UserDto>.Failure("Unauthorized"));
-            }
-
-            var result = await _authService.UpdateUserAsync(userId, request);
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result);
-            }
-
-            return Ok(result);
-        }
-
-        [HttpPost("change-password")]
-        [Authorize]
-        public async Task<ActionResult<ResponseDto<string>>> ChangePassword([FromBody] ChangePasswordDto request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ResponseDto<string>.Failure("Dữ liệu không hợp lệ"));
-            }
-
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(ResponseDto<string>.Failure("Unauthorized"));
-            }
-
-            var result = await _authService.ChangePasswordAsync(userId, request);
             if (!result.IsSuccess)
             {
                 return BadRequest(result);

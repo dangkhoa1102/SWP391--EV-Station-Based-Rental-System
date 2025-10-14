@@ -18,14 +18,20 @@ namespace Monolithic.Controllers
             _stationService = stationService;
         }
 
-        [HttpGet]
+        /// <summary>
+        /// Lấy danh sách trạm sạc (có phân trang)
+        /// </summary>
+        [HttpGet("Get-All")]
         public async Task<ActionResult<ResponseDto<PaginationDto<StationDto>>>> GetStations([FromQuery] PaginationRequestDto request)
         {
             var result = await _stationService.GetStationsAsync(request);
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        /// <summary>
+        /// Xem chi tiết thông tin trạm sạc
+        /// </summary>
+        [HttpGet("Get-By-{id}")]
         public async Task<ActionResult<ResponseDto<StationDto>>> GetStation(Guid id)
         {
             var result = await _stationService.GetStationByIdAsync(id);
@@ -33,7 +39,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpPost]
+        /// <summary>
+        /// Tạo trạm sạc mới (Admin, Station Staff)
+        /// </summary>
+        [HttpPost("Create")]
         [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<StationDto>>> CreateStation([FromBody] CreateStationDto request)
         {
@@ -45,7 +54,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpPut("{id}")]
+        /// <summary>
+        /// Cập nhật thông tin trạm sạc (Admin, Station Staff)
+        /// </summary>
+        [HttpPut("Update-By-{id}")]
         [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<StationDto>>> UpdateStation(Guid id, [FromBody] UpdateStationDto request)
         {
@@ -54,7 +66,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpDelete("{id}")]
+        /// <summary>
+        /// Xóa trạm sạc (chỉ Admin)
+        /// </summary>
+        [HttpDelete("Delete-By-{id}")]
         [Authorize(Roles = AppRoles.Admin)]
         public async Task<ActionResult<ResponseDto<string>>> DeleteStation(Guid id)
         {
@@ -62,7 +77,11 @@ namespace Monolithic.Controllers
             if (!result.IsSuccess) return NotFound(result);
             return Ok(result);
         }
-        [HttpGet("{id}/cars")]
+
+        /// <summary>
+        /// Xem danh sách xe khả dụng tại trạm
+        /// </summary>
+        [HttpGet("Get-Available-Cars-By-{id}")]
         public async Task<ActionResult<ResponseDto<List<StationCarDto>>>> GetAvailableCars(Guid id)
         {
             var result = await _stationService.GetAvailableCarsAtStationAsync(id);
@@ -70,7 +89,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpPatch("{id}/slots")]
+        /// <summary>
+        /// Cập nhật số lượng chỗ đỗ xe
+        /// </summary>
+        [HttpPatch("Update-Slots-By-{id}")]
         public async Task<ActionResult<ResponseDto<string>>> UpdateSlots(Guid id, [FromQuery] int totalSlots)
         {
             var result = await _stationService.UpdateStationSlotsAsync(id, totalSlots);
@@ -79,5 +101,4 @@ namespace Monolithic.Controllers
         }
     }
 }
-
 

@@ -25,6 +25,14 @@ builder.Services.AddSwaggerGen(options =>
         Description = "API for EV Station-based Rental System - Monolithic Architecture"
     });
 
+    // Enable XML comments for better API documentation
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
+
     // Add JWT Authentication to Swagger
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
@@ -166,17 +174,18 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Auto-open browser in development
+// Auto-open browser in development (browser close monitoring disabled for now)
 if (app.Environment.IsDevelopment())
 {
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    
     app.Lifetime.ApplicationStarted.Register(() =>
     {
         var urls = app.Urls;
         if (urls.Any())
         {
-            var httpsUrl = urls.FirstOrDefault(u => u.StartsWith("https")) ?? urls.First();
-            var swaggerUrl = $"{httpsUrl}/swagger";
+            var httpUrl = urls.FirstOrDefault(u => u.StartsWith("http://")) ?? urls.First();
+            var swaggerUrl = $"{httpUrl}/swagger";
             logger.LogInformation("Opening Swagger UI at: {SwaggerUrl}", swaggerUrl);
             
             try
