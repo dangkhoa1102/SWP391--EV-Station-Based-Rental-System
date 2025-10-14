@@ -19,7 +19,10 @@ public class IncidentsController : ControllerBase
         _environment = environment;
     }
 
-    [HttpPost]
+    /// <summary>
+    /// Tạo báo cáo sự cố mới (có upload hình ảnh)
+    /// </summary>
+    [HttpPost("Create")]
     public async Task<ActionResult<IncidentResponse>> CreateIncident([FromForm] CreateIncidentFormRequest request)
     {
         try
@@ -37,7 +40,10 @@ public class IncidentsController : ControllerBase
         }
     }
 
-    [HttpGet]
+    /// <summary>
+    /// Lấy danh sách sự cố (có bộ lọc và phân trang)
+    /// </summary>
+    [HttpGet("Get-All")]
     public async Task<ActionResult<IncidentListResponse>> GetIncidents(
         [FromQuery] Guid? stationId,
         [FromQuery] string? status,
@@ -60,7 +66,10 @@ public class IncidentsController : ControllerBase
         }
     }
 
-    [HttpGet("{id}")]
+    /// <summary>
+    /// Xem chi tiết sự cố
+    /// </summary>
+    [HttpGet("Get-By-{id}")]
     public async Task<ActionResult<IncidentResponse>> GetIncident(int id)
     {
         try
@@ -88,7 +97,10 @@ public class IncidentsController : ControllerBase
         }
     }
 
-    [HttpPut("{id}")]
+    /// <summary>
+    /// Cập nhật thông tin sự cố
+    /// </summary>
+    [HttpPut("Update-By-{id}")]
     public async Task<ActionResult<IncidentResponse>> UpdateIncident(
         int id,
         [FromForm] UpdateIncidentFormRequest request)
@@ -122,7 +134,10 @@ public class IncidentsController : ControllerBase
         }
     }
 
-    [HttpPatch("{id}/resolve")]
+    /// <summary>
+    /// Đánh dấu sự cố đã được giải quyết
+    /// </summary>
+    [HttpPatch("Resolve-By-{id}")]
     public async Task<ActionResult> ResolveIncident(int id, [FromBody] UpdateIncidentRequest request)
     {
         try
@@ -145,7 +160,10 @@ public class IncidentsController : ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
+    /// <summary>
+    /// Xóa báo cáo sự cố
+    /// </summary>
+    [HttpDelete("Delete-By-{id}")]
     public async Task<ActionResult> DeleteIncident(int id)
     {
         try
@@ -165,7 +183,10 @@ public class IncidentsController : ControllerBase
         }
     }
 
-    [HttpGet("download-image/{imageName}")]
+    /// <summary>
+    /// Tải xuống hình ảnh sự cố
+    /// </summary>
+    [HttpGet("Download-Image/{imageName}")]
     public async Task<IActionResult> DownloadImage(string imageName)
     {
         try

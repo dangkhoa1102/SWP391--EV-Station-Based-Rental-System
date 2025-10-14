@@ -51,9 +51,12 @@ namespace Monolithic.Services.Implementation
                     {
                         Id = user.UserId.ToString(),
                         Email = user.Email ?? "",
-                        FullName = user.FullName,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
                         PhoneNumber = user.PhoneNumber,
+                        UserRole = user.UserRole,
                         CreatedAt = user.CreatedAt,
+                        UpdatedAt = user.UpdatedAt,
                         IsActive = user.IsActive
                     }
                 };
@@ -110,9 +113,12 @@ namespace Monolithic.Services.Implementation
                 {
                     Id = user.UserId.ToString(),
                     Email = user.Email ?? "",
-                    FullName = user.FullName,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
                     PhoneNumber = user.PhoneNumber,
+                    UserRole = user.UserRole,
                     CreatedAt = user.CreatedAt,
+                    UpdatedAt = user.UpdatedAt,
                     IsActive = user.IsActive
                 };
 
@@ -181,9 +187,12 @@ namespace Monolithic.Services.Implementation
                 {
                     Id = user.UserId.ToString(),
                     Email = user.Email ?? "",
-                    FullName = user.FullName,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
                     PhoneNumber = user.PhoneNumber,
+                    UserRole = user.UserRole,
                     CreatedAt = user.CreatedAt,
+                    UpdatedAt = user.UpdatedAt,
                     IsActive = user.IsActive
                 };
 
@@ -216,9 +225,12 @@ namespace Monolithic.Services.Implementation
                 {
                     Id = user.UserId.ToString(),
                     Email = user.Email ?? "",
-                    FullName = user.FullName,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
                     PhoneNumber = user.PhoneNumber,
+                    UserRole = user.UserRole,
                     CreatedAt = user.CreatedAt,
+                    UpdatedAt = user.UpdatedAt,
                     IsActive = user.IsActive
                 };
 
