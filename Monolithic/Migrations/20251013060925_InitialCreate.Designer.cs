@@ -12,8 +12,8 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    [Migration("20251010010024_CleanInitialCreate")]
-    partial class CleanInitialCreate
+    [Migration("20251013060925_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,7 +27,7 @@ namespace Monolithic.Migrations
 
             modelBuilder.Entity("Monolithic.Models.Booking", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("BookingId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWID()");
@@ -73,11 +73,10 @@ namespace Monolithic.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("Id");
+                    b.HasKey("BookingId");
 
                     b.HasIndex("CarId");
 
@@ -94,7 +93,7 @@ namespace Monolithic.Migrations
 
             modelBuilder.Entity("Monolithic.Models.Car", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("CarId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWID()");
@@ -159,7 +158,7 @@ namespace Monolithic.Migrations
                     b.Property<int>("Year")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("CarId");
 
                     b.HasIndex("CurrentStationId");
 
@@ -169,9 +168,88 @@ namespace Monolithic.Migrations
                     b.ToTable("Cars");
                 });
 
+            modelBuilder.Entity("Monolithic.Models.Contract", b =>
+                {
+                    b.Property<Guid>("ContractId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConfirmationTokenHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ConfirmedFromIp")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ConfirmedUserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("ContractContent")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("ContractContentHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsConfirmed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("RenterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SignatureType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SignatureValue")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("SignerEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("StaffId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("TokenExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ContractId");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("RenterId");
+
+                    b.ToTable("Contracts");
+                });
+
             modelBuilder.Entity("Monolithic.Models.Feedback", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("FeedbackId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWID()");
@@ -204,11 +282,10 @@ namespace Monolithic.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("Id");
+                    b.HasKey("FeedbackId");
 
                     b.HasIndex("BookingId");
 
@@ -219,9 +296,68 @@ namespace Monolithic.Migrations
                     b.ToTable("Feedbacks");
                 });
 
+            modelBuilder.Entity("Monolithic.Models.Incident", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("CostIncurred")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Images")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ReportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReportedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ResolvedBy")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("StationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("ReportedAt");
+
+                    b.HasIndex("StationId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Incidents");
+                });
+
             modelBuilder.Entity("Monolithic.Models.Station", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("StationId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWID()");
@@ -244,14 +380,6 @@ namespace Monolithic.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
-                    b.Property<decimal>("Latitude")
-                        .HasPrecision(10, 8)
-                        .HasColumnType("decimal(10,8)");
-
-                    b.Property<decimal>("Longitude")
-                        .HasPrecision(11, 8)
-                        .HasColumnType("decimal(11,8)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -265,18 +393,17 @@ namespace Monolithic.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("Latitude", "Longitude");
+                    b.HasKey("StationId");
 
                     b.ToTable("Stations");
                 });
 
             modelBuilder.Entity("Monolithic.Models.User", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
 
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
@@ -323,11 +450,6 @@ namespace Monolithic.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("NEWID()");
-
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -339,7 +461,7 @@ namespace Monolithic.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasDefaultValue("Customer");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId");
 
                     b.HasIndex("Email");
 
@@ -394,6 +516,15 @@ namespace Monolithic.Migrations
                     b.Navigation("CurrentStation");
                 });
 
+            modelBuilder.Entity("Monolithic.Models.Contract", b =>
+                {
+                    b.HasOne("Monolithic.Models.Booking", null)
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Monolithic.Models.Feedback", b =>
                 {
                     b.HasOne("Monolithic.Models.Booking", null)
@@ -415,6 +546,17 @@ namespace Monolithic.Migrations
                     b.Navigation("Car");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Monolithic.Models.Incident", b =>
+                {
+                    b.HasOne("Monolithic.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
                 });
 
             modelBuilder.Entity("Monolithic.Models.Booking", b =>

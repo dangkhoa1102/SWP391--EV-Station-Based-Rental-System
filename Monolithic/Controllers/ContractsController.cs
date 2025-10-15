@@ -16,7 +16,10 @@ namespace Monolithic.Controllers
             _contractService = contractService;
         }
 
-        [HttpPost]
+        /// <summary>
+        /// Tạo hợp đồng mới
+        /// </summary>
+        [HttpPost("Create")]
         public async Task<ActionResult<ResponseDto<ContractDto>>> CreateContract([FromBody] CreateContractDto request)
         {
             var result = await _contractService.CreateContractAsync(request);
@@ -24,15 +27,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        //[HttpPost]
-        //public async Task<ActionResult<VerificationRequestDto>> VerificationSign([FromBody] VerificationRequestDto request)
-        //{
-        //    // Implementation for verification sign endpoint
-   
-        //    return Ok();
-        //}
-
-        [HttpPost("fill")]
+        /// <summary>
+        /// Điền thông tin hợp đồng
+        /// </summary>
+        [HttpPost("Fill")]
         public async Task<ActionResult<ResponseDto<ContractDto>>> FillContract([FromBody] Monolithic.DTOs.Contract.FillContractFieldsDto request)
         {
             if (!ModelState.IsValid) return BadRequest(ResponseDto<ContractDto>.Failure("Validation failed"));
@@ -49,7 +47,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpPost("{contractId}/request-confirmation")]
+        /// <summary>
+        /// Yêu cầu xác nhận hợp đồng qua email
+        /// </summary>
+        [HttpPost("Request-Confirmation-By-{contractId}")]
         public async Task<ActionResult<ResponseDto<string>>> RequestConfirmation(Guid contractId, [FromBody] RequestConfirmationDto body)
         {
             var result = await _contractService.RequestConfirmationAsync(contractId, body.Email);
@@ -57,7 +58,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpPost("confirm")]
+        /// <summary>
+        /// Xác nhận hợp đồng với token
+        /// </summary>
+        [HttpPost("Confirm")]
         public async Task<ActionResult<ResponseDto<ContractDto>>> Confirm([FromBody] ConfirmContractDto body)
         {
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
@@ -67,7 +71,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpGet("booking/{bookingId}")]
+        /// <summary>
+        /// Lấy hợp đồng theo booking ID
+        /// </summary>
+        [HttpGet("Get-By-Booking/{bookingId}")]
         public async Task<ActionResult<ResponseDto<ContractDto>>> GetByBooking(Guid bookingId)
         {
             var result = await _contractService.GetContractByBookingIdAsync(bookingId);
@@ -75,7 +82,10 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
-        [HttpGet("renter/{renterId}")]
+        /// <summary>
+        /// Lấy danh sách hợp đồng của người thuê
+        /// </summary>
+        [HttpGet("Get-By-Renter/{renterId}")]
         public async Task<ActionResult<ResponseDto<List<ContractDto>>>> GetByRenter(Guid renterId)
         {
             var result = await _contractService.GetContractsByRenterAsync(renterId);

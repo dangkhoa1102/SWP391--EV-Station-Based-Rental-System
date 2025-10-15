@@ -31,7 +31,7 @@ namespace Monolithic.Data
                 entity.Property(u => u.FirstName).IsRequired().HasMaxLength(50);
                 entity.Property(u => u.LastName).IsRequired().HasMaxLength(50);
                 entity.Property(u => u.Email).HasMaxLength(256);
-                entity.Property(u => u.UserRole).IsRequired().HasDefaultValue("Customer");
+                entity.Property(u => u.UserRole).IsRequired().HasDefaultValue("EV Renter");
                 entity.Property(u => u.IsActive).HasDefaultValue(true);
                 entity.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             });
@@ -108,7 +108,7 @@ namespace Monolithic.Data
                 entity.Property(b => b.BookingId).HasDefaultValueSql("NEWID()");
                 entity.Property(b => b.UserId).IsRequired();
                 entity.Property(b => b.TotalAmount).HasPrecision(10, 2);
-                entity.Property(b => b.Status).IsRequired().HasMaxLength(50).HasDefaultValue("Pending");
+                entity.Property(b => b.BookingStatus).IsRequired().HasMaxLength(50);
                 entity.Property(b => b.IsActive).HasDefaultValue(true);
                 entity.Property(b => b.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(b => b.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
@@ -132,9 +132,9 @@ namespace Monolithic.Data
                       .OnDelete(DeleteBehavior.Restrict);
 
                 // Booking-DropoffStation relationship (optional)
-                entity.HasOne(b => b.DropoffStation)
+                entity.HasOne(b => b.ReturnStation)
                       .WithMany(s => s.DropoffBookings)
-                      .HasForeignKey(b => b.DropoffStationId)
+                      .HasForeignKey(b => b.ReturnStationId)
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -164,24 +164,65 @@ namespace Monolithic.Data
             });
 
             // Incident configuration
+            //builder.Entity<Incident>(entity =>
+            //{
+            //    entity.HasKey(e => e.Id);
+            //    entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
+            //    entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+            //    entity.Property(e => e.ResolutionNotes).HasMaxLength(500);
+
+            //    // Relationship with Booking
+            //    entity.HasOne(e => e.Booking)
+            //          .WithMany()
+            //          .HasForeignKey(e => e.BookingId)
+            //          .OnDelete(DeleteBehavior.Restrict);
+
+            //    // Indexes for better performance
+            //    entity.HasIndex(e => e.BookingId);
+            //    entity.HasIndex(e => e.Status);
+            //    entity.HasIndex(e => e.StationId);
+            //    entity.HasIndex(e => e.ReportedAt);
+            //});
             builder.Entity<Incident>(entity =>
             {
+                // --- Khóa chính ---
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
-                entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.ResolutionNotes).HasMaxLength(500);
 
-                // Relationship with Booking
-                entity.HasOne(e => e.Booking)
-                      .WithMany()
-                      .HasForeignKey(e => e.BookingId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                // --- C?u hình thu?c tính ---
+                entity.Property(e => e.Description)
+                      .IsRequired()
+                      .HasMaxLength(1000);
 
-                // Indexes for better performance
-                entity.HasIndex(e => e.BookingId);
-                entity.HasIndex(e => e.Status);
-                entity.HasIndex(e => e.StationId);
-                entity.HasIndex(e => e.ReportedAt);
+                // C?u hình cho Enum Status, l?u d??i d?ng chu?i trong DB cho d? ??c
+                entity.Property(e => e.Status)
+                      .IsRequired()
+                      .HasConversion<string>()
+                      .HasMaxLength(50)
+                      .HasDefaultValue(IncidentStatus.Reported);
+
+                // ResolvedAt có th? null vì s? c? có th? ch?a ???c gi?i quy?t
+                entity.Property(e => e.ResolvedAt)
+                      .IsRequired(false);
+
+                // --- C?u hình giá tr? m?c ??nh & t? ??ng ---
+                // ?? DB t? gán ngày gi? t?o (UTC)
+                entity.Property(e => e.CreatedAt)
+                      .HasDefaultValueSql("GETUTCDATE()");
+
+                // UpdatedAt nên ???c x? lý b?i logic trong DbContext.SaveChangesAsync ?? t? ??ng c?p nh?t
+                // N?u b?n mu?n DB x? lý, b?n s? c?n trigger, nên cách dùng DbContext t?t h?n.
+                entity.Property(e => e.UpdatedAt)
+                      .IsRequired();
+
+                entity.Property(e => e.ReportedAt)
+                      .IsRequired();
+
+                // --- C?u hình quan h? ---
+                // Quan h? m?t-nhi?u: M?t Booking có th? có nhi?u Incident
+                entity.HasOne(i => i.Booking)          // M?t Incident thu?c v? m?t Booking
+                      .WithMany()                     // M?t Booking có th? có nhi?u Incident (không c?n ch? rõ navigation property trong Booking)
+                      .HasForeignKey(i => i.BookingId)  // Khóa ngo?i là BookingId
+                      .OnDelete(DeleteBehavior.Restrict); // Ng?n vi?c xóa Booking n?u v?n còn Incident liên quan
             });
 
             // Configure indexes for better performance

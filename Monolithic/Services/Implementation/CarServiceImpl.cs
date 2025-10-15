@@ -86,6 +86,63 @@ namespace Monolithic.Services.Implementation
             return ResponseDto<List<CarDto>>.Success(_mapper.Map<List<CarDto>>(cars));
         }
 
+        public async Task<ResponseDto<List<CarDto>>> SearchAvailableCarsAsync(
+            Guid? stationId, string? brand, string? model,
+            decimal? minPrice, decimal? maxPrice, decimal? minBatteryLevel,
+            int page, int pageSize)
+        {
+            Expression<Func<Car, bool>> predicate = c => c.IsActive && c.IsAvailable;
+
+            // Filter by station
+            if (stationId.HasValue)
+            {
+                var oldPredicate = predicate;
+                predicate = c => oldPredicate.Compile()(c) && c.CurrentStationId == stationId.Value;
+            }
+
+            // Filter by brand
+            if (!string.IsNullOrWhiteSpace(brand))
+            {
+                var brandLower = brand.ToLower();
+                var oldPredicate = predicate;
+                predicate = c => oldPredicate.Compile()(c) && c.Brand.ToLower().Contains(brandLower);
+            }
+
+            // Filter by model
+            if (!string.IsNullOrWhiteSpace(model))
+            {
+                var modelLower = model.ToLower();
+                var oldPredicate = predicate;
+                predicate = c => oldPredicate.Compile()(c) && c.Model.ToLower().Contains(modelLower);
+            }
+
+            // Filter by price range
+            if (minPrice.HasValue)
+            {
+                var oldPredicate = predicate;
+                predicate = c => oldPredicate.Compile()(c) && c.RentalPricePerHour >= minPrice.Value;
+            }
+
+            if (maxPrice.HasValue)
+            {
+                var oldPredicate = predicate;
+                predicate = c => oldPredicate.Compile()(c) && c.RentalPricePerHour <= maxPrice.Value;
+            }
+
+            // Filter by battery level
+            if (minBatteryLevel.HasValue)
+            {
+                var oldPredicate = predicate;
+                predicate = c => oldPredicate.Compile()(c) && c.CurrentBatteryLevel >= minBatteryLevel.Value;
+            }
+
+            var (items, total) = await _carRepository.GetPagedAsync(
+                page, pageSize, predicate, c => c.RentalPricePerHour, false);
+
+            var dto = _mapper.Map<List<CarDto>>(items);
+            return ResponseDto<List<CarDto>>.Success(dto, $"Found {total} available cars");
+        }
+
         public async Task<ResponseDto<string>> UpdateCarStatusAsync(Guid id, bool isAvailable)
         {
             var ok = await _carRepository.UpdateCarStatusAsync(id, isAvailable);
