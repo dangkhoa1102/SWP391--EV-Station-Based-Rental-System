@@ -3,93 +3,75 @@ using Monolithic.DTOs.Common;
 using Monolithic.DTOs.Contract;
 using Monolithic.Services.Interfaces;
 
-namespace Monolithic.Controllers
+namespace Monolithic.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ContractsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ContractsController : ControllerBase
+    private readonly IContractService _contractService;
+    public ContractsController(IContractService contractService)
     {
-        private readonly IContractService _contractService;
+        _contractService = contractService;
+    }
 
-        public ContractsController(IContractService contractService)
+    // Endpoint tạo hợp đồng (đã sửa)
+    [HttpPost("tao-hop-dong")]
+    public async Task<IActionResult> TaoHopDong([FromBody] TaoHopDongDto request)
+    {
+        var contractId = await _contractService.LuuHopDongVaTaoFileAsync(request);
+        return Ok(new { HopDongId = contractId });
+    }
+
+    // Endpoint gửi email
+    [HttpPost("{id}/gui-xac-nhan")]
+    public async Task<IActionResult> GuiEmailXacNhan(Guid id, [FromBody] GuiEmailRequestDto request)
+    {
+        await _contractService.GuiEmailXacNhanAsync(id, request.Email);
+        return Ok(new { message = "Email xác nhận đã được gửi đi." });
+    }
+
+    // Endpoint cho frontend lấy nội dung hợp đồng
+    [HttpGet("xac-nhan/{token}")]
+    public async Task<IActionResult> LayNoiDung(string token)
+    {
+        try
         {
-            _contractService = contractService;
+            var data = await _contractService.LayHopDongDeXacNhanAsync(token);
+            return Ok(data);
         }
-
-        /// <summary>
-        /// Tạo hợp đồng mới
-        /// </summary>
-        [HttpPost("Create")]
-        public async Task<ActionResult<ResponseDto<ContractDto>>> CreateContract([FromBody] CreateContractDto request)
+        catch (Exception ex)
         {
-            var result = await _contractService.CreateContractAsync(request);
-            if (!result.IsSuccess) return BadRequest(result);
-            return Ok(result);
+            return BadRequest(new { message = ex.Message });
         }
+    }
 
-        /// <summary>
-        /// Điền thông tin hợp đồng
-        /// </summary>
-        [HttpPost("Fill")]
-        public async Task<ActionResult<ResponseDto<ContractDto>>> FillContract([FromBody] Monolithic.DTOs.Contract.FillContractFieldsDto request)
+    // Endpoint để xác nhận ký
+    [HttpPost("xac-nhan")]
+    public async Task<IActionResult> XacNhanKy([FromBody] KyHopDongRequestDto request)
+    {
+        try
         {
-            if (!ModelState.IsValid) return BadRequest(ResponseDto<ContractDto>.Failure("Validation failed"));
-
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-            {
-                return Unauthorized(ResponseDto<ContractDto>.Failure("Unauthorized"));
-            }
-
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Customer";
-            var result = await _contractService.FillContractAsync(request, userId, role);
-            if (!result.IsSuccess) return BadRequest(result);
-            return Ok(result);
+            await _contractService.XacNhanKyHopDongAsync(request.Token);
+            return Ok(new { message = "Hợp đồng đã được ký thành công." });
         }
-
-        /// <summary>
-        /// Yêu cầu xác nhận hợp đồng qua email
-        /// </summary>
-        [HttpPost("Request-Confirmation-By-{contractId}")]
-        public async Task<ActionResult<ResponseDto<string>>> RequestConfirmation(Guid contractId, [FromBody] RequestConfirmationDto body)
+        catch (Exception ex)
         {
-            var result = await _contractService.RequestConfirmationAsync(contractId, body.Email);
-            if (!result.IsSuccess) return BadRequest(result);
-            return Ok(result);
+            return BadRequest(new { message = ex.Message });
         }
+    }
 
-        /// <summary>
-        /// Xác nhận hợp đồng với token
-        /// </summary>
-        [HttpPost("Confirm")]
-        public async Task<ActionResult<ResponseDto<ContractDto>>> Confirm([FromBody] ConfirmContractDto body)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> XoaHopDong(Guid id)
+    {
+        try
         {
-            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
-            var ua = Request.Headers["User-Agent"].ToString();
-            var result = await _contractService.ConfirmContractAsync(body.ContractId, body.Token, ip, ua);
-            if (!result.IsSuccess) return BadRequest(result);
-            return Ok(result);
+            await _contractService.XoaMemHopDongAsync(id);
+            return Ok(new { message = "Hợp đồng đã được xóa mềm thành công." });
         }
-
-        /// <summary>
-        /// Lấy hợp đồng theo booking ID
-        /// </summary>
-        [HttpGet("Get-By-Booking/{bookingId}")]
-        public async Task<ActionResult<ResponseDto<ContractDto>>> GetByBooking(Guid bookingId)
+        catch (Exception ex)
         {
-            var result = await _contractService.GetContractByBookingIdAsync(bookingId);
-            if (!result.IsSuccess) return NotFound(result);
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Lấy danh sách hợp đồng của người thuê
-        /// </summary>
-        [HttpGet("Get-By-Renter/{renterId}")]
-        public async Task<ActionResult<ResponseDto<List<ContractDto>>>> GetByRenter(Guid renterId)
-        {
-            var result = await _contractService.GetContractsByRenterAsync(renterId);
-            return Ok(result);
+            return NotFound(new { message = ex.Message });
         }
     }
 }

@@ -3,57 +3,39 @@ using Monolithic.Data;
 using Monolithic.Models;
 using Monolithic.Repositories.Interfaces;
 
-namespace Monolithic.Repositories.Implementation
+namespace Monolithic.Repositories.Implementation;
+
+public class ContractRepositoryImpl : IContractRepository
 {
-    public class ContractRepositoryImpl : GenericRepository<Contract>, IContractRepository
+    private readonly EVStationBasedRentalSystemDbContext _context;
+
+    public ContractRepositoryImpl(EVStationBasedRentalSystemDbContext context)
     {
-        public ContractRepositoryImpl(EVStationBasedRentalSystemDbContext dbContext) : base(dbContext)
-        {
-        }
+        _context = context;
+    }
 
-        public async Task<Contract?> GetByBookingIdAsync(Guid bookingId)
-        {
-            return await _dbContext.Contracts
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.BookingId == bookingId);
-        }
+    public async Task AddAsync(Contract c)
+    {
+        await _context.Contracts.AddAsync(c);
+        await _context.SaveChangesAsync();
+    }
 
-        public async Task<IEnumerable<Contract>> GetByRenterIdAsync(Guid renterId)
-        {
-            return await _dbContext.Contracts
-                .AsNoTracking()
-                .Where(c => c.RenterId == renterId)
-                .ToListAsync();
-        }
+    // --- B? SUNG HÀM CÒN THI?U ---
+    public async Task<Contract?> GetByIdAsync(Guid id)
+    {
+        return await _context.Contracts.FindAsync(id);
+    }
+    // --- K?T THÚC B? SUNG ---
 
-        public async Task<Contract> UpsertDraftAsync(Contract contract)
-        {
-            using var tx = await _dbContext.Database.BeginTransactionAsync();
-            try
-            {
-                var existing = await _dbContext.Contracts.FirstOrDefaultAsync(c => c.BookingId == contract.BookingId && !c.IsConfirmed);
-                if (existing != null)
-                {
-                    existing.ContractContent = contract.ContractContent;
-                    existing.ContractContentHash = contract.ContractContentHash;
-                    existing.SignerEmail = contract.SignerEmail;
-                    existing.UpdatedAt = DateTime.UtcNow;
-                    _dbContext.Contracts.Update(existing);
-                    await _dbContext.SaveChangesAsync();
-                    await tx.CommitAsync();
-                    return existing;
-                }
+    public async Task<Contract?> GetByTokenAsync(string token)
+    {
+        return await _context.Contracts
+            .FirstOrDefaultAsync(h => h.ConfirmationToken == token);
+    }
 
-                await _dbContext.Contracts.AddAsync(contract);
-                await _dbContext.SaveChangesAsync();
-                await tx.CommitAsync();
-                return contract;
-            }
-            catch
-            {
-                await tx.RollbackAsync();
-                throw;
-            }
-        }
+    public async Task UpdateAsync(Contract c)
+    {
+        _context.Contracts.Update(c);
+        await _context.SaveChangesAsync();
     }
 }

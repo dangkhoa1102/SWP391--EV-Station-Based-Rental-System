@@ -8,6 +8,7 @@ using Monolithic.Repositories.Interfaces;
 using Monolithic.Repositories.Implementation;
 using Monolithic.Services.Implementation;
 using Monolithic.Mappings;
+using Monolithic.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -166,10 +167,13 @@ builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IContractService, ContractServiceImpl>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Auth Services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenServiceImpl>();
 builder.Services.AddScoped<IAuthService, AuthServiceImpl>();
+
+builder.Services.AddHostedService<ContractExpirationService>();
 
 var app = builder.Build();
 

@@ -1,58 +1,29 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Monolithic.Models
+namespace Monolithic.Models;
+
+public class Contract
 {
-    public class Contract
-    {
-        [Key]
-        public Guid ContractId { get; set; }
+    public Guid Id { get; set; }
+    public string SoHopDong { get; set; }
+    //public DateTime NgayKy { get; set; }
+    public string HoTenBenA { get; set; }
+    public string BienSoXe { get; set; }
 
-        [Required]
-        public Guid BookingId { get; set; }
+    // --- Các tr??ng m?i cho quy trình ký tên ---
+    public ContractStatus Status { get; set; } = ContractStatus.Pending;
+    public string? ConfirmationToken { get; set; } // Token duy nh?t g?i qua email
+    public DateTime? TokenExpiry { get; set; }     // Th?i gian token h?t h?n
+    public DateTime? NgayTao { get; set; }          // Th?i ?i?m h?p ??ng ???c t?o
+    public DateTime? NgayKy { get; set; }           // Th?i ?i?m h?p ??ng ???c ký
+    public DateTime? NgayHetHan { get; set; }
+    public bool IsDeleted { get; set; } = false;
+}
 
-        [Required]
-        public Guid RenterId { get; set; }
-
-        public Guid? StaffId { get; set; }
-        // Contract content (plain text) and its hash for tamper-proof audit
-        [Required]
-        [StringLength(4000)]
-        public string ContractContent { get; set; } = string.Empty;
-
-        [Required]
-        [StringLength(128)]
-        public string ContractContentHash { get; set; } = string.Empty;
-
-        // Signature type: e.g. "EmailConfirmation", "TypedName"
-        [Required]
-        [StringLength(50)]
-        public string SignatureType { get; set; } = "EmailConfirmation";
-
-        // Signature value depends on SignatureType (e.g. typed full name)
-        [StringLength(256)]
-        public string? SignatureValue { get; set; }
-
-        // Email used for confirmation (if applicable)
-        [StringLength(256)]
-        public string? SignerEmail { get; set; }
-
-        // Store only hash of confirmation token
-        [StringLength(128)]
-        public string? ConfirmationTokenHash { get; set; }
-
-        public DateTime? TokenExpiresAt { get; set; }
-
-        public bool IsConfirmed { get; set; } = false;
-        public DateTime? ConfirmedAt { get; set; }
-
-        [StringLength(100)]
-        public string? ConfirmedFromIp { get; set; }
-
-        [StringLength(512)]
-        public string? ConfirmedUserAgent { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-    }
+public enum ContractStatus
+{
+    Pending,
+    Signed,
+    Expired
 }

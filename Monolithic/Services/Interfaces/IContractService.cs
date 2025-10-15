@@ -5,11 +5,10 @@ namespace Monolithic.Services.Interfaces
 {
     public interface IContractService
     {
-        Task<ResponseDto<ContractDto>> CreateContractAsync(CreateContractDto request);
-        Task<ResponseDto<ContractDto>> FillContractAsync(Monolithic.DTOs.Contract.FillContractFieldsDto request, Guid callerUserId, string callerRole);
-        Task<ResponseDto<string>> RequestConfirmationAsync(Guid contractId, string email);
-        Task<ResponseDto<ContractDto>> ConfirmContractAsync(Guid contractId, string token, string requesterIp, string userAgent);
-        Task<ResponseDto<ContractDto>> GetContractByBookingIdAsync(Guid bookingId);
-        Task<ResponseDto<List<ContractDto>>> GetContractsByRenterAsync(Guid renterId);
+        Task<Guid> LuuHopDongVaTaoFileAsync(TaoHopDongDto request);
+        Task GuiEmailXacNhanAsync(Guid hopDongId, string email);
+        Task<HopDongXacNhanDto> LayHopDongDeXacNhanAsync(string token);
+        Task XacNhanKyHopDongAsync(string token);
+        Task XoaMemHopDongAsync(Guid id);
     }
 }

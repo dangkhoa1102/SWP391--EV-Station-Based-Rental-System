@@ -98,29 +98,30 @@ namespace Monolithic.Mappings
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
-
-            // Contract mappings
-            CreateMap<Contract, ContractDto>()
-                .ForMember(dest => dest.ContractId, opt => opt.MapFrom(src => src.ContractId))
-                .ForMember(dest => dest.BookingId, opt => opt.MapFrom(src => src.BookingId))
-                .ForMember(dest => dest.RenterId, opt => opt.MapFrom(src => src.RenterId))
-                .ForMember(dest => dest.StaffId, opt => opt.MapFrom(src => src.StaffId))
-                .ForMember(dest => dest.ContractContent, opt => opt.MapFrom(src => src.ContractContent))
-                .ForMember(dest => dest.ContractContentHash, opt => opt.MapFrom(src => src.ContractContentHash))
-                .ForMember(dest => dest.SignatureType, opt => opt.MapFrom(src => src.SignatureType))
-                .ForMember(dest => dest.SignatureValue, opt => opt.MapFrom(src => src.SignatureValue))
-                .ForMember(dest => dest.SignerEmail, opt => opt.MapFrom(src => src.SignerEmail))
-                .ForMember(dest => dest.IsConfirmed, opt => opt.MapFrom(src => src.IsConfirmed))
-                .ForMember(dest => dest.ConfirmedAt, opt => opt.MapFrom(src => src.ConfirmedAt))
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
-
-            CreateMap<CreateContractDto, Contract>()
-                .ForMember(dest => dest.ContractId, opt => opt.MapFrom(src => Guid.NewGuid()))
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-                .ForMember(dest => dest.ContractContent, opt => opt.MapFrom(src => src.ContractContent))
-                .ForMember(dest => dest.SignatureValue, opt => opt.MapFrom(src => src.SignatureValue))
-                .ForMember(dest => dest.SignerEmail, opt => opt.MapFrom(src => src.SignerEmail));
         }
+
+        //    // Contract mappings
+        //    CreateMap<Contract, ContractDto>()
+        //        .ForMember(dest => dest.ContractId, opt => opt.MapFrom(src => src.ContractId))
+        //        .ForMember(dest => dest.BookingId, opt => opt.MapFrom(src => src.BookingId))
+        //        .ForMember(dest => dest.RenterId, opt => opt.MapFrom(src => src.RenterId))
+        //        .ForMember(dest => dest.StaffId, opt => opt.MapFrom(src => src.StaffId))
+        //        .ForMember(dest => dest.ContractContent, opt => opt.MapFrom(src => src.ContractContent))
+        //        .ForMember(dest => dest.ContractContentHash, opt => opt.MapFrom(src => src.ContractContentHash))
+        //        .ForMember(dest => dest.SignatureType, opt => opt.MapFrom(src => src.SignatureType))
+        //        .ForMember(dest => dest.SignatureValue, opt => opt.MapFrom(src => src.SignatureValue))
+        //        .ForMember(dest => dest.SignerEmail, opt => opt.MapFrom(src => src.SignerEmail))
+        //        .ForMember(dest => dest.IsConfirmed, opt => opt.MapFrom(src => src.IsConfirmed))
+        //        .ForMember(dest => dest.ConfirmedAt, opt => opt.MapFrom(src => src.ConfirmedAt))
+        //        .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
+
+        //    CreateMap<CreateContractDto, Contract>()
+        //        .ForMember(dest => dest.ContractId, opt => opt.MapFrom(src => Guid.NewGuid()))
+        //        .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+        //        .ForMember(dest => dest.ContractContent, opt => opt.MapFrom(src => src.ContractContent))
+        //        .ForMember(dest => dest.SignatureValue, opt => opt.MapFrom(src => src.SignatureValue))
+        //        .ForMember(dest => dest.SignerEmail, opt => opt.MapFrom(src => src.SignerEmail));
+        //}
 
         private static string GetFirstName(string fullName)
         {
