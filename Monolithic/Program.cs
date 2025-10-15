@@ -193,7 +193,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Auto-open browser in development (browser close monitoring disabled for now)
+// Auto-open browser in development
 if (app.Environment.IsDevelopment())
 {
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
