@@ -1,4 +1,3 @@
-// src/components/Vehicle/VehicleSection.jsx
 import React, { useState } from 'react';
 import VehicleCard from './VehicleCard';
 import AddVehicleModal from './AddVehicleModal';

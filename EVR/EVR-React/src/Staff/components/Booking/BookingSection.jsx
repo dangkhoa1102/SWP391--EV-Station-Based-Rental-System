@@ -1,4 +1,3 @@
-// src/components/Booking/BookingSection.jsx
 import React, { useState } from 'react';
 import BookingCard from './BookingCard';
 import BookingModal from './BookingModal';

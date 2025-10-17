@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import './styles/staff.css';
+import './Staff/styles/staff.css';
 
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-import BookingSection from './components/Booking/BookingSection';
-import VehicleSection from './components/Vehicle/VehicleSection';
-import ProfileSection from './components/Profile/ProfileSection';
+import Header from './Staff/components/Header';
+import Sidebar from './Staff/components/Sidebar';
+import BookingSection from './Staff/components/Booking/BookingSection';
+import VehicleSection from './Staff/components/Vehicle/VehicleSection';
+import ProfileSection from './Staff/components/Profile/ProfileSection';
 
 const initialBookings = [
   { id: 1, title: 'Tesla Model 3', customer: 'Nguyen Van A', status: 'booked', date: '2025-10-10', img: 'https://via.placeholder.com/440x280?text=Tesla+3', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+A', idString: '012345678901', phone: '0912345678' },
