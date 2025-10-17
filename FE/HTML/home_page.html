@@ -85,10 +85,6 @@
                             </label>
                             <select id="location" name="location" required>
                                 <option value="">Select location</option>
-                                <option value="district1">District 1</option>
-                                <option value="district2">District 2</option>
-                                <option value="district3">District 3</option>
-                                <option value="district4">District 4</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -176,28 +172,23 @@
             <div class="car-section-header">
                 <h2>Our Electric Car Models</h2>
             </div>
-            <div class="car-grid">
-                <!-- Car Cards -->
-                <div class="car-card">
-                    <div class="car-image">
-                        <img src="assets/placeholder.jpg" alt="Tesla Model 3" />
-                        <span class="car-tag">Electric</span>
-                    </div>
-                    <div class="car-info">
-                        <div class="car-header">
-                            <h3 class="car-name">Tesla Model 3</h3>
-                        </div>
-                        <div class="car-features">
-                            <span><i class="fas fa-battery-three-quarters"></i> 350km Range</span>
-                            <span><i class="fas fa-bolt"></i> Fast Charging</span>
-                            <span><i class="fas fa-user"></i> 5 seats</span>
-                        </div>
-                        <div class="car-description">
-                            <p>Premium electric sedan with cutting-edge technology and impressive performance.</p>
-                        </div>
+            
+            <!-- Car Carousel Container -->
+            <div class="car-carousel-wrapper">
+                <button class="carousel-nav prev-carousel" onclick="changeCarCarousel(-1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                
+                <div class="car-carousel-container" id="carCarouselContainer">
+                    <!-- Car cards will be inserted here -->
+                    <div class="car-card-item loading-placeholder" style="text-align: center; padding: 20px;">
+                        <p>Loading cars...</p>
                     </div>
                 </div>
-                <!-- More car cards... -->
+                
+                <button class="carousel-nav next-carousel" onclick="changeCarCarousel(1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
         </div>
     </section>
@@ -242,6 +233,149 @@
     </div>
 
     <script>
+        // ========== GLOBAL CAR CAROUSEL VARIABLES ==========
+        let carCarouselIndex = 0;
+
+        // ========== FAVORITE FUNCTION ==========
+        function toggleFavorite(carId) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                openModal();
+                return;
+            }
+            // TODO: Implement favorite API call
+            alert('Favorite feature coming soon! Car ID: ' + carId);
+        }
+
+        // ========== CAR CAROUSEL FUNCTIONS ==========
+        async function loadCarModels() {
+            const carContainer = document.getElementById('carCarouselContainer');
+            if (!carContainer) {
+                console.error('Car carousel container not found');
+                return;
+            }
+
+            try {
+                if (!window.API || typeof window.API.getAllCars !== 'function') {
+                    console.error('window.API.getAllCars is not available');
+                    carContainer.innerHTML = '<div class="car-card-item loading-placeholder"><p>Failed to load cars</p></div>';
+                    return;
+                }
+
+                console.log('📍 Loading car models...');
+                const cars = await window.API.getAllCars(1, 100);
+                console.log('✅ Cars loaded:', cars.length);
+
+                if (!cars || cars.length === 0) {
+                    carContainer.innerHTML = '<div class="car-card-item loading-placeholder"><p>No cars available</p></div>';
+                    return;
+                }
+
+                // Log first car to check field names
+                if (cars.length > 0) {
+                    console.log('📊 First car full object:', JSON.stringify(cars[0], null, 2));
+                    console.log('📊 All field names:', Object.keys(cars[0]));
+                }
+
+                // Create inner wrapper for smooth animation
+                const carCardsHTML = cars.slice(0, 20).map((car, index) => {
+                    // Log each car to debug
+                    console.log('Processing car ' + index + ':', car);
+                    
+                    // Try all possible field name variations from API
+                    const carId = car.id || car.Id || car.carId || car.CarId;
+                    const carName = car.name || car.Name || car.carName || car.CarName || car.model || car.Model || car.modelName || car.ModelName;
+                    const brand = car.brand || car.Brand || car.manufacturer || car.Manufacturer || car.manufacturerName || car.ManufacturerName;
+                    
+                    // Get price from rentalPricePerHour and convert to per day
+                    const pricePerHour = parseFloat(car.rentalPricePerHour || car.RentalPricePerHour || 0);
+                    const pricePerDay = pricePerHour * 24; // Convert hourly to daily rate
+                    
+                    const imageUrl = car.imageUrl || car.ImageUrl || car.image || car.Image || car.carImageUrl || car.CarImageUrl;
+                    const seats = car.seats || car.Seats || car.seatCount || car.SeatCount || car.numberOfSeats;
+                    const transmission = car.transmission || car.Transmission || car.transmissionType || car.TransmissionType;
+                    const fuelType = car.fuelType || car.FuelType || car.fuel || car.Fuel || car.engineType;
+                    
+                    // Only show if we have actual data
+                    if (!carId || !carName) {
+                        console.warn('Skipping car ' + index + ' - missing ID or name');
+                        return '';
+                    }
+
+                    console.log('✅ Car ' + index + ' rendered:', { carId, carName, brand, pricePerDay, imageUrl });
+
+                    return `
+                        <div class="car-card-item">
+                            <div class="car-image">
+                                <img src="${imageUrl}" alt="${carName}" onerror="this.src='../Picture/E car 1.jpg'" />
+                                <button class="view-detail-btn" onclick="event.preventDefault(); window.location.href='car_detail.html?id=${carId}'">
+                                    <i class="fas fa-eye"></i> View Details
+                                </button>
+                            </div>
+                            <div class="car-info">
+                                <h3 class="car-name">${carName}</h3>
+                                ${brand ? '<p class="car-brand">' + brand + '</p>' : ''}
+                                
+                                <div class="car-price-simple">
+                                    <span class="price-amount">$${pricePerHour.toFixed(2)}</span>
+                                    <span class="price-label">/hour</span>
+                                </div>
+                                
+                                <div class="car-specs">
+                                    ${seats ? '<span><i class="fas fa-users"></i> ' + seats + ' Seats</span>' : ''}
+                                    ${transmission ? '<span><i class="fas fa-cog"></i> ' + transmission + '</span>' : ''}
+                                    ${fuelType ? '<span><i class="fas fa-gas-pump"></i> ' + fuelType + '</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).filter(html => html !== '').join('');
+
+                // Wrap cards in inner div for smooth animation
+                carContainer.innerHTML = `<div class="car-carousel-inner" id="carCarouselInner">${carCardsHTML}</div>`;
+
+            } catch (error) {
+                console.error('❌ Error loading car models:', error);
+                carContainer.innerHTML = '<div class="car-card-item loading-placeholder"><p>Failed to load cars</p></div>';
+            }
+        }
+
+        function changeCarCarousel(direction) {
+            const carInner = document.getElementById('carCarouselInner');
+            if (!carInner) return;
+            
+            // Get first card width + gap
+            const firstCard = carInner.querySelector('.car-card-item');
+            if (!firstCard) return;
+            
+            const cardWidth = firstCard.offsetWidth;
+            const gap = 20; // CSS gap value
+            const scrollUnit = cardWidth + gap;
+            
+            // Update carousel index
+            carCarouselIndex += direction;
+            
+            // Get total cards
+            const totalCards = carInner.querySelectorAll('.car-card-item').length;
+            const maxIndex = Math.max(0, totalCards - 4); // Show 4 cards at a time
+            
+            // Prevent scrolling beyond bounds
+            if (carCarouselIndex > maxIndex) {
+                carCarouselIndex = maxIndex;
+            }
+            if (carCarouselIndex < 0) {
+                carCarouselIndex = 0;
+            }
+            
+            // Calculate transform amount
+            const transformAmount = carCarouselIndex * scrollUnit;
+            
+            // Apply smooth transform
+            carInner.style.transform = `translateX(-${transformAmount}px)`;
+            
+            console.log('Carousel scroll: direction=' + direction + ', index=' + carCarouselIndex + ', transform=' + transformAmount + 'px');
+        }
+
         // ========================================
         // SLIDESHOW FUNCTIONS
         // ======================================== 
@@ -312,7 +446,7 @@
         function changeSlide(direction) {
             slideIndex += direction;
             showSlide(slideIndex);
-            resetAutoSlide(); // Reset timer khi user tương tác
+            resetAutoSlide; // Reset timer khi user tương tác
         }
 
         /**
@@ -560,19 +694,55 @@
             const searchFormOverlay = document.getElementById('searchFormOverlay');
             const heroSlideshow = document.querySelector('.hero-slideshow');
             
-            if (!searchFormOverlay || !heroSlideshow) return;
+            if (!searchFormOverlay || !heroSlideshow) {
+                console.warn('❌ Search form overlay or hero slideshow not found');
+                return;
+            }
+            
+            console.log('✅ Sticky search form initialized');
+            const initialHeight = heroSlideshow.offsetHeight;
+            const initialTop = heroSlideshow.offsetTop;
+            console.log('Hero slideshow - Top:', initialTop, 'Height:', initialHeight);
+            
+            let ticking = false;
+            let lastScrollPos = 0;
+            let isSticky = false;
+            
+            function updateStickyState() {
+                const scrollPosition = window.scrollY;
+                const header = document.querySelector('.header');
+                const headerHeight = header ? header.offsetHeight : 76;
+                
+                // Trigger sticky khi scroll vượt qua header
+                const shouldBeSticky = scrollPosition > headerHeight + 50;
+                
+                console.log('🔍 Scroll:', scrollPosition, 'Header height:', headerHeight, 'Should sticky:', shouldBeSticky);
+                
+                // Khi scroll vượt qua, làm sticky với smooth animation
+                if (shouldBeSticky && !isSticky) {
+                    console.log('📌 ✅ Adding sticky class');
+                    searchFormOverlay.classList.add('sticky');
+                    isSticky = true;
+                } else if (!shouldBeSticky && isSticky) {
+                    console.log('📌 ❌ Removing sticky class');
+                    searchFormOverlay.classList.remove('sticky');
+                    isSticky = false;
+                }
+                
+                ticking = false;
+            }
             
             window.addEventListener('scroll', function() {
-                const slideshowBottom = heroSlideshow.offsetTop + heroSlideshow.offsetHeight;
-                const scrollPosition = window.scrollY;
+                lastScrollPos = window.scrollY;
                 
-                // Khi scroll vượt qua slideshow, làm sticky
-                if (scrollPosition >= slideshowBottom - 100) {
-                    searchFormOverlay.classList.add('sticky');
-                } else {
-                    searchFormOverlay.classList.remove('sticky');
+                if (!ticking) {
+                    window.requestAnimationFrame(updateStickyState);
+                    ticking = true;
                 }
-            });
+            }, { passive: true });
+            
+            // Initial check
+            updateStickyState();
         }
         
         // ========================================
@@ -600,7 +770,19 @@
                         e.preventDefault(); // Stop form submission if validation fails
                         return false;
                     }
-                    // If validation passes, form will submit normally
+                    // Persist rental context for later pages (car list, detail, payment)
+                    const locationSelect = document.getElementById('location');
+                    const rentalContext = {
+                        stationId: locationSelect.value,
+                        stationName: locationSelect.options[locationSelect.selectedIndex]?.text || '',
+                        pickupDate: document.getElementById('pickup-date').value,
+                        pickupTime: document.getElementById('pickup-time').value,
+                        returnDate: document.getElementById('return-date').value,
+                        returnTime: document.getElementById('return-time').value,
+                        createdAt: new Date().toISOString()
+                    };
+                    try { localStorage.setItem('rentalContext', JSON.stringify(rentalContext)); } catch (_) {}
+                    // Form continues to navigate with query params for redundancy
                 });
             }
             
@@ -866,6 +1048,99 @@
                     dropdown.classList.remove('show');
                 }
             });
+
+                        // Debugging station dropdown population
+                        console.log('Initializing station dropdown population...');
+                        async function populateStationDropdown() {
+                            const dropdown = document.getElementById('location');
+                            if (!dropdown) {
+                                console.error('Dropdown element not found');
+                                return;
+                            }
+
+                            console.log('Checking auth status. Token:', localStorage.getItem('token'));
+
+                            try {
+                                let stations = [];
+
+                                // Use the provided API to fetch stations
+                                    if (window.API && typeof window.API.getAllStations === 'function') {
+                                    // Call with NO params (backend returns all stations by default)
+                                    console.log('Calling window.API.getAllStations() with no params...');
+                                    const res = await window.API.getAllStations();
+                                    console.log('Raw stations response from window.API.getAllStations:', res);
+
+                                        // window.API.getAllStations normalizes and returns an array of stations.
+                                        // But be tolerant: it may return an array directly, or an object with
+                                        // a data/data array, or other common shapes.
+                                        if (!res) {
+                                            stations = [];
+                                        } else if (Array.isArray(res)) {
+                                            stations = res;
+                                        } else if (Array.isArray(res.data)) {
+                                            stations = res.data;
+                                        } else if (res.data && Array.isArray(res.data.data)) {
+                                            stations = res.data.data;
+                                        } else if (Array.isArray(res.items)) {
+                                            stations = res.items;
+                                        } else {
+                                            console.warn('Unexpected response shape for stations:', res);
+                                            stations = [];
+                                        }
+                                } else {
+                                    console.error('window.API.getAllStations is not available');
+                                    return;
+                                }
+
+                                console.log('Normalized stations array:', stations);
+                                console.log('Stations count:', stations.length);
+                                console.log('Station samples (id/name):', stations.slice(0,20).map(s => ({ id: s.id||s.Id||s.ID||s.stationId, name: s.name||s.Name||s.stationName||s.displayName })));
+                                dropdown.innerHTML = '<option value="">Select location</option>'; // Reset options
+
+                                stations.forEach(station => {
+                                    // Support multiple casing conventions from backend
+                                    const id = station.id || station.Id || station.ID || station.stationId || station.StationId;
+                                    const name = station.name || station.Name || station.stationName || station.StationName || station.displayName;
+
+                                    if (!id || !name) return; // Skip invalid entries
+
+                                    const option = document.createElement('option');
+                                    option.value = id; // Use station ID as value
+                                    option.textContent = name; // Use station name as text
+                                    dropdown.appendChild(option);
+                                });
+
+                                if (stations.length === 0) {
+                                    console.warn('⚠️ No stations found when populating dropdown.');
+                                    const token = localStorage.getItem('token');
+                                    if (!token) {
+                                        console.log('💡 Hint: You may need to log in first. The /Stations/Get-All endpoint requires authentication.');
+                                        showNotification('Please log in to view available locations', 'error');
+                                    } else {
+                                        console.log('💡 Hint: Backend returned 0 stations. Check if the database has station data.');
+                                        showNotification('No locations available at the moment', 'error');
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Failed to populate station dropdown:', error);
+                                const selectEl = document.getElementById('location');
+                                const note = document.getElementById('stationErrorNote') || document.createElement('div');
+                                note.id = 'stationErrorNote';
+                                note.textContent = 'Error: Cannot load stations from server. Please try again later.';
+                                note.style.color = '#c9302c';
+                                note.style.fontSize = '12px';
+                                note.style.marginTop = '6px';
+                                if (selectEl && selectEl.parentElement) selectEl.parentElement.appendChild(note);
+                            }
+                        }
+
+                        // Call populateStationDropdown immediately
+                        console.log('Page loaded. Calling populateStationDropdown...');
+                        populateStationDropdown();
+                        
+                        // Load car models
+                        console.log('Loading car models...');
+                        loadCarModels();
         });
     </script>
 </body>

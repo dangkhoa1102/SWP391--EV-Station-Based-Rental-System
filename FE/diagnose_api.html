@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>API Diagnostic Tool</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+    .section { background: white; padding: 16px; margin-bottom: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 8px; }
+    button:hover { background: #0056b3; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    pre { background: #f8f8f8; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    .success { color: green; }
+    .error { color: red; }
+    input, select { padding: 8px; margin: 4px; border: 1px solid #ddd; border-radius: 4px; }
+    label { display: inline-block; width: 120px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🔍 API Diagnostic Tool</h1>
+  <p>This tool helps you diagnose FE vs BE issues by testing different parameter combinations.</p>
+
+  <div class="section">
+    <h3>1. Test Swagger Connection</h3>
+    <p>First, verify the Swagger endpoint is reachable:</p>
+    <button onclick="testSwagger()">Test Swagger JSON</button>
+    <pre id="swaggerResult">Not tested yet</pre>
+  </div>
+
+  <div class="section">
+    <h3>2. Test Stations Endpoint (Different Parameter Styles)</h3>
+    <p>Try different parameter naming conventions to see which one works:</p>
+    
+    <div style="margin: 16px 0;">
+      <label>Page:</label><input id="testPage" type="number" value="1" style="width: 80px">
+      <label>PageSize:</label><input id="testPageSize" type="number" value="10" style="width: 80px">
+    </div>
+
+    <button onclick="testStations('PascalCase')">Test PascalCase (PageIndex, PageSize)</button>
+    <button onclick="testStations('camelCase')">Test camelCase (pageIndex, pageSize)</button>
+    <button onclick="testStations('lowercase')">Test lowercase (page, pagesize)</button>
+    <button onclick="testStations('mixed')">Test Mixed (Page, Size)</button>
+    <button onclick="testStations('noParams')">Test No Params</button>
+    
+    <h4>Results:</h4>
+    <pre id="stationsResult">Not tested yet</pre>
+  </div>
+
+  <div class="section">
+    <h3>3. Inspect Swagger Definition</h3>
+    <p>Check what parameters the Swagger spec says are required:</p>
+    <button onclick="inspectSwaggerParams()">Inspect /Stations/Get-All Parameters</button>
+    <pre id="swaggerParams">Not inspected yet</pre>
+  </div>
+
+  <div class="section">
+    <h3>4. Compare Login (Working) vs Stations (Broken)</h3>
+    <p>Since Login works, let's compare the request patterns:</p>
+    <button onclick="compareEndpoints()">Compare Request Patterns</button>
+    <pre id="compareResult">Not compared yet</pre>
+  </div>
+
+  <script>
+    const BASE = 'http://localhost:5054/api';
+    
+    async function testSwagger() {
+      const result = document.getElementById('swaggerResult');
+      result.textContent = 'Testing...';
+      try {
+        const res = await axios.get('http://localhost:5054/api/swagger/v1/swagger.json', { timeout: 5000 });
+        const info = res.data?.info || {};
+        result.innerHTML = '<span class="success">✅ Swagger is reachable!</span>\n' + 
+          JSON.stringify({ 
+            title: info.title, 
+            version: info.version,
+            totalPaths: Object.keys(res.data?.paths || {}).length,
+            status: res.status 
+          }, null, 2);
+      } catch (e) {
+        result.innerHTML = '<span class="error">❌ Swagger test failed</span>\n' + 
+          JSON.stringify({ 
+            error: e.message, 
+            status: e.response?.status, 
+            data: e.response?.data 
+          }, null, 2);
+      }
+    }
+
+    async function testStations(style) {
+      const result = document.getElementById('stationsResult');
+      const page = parseInt(document.getElementById('testPage').value);
+      const pageSize = parseInt(document.getElementById('testPageSize').value);
+      
+      let params = {};
+      switch(style) {
+        case 'PascalCase':
+          params = { PageIndex: page, PageSize: pageSize, Search: '', SortBy: 'Id', SortDesc: false };
+          break;
+        case 'camelCase':
+          params = { pageIndex: page, pageSize: pageSize, search: '', sortBy: 'Id', sortDesc: false };
+          break;
+        case 'lowercase':
+          params = { page: page, pagesize: pageSize, search: '', sortby: 'Id', sortdesc: false };
+          break;
+        case 'mixed':
+          params = { Page: page, Size: pageSize, Search: '', Sort: 'Id' };
+          break;
+        case 'noParams':
+          params = {};
+          break;
+      }
+
+      result.textContent = `Testing with ${style} params...\nSending: ${JSON.stringify(params, null, 2)}`;
+      
+      try {
+        const startTime = Date.now();
+        const res = await axios.get(BASE + '/Stations/Get-All', { params, timeout: 10000 });
+        const elapsed = Date.now() - startTime;
+        
+        const data = res.data;
+        let recordCount = 0;
+        if (Array.isArray(data)) recordCount = data.length;
+        else if (Array.isArray(data?.data)) recordCount = data.data.length;
+        else if (Array.isArray(data?.items)) recordCount = data.items.length;
+        
+        result.innerHTML = `<span class="success">✅ ${style} WORKS!</span>\n` +
+          `Time: ${elapsed}ms | Status: ${res.status} | Records: ${recordCount}\n` +
+          `Response shape: ${JSON.stringify(Object.keys(data || {}))}\n\n` +
+          `Full response:\n${JSON.stringify(data, null, 2).substring(0, 1000)}...`;
+      } catch (e) {
+        result.innerHTML = `<span class="error">❌ ${style} FAILED</span>\n` +
+          `Status: ${e.response?.status || 'N/A'}\n` +
+          `Error: ${e.message}\n` +
+          `Response: ${JSON.stringify(e.response?.data, null, 2)}`;
+      }
+    }
+
+    async function inspectSwaggerParams() {
+      const result = document.getElementById('swaggerParams');
+      result.textContent = 'Fetching Swagger spec...';
+      try {
+        const res = await axios.get('http://localhost:5054/api/swagger/v1/swagger.json');
+        const paths = res.data?.paths || {};
+        const stationsPath = paths['/Stations/Get-All'] || paths['/api/Stations/Get-All'] || null;
+        
+        if (!stationsPath) {
+          result.textContent = 'Could not find /Stations/Get-All in Swagger spec.\nAvailable paths:\n' + 
+            Object.keys(paths).join('\n');
+          return;
+        }
+
+        const getOp = stationsPath.get || stationsPath.GET;
+        if (!getOp) {
+          result.textContent = 'No GET operation found for /Stations/Get-All';
+          return;
+        }
+
+        const params = getOp.parameters || [];
+        result.innerHTML = '<span class="success">✅ Found endpoint definition!</span>\n\n' +
+          `Parameters (${params.length}):\n` +
+          JSON.stringify(params.map(p => ({
+            name: p.name,
+            in: p.in,
+            required: p.required,
+            type: p.type || p.schema?.type,
+            description: p.description
+          })), null, 2);
+      } catch (e) {
+        result.innerHTML = '<span class="error">❌ Failed to fetch Swagger spec</span>\n' + 
+          JSON.stringify({ error: e.message, status: e.response?.status }, null, 2);
+      }
+    }
+
+    async function compareEndpoints() {
+      const result = document.getElementById('compareResult');
+      result.textContent = 'Comparing...';
+      
+      const comparison = {
+        login: {
+          endpoint: '/Auth/Login',
+          method: 'POST',
+          expectedParams: 'Body: { Email, Password }',
+          notes: 'Works fine according to user'
+        },
+        stations: {
+          endpoint: '/Stations/Get-All',
+          method: 'GET',
+          expectedParams: 'Query: PageIndex, PageSize, Search, SortBy, SortDesc',
+          notes: 'Returns 400 Bad Request'
+        },
+        hypothesis: [
+          '1. Parameter naming: Backend may expect different case (camelCase vs PascalCase)',
+          '2. Required vs Optional: Some params may be required that we are not sending',
+          '3. Data types: Backend may expect strings for boolean or numbers',
+          '4. Authentication: Stations might require auth token while Login does not',
+          '5. CORS/Headers: Different endpoints may have different header requirements'
+        ]
+      };
+
+      result.textContent = JSON.stringify(comparison, null, 2);
+      
+      // Now test with auth token
+      const token = localStorage.getItem('token');
+      result.textContent += '\n\n=== Testing with Auth Token ===\n';
+      result.textContent += `Token present: ${!!token}\n`;
+      
+      if (token) {
+        try {
+          const res = await axios.get(BASE + '/Stations/Get-All', {
+            params: { PageIndex: 1, PageSize: 10 },
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          result.textContent += '✅ WITH TOKEN: Success! Status: ' + res.status;
+        } catch (e) {
+          result.textContent += '❌ WITH TOKEN: Still fails. Status: ' + (e.response?.status || 'N/A') + 
+            '\nError: ' + JSON.stringify(e.response?.data, null, 2);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

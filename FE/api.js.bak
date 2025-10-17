@@ -1,0 +1,538 @@
+// Centralized API helper - forced to use swagger backend on port 5054
+const SWAGGER_ROOT = 'http://localhost:5054/api';
+
+if (typeof axios === 'undefined') {
+  console.error('Axios is required by api.js. Please include axios before this script.');
+} else {
+  // Ensure axios uses the forced swagger root as the default base for relative requests
+  try { axios.defaults.baseURL = SWAGGER_ROOT; } catch (e) {}
+}
+
+// single axios instance
+const apiClient = axios.create({
+  baseURL: SWAGGER_ROOT,
+  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+  timeout: 10000
+});
+
+apiClient.interceptors.request.use(cfg => {
+  try {
+    const t = localStorage.getItem('token');
+    if (t && t !== 'null') cfg.headers.Authorization = `Bearer ${t}`;
+  } catch (e) {}
+  return cfg;
+});
+
+apiClient.interceptors.response.use(r => r, e => Promise.reject(e));
+
+window.API = {
+  baseURL: SWAGGER_ROOT,
+  _client: apiClient,
+
+  login: async (email, password) => {
+    const res = await apiClient.post('/Auth/Login', { Email: email, Password: password });
+    const payload = res.data?.data || res.data || {};
+    const token = payload.token || payload.accessToken || res.data?.token;
+    if (token) localStorage.setItem('token', token);
+    if (payload.user) localStorage.setItem('user', JSON.stringify(payload.user));
+    return { raw: res.data, token, payload };
+  },
+
+  register: async (fullName, email, phoneNumber, password) => {
+    const res = await apiClient.post('/Auth/Register', { FullName: fullName, Email: email, PhoneNumber: phoneNumber, Password: password, ConfirmPassword: password, Role: 'Customer' });
+    return res.data;
+  },
+
+  refreshToken: async () => {
+    const res = await apiClient.post('/Auth/Refresh-Token');
+    return res.data;
+  },
+
+  logout: async () => {
+    const res = await apiClient.post('/Auth/Logout');
+    localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); localStorage.removeItem('user'); localStorage.removeItem('userEmail');
+    return res.data;
+  },
+
+  forgotPassword: async (email) => {
+    const res = await apiClient.post('/Auth/forgot-password', { email });
+    return res.data;
+  },
+
+  getMe: async () => {
+    const res = await apiClient.get('/Auth/Me');
+    return res.data;
+  },
+
+  changePassword: async (userId, currentPassword, newPassword) => {
+    const res = await apiClient.post('/Auth/Change-Password', { userId, currentPassword, newPassword });
+    return res.data;
+  },
+
+  getAllStations: async (page = 1, pageSize = 10, search = '', sortBy = 'Id', sortDesc = false) => {
+    const params = { PageIndex: page, PageSize: pageSize, Search: search || '', SortBy: sortBy || 'Id', SortDesc: !!sortDesc };
+    const res = await apiClient.get('/Stations/Get-All', { params });
+    const data = res.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.data)) return data.data;
+    if (Array.isArray(data.items)) return data.items;
+    if (Array.isArray(data.result)) return data.result;
+    const key = Object.keys(data || {}).find(k => Array.isArray(data[k]));
+    return key ? data[key] : [];
+  },
+
+  getAvailableCarsByStation: async (stationId) => {
+    const res = await apiClient.get(`/Cars/Get-Available-By-Station/${encodeURIComponent(stationId)}`);
+    return res.data?.data || res.data || [];
+  },
+
+  createBooking: async (payload, userId) => {
+    const res = await apiClient.post(`/Bookings/Create?userId=${encodeURIComponent(userId)}`, payload);
+    return res.data?.data || res.data || {};
+  }
+};
+
+// convenience wrappers
+['get','post','put','delete','patch'].forEach(m => {
+  window.API[m] = async (endpoint, body, opts) => {
+    if (m === 'get' || m === 'delete') return (await apiClient[m](endpoint, opts)).data;
+    return (await apiClient[m](endpoint, body, opts)).data;
+  };
+});
+
+window.API.decodeJwt = (token) => {
+  const parts = token.split('.'); if (parts.length < 2) throw new Error('Invalid JWT');
+  const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+  const json = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  return JSON.parse(json);
+};
+
+console.log('✅ api.js loaded — forced base:', SWAGGER_ROOT);
+console.log('📌 All API calls use apiClient with automatic token authentication');
+    const candidates = [
+      'http://localhost:5054/api',
+      'https://localhost:7054/api',
+      API_BASE_URL
+    ].filter((v, i, a) => !!v && a.indexOf(v) === i);
+
+    for (const base of candidates) {
+      try {
+        const root = base.replace(/\/$/, '');
+        // First try the swagger JSON (doesn't usually require auth)
+        try {
+          const swaggerUrl = root + '/swagger/v1/swagger.json';
+          const sres = await axios.get(swaggerUrl, { timeout: 3000 });
+          if (sres.status >= 200 && sres.status < 300) {
+            API_BASE_URL = base;
+            api.defaults.baseURL = base;
+            window.API.baseURL = base;
+            localStorage.setItem('apiBase', base);
+            return { ok: true, chosen: base, probe: 'swagger', status: sres.status };
+          }
+        } catch (swErr) {
+          // ignore swagger failure and try public GET
+        }
+
+        // Next try a harmless GET to Stations (pageSize=1 reduces payload)
+        try {
+          const probeUrl = root + '/Stations/Get-All';
+          const pres = await axios.get(probeUrl, { params: { page: 1, pageSize: 1 }, timeout: 3000 });
+          if (pres.status >= 200 && pres.status < 300) {
+            API_BASE_URL = base;
+            api.defaults.baseURL = base;
+            window.API.baseURL = base;
+            localStorage.setItem('apiBase', base);
+            return { ok: true, chosen: base, probe: 'stations', status: pres.status };
+          }
+        } catch (pErr) {
+          // ignore probe failure and continue with other candidates
+        }
+      } catch (e) {
+        // ignore outer errors
+      }
+    }
+
+    return { ok: false, tried: candidates };
+  },
+  // Clear cached base URL and force re-detect
+  clearBase: () => {
+    localStorage.removeItem('apiBase');
+  },
+  // Force-set the API base at runtime (useful for debugging / dev override)
+  // Example: window.API.setBase('http://localhost:5054/api')
+  setBase: (base) => {
+    try {
+      API_BASE_URL = base;
+      if (api && api.defaults) api.defaults.baseURL = base;
+      if (axios && axios.defaults) axios.defaults.baseURL = base;
+      window.API.baseURL = base;
+      localStorage.setItem('apiBase', base);
+      console.log('API base forced to', base);
+      return { ok: true, base };
+    } catch (e) {
+      console.error('Failed to set API base', e);
+      return { ok: false, error: e };
+    }
+  },
+  // Debug helper to inspect the internal axios instance base
+  _debugAxiosBase: () => {
+    try {
+      return { axiosDefaults: axios?.defaults?.baseURL, apiDefaults: api?.defaults?.baseURL, windowAPI: window.API?.baseURL, stored: localStorage.getItem('apiBase') };
+    } catch (e) {
+      return { error: e };
+    }
+  },
+  // Connectivity check - use the same safer probes as autoDetectBase
+  ping: async () => {
+    const detection = await window.API.autoDetectBase();
+    if (detection?.ok) {
+      return { ok: true, status: detection.status, backend: API_BASE_URL, chosen: detection.chosen, message: 'Reachable (probe OK)' };
+    }
+
+    // If detection failed, perform one more explicit probe and surface clear diagnostics
+    const origin = window.location.origin;
+    const candidates = detection?.tried || [];
+    const details = [];
+    for (const base of candidates) {
+      try {
+        const root = base.replace(/\/$/, '');
+        try {
+          const sres = await axios.get(root + '/swagger/v1/swagger.json', { timeout: 3000 });
+          details.push({ base, probe: 'swagger', status: sres.status });
+          continue;
+        } catch (e) {
+          details.push({ base, probe: 'swagger', error: e.response?.status || e.message || 'no-response' });
+        }
+
+        try {
+          const pres = await axios.get(root + '/Stations/Get-All', { params: { page: 1, pageSize: 1 }, timeout: 3000 });
+          details.push({ base, probe: 'stations', status: pres.status });
+          continue;
+        } catch (e) {
+          details.push({ base, probe: 'stations', error: e.response?.status || e.message || 'no-response' });
+        }
+      } catch (e) {
+        details.push({ base, error: e.message || e });
+      }
+    }
+
+    return { ok: false, message: 'No reachable backend detected', origin, backend: API_BASE_URL, tried: candidates, details };
+  },
+  
+  // Authentication endpoints
+  login: async (email, password) => {
+    try {
+      const requestBody = { Email: email, Password: password };
+      
+  console.log('Sending login request to:', API_BASE_URL + '/Auth/Login');
+      console.log('Login data:', { ...requestBody, password: '***' });
+      
+  // Use forced swagger root to avoid calls to wrong ports
+  const root = (window.API && window.API.forcedSwaggerRoot) ? window.API.forcedSwaggerRoot.replace(/\/$/, '') : API_BASE_URL.replace(/\/$/, '');
+  const headers = {};
+  const storedToken = localStorage.getItem('token');
+  if (storedToken && storedToken !== 'null') headers.Authorization = `Bearer ${storedToken}`;
+  const response = await axios.post(root + '/Auth/Login', requestBody, { headers });
+      console.log('Login response:', response.data);
+
+      // Backend returns shape: { isSuccess, message, data: { token, refreshToken, user }, errors }
+      const payload = response?.data?.data || {};
+      const token = payload.token || response?.data?.token; // fallback just in case
+      const refreshToken = payload.refreshToken || response?.data?.refreshToken;
+      const user = payload.user || response?.data?.user;
+
+      if (token) {
+        // Persist for subsequent requests
+        localStorage.setItem('token', token);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+        if (user?.email) localStorage.setItem('userEmail', user.email);
+        if (user) localStorage.setItem('user', JSON.stringify(user));
+
+        console.log('Login successful. Token received:', token);
+        // Return a normalized object while preserving raw for debugging
+        return {
+          isSuccess: response?.data?.isSuccess ?? true,
+          message: response?.data?.message || 'Login successful',
+          token,
+          refreshToken,
+          user,
+          raw: response.data
+        };
+      }
+
+      console.warn('Login successful but no token received. Response:', response.data);
+      throw { message: 'Login successful but no token received. Please contact support.' };
+    } catch (error) {
+      console.error('Login error details:', error);
+      
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        console.error('Error status:', error.response.status);
+        throw error.response.data || { message: `Server error: ${error.response.status}` };
+      } else if (error.request) {
+        console.error('Network error (possible CORS or server offline):', error.request);
+        const origin = window.location.origin;
+        throw { message: `Unable to connect to server at ${API_BASE_URL}. Ensure backend is running and CORS allows origin ${origin}.` };
+      } else {
+        console.error('Unknown error:', error.message);
+        throw { message: error.message || 'An unknown error occurred' };
+      }
+    }
+  },
+  
+  register: async (fullName, email, phoneNumber, password) => {
+    try {
+      const requestBody = { 
+        FullName: fullName,              // Sửa từ Name thành FullName
+        Email: email, 
+        PhoneNumber: phoneNumber,
+        Password: password,
+        ConfirmPassword: password,
+        Role: 'Customer'
+      };
+      
+  console.log('Sending register request to:', API_BASE_URL + '/Auth/Register');
+      console.log('Register data:', { ...requestBody, password: '***', confirmPassword: '***' });
+      
+  const root = (window.API && window.API.forcedSwaggerRoot) ? window.API.forcedSwaggerRoot.replace(/\/$/, '') : API_BASE_URL.replace(/\/$/, '');
+  const headers = {};
+  const token = localStorage.getItem('token');
+  if (token && token !== 'null') headers.Authorization = `Bearer ${token}`;
+  const response = await axios.post(root + '/Auth/Register', requestBody, { headers });
+      console.log('Register response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Register error details:', error);
+      
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        console.error('Error status:', error.response.status);
+        throw error.response.data || { message: `Server error: ${error.response.status}` };
+      } else if (error.request) {
+        console.error('Network error:', error.request);
+        throw { message: 'Unable to connect to server. Please check your network connection.' };
+      } else {
+        console.error('Unknown error:', error.message);
+        throw { message: error.message || 'An unknown error occurred' };
+      }
+    }
+  },
+  
+  refreshToken: async () => {
+    try {
+  const root = (window.API && window.API.forcedSwaggerRoot) ? window.API.forcedSwaggerRoot.replace(/\/$/, '') : API_BASE_URL.replace(/\/$/, '');
+  const headers = {};
+  const token = localStorage.getItem('token');
+  if (token && token !== 'null') headers.Authorization = `Bearer ${token}`;
+  const response = await axios.post(root + '/Auth/Refresh-Token', null, { headers });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  
+  logout: async () => {
+    try {
+  const root = (window.API && window.API.forcedSwaggerRoot) ? window.API.forcedSwaggerRoot.replace(/\/$/, '') : API_BASE_URL.replace(/\/$/, '');
+  const headers = {};
+  const token = localStorage.getItem('token');
+  if (token && token !== 'null') headers.Authorization = `Bearer ${token}`;
+  const response = await axios.post(root + '/Auth/Logout', null, { headers });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  
+  forgotPassword: async (email) => {
+    try {
+  const root = (window.API && window.API.forcedSwaggerRoot) ? window.API.forcedSwaggerRoot.replace(/\/$/, '') : API_BASE_URL.replace(/\/$/, '');
+  const headers = {};
+  const token = localStorage.getItem('token');
+  if (token && token !== 'null') headers.Authorization = `Bearer ${token}`;
+  const response = await axios.post(root + '/Auth/forgot-password', { email }, { headers });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  
+  // Get current user info
+  getMe: async () => {
+    try {
+      console.log('Fetching current user info (forced root) from:', (window.API && window.API.forcedSwaggerRoot) || API_BASE_URL + '/Auth/Me');
+      const root = (window.API && window.API.forcedSwaggerRoot) ? window.API.forcedSwaggerRoot.replace(/\/$/, '') : API_BASE_URL.replace(/\/$/, '');
+      const headers = {};
+      const token = localStorage.getItem('token');
+      if (token && token !== 'null') headers.Authorization = `Bearer ${token}`;
+      const response = await axios.get(root + '/Auth/Me', { headers });
+      console.log('User info response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get user info error:', error);
+      // If endpoint doesn't exist on BE (404), try to decode from JWT as fallback
+      const token = localStorage.getItem('token');
+      if (error.response && error.response.status === 404 && token) {
+        try {
+          const payload = window.API.decodeJwt(token);
+          return { source: 'token', payload };
+        } catch (e) {
+          // fall through to standard error
+        }
+      }
+
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        console.error('Error status:', error.response.status);
+        throw error.response.data || { message: `Server error: ${error.response.status}` };
+      } else if (error.request) {
+        console.error('Network error:', error.request);
+        throw { message: 'Unable to connect to server. Please check your network connection.' };
+      } else {
+        console.error('Unknown error:', error.message);
+        throw { message: error.message || 'An unknown error occurred' };
+      }
+    }
+  },
+  
+  changePassword: async (userId, currentPassword, newPassword) => {
+    try {
+  console.log('Sending change password request (forced root) to:', (window.API && window.API.forcedSwaggerRoot) || API_BASE_URL + '/Auth/Change-Password');
+      const root = (window.API && window.API.forcedSwaggerRoot) ? window.API.forcedSwaggerRoot.replace(/\/$/, '') : API_BASE_URL.replace(/\/$/, '');
+      const headers = {};
+      const token = localStorage.getItem('token');
+      if (token && token !== 'null') headers.Authorization = `Bearer ${token}`;
+      const response = await axios.post(root + '/Auth/Change-Password', { 
+        userId: userId,
+        currentPassword: currentPassword,
+        newPassword: newPassword
+      }, { headers });
+      
+      console.log('Change password response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Change password error details:', error);
+      
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        console.error('Error status:', error.response.status);
+        throw error.response.data || { message: `Server error: ${error.response.status}` };
+      } else if (error.request) {
+        console.error('Network error:', error.request);
+        throw { message: 'Unable to connect to server. Please check your network connection.' };
+      } else {
+        console.error('Unknown error:', error.message);
+        throw { message: error.message || 'An unknown error occurred' };
+      }
+    }
+  },
+  
+  // Fetch all stations with pagination support
+  // Note: This endpoint requires authentication. The apiClient automatically includes the token.
+  getAllStations: async (page = 1, pageSize = 10, search = '', sortBy = '', sortDesc = false) => {
+    try {
+      console.log('Calling /Stations/Get-All (authenticated):', { page, pageSize, search, sortBy, sortDesc });
+
+      // Backend accepts params but they are optional. Using apiClient ensures token is sent.
+      const params = {};
+      if (page) params.PageIndex = page;
+      if (pageSize) params.PageSize = pageSize;
+      if (search) params.Search = search;
+      if (sortBy) params.SortBy = sortBy;
+      if (sortDesc !== undefined) params.SortDesc = sortDesc;
+
+      // Use apiClient which has token interceptor
+      const response = await apiClient.get('/Stations/Get-All', { params });
+      const res = response?.data;
+
+      // Normalizer to extract an array from various possible response shapes
+      const extractArray = (obj) => {
+        if (!obj) return [];
+        if (Array.isArray(obj)) return obj;
+        if (Array.isArray(obj.data)) return obj.data;
+        if (obj.data && Array.isArray(obj.data.data)) return obj.data.data;
+        if (Array.isArray(obj.items)) return obj.items;
+        if (Array.isArray(obj.result)) return obj.result;
+        const arrProp = Object.keys(obj).find(k => Array.isArray(obj[k]));
+        return arrProp ? obj[arrProp] : [];
+      };
+
+      let stations = extractArray(res);
+
+      // If pagination metadata indicates more pages, attempt to fetch them sequentially (best-effort)
+      const total = res?.totalItems || res?.totalCount || res?.total || res?.data?.totalItems || res?.data?.totalCount;
+      const pageSizeReturned = res?.pageSize || res?.pageSizeReturned || res?.data?.pageSize || pageSize;
+      const currentPage = res?.pageIndex || res?.page || res?.data?.pageIndex || page;
+
+      if (total && pageSizeReturned && total > (pageSizeReturned * (currentPage || page))) {
+        const totalPages = Math.ceil(total / pageSizeReturned);
+        for (let p = (currentPage || page) + 1; p <= totalPages; p++) {
+          try {
+            const pgResp = await apiClient.get('/Stations/Get-All', { 
+              params: { PageIndex: p, PageSize: pageSize, Search: params.Search, SortBy: params.SortBy, SortDesc: params.SortDesc } 
+            });
+            stations = stations.concat(extractArray(pgResp?.data));
+          } catch (e) {
+            console.warn('Failed to fetch additional station page', p, e && e.message);
+            break; // stop trying further pages on error
+          }
+        }
+      }
+
+      return stations || [];
+    } catch (error) {
+      console.error('Error fetching stations:', error);
+      if (error.response) {
+        // server responded with non-2xx
+        console.error('Stations error response body:', error.response.data);
+        throw error.response.data || { message: `Server error: ${error.response.status}` };
+      } else if (error.request) {
+        // no response received
+        console.error('Stations request made but no response (network/CORS):', error.request);
+        throw { message: `Unable to reach backend. Ensure backend is running and CORS allows origin ${window.location.origin}.` };
+      }
+      throw { message: error.message || 'Unknown error fetching stations' };
+    }
+  },
+
+  // Fetch available cars by station
+  getAvailableCarsByStation: async (stationId) => {
+    try {
+      const root = (window.API && window.API.forcedSwaggerRoot) ? window.API.forcedSwaggerRoot.replace(/\/$/, '') : API_BASE_URL.replace(/\/$/, '');
+      const headers = {};
+      const token = localStorage.getItem('token');
+      if (token && token !== 'null') headers.Authorization = `Bearer ${token}`;
+      const response = await axios.get(root + `/Cars/Get-Available-By-Station/${encodeURIComponent(stationId)}`, { headers });
+      return response.data?.data || response.data || [];
+    } catch (error) {
+      console.error('Error fetching available cars:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Create a booking
+  createBooking: async (payload, userId) => {
+    try {
+      const root = (window.API && window.API.forcedSwaggerRoot) ? window.API.forcedSwaggerRoot.replace(/\/$/, '') : API_BASE_URL.replace(/\/$/, '');
+      const headers = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('token');
+      if (token && token !== 'null') headers.Authorization = `Bearer ${token}`;
+      const response = await axios.post(root + `/Bookings/Create?userId=${encodeURIComponent(userId)}`, payload, { headers });
+      return response.data?.data || response.data || {};
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      throw error.response?.data || error.message;
+    }
+  }
+};
+
+// Lightweight JWT decoder (no verification, for displaying claims only)
+window.API.decodeJwt = (token) => {
+  const parts = token.split('.');
+  if (parts.length < 2) throw new Error('Invalid JWT');
+  const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+  const json = decodeURIComponent(atob(base64).split('').map(c => {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  return JSON.parse(json);
+};

@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../CSS/car_detail.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
 </head>
 
 <body>
@@ -57,39 +58,39 @@
                 <div class="car-media-section">
                     <div class="car-gallery">
                         <div class="main-image">
-                            <img src="assets/placeholder.jpg" alt="Car Image" id="mainCarImage">
+                            <div class="car-image-placeholder">
+                                <i class="fas fa-car"></i>
+                            </div>
                         </div>
-                        <div class="thumbnail-list">
-                            <img src="assets/placeholder.jpg" alt="Car Thumbnail 1" onclick="changeMainImage(this.src)">
-                            <img src="assets/placeholder.jpg" alt="Car Thumbnail 2" onclick="changeMainImage(this.src)">
-                            <img src="assets/placeholder.jpg" alt="Car Thumbnail 3" onclick="changeMainImage(this.src)">
+                        <div class="thumbnail-list" style="display: none;">
+                            <!-- Thumbnails will be shown when real images are available -->
                         </div>
                     </div>
 
                     <div class="car-details-header">
-                        <h2>Tesla Model 3</h2>
+                        <h2 id="car-name">Loading...</h2>
                         <div class="car-rating">
                             <i class="fas fa-star"></i>
-                            <span>4.8 (124 reviews)</span>
+                            <span id="car-rating">Loading...</span>
                         </div>
                     </div>
 
-                    <div class="car-specs">
+                    <div class="car-specs" id="car-specs">
                         <div class="spec-item">
                             <i class="fas fa-user"></i>
-                            <span>5 Seats</span>
+                            <span id="spec-seats">Loading...</span>
                         </div>
                         <div class="spec-item">
-                            <i class="fas fa-bolt"></i>
-                            <span>350km Range</span>
+                            <i class="fas fa-fill-drip"></i>
+                            <span id="spec-color">Loading...</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span id="spec-year">Loading...</span>
                         </div>
                         <div class="spec-item">
                             <i class="fas fa-charging-station"></i>
-                            <span>Fast Charging</span>
-                        </div>
-                        <div class="spec-item">
-                            <i class="fas fa-road"></i>
-                            <span>25,000 km</span>
+                            <span id="spec-battery">Loading...</span>
                         </div>
                     </div>
 
@@ -111,7 +112,7 @@
                     <div class="rental-pricing">
                         <h3>Rental Rate</h3>
                         <div class="price-display">
-                            <span class="price">$15/hour</span>
+                            <span class="price" id="hourly-rate">Loading...</span>
                         </div>
                     </div>
 
@@ -141,7 +142,7 @@
                         </div>
                     </div>
 
-                    <button onclick="proceedToPayment()" class="btn-book-now">
+                    <button onclick="proceedToPayment()" id="btnBookNow" class="btn-book-now">
                         Book Now
                     </button>
                 </div>
@@ -185,75 +186,11 @@
     </div>
 
     <script>
-        // Modal functions
-        function openModal() {
-            document.getElementById("modal").style.display = "flex";
-        }
+        // ============= GLOBAL STATE =============
+        let currentCar = null;
+        let rentalContext = null;
 
-        function closeModal() {
-            document.getElementById("modal").style.display = "none";
-        }
-
-        function openRegisterModal() {
-            closeModal();
-            document.getElementById("registerModal").style.display = "flex";
-        }
-
-        function closeRegisterModal() {
-            document.getElementById("registerModal").style.display = "none";
-        }
-
-        function changeMainImage(src) {
-            document.getElementById("mainCarImage").src = src;
-        }
-
-        // Get booking details from URL and calculate prices
-        document.addEventListener('DOMContentLoaded', function() {
-            const params = new URLSearchParams(window.location.search);
-            const location = params.get('location');
-            const pickupDate = params.get('pickup-date');
-            const pickupTime = params.get('pickup-time');
-            const returnDate = params.get('return-date');
-            const returnTime = params.get('return-time');
-
-            // Update booking summary
-            if (location) {
-                document.getElementById('summary-location').textContent = location;
-            }
-            if (pickupDate && pickupTime) {
-                document.getElementById('summary-pickup-date').textContent = 
-                    `${pickupDate} ${pickupTime}`;
-            }
-            if (returnDate && returnTime) {
-                document.getElementById('summary-return-date').textContent = 
-                    `${returnDate} ${returnTime}`;
-            }
-
-            // Calculate total hours and price if dates are available
-            if (pickupDate && pickupTime && returnDate && returnTime) {
-                const pickup = new Date(`${pickupDate} ${pickupTime}`);
-                const return_ = new Date(`${returnDate} ${returnTime}`);
-                const hours = Math.ceil((return_ - pickup) / (1000 * 60 * 60));
-                
-                document.getElementById('summary-duration').textContent = `${hours} hours`;
-                const hourlyRate = 15; // This should come from your backend
-                const totalPrice = hours * hourlyRate;
-                document.getElementById('summary-total-price').textContent = `$${totalPrice}`;
-            }
-        });
-
-        // Function to handle booking and redirect to payment page
-        function proceedToPayment() {
-            const params = new URLSearchParams(window.location.search);
-            const carId = new URLSearchParams(window.location.search).get('id') || '1';
-            const vehicle = 'Tesla Model 3'; // This should come from your backend based on carId
-
-            // Create payment URL with all necessary parameters
-            const paymentUrl = `payment_page.html?${params.toString()}&vehicle=${encodeURIComponent(vehicle)}&carId=${carId}`;
-            window.location.href = paymentUrl;
-        }
-
-        // Common functions for all pages
+        // ============= NOTIFICATION =============
         function showNotification(message, type = 'success') {
             const existingNotifications = document.querySelectorAll('.notification');
             existingNotifications.forEach(notification => notification.remove());
@@ -265,6 +202,7 @@
             setTimeout(() => { if (notification.parentElement) { notification.classList.remove('show'); setTimeout(() => notification.remove(), 300); } }, 5000);
         }
 
+        // ============= AUTH FUNCTIONS =============
         function checkAuthStatus() {
             const token = localStorage.getItem('token');
             const loginBtn = document.getElementById('loginBtn');
@@ -297,17 +235,249 @@
             checkAuthStatus(); showNotification('👋 Bạn đã đăng xuất thành công!', 'success');
         }
 
-        function openModal() { showNotification('🔧 Login modal - chuyển về home page để đăng nhập!', 'error'); }
+        function openModal() { document.getElementById("modal").style.display = "flex"; }
+        function closeModal() { document.getElementById("modal").style.display = "none"; }
+        function openRegisterModal() { closeModal(); document.getElementById("registerModal").style.display = "flex"; }
+        function closeRegisterModal() { document.getElementById("registerModal").style.display = "none"; }
         function toggleMobileMenu() { /* Mobile menu logic */ }
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        // ============= LOAD CAR DATA =============
+        async function loadCarDetails(carId) {
+            console.log('🚗 Loading car details for:', carId);
+            
+            try {
+                // Call real API to get car by ID
+                const car = await window.API.getCarById(carId);
+                
+                if (!car) {
+                    console.error('❌ Car not found:', carId);
+                    showNotification('❌ Car not found', 'error');
+                    return null;
+                }
+
+                console.log('✅ Car loaded successfully:', car);
+                currentCar = car;
+                displayCarDetails(car);
+                return car;
+            } catch (error) {
+                console.error('❌ Error loading car:', error);
+                showNotification('❌ Failed to load car details: ' + (error.message || 'Unknown error'), 'error');
+                return null;
+            }
+        }
+
+        // ============= DISPLAY CAR DETAILS =============
+        function displayCarDetails(car) {
+            const brand = car.brand || car.Brand || '';
+            const model = car.model || car.Model || '';
+            const displayName = (brand && model) ? `${brand} ${model}` : (brand || model || 'Unknown Car');
+            
+            document.getElementById('car-name').textContent = displayName;
+            
+            const rating = car.rating || car.Rating || 0;
+            const reviewCount = car.reviewCount || car.ReviewCount || 0;
+            document.getElementById('car-rating').textContent = `${rating} (${reviewCount} reviews)`;
+            
+            const seats = car.seats || car.Seats || 5;
+            document.getElementById('spec-seats').textContent = `${seats} Seats`;
+            
+            const color = car.color || car.Color || 'N/A';
+            document.getElementById('spec-color').textContent = color;
+            
+            const year = car.year || car.Year || 'N/A';
+            document.getElementById('spec-year').textContent = year;
+            
+            const battery = car.batteryCapacity || car.BatteryCapacity || 0;
+            const batteryLevel = car.currentBatteryLevel || car.CurrentBatteryLevel || 0;
+            document.getElementById('spec-battery').textContent = `${battery}kWh (${batteryLevel}%)`;
+            
+            const pricePerHour = car.rentalPricePerHour || car.pricePerHour || car.PricePerHour || 0;
+            document.getElementById('hourly-rate').textContent = `$${pricePerHour}/hour`;
+            
+            // Store for price calculation
+            currentCar = car;
+            
+            // Recalculate pricing
+            updatePricingSummary();
+        }
+
+        // ============= UPDATE PRICING SUMMARY =============
+        function updatePricingSummary() {
+            // Get rental context from localStorage
+            try {
+                const ctxRaw = localStorage.getItem('rentalContext');
+                if (ctxRaw) {
+                    rentalContext = JSON.parse(ctxRaw);
+                } else {
+                    rentalContext = null;
+                }
+            } catch (e) {
+                rentalContext = null;
+            }
+
+            if (!rentalContext) {
+                document.getElementById('summary-location').textContent = 'Not selected';
+                document.getElementById('summary-pickup-date').textContent = 'Not selected';
+                document.getElementById('summary-return-date').textContent = 'Not selected';
+                document.getElementById('summary-duration').textContent = 'N/A';
+                document.getElementById('summary-total-price').textContent = 'N/A';
+                return;
+            }
+
+            // Display location
+            const stationName = rentalContext.stationName || rentalContext.location || 'Unknown';
+            document.getElementById('summary-location').textContent = stationName;
+
+            // Display pickup
+            const pickupDate = rentalContext.pickupDate || '';
+            const pickupTime = rentalContext.pickupTime || '';
+            if (pickupDate && pickupTime) {
+                document.getElementById('summary-pickup-date').textContent = `${pickupDate} ${pickupTime}`;
+            } else {
+                document.getElementById('summary-pickup-date').textContent = 'Not selected';
+            }
+
+            // Display return
+            const returnDate = rentalContext.returnDate || '';
+            const returnTime = rentalContext.returnTime || '';
+            if (returnDate && returnTime) {
+                document.getElementById('summary-return-date').textContent = `${returnDate} ${returnTime}`;
+            } else {
+                document.getElementById('summary-return-date').textContent = 'Not selected';
+            }
+
+            // Calculate duration and total price
+            if (pickupDate && pickupTime && returnDate && returnTime && currentCar) {
+                const pickup = new Date(`${pickupDate}T${pickupTime}`);
+                const returnDt = new Date(`${returnDate}T${returnTime}`);
+                const hours = Math.ceil((returnDt - pickup) / (1000 * 60 * 60));
+                
+                document.getElementById('summary-duration').textContent = `${hours} hour${hours > 1 ? 's' : ''}`;
+                
+                const pricePerHour = currentCar.rentalPricePerHour || currentCar.pricePerHour || currentCar.PricePerHour || 0;
+                const totalPrice = (hours * pricePerHour).toFixed(2);
+                document.getElementById('summary-total-price').textContent = `$${totalPrice}`;
+            } else {
+                document.getElementById('summary-duration').textContent = 'N/A';
+                document.getElementById('summary-total-price').textContent = 'N/A';
+            }
+        }
+
+        // ============= PROCEED TO PAYMENT =============
+        function proceedToPayment() {
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') {
+                showNotification('⚠️ Please login to continue booking', 'error');
+                return;
+            }
+
+            if (!currentCar) {
+                showNotification('⚠️ Car details not loaded', 'error');
+                return;
+            }
+
+            if (!rentalContext || !rentalContext.pickupDate || !rentalContext.returnDate) {
+                showNotification('⚠️ Please select pickup and return dates from car list page', 'error');
+                return;
+            }
+
+            // Save current car and rental context for payment page
+            try {
+                localStorage.setItem('selectedCar', JSON.stringify(currentCar));
+                localStorage.setItem('rentalContext', JSON.stringify(rentalContext));
+            } catch (e) {
+                console.error('Failed to save booking data:', e);
+            }
+
+            // Navigate to payment page
+            const carId = currentCar.id || currentCar.carId || currentCar.Id;
+            window.location.href = `payment_page.html?carId=${carId}`;
+        }
+
+        // ============= INITIALIZATION =============
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Car detail page initializing...');
+            
+            // Check auth
             checkAuthStatus();
+
+            // Get carId from URL
+            const params = new URLSearchParams(window.location.search);
+            const carId = params.get('id') || params.get('carId');
+            
+            if (carId) {
+                await loadCarDetails(carId);
+            } else {
+                showNotification('⚠️ No car selected', 'error');
+            }
+
+            // Load rental context and update summary
+            updatePricingSummary();
+
+            // Close dropdown when clicking outside
             document.addEventListener('click', function(event) {
                 const userMenu = document.querySelector('.user-menu');
                 const dropdown = document.getElementById('userDropdown');
                 if (userMenu && !userMenu.contains(event.target)) { dropdown.classList.remove('show'); }
             });
+
+            // ========== LOGIN FORM HANDLER ==========
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const email = document.getElementById('loginEmail').value.trim();
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    if (!email || !password) {
+                        showNotification('❌ Please enter email and password!', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await window.API.login(email, password);
+                        if (response.token) {
+                            localStorage.setItem('token', response.token);
+                            if (response.user && response.user.id) localStorage.setItem('userId', response.user.id);
+                            if (response.user && response.user.email) localStorage.setItem('userEmail', response.user.email);
+                            showNotification('🎉 Login successful!', 'success');
+                            closeModal();
+                            checkAuthStatus();
+                            loginForm.reset();
+                        } else {
+                            showNotification('⚠️ Invalid server response.', 'error');
+                        }
+                    } catch (error) {
+                        showNotification(`❌ ${error.message || 'Login failed'}`, 'error');
+                    }
+                });
+            }
+
+            // ========== REGISTER FORM HANDLER ==========
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const username = document.getElementById('registerUsername').value.trim();
+                    const email = document.getElementById('registerEmail').value.trim();
+                    const phoneNumber = document.getElementById('registerPhone').value.trim();
+                    const password = document.getElementById('registerPassword').value;
+                    
+                    try {
+                        await window.API.register(username, email, phoneNumber, password);
+                        showNotification('🎊 Registration successful!', 'success');
+                        closeRegisterModal();
+                        setTimeout(() => {
+                            openModal();
+                            showNotification('💡 You can login now!', 'success');
+                        }, 2000);
+                    } catch (error) {
+                        showNotification(`❌ ${error.message || 'Registration failed'}`, 'error');
+                    }
+                });
+            }
+
+            console.log('✅ Car detail page initialized');
         });
     </script>
 </body>

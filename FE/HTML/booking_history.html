@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking History - FEC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="../CSS/shared.css">
     <link rel="stylesheet" href="../CSS/booking_history.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -17,23 +18,15 @@
             <div class="logo">
                 <a href="home_page.html">FEC</a>
             </div>
-
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-
-            <div class="search-container">
-                <form class="search-form-header">
-                    <input type="text" placeholder="Search for cars..." class="search-input">
-                    <button type="submit" class="search-button">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </form>
-            </div>
-
             <nav class="nav">
                 <div class="navbar-right">
-                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn">Login</button>
+                    <!-- Login button for non-authenticated users -->
+                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn" style="display:none;">Login</button>
+                    
+                    <!-- User menu for authenticated users -->
                     <div id="userMenu" class="user-menu" style="display: none;">
                         <button class="user-menu-btn" onclick="toggleUserMenu()">
                             <i class="fas fa-user-circle"></i>
@@ -45,7 +38,7 @@
                                 <span id="userEmail">User Account</span>
                             </div>
                             <hr>
-                            <a href="#" onclick="openUserProfile()">
+                            <a href="user_profile.html" onclick="toggleUserMenu()">
                                 <i class="fas fa-user-cog"></i> User Profile
                             </a>
                             <a href="#" onclick="logout()">
@@ -59,256 +52,451 @@
     </header>
 
     <!-- Main Content -->
-    <main class="booking-history-page">
+    <main class="main-content">
         <div class="container">
-            <div class="booking-content">
-                <h1>My Bookings</h1>
-
-                <!-- Booking Filters -->
-                <div class="booking-filters">
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" data-status="all">All Bookings</button>
-                        <button class="filter-tab" data-status="active">Active</button>
-                        <button class="filter-tab" data-status="completed">Completed</button>
-                        <button class="filter-tab" data-status="cancelled">Cancelled</button>
-                    </div>
-                    <div class="filter-sort">
-                        <select class="sort-select">
-                            <option value="newest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                            <option value="price-high">Price: High to Low</option>
-                            <option value="price-low">Price: Low to High</option>
-                        </select>
-                    </div>
+            <div class="page-header">
+                <i class="fas fa-history"></i>
+                <div class="page-header-text">
+                    <h1>Booking History</h1>
+                    <p>Manage all your car rentals</p>
                 </div>
+            </div>
 
-                <!-- Booking List -->
-                <div class="booking-list">
-                    <!-- Active Booking -->
-                    <div class="booking-card active">
-                        <div class="booking-image">
-                            <img src="assets/placeholder.jpg" alt="Car Image">
-                        </div>
-                        <div class="booking-details">
-                            <div class="booking-header">
-                                <h3>Toyota Camry 2023</h3>
-                                <span class="booking-status active">Active</span>
-                            </div>
-                            <div class="booking-info">
-                                <div class="info-group">
-                                    <i class="fas fa-calendar"></i>
-                                    <div class="info-text">
-                                        <p>Pick-up: Sept 15, 2025 - 10:00 AM</p>
-                                        <p>Return: Sept 17, 2025 - 10:00 AM</p>
-                                    </div>
-                                </div>
-                                <div class="info-group">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <p>District 1, Ho Chi Minh City</p>
-                                </div>
-                            </div>
-                            <div class="booking-actions">
-                                <span class="booking-price">$150.00</span>
-                                <div class="action-buttons">
-                                    <button class="btn-extend">Extend Rental</button>
-                                    <button class="btn-cancel">Cancel</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Completed Booking -->
-                    <div class="booking-card completed">
-                        <div class="booking-image">
-                            <img src="assets/placeholder.jpg" alt="Car Image">
-                        </div>
-                        <div class="booking-details">
-                            <div class="booking-header">
-                                <h3>Honda CR-V 2023</h3>
-                                <span class="booking-status completed">Completed</span>
-                            </div>
-                            <div class="booking-info">
-                                <div class="info-group">
-                                    <i class="fas fa-calendar"></i>
-                                    <div class="info-text">
-                                        <p>Pick-up: Sept 1, 2025 - 9:00 AM</p>
-                                        <p>Return: Sept 3, 2025 - 9:00 AM</p>
-                                    </div>
-                                </div>
-                                <div class="info-group">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <p>District 2, Ho Chi Minh City</p>
-                                </div>
-                            </div>
-                            <div class="booking-actions">
-                                <span class="booking-price">$180.00</span>
-                                <div class="action-buttons">
-                                    <button class="btn-review">Write Review</button>
-                                    <button class="btn-book-again">Book Again</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Cancelled Booking -->
-                    <div class="booking-card cancelled">
-                        <div class="booking-image">
-                            <img src="assets/placeholder.jpg" alt="Car Image">
-                        </div>
-                        <div class="booking-details">
-                            <div class="booking-header">
-                                <h3>BMW 3 Series 2023</h3>
-                                <span class="booking-status cancelled">Cancelled</span>
-                            </div>
-                            <div class="booking-info">
-                                <div class="info-group">
-                                    <i class="fas fa-calendar"></i>
-                                    <div class="info-text">
-                                        <p>Pick-up: Aug 25, 2025 - 2:00 PM</p>
-                                        <p>Return: Aug 27, 2025 - 2:00 PM</p>
-                                    </div>
-                                </div>
-                                <div class="info-group">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <p>District 3, Ho Chi Minh City</p>
-                                </div>
-                            </div>
-                            <div class="booking-actions">
-                                <span class="booking-price">$250.00</span>
-                                <div class="action-buttons">
-                                    <button class="btn-book-again">Book Again</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Filters -->
+            <div class="filters-section">
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select id="statusFilter" onchange="applyFilters()">
+                        <option value="">All</option>
+                        <option value="0">Pending</option>
+                        <option value="1">Active</option>
+                        <option value="2">Completed</option>
+                        <option value="3">Cancelled</option>
+                    </select>
                 </div>
-
-                <!-- Pagination -->
-                <div class="pagination">
-                    <button class="page-prev">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <div class="page-numbers">
-                        <button class="active">1</button>
-                        <button>2</button>
-                        <button>3</button>
-                        <span>...</span>
-                        <button>10</button>
-                    </div>
-                    <button class="page-next">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
+                <div class="filter-group">
+                    <label>Sort By:</label>
+                    <select id="sortFilter" onchange="applyFilters()">
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="price-high">Price (High to Low)</option>
+                        <option value="price-low">Price (Low to High)</option>
+                    </select>
                 </div>
+                <button class="btn-refresh" onclick="refreshBookings()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+
+            <!-- Bookings List -->
+            <div id="bookingsList" class="bookings-list">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display:none;">
+                <i class="fas fa-inbox"></i>
+                <h2>No Bookings Yet</h2>
+                <p>Start booking a car to find your perfect ride</p>
+                <a href="car_list_page.html" class="btn btn-primary">
+                    <i class="fas fa-car"></i> View Cars
+                </a>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2025 FEC. All rights reserved.</p>
+    <!-- Booking Detail Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Booking Details</h2>
+                <button class="close-btn" onclick="closeBookingModal()">×</button>
+            </div>
+            <div id="bookingDetails" class="modal-body">
+                <!-- Populated by JavaScript -->
+            </div>
         </div>
-    </footer>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Auth Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Login</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="modal-body">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
 
     <script>
-        function toggleMobileMenu() {
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.overlay');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
+        // ========== State Management ==========
+        let allBookings = [];
+        let filteredBookings = [];
 
-        // Filter tabs functionality
+        // ========== Initialization ==========
         document.addEventListener('DOMContentLoaded', function() {
-            const filterTabs = document.querySelectorAll('.filter-tab');
-            const bookingCards = document.querySelectorAll('.booking-card');
-
-            filterTabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Update active tab
-                    filterTabs.forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-
-                    const status = this.dataset.status;
-
-                    // Filter booking cards
-                    bookingCards.forEach(card => {
-                        if (status === 'all' || card.classList.contains(status)) {
-                            card.style.display = 'flex';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                });
-            });
+            checkAuthStatus();
+            loadBookings();
         });
 
-        // Common functions for all pages
-        function showNotification(message, type = 'success') {
-            const existingNotifications = document.querySelectorAll('.notification');
-            existingNotifications.forEach(notification => notification.remove());
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `<span>${message}</span><span class="close-btn" onclick="this.parentElement.remove()">&times;</span>`;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.classList.add('show'), 100);
-            setTimeout(() => { if (notification.parentElement) { notification.classList.remove('show'); setTimeout(() => notification.remove(), 300); } }, 5000);
+        // ========== Fetch Bookings ==========
+        async function loadBookings() {
+            try {
+                const userId = localStorage.getItem('userId');
+                if (!userId) {
+                    showNotification('Please login to view your bookings', 'error');
+                    return;
+                }
+
+                console.log('Fetching bookings for userId:', userId);
+                const bookings = await window.API.get(`/Bookings/Get-By-User/${encodeURIComponent(userId)}`);
+                allBookings = Array.isArray(bookings) ? bookings : bookings.data || [];
+                
+                console.log('Bookings loaded:', allBookings);
+                applyFilters();
+            } catch (err) {
+                console.error('Error loading bookings:', err);
+                showNotification('Error loading bookings', 'error');
+            }
         }
 
+        // ========== Filter & Sort ==========
+        function applyFilters() {
+            const status = document.getElementById('statusFilter').value;
+            const sort = document.getElementById('sortFilter').value;
+
+            // Filter by status
+            filteredBookings = allBookings.filter(b => !status || String(b.bookingStatus) === status);
+
+            // Sort
+            filteredBookings.sort((a, b) => {
+                switch(sort) {
+                    case 'oldest':
+                        return new Date(a.createdAt) - new Date(b.createdAt);
+                    case 'price-high':
+                        return (b.totalAmount || 0) - (a.totalAmount || 0);
+                    case 'price-low':
+                        return (a.totalAmount || 0) - (b.totalAmount || 0);
+                    default: // newest
+                        return new Date(b.createdAt) - new Date(a.createdAt);
+                }
+            });
+
+            renderBookings();
+        }
+
+        // ========== Render Bookings ==========
+        function renderBookings() {
+            const container = document.getElementById('bookingsList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (filteredBookings.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            container.innerHTML = filteredBookings.map(booking => {
+                const status = getBookingStatus(booking.bookingStatus);
+                const pickupDate = formatDateTime(booking.startTime);
+                const returnDate = formatDateTime(booking.endTime);
+
+                return `
+                    <div class="booking-card ${status.class}">
+                        <div class="booking-header">
+                            <h3>${booking.carInfo || 'N/A'}</h3>
+                            <span class="status-badge ${status.class}">${status.text}</span>
+                        </div>
+                        <div class="booking-body">
+                            <div class="booking-info">
+                                <div class="info-row" style="display: none;">
+                                    <span class="label"><i class="fas fa-id-card"></i> Booking ID:</span>
+                                    <span class="value booking-id">${booking.bookingId}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="label"><i class="fas fa-map-marker-alt"></i> Pick-up:</span>
+                                    <span class="value">${booking.pickupStationName || 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="label"><i class="fas fa-calendar"></i> Start:</span>
+                                    <span class="value">${pickupDate}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="label"><i class="fas fa-calendar-check"></i> End:</span>
+                                    <span class="value">${returnDate}</span>
+                                </div>
+                                <div class="info-row price">
+                                    <span class="label"><i class="fas fa-tag"></i> Total:</span>
+                                    <span class="value">$${(booking.totalAmount || 0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="booking-footer">
+                            <button class="btn btn-sm btn-primary" onclick="viewBookingDetails('${booking.bookingId}')">
+                                <i class="fas fa-eye"></i> Details
+                            </button>
+                            ${getActionButton(booking)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ========== Booking Status Helper ==========
+        function getBookingStatus(status) {
+            const statuses = {
+                0: { text: 'Pending', class: 'status-pending' },
+                1: { text: 'Active', class: 'status-active' },
+                2: { text: 'Completed', class: 'status-completed' },
+                3: { text: 'Cancelled', class: 'status-cancelled' }
+            };
+            return statuses[status] || { text: 'Unknown', class: 'status-unknown' };
+        }
+
+        // ========== Action Button ==========
+        function getActionButton(booking) {
+            if (booking.bookingStatus === 0) {
+                return `<button class="btn btn-sm btn-danger" onclick="cancelBooking('${booking.bookingId}')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>`;
+            }
+            return '';
+        }
+
+        // ========== Format DateTime ==========
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                // Check if date is valid
+                if (isNaN(date.getTime())) return dateString;
+                
+                // Format: "Oct 18, 2025 at 06:00"
+                return date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        // ========== View Booking Details ==========
+        function viewBookingDetails(bookingId) {
+            const booking = allBookings.find(b => b.bookingId === bookingId);
+            if (!booking) return;
+
+            const status = getBookingStatus(booking.bookingStatus);
+            const pickupDateTime = formatDateTime(booking.startTime);
+            const returnDateTime = formatDateTime(booking.endTime);
+
+            const details = `
+                <div class="details-grid">
+                    <div class="detail-item" style="display: none;">
+                        <label>Booking ID:</label>
+                        <p class="booking-id-display">${booking.bookingId}</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Car:</label>
+                        <p>${booking.carInfo}</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Status:</label>
+                        <p><span class="status-badge ${status.class}">${status.text}</span></p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Pick-up Station:</label>
+                        <p>${booking.pickupStationName}</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Return Station:</label>
+                        <p>${booking.returnStationName}</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Pick-up Time:</label>
+                        <p>${pickupDateTime}</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Return Time:</label>
+                        <p>${returnDateTime}</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Hourly Rate:</label>
+                        <p>$${(booking.hourlyRate || 0).toFixed(2)}/hour</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Daily Rate:</label>
+                        <p>$${(booking.dailyRate || 0).toFixed(2)}/day</p>
+                    </div>
+                    <div class="detail-item highlight">
+                        <label>Total Amount:</label>
+                        <p>$${(booking.totalAmount || 0).toFixed(2)}</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Payment Status:</label>
+                        <p>${booking.paymentStatus || 'N/A'}</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Created At:</label>
+                        <p>${formatDateTime(booking.createdAt)}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('bookingDetails').innerHTML = details;
+            document.getElementById('bookingModal').style.display = 'flex';
+        }
+
+        // ========== Modal Functions ==========
+        function closeBookingModal() {
+            document.getElementById('bookingModal').style.display = 'none';
+        }
+
+        // ========== Cancel Booking ==========
+        async function cancelBooking(bookingId) {
+            if (!confirm('Are you sure you want to cancel this booking?')) return;
+
+            try {
+                const userId = localStorage.getItem('userId');
+                if (!userId) {
+                    showNotification('User ID not found. Please login again.', 'error');
+                    return;
+                }
+
+                const btn = event.target;
+                btn.disabled = true;
+                btn.textContent = '⏳ Cancelling...';
+
+                console.log('Cancelling booking:', bookingId, 'for user:', userId);
+                
+                // Call the cancel booking API
+                const response = await window.API.post(
+                    `/Bookings/Cancel-By-${bookingId}?userId=${encodeURIComponent(userId)}`,
+                    ''
+                );
+
+                console.log('Cancel response:', response);
+                showNotification('✅ Booking cancelled successfully', 'success');
+                
+                // Refresh bookings list
+                setTimeout(() => {
+                    loadBookings();
+                }, 1500);
+            } catch (err) {
+                console.error('Error canceling booking:', err);
+                const msg = err?.response?.data?.message || err.message || 'Error canceling booking';
+                showNotification('❌ ' + msg, 'error');
+                event.target.disabled = false;
+                event.target.textContent = '✕ Cancel';
+            }
+        }
+
+        // ========== Refresh ==========
+        function refreshBookings() {
+            loadBookings();
+            showNotification('Bookings refreshed', 'success');
+        }
+
+        // ========== Auth Functions ==========
         function checkAuthStatus() {
             const token = localStorage.getItem('token');
             const loginBtn = document.getElementById('loginBtn');
             const userMenu = document.getElementById('userMenu');
             const userEmail = document.getElementById('userEmail');
-            if (token && token !== 'null' && token !== '') {
-                if (loginBtn) loginBtn.style.display = 'none';
-                if (userMenu) userMenu.style.display = 'block';
-                const savedEmail = localStorage.getItem('userEmail');
-                if (savedEmail && userEmail) { userEmail.textContent = savedEmail; } else if (userEmail) { userEmail.textContent = 'User Account'; }
+
+            if (token && token !== 'null') {
+                loginBtn.style.display = 'none';
+                userMenu.style.display = 'block';
+                userEmail.textContent = localStorage.getItem('userEmail') || 'User';
             } else {
-                localStorage.removeItem('token'); localStorage.removeItem('userEmail');
-                if (loginBtn) loginBtn.style.display = 'inline-block';
-                if (userMenu) userMenu.style.display = 'none';
+                loginBtn.style.display = 'block';
+                userMenu.style.display = 'none';
             }
         }
 
-        function toggleUserMenu() { document.getElementById('userDropdown').classList.toggle('show'); }
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function toggleMobileMenu() {
+            const nav = document.querySelector('.nav');
+            nav.classList.toggle('active');
+        }
+
+        function openModal() {
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
 
         function openUserProfile() {
-            document.getElementById('userDropdown').classList.remove('show');
-            const token = localStorage.getItem('token');
-            if (!token || token === 'null' || token === '') { showNotification('⚠️ Vui lòng đăng nhập để xem profile!', 'error'); return; }
+            document.getElementById('userDropdown').style.display = 'none';
             window.location.href = 'user_profile.html';
         }
 
-        function logout() {
-            document.getElementById('userDropdown').classList.remove('show');
-            localStorage.removeItem('token'); localStorage.removeItem('userEmail');
-            checkAuthStatus(); showNotification('👋 Bạn đã đăng xuất thành công!', 'success');
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const result = await window.API.login(email, password);
+                showNotification('✅ Login successful!', 'success');
+                closeModal();
+                checkAuthStatus();
+                loadBookings();
+            } catch (err) {
+                showNotification('❌ Invalid email or password', 'error');
+            }
         }
 
-        function openModal() { showNotification('🔧 Login modal - chuyển về home page để đăng nhập!', 'error'); }
-        function toggleMobileMenu() { /* Mobile menu logic */ }
-
-        // Initialize on page load - check auth and redirect if needed
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is logged in for booking history
-            const token = localStorage.getItem('token');
-            if (!token || token === 'null' || token === '') {
-                showNotification('⚠️ Vui lòng đăng nhập để xem lịch sử booking!', 'error');
-                setTimeout(() => {
-                    window.location.href = 'home_page.html';
-                }, 2000);
-                return;
-            }
-            
+        function logout() {
+            localStorage.clear();
+            showNotification('✅ Logged out', 'success');
             checkAuthStatus();
-            document.addEventListener('click', function(event) {
-                const userMenu = document.querySelector('.user-menu');
-                const dropdown = document.getElementById('userDropdown');
-                if (userMenu && !userMenu.contains(event.target)) { dropdown.classList.remove('show'); }
-            });
-        });
+            setTimeout(() => window.location.href = 'home_page.html', 1500);
+        }
+
+        // ========== Notification ==========
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.className = `notification ${type} show`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.classList.remove('show')" class="close-btn">×</button>
+                </div>
+            `;
+            setTimeout(() => notification.classList.remove('show'), 5000);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('bookingModal');
+            const loginModal = document.getElementById('loginModal');
+            if (event.target === modal) modal.style.display = 'none';
+            if (event.target === loginModal) loginModal.style.display = 'none';
+        };
     </script>
 </body>
 </html>
