@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment - FEC</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../CSS/shared.css" />
+    <link rel="stylesheet" href="../CSS/payment_page.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../api.js"></script>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <a href="home_page.html">FEC</a>
+            </div>
+            
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav class="nav">
+                <div class="navbar-right">
+                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn">Login</button>
+                    <div id="userMenu" class="user-menu" style="display: none;">
+                        <button class="user-menu-btn" onclick="toggleUserMenu()">
+                            <i class="fas fa-user-circle"></i>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div id="userDropdown" class="user-dropdown">
+                            <div class="dropdown-header">
+                                <i class="fas fa-user-circle"></i>
+                                <span id="userEmail">User Account</span>
+                            </div>
+                            <hr>
+                            <a href="#" onclick="openUserProfile()">
+                                <i class="fas fa-user-cog"></i> User Profile
+                            </a>
+                            <a href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="payment-container">
+            <a href="car_detail.html" class="back-btn">← Back to Booking</a>
+
+            <div class="rental-info">
+                <h3>Rental Information</h3>
+                <p><strong>Location:</strong> <span id="rental-location"></span></p>
+                <p><strong>Pick-up:</strong> <span id="rental-pickup"></span></p>
+                <p><strong>Return:</strong> <span id="rental-return"></span></p>
+                <p><strong>Vehicle:</strong> <span id="rental-vehicle"></span></p>
+            </div>
+
+            <div class="price-info">
+                <h3>Price Information</h3>
+                <div class="price-row">
+                    <span class="price-label">Duration:</span>
+                    <span class="price-value"><span id="rental-duration">-</span> hours</span>
+                </div>
+                <div class="price-row">
+                    <span class="price-label">Rate:</span>
+                    <span class="price-value">$<span id="hourly-rate">-</span>/hour</span>
+                </div>
+                <div class="price-row">
+                    <span class="price-label">Total Amount:</span>
+                    <span class="price-value">$<span id="total-amount">-</span></span>
+                </div>
+                <p style="font-size:12px;color:#999;margin-top:1rem;padding-top:1rem;border-top:1px solid #ddd" id="price-note"></p>
+            </div>
+
+            <div class="payment-methods">
+                <button type="button" class="payment-method-btn" onclick="selectPaymentMethod('bank')">
+                    <i class="fas fa-university"></i> Bank Transfer
+                </button>
+                <button type="button" class="payment-method-btn" onclick="selectPaymentMethod('cash')">
+                    <i class="fas fa-money-bill-wave"></i> Cash
+                </button>
+                <button type="button" class="payment-method-btn" onclick="selectPaymentMethod('deposit')">
+                    <i class="fas fa-piggy-bank"></i> Deposit
+                </button>
+            </div>
+
+            <div id="bank-info" class="bank-info" style="display: none;">
+                <input type="text" id="bank-name" placeholder="Bank's Name" required>
+                <input type="text" id="bank-number" placeholder="Bank Account Number" required>
+            </div>
+
+            <div class="invoice-options">
+                <label>
+                    <input type="radio" name="invoice-option" value="station"> Receive invoice at station
+                </label>
+                <br>
+                <label>
+                    <input type="radio" name="invoice-option" value="contract"> E-contract
+                </label>
+            </div>
+
+            <button type="button" id="btnConfirmPayment" class="confirm-btn" onclick="confirmPayment()">
+                Confirm & Create Booking
+            </button>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 FEC. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // ==== Rental & Booking Logic ====
+        function getApiBase() {
+            // Prefer the globally configured API base (window.API), otherwise use stored apiBase or the forced swagger root.
+            if (window.API && window.API.baseURL) return window.API.baseURL;
+            const saved = localStorage.getItem('apiBase');
+            return saved || 'http://localhost:5054/api';
+        }
+
+        function decodeJwtPayload(token) {
+            try {
+                const p = token.split('.')[1];
+                const json = atob(p.replace(/-/g, '+').replace(/_/g, '/'));
+                const decoded = decodeURIComponent(json.split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                return JSON.parse(decoded);
+            } catch { return null; }
+        }
+        async function getUserId() {
+            // Check localStorage first
+            const storedUserId = localStorage.getItem('userId');
+            
+            // Validate: userId should be UUID format (contains dashes), not email
+            const isValidUUID = storedUserId && storedUserId.includes('-') && !storedUserId.includes('@');
+            
+            if (isValidUUID) {
+                console.log('✅ Found valid userId in localStorage:', storedUserId);
+                return storedUserId;
+            }
+            
+            if (storedUserId && !isValidUUID) {
+                console.warn('⚠️ localStorage has invalid userId (email):', storedUserId);
+                localStorage.removeItem('userId'); // Clear invalid data
+            }
+            
+            // Fetch from /Users/Get-My-Profile API
+            try {
+                console.log('🔄 Calling /Users/Get-My-Profile to get userId...');
+                const profileData = await window.API.getMyProfile();
+                console.log('📦 Profile response:', profileData);
+                
+                const userId = profileData.id || profileData.data?.id;
+                if (userId) {
+                    console.log('✅ Got userId from profile API:', userId);
+                    localStorage.setItem('userId', userId);
+                    return userId;
+                } else {
+                    console.error('❌ No id found in profile response!');
+                }
+            } catch (error) {
+                console.error('❌ Failed to fetch userId from /Users/Get-My-Profile:', error);
+            }
+            
+            // Fallback: Decode from JWT token
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('❌ No token found!');
+                return null;
+            }
+            
+            try {
+                const payload = decodeJwtPayload(token);
+                console.log('🔍 JWT payload (fallback):', payload);
+                
+                const userId = payload.UserId || payload.userId || payload.uid || payload.nameid || payload.sub || null;
+                if (userId) {
+                    console.log('✅ Found userId in JWT:', userId);
+                    localStorage.setItem('userId', userId);
+                    return userId;
+                }
+            } catch (e) {
+                console.error('❌ Cannot decode JWT:', e);
+            }
+            
+            console.error('❌ No userId found anywhere!');
+            return null;
+        }
+
+        async function fetchCarInfo(carId) {
+            try {
+                // Use the correct API to get car by ID (not by station)
+                if (window.API && window.API.getCarById) {
+                    const car = await window.API.getCarById(carId);
+                    return car || null;
+                }
+                // fallback: call centralized API helper
+                const res = await window.API.get(`/Cars/Get-By-${carId}`);
+                return res?.data || res || null;
+            } catch (error) {
+                console.error('Error fetching car info:', error);
+                return null;
+            }
+        }
+
+        function computePricing(pickupDate, pickupTime, returnDate, returnTime, hourlyRate) {
+            if (!pickupDate || !pickupTime || !returnDate || !returnTime) return { hours: 0, total: 0 };
+            const start = new Date(`${pickupDate}T${pickupTime}`);
+            const end = new Date(`${returnDate}T${returnTime}`);
+            if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return { hours: 0, total: 0 };
+            const hours = Math.ceil((end - start) / 3600000);
+            return { hours, total: parseFloat((hours * hourlyRate).toFixed(2)) };
+        }
+
+        function hydrateFromContext() {
+            const params = new URLSearchParams(window.location.search);
+            let ctx = null;
+            try { ctx = JSON.parse(localStorage.getItem('rentalContext')); } catch {}
+            const pickupDate = params.get('pickup-date') || ctx?.pickupDate;
+            const pickupTime = params.get('pickup-time') || ctx?.pickupTime;
+            const returnDate = params.get('return-date') || ctx?.returnDate;
+            const returnTime = params.get('return-time') || ctx?.returnTime;
+            const location = params.get('location') || ctx?.stationName || 'Unknown Station';
+            return { pickupDate, pickupTime, returnDate, returnTime, location, ctx };
+        }
+
+        async function initPaymentPage() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showNotification('Vui lòng đăng nhập trước khi thanh toán.', 'error');
+            }
+            
+            // Try to get car from localStorage first (saved from car_detail page)
+            let selectedCar = null;
+            try {
+                const carData = localStorage.getItem('selectedCar');
+                if (carData) {
+                    selectedCar = JSON.parse(carData);
+                    console.log('📦 Loaded car from localStorage:', selectedCar);
+                }
+            } catch (e) {
+                console.error('Failed to parse selectedCar from localStorage:', e);
+            }
+            
+            const params = new URLSearchParams(window.location.search);
+            const carId = selectedCar?.id || params.get('carId') || params.get('id');
+            
+            if (!carId) {
+                showNotification('⚠️ No car selected. Please go back to car list.', 'error');
+                return;
+            }
+            
+            const vehicleSpan = document.getElementById('rental-vehicle');
+            const { pickupDate, pickupTime, returnDate, returnTime, location } = hydrateFromContext();
+
+            document.getElementById('rental-location').textContent = location;
+            document.getElementById('rental-pickup').textContent = `${pickupDate || '-'} ${pickupTime || ''}`;
+            document.getElementById('rental-return').textContent = `${returnDate || '-'} ${returnTime || ''}`;
+
+            // Use car from localStorage if available (saves API call and ensures consistency)
+            let hourlyRate = 0;
+            let vehicleName = 'Selected Car';
+            let car = selectedCar; // Use cached car first
+            
+            // If no cached car, fetch from API
+            if (!car) {
+                console.log('🚗 Fetching car info from API for carId:', carId);
+                car = await fetchCarInfo(carId);
+                console.log('🚗 Fetched car from API:', car);
+            } else {
+                console.log('✅ Using cached car from localStorage:', car);
+            }
+            
+            if (car) {
+                vehicleName = `${car.brand || car.Brand || ''} ${car.model || car.Model || ''}`.trim() || vehicleName;
+                hourlyRate = car.rentalPricePerHour || car.RentalPricePerHour || 0;
+                console.log('✅ Car found:', vehicleName, 'Rate:', hourlyRate);
+            } else {
+                console.error('❌ Car not found! Using carId:', carId);
+                showNotification('⚠️ Failed to load car details', 'error');
+            }
+            
+            vehicleSpan.textContent = vehicleName;
+            document.getElementById('hourly-rate').textContent = hourlyRate;
+
+            const { hours, total } = computePricing(pickupDate, pickupTime, returnDate, returnTime, hourlyRate);
+            document.getElementById('rental-duration').textContent = hours;
+            document.getElementById('total-amount').textContent = total;
+            document.getElementById('price-note').textContent = hours > 0 ? 'Giá tạm tính. Booking sẽ được tạo khi bạn xác nhận thanh toán.' : '';
+        }
+
+        async function confirmPayment() {
+            const btn = document.getElementById('btnConfirmPayment');
+            const token = localStorage.getItem('token');
+            if (!token) { showNotification('Bạn cần đăng nhập.', 'error'); return; }
+            const userId = await getUserId();
+            if (!userId) { showNotification('Không đọc được thông tin người dùng.', 'error'); return; }
+            const params = new URLSearchParams(window.location.search);
+            const carId = params.get('carId') || params.get('id');
+            if (!carId) { showNotification('Thiếu thông tin xe.', 'error'); return; }
+
+            // Payment method validation (reuse existing logic partially)
+            const selectedMethod = document.querySelector('.payment-method-btn.active');
+            if (!selectedMethod) { showNotification('Chọn phương thức thanh toán.', 'error'); return; }
+            const invoiceOption = document.querySelector('input[name="invoice-option"]:checked');
+            if (!invoiceOption) { showNotification('Chọn hình thức nhận hoá đơn.', 'error'); return; }
+            if (selectedMethod.getAttribute('onclick').includes('bank')) {
+                if (!document.getElementById('bank-name').value || !document.getElementById('bank-number').value) {
+                    showNotification('Nhập đủ thông tin ngân hàng.', 'error'); return;
+                }
+            }
+
+            // Gather context
+            let ctx = null; try { ctx = JSON.parse(localStorage.getItem('rentalContext')); } catch {}
+            const pickupDate = params.get('pickup-date') || ctx?.pickupDate;
+            const pickupTime = params.get('pickup-time') || ctx?.pickupTime;
+            const returnDate = params.get('return-date') || ctx?.returnDate;
+            const returnTime = params.get('return-time') || ctx?.returnTime;
+            if (!pickupDate || !pickupTime || !returnDate || !returnTime) { showNotification('Thiếu thời gian thuê.', 'error'); return; }
+
+            const stationId = ctx?.stationId || ctx?.stationKey || params.get('stationId');
+            if (!stationId) {
+                showNotification('Thiếu station. Vui lòng chọn lại.', 'error');
+                return;
+            }
+
+            // Determine payment method (bank or cash)
+            const paymentMethod = selectedMethod.getAttribute('onclick').includes('bank') ? 'bank' : 'cash';
+            const paymentTransactionId = paymentMethod === 'bank' ? document.getElementById('bank-number').value : null;
+
+            // Prepare booking payload (carId and stationId are STRING UUIDs, not numbers)
+            // Format datetime as ISO 8601: "2025-10-18T07:10:24.000Z"
+            const payload = {
+                carId: carId, // STRING UUID
+                pickupStationId: stationId, // STRING UUID
+                returnStationId: stationId, // STRING UUID (assuming same station)
+                pickupDateTime: `${pickupDate}T${pickupTime}:00Z`, // Remove .000 
+                expectedReturnDateTime: `${returnDate}T${returnTime}:00Z`
+            };
+
+            btn.disabled = true;
+            
+            try {
+                // STEP 1: Create Booking
+                btn.textContent = '⏳ Creating Booking...';
+                console.log('🔄 STEP 1: Creating booking with payload:', payload);
+                console.log('🔄 userId:', userId);
+                
+                const createResult = await window.API.createBooking(payload, userId);
+                console.log('✅ STEP 1 Complete. Create result:', createResult);
+                console.log('📦 Full createResult object:', JSON.stringify(createResult, null, 2));
+                
+                const bookingId = createResult.bookingId || createResult.id;
+                console.log('📌 Extracted bookingId:', bookingId);
+                
+                if (!bookingId) {
+                    console.error('❌ No bookingId found in response!');
+                    console.error('Response keys:', Object.keys(createResult));
+                    throw new Error('Không nhận được bookingId từ API Create.');
+                }
+                
+                // ✅ BOOKING CREATED SUCCESSFULLY!
+                showNotification('✅ Đặt xe thành công! BookingId: ' + bookingId, 'success');
+                console.log('🎉 BOOKING CREATED! BookingId:', bookingId);
+                
+                // Save booking info for history page
+                localStorage.setItem('lastBooking', JSON.stringify({ 
+                    bookingId, 
+                    carId, 
+                    ...payload,
+                    paymentMethod,
+                    createdAt: new Date().toISOString()
+                }));
+                
+                // TODO: STEP 2 & STEP 3 will be implemented later
+                // - STEP 2: Confirm Booking (payment confirmation)
+                // - STEP 3: Complete Booking (final step)
+                
+                // Redirect to booking history after short delay
+                setTimeout(() => { window.location.href = 'booking_history.html'; }, 2000);
+                
+            } catch (err) {
+                console.error('❌ Booking failed:', err);
+                const msg = err?.response?.data?.message || err.message || 'Đặt xe thất bại. Vui lòng thử lại.';
+                showNotification('❌ ' + msg, 'error');
+            } finally {
+                btn.disabled = false; 
+                btn.textContent = 'Confirm & Create Booking';
+            }
+        }
+
+        // Populate rental information & pricing
+        document.addEventListener('DOMContentLoaded', function() {
+            initPaymentPage();
+        });
+
+        function selectPaymentMethod(method) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.payment-method-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Add active class to selected button
+            const selectedBtn = document.querySelector(`.payment-method-btn[onclick*="${method}"]`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('active');
+            }
+
+            // Show/hide bank info
+            const bankInfo = document.getElementById('bank-info');
+            bankInfo.style.display = method === 'bank' ? 'block' : 'none';
+        }
+
+        // OLD confirmPayment function removed - using the async version above (line 239) that handles full booking flow
+
+        // Common functions for all pages
+        function showNotification(message, type = 'success') {
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<span>${message}</span><span class="close-btn" onclick="this.parentElement.remove()">&times;</span>`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => { if (notification.parentElement) { notification.classList.remove('show'); setTimeout(() => notification.remove(), 300); } }, 5000);
+        }
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            const loginBtn = document.getElementById('loginBtn');
+            const userMenu = document.getElementById('userMenu');
+            const userEmail = document.getElementById('userEmail');
+            if (token && token !== 'null' && token !== '') {
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (userMenu) userMenu.style.display = 'block';
+                const savedEmail = localStorage.getItem('userEmail');
+                if (savedEmail && userEmail) { userEmail.textContent = savedEmail; } else if (userEmail) { userEmail.textContent = 'User Account'; }
+            } else {
+                localStorage.removeItem('token'); localStorage.removeItem('userEmail');
+                if (loginBtn) loginBtn.style.display = 'inline-block';
+                if (userMenu) userMenu.style.display = 'none';
+            }
+        }
+
+        function toggleUserMenu() { document.getElementById('userDropdown').classList.toggle('show'); }
+
+        function openUserProfile() {
+            document.getElementById('userDropdown').classList.remove('show');
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') { showNotification('⚠️ Vui lòng đăng nhập để xem profile!', 'error'); return; }
+            window.location.href = 'user_profile.html';
+        }
+
+        function logout() {
+            document.getElementById('userDropdown').classList.remove('show');
+            localStorage.removeItem('token'); localStorage.removeItem('userEmail');
+            checkAuthStatus(); showNotification('👋 Bạn đã đăng xuất thành công!', 'success');
+        }
+
+        function openModal() { document.getElementById("modal").style.display = "flex"; }
+        function toggleMobileMenu() { /* Mobile menu logic */ }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            document.addEventListener('click', function(event) {
+                const userMenu = document.querySelector('.user-menu');
+                const dropdown = document.getElementById('userDropdown');
+                if (userMenu && !userMenu.contains(event.target)) { dropdown.classList.remove('show'); }
+            });
+
+            // ========== LOGIN FORM HANDLER ==========
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const email = document.getElementById('loginEmail').value.trim();
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    if (!email || !password) {
+                        showNotification('❌ Please enter email and password!', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await window.API.login(email, password);
+                        if (response.token) {
+                            localStorage.setItem('token', response.token);
+                            if (response.user && response.user.id) localStorage.setItem('userId', response.user.id);
+                            if (response.user && response.user.email) localStorage.setItem('userEmail', response.user.email);
+                            showNotification('🎉 Login successful!', 'success');
+                            closeModal();
+                            checkAuthStatus();
+                            loginForm.reset();
+                        } else {
+                            showNotification('⚠️ Invalid server response.', 'error');
+                        }
+                    } catch (error) {
+                        showNotification(`❌ ${error.message || 'Login failed'}`, 'error');
+                    }
+                });
+            }
+
+            // ========== REGISTER FORM HANDLER ==========
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const username = document.getElementById('registerUsername').value.trim();
+                    const email = document.getElementById('registerEmail').value.trim();
+                    const phoneNumber = document.getElementById('registerPhone').value.trim();
+                    const password = document.getElementById('registerPassword').value;
+                    
+                    try {
+                        await window.API.register(username, email, phoneNumber, password);
+                        showNotification('🎊 Registration successful!', 'success');
+                        closeRegisterModal();
+                        setTimeout(() => {
+                            openModal();
+                            showNotification('💡 You can login now!', 'success');
+                        }, 2000);
+                    } catch (error) {
+                        showNotification(`❌ ${error.message || 'Registration failed'}`, 'error');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

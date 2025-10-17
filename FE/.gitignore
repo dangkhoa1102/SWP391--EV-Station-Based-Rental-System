@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test files (keep for now, but can be removed in production)
+test_*.html
+connection_test.html
+
+# Documentation files (consolidate into README.md)
+BACKEND_CONFIG_HTTP.md
+BUG_FIX_SUMMARY.md
+DEBUG_LOGIN.md
+ENGLISH_PASCALCASE_FIX.md
+FINAL_SOLUTION.md
+FIX_CONNECTION_ERROR.md
+FIX_NAME_FIELD.md
+LOGIN_FIXED.md
+USERID_REQUIREMENT.md
+program_cs_fixed.txt
+
+# Wireframe (optional, keep if needed)
+# Wireframe.drawio
+# wireframe.drawio.png
