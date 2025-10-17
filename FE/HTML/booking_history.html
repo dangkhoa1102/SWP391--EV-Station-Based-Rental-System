@@ -21,7 +21,12 @@
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-            <nav class="nav">
+            <nav class="nav" id="mainNav">
+                <ul class="nav-links">
+                    <li><a href="home_page.html">Home</a></li>
+                    <li><a href="car_list_page.html">Browse Cars</a></li>
+                    <li><a href="user_profile.html">My Profile</a></li>
+                </ul>
                 <div class="navbar-right">
                     <!-- Login button for non-authenticated users -->
                     <button id="loginBtn" onclick="openModal()" class="login-nav-btn" style="display:none;">Login</button>
@@ -154,19 +159,32 @@
             try {
                 const userId = localStorage.getItem('userId');
                 if (!userId) {
+                    console.error('No userId found in localStorage');
                     showNotification('Please login to view your bookings', 'error');
+                    // Show empty state
+                    document.getElementById('bookingsList').style.display = 'none';
+                    document.getElementById('emptyState').style.display = 'block';
                     return;
                 }
 
                 console.log('Fetching bookings for userId:', userId);
-                const bookings = await window.API.get(`/Bookings/Get-By-User/${encodeURIComponent(userId)}`);
-                allBookings = Array.isArray(bookings) ? bookings : bookings.data || [];
                 
-                console.log('Bookings loaded:', allBookings);
+                // Use the new getUserBookings function
+                const bookings = await window.API.getUserBookings(userId);
+                
+                console.log('Raw bookings response:', bookings);
+                allBookings = Array.isArray(bookings) ? bookings : [];
+                
+                console.log('Bookings loaded:', allBookings.length, 'bookings');
                 applyFilters();
             } catch (err) {
                 console.error('Error loading bookings:', err);
-                showNotification('Error loading bookings', 'error');
+                console.error('Error details:', err.response?.data || err.message);
+                showNotification('Error loading bookings: ' + (err.response?.data?.message || err.message), 'error');
+                
+                // Show empty state on error
+                document.getElementById('bookingsList').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
             }
         }
 
@@ -417,14 +435,35 @@
         // ========== Auth Functions ==========
         function checkAuthStatus() {
             const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
             const loginBtn = document.getElementById('loginBtn');
             const userMenu = document.getElementById('userMenu');
             const userEmail = document.getElementById('userEmail');
+
+            console.log('Auth check - token:', token ? 'exists' : 'missing', 'userId:', userId);
 
             if (token && token !== 'null') {
                 loginBtn.style.display = 'none';
                 userMenu.style.display = 'block';
                 userEmail.textContent = localStorage.getItem('userEmail') || 'User';
+                
+                // If we have token but no userId, try to extract it from JWT
+                if (!userId || userId === 'null') {
+                    console.warn('⚠️ Token exists but no userId! Attempting to extract from JWT...');
+                    try {
+                        const decoded = window.API.decodeJwt(token);
+                        console.log('Decoded JWT:', decoded);
+                        const extractedUserId = decoded.UserId || decoded.userId || decoded.uid || decoded.nameid || decoded.sub;
+                        if (extractedUserId) {
+                            localStorage.setItem('userId', extractedUserId);
+                            console.log('✅ Extracted and saved userId:', extractedUserId);
+                        } else {
+                            console.error('❌ Could not find userId in JWT. JWT keys:', Object.keys(decoded));
+                        }
+                    } catch (e) {
+                        console.error('Failed to decode JWT:', e);
+                    }
+                }
             } else {
                 loginBtn.style.display = 'block';
                 userMenu.style.display = 'none';
