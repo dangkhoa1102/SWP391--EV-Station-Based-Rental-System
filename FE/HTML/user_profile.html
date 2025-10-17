@@ -22,7 +22,12 @@
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-            <nav class="nav">
+            <nav class="nav" id="mainNav">
+                <ul class="nav-links">
+                    <li><a href="home_page.html">Home</a></li>
+                    <li><a href="car_list_page.html">Browse Cars</a></li>
+                    <li><a href="booking_history.html">My Bookings</a></li>
+                </ul>
                 <div class="navbar-right">
                     <!-- Login button for non-authenticated users -->
                     <button id="loginBtn" onclick="openModal()" class="login-nav-btn" style="display:none;">Login</button>

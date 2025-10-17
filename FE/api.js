@@ -205,6 +205,29 @@ window.API = {
     const res = await apiClient.post(`/Bookings/Complete-By-${encodeURIComponent(bookingId)}`);
     console.log('completeBooking response:', res.data);
     return res.data?.data || res.data || {};
+  },
+
+  getUserBookings: async (userId) => {
+    console.log('getUserBookings called with userId:', userId);
+    const res = await apiClient.get(`/Bookings/Get-By-User/${encodeURIComponent(userId)}`);
+    console.log('getUserBookings raw response:', res.data);
+    
+    const data = res.data;
+    // Normalize response: nested data.data > data > direct array
+    if (data.data && Array.isArray(data.data)) {
+      console.log('getUserBookings returning data.data:', data.data);
+      return data.data;
+    }
+    if (Array.isArray(data)) {
+      console.log('getUserBookings returning data:', data);
+      return data;
+    }
+    if (Array.isArray(data.items)) {
+      console.log('getUserBookings returning data.items:', data.items);
+      return data.items;
+    }
+    console.log('getUserBookings returning empty array');
+    return [];
   }
 };
 
