@@ -1,0 +1,6 @@
+@HopDong.APIs_HostAddress = http://localhost:5124
+
+GET {{HopDong.APIs_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
