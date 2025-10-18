@@ -19,18 +19,10 @@
             <div class="logo">
                 <a href="home_page.html">FEC</a>
             </div>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                <i class="fas fa-bars"></i>
-            </button>
-            <nav class="nav" id="mainNav">
-                <ul class="nav-links">
-                    <li><a href="home_page.html">Home</a></li>
-                    <li><a href="car_list_page.html">Browse Cars</a></li>
-                    <li><a href="booking_history.html">My Bookings</a></li>
-                </ul>
+            <nav class="nav">
                 <div class="navbar-right">
                     <!-- Login button for non-authenticated users -->
-                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn" style="display:none;">Login</button>
+                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn">Login</button>
                     
                     <!-- User menu for authenticated users -->
                     <div id="userMenu" class="user-menu" style="display: none;">
@@ -44,10 +36,13 @@
                                 <span id="userEmail">User Account</span>
                             </div>
                             <hr>
+                            <a href="user_profile.html" onclick="toggleUserMenu()">
+                                <i class="fas fa-user-cog"></i> User Profile
+                            </a>
                             <a href="booking_history.html" onclick="toggleUserMenu()">
                                 <i class="fas fa-history"></i> Booking History
                             </a>
-                            <a href="#" onclick="logout()">
+                            <a href="#" onclick="logout(); return false;">
                                 <i class="fas fa-sign-out-alt"></i> Logout
                             </a>
                         </div>
@@ -192,18 +187,41 @@
 
         function toggleUserMenu() {
             const dropdown = document.getElementById('userDropdown');
-            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            if (dropdown.style.display === 'block' || dropdown.classList.contains('show')) {
+                dropdown.style.display = 'none';
+                dropdown.classList.remove('show');
+            } else {
+                dropdown.style.display = 'block';
+                dropdown.classList.add('show');
+            }
         }
 
-        function toggleMobileMenu() {
-            const nav = document.querySelector('.nav');
-            nav.classList.toggle('active');
+        function openUserProfile() {
+            document.getElementById('userDropdown').style.display = 'none';
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') {
+                showNotification('⚠️ Please login to view profile!', 'error');
+                return;
+            }
+            // Already on user profile page, no need to redirect
+            window.location.reload();
+        }
+
+        function openBookingHistory() {
+            document.getElementById('userDropdown').style.display = 'none';
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') {
+                showNotification('⚠️ Please login to view booking history!', 'error');
+                return;
+            }
+            window.location.href = 'booking_history.html';
         }
 
         function logout() {
             localStorage.clear();
             showNotification('✅ Logged out', 'success');
             checkAuthStatus();
+            setTimeout(() => window.location.href = 'home_page.html', 1500);
         }
 
         // Load user data on page load
@@ -330,6 +348,15 @@
                 closeChangePasswordModal();
             }
         }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.querySelector('.user-menu');
+            const dropdown = document.getElementById('userDropdown');
+            if (userMenu && dropdown && !userMenu.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
 
         // Show notification
         function showNotification(message, type = 'success') {

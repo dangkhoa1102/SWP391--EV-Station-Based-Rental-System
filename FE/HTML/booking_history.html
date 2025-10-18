@@ -18,18 +18,10 @@
             <div class="logo">
                 <a href="home_page.html">FEC</a>
             </div>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                <i class="fas fa-bars"></i>
-            </button>
-            <nav class="nav" id="mainNav">
-                <ul class="nav-links">
-                    <li><a href="home_page.html">Home</a></li>
-                    <li><a href="car_list_page.html">Browse Cars</a></li>
-                    <li><a href="user_profile.html">My Profile</a></li>
-                </ul>
+            <nav class="nav">
                 <div class="navbar-right">
                     <!-- Login button for non-authenticated users -->
-                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn" style="display:none;">Login</button>
+                    <button id="loginBtn" onclick="openModal()" class="login-nav-btn">Login</button>
                     
                     <!-- User menu for authenticated users -->
                     <div id="userMenu" class="user-menu" style="display: none;">
@@ -46,7 +38,10 @@
                             <a href="user_profile.html" onclick="toggleUserMenu()">
                                 <i class="fas fa-user-cog"></i> User Profile
                             </a>
-                            <a href="#" onclick="logout()">
+                            <a href="booking_history.html" onclick="toggleUserMenu()">
+                                <i class="fas fa-history"></i> Booking History
+                            </a>
+                            <a href="#" onclick="logout(); return false;">
                                 <i class="fas fa-sign-out-alt"></i> Logout
                             </a>
                         </div>
@@ -154,10 +149,80 @@
             loadBookings();
         });
 
+        // ========== Get User ID (with fallback) ==========
+        function decodeJwtPayload(token) {
+            try {
+                const p = token.split('.')[1];
+                const json = atob(p.replace(/-/g, '+').replace(/_/g, '/'));
+                const decoded = decodeURIComponent(json.split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                return JSON.parse(decoded);
+            } catch { return null; }
+        }
+
+        async function getUserId() {
+            // Check localStorage first
+            const storedUserId = localStorage.getItem('userId');
+            
+            // Validate: userId should be UUID format (contains dashes), not email
+            const isValidUUID = storedUserId && storedUserId.includes('-') && !storedUserId.includes('@');
+            
+            if (isValidUUID) {
+                console.log('✅ Found valid userId in localStorage:', storedUserId);
+                return storedUserId;
+            }
+            
+            if (storedUserId && !isValidUUID) {
+                console.warn('⚠️ localStorage has invalid userId (email):', storedUserId);
+                localStorage.removeItem('userId'); // Clear invalid data
+            }
+            
+            // Fetch from /Users/Get-My-Profile API
+            try {
+                console.log('🔄 Calling /Users/Get-My-Profile to get userId...');
+                const profileData = await window.API.getMyProfile();
+                console.log('📦 Profile response:', profileData);
+                
+                const userId = profileData.id || profileData.data?.id;
+                if (userId) {
+                    console.log('✅ Got userId from profile API:', userId);
+                    localStorage.setItem('userId', userId);
+                    return userId;
+                } else {
+                    console.error('❌ No id found in profile response!');
+                }
+            } catch (error) {
+                console.error('❌ Failed to fetch userId from /Users/Get-My-Profile:', error);
+            }
+            
+            // Fallback: Decode from JWT token
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('❌ No token found!');
+                return null;
+            }
+            
+            try {
+                const payload = decodeJwtPayload(token);
+                console.log('🔍 JWT payload (fallback):', payload);
+                
+                const userId = payload.UserId || payload.userId || payload.uid || payload.nameid || payload.sub || null;
+                if (userId) {
+                    console.log('✅ Found userId in JWT:', userId);
+                    localStorage.setItem('userId', userId);
+                    return userId;
+                }
+            } catch (e) {
+                console.error('❌ Cannot decode JWT:', e);
+            }
+            
+            console.error('❌ No userId found anywhere!');
+            return null;
+        }
+
         // ========== Fetch Bookings ==========
         async function loadBookings() {
             try {
-                const userId = localStorage.getItem('userId');
+                const userId = await getUserId();
                 if (!userId) {
                     console.error('No userId found in localStorage');
                     showNotification('Please login to view your bookings', 'error');
@@ -451,14 +516,16 @@
                 if (!userId || userId === 'null') {
                     console.warn('⚠️ Token exists but no userId! Attempting to extract from JWT...');
                     try {
-                        const decoded = window.API.decodeJwt(token);
+                        const decoded = decodeJwtPayload(token);
                         console.log('Decoded JWT:', decoded);
-                        const extractedUserId = decoded.UserId || decoded.userId || decoded.uid || decoded.nameid || decoded.sub;
-                        if (extractedUserId) {
-                            localStorage.setItem('userId', extractedUserId);
-                            console.log('✅ Extracted and saved userId:', extractedUserId);
-                        } else {
-                            console.error('❌ Could not find userId in JWT. JWT keys:', Object.keys(decoded));
+                        if (decoded) {
+                            const extractedUserId = decoded.UserId || decoded.userId || decoded.uid || decoded.nameid || decoded.sub;
+                            if (extractedUserId) {
+                                localStorage.setItem('userId', extractedUserId);
+                                console.log('✅ Extracted and saved userId:', extractedUserId);
+                            } else {
+                                console.error('❌ Could not find userId in JWT. JWT keys:', Object.keys(decoded));
+                            }
                         }
                     } catch (e) {
                         console.error('Failed to decode JWT:', e);
@@ -472,12 +539,13 @@
 
         function toggleUserMenu() {
             const dropdown = document.getElementById('userDropdown');
-            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function toggleMobileMenu() {
-            const nav = document.querySelector('.nav');
-            nav.classList.toggle('active');
+            if (dropdown.style.display === 'block' || dropdown.classList.contains('show')) {
+                dropdown.style.display = 'none';
+                dropdown.classList.remove('show');
+            } else {
+                dropdown.style.display = 'block';
+                dropdown.classList.add('show');
+            }
         }
 
         function openModal() {
@@ -490,7 +558,23 @@
 
         function openUserProfile() {
             document.getElementById('userDropdown').style.display = 'none';
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') {
+                showNotification('⚠️ Please login to view profile!', 'error');
+                return;
+            }
             window.location.href = 'user_profile.html';
+        }
+
+        function openBookingHistory() {
+            document.getElementById('userDropdown').style.display = 'none';
+            const token = localStorage.getItem('token');
+            if (!token || token === 'null' || token === '') {
+                showNotification('⚠️ Please login to view booking history!', 'error');
+                return;
+            }
+            // Already on booking history page, just refresh
+            loadBookings();
         }
 
         async function handleLogin(e) {
@@ -536,6 +620,15 @@
             if (event.target === modal) modal.style.display = 'none';
             if (event.target === loginModal) loginModal.style.display = 'none';
         };
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.querySelector('.user-menu');
+            const dropdown = document.getElementById('userDropdown');
+            if (userMenu && dropdown && !userMenu.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>

@@ -104,10 +104,12 @@
     overflow: hidden;
 }
 
-.user-dropdown.show {
+.user-dropdown.show,
+.user-dropdown[style*="display: block"] {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
+    display: block !important;
 }
 
 .dropdown-header {

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../style.css" />
     <link rel="stylesheet" href="../CSS/shared.css" />
     <link rel="stylesheet" href="../CSS/car_list_page.css" />
+    <link rel="stylesheet" href="../CSS/search_modal.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../api.js"></script>
@@ -58,98 +59,35 @@
     </header>
 
     <main class="car-list-main">
+        <!-- Search Bar Section -->
         <section class="search-form">
             <div class="container">
-                <form id="car-search-form">
-                    <div class="search-grid">
-                        <div class="form-group">
-                            <label for="location">
-                                <i class="fas fa-map-marker-alt"></i>
-                                Pick-up Location
-                            </label>
-                            <select id="location" name="location" required>
-                                <option value="">Select location</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="pickup-date">
-                                <i class="fas fa-calendar"></i>
-                                Pick-up Date
-                            </label>
-                            <input type="date" id="pickup-date" name="pickup-date" required />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="pickup-time">
-                                <i class="fas fa-clock"></i>
-                                Pick-up Time
-                            </label>
-                            <select id="pickup-time" name="pickup-time" required>
-                                <option value="">Select hour</option>
-                                <option value="06:00">06:00</option>
-                                <option value="07:00">07:00</option>
-                                <option value="08:00">08:00</option>
-                                <option value="09:00">09:00</option>
-                                <option value="10:00">10:00</option>
-                                <option value="11:00">11:00</option>
-                                <option value="12:00">12:00</option>
-                                <option value="13:00">13:00</option>
-                                <option value="14:00">14:00</option>
-                                <option value="15:00">15:00</option>
-                                <option value="16:00">16:00</option>
-                                <option value="17:00">17:00</option>
-                                <option value="18:00">18:00</option>
-                                <option value="19:00">19:00</option>
-                                <option value="20:00">20:00</option>
-                                <option value="21:00">21:00</option>
-                                <option value="22:00">22:00</option>
-                                <option value="23:00">23:00</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="return-date">
-                                <i class="fas fa-calendar-check"></i>
-                                Return Date
-                            </label>
-                            <input type="date" id="return-date" name="return-date" required />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="return-time">
-                                <i class="fas fa-clock"></i>
-                                Return Time
-                            </label>
-                            <select id="return-time" name="return-time" required>
-                                <option value="">Select hour</option>
-                                <option value="06:00">06:00</option>
-                                <option value="07:00">07:00</option>
-                                <option value="08:00">08:00</option>
-                                <option value="09:00">09:00</option>
-                                <option value="10:00">10:00</option>
-                                <option value="11:00">11:00</option>
-                                <option value="12:00">12:00</option>
-                                <option value="13:00">13:00</option>
-                                <option value="14:00">14:00</option>
-                                <option value="15:00">15:00</option>
-                                <option value="16:00">16:00</option>
-                                <option value="17:00">17:00</option>
-                                <option value="18:00">18:00</option>
-                                <option value="19:00">19:00</option>
-                                <option value="20:00">20:00</option>
-                                <option value="21:00">21:00</option>
-                                <option value="22:00">22:00</option>
-                                <option value="23:00">23:00</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" class="btn-search">
-                            <i class="fas fa-search"></i>
-                            SEARCH
-                        </button>
+                <div class="search-summary">
+                    <div class="summary-item" onclick="openSearchModal()">
+                        <div class="summary-label">Pick-up Location</div>
+                        <div class="summary-value" id="summaryLocation">Select location</div>
                     </div>
-                </form>
+                    <div class="summary-item" onclick="openSearchModal()">
+                        <div class="summary-label">Pick-up Date</div>
+                        <div class="summary-value" id="summaryPickupDate">18/10/2025</div>
+                    </div>
+                    <div class="summary-item" onclick="openSearchModal()">
+                        <div class="summary-label">Pick-up Time</div>
+                        <div class="summary-value" id="summaryPickupTime">15:00</div>
+                    </div>
+                    <div class="summary-item" onclick="openSearchModal()">
+                        <div class="summary-label">Return Date</div>
+                        <div class="summary-value" id="summaryReturnDate">20/10/2025</div>
+                    </div>
+                    <div class="summary-item" onclick="openSearchModal()">
+                        <div class="summary-label">Return Time</div>
+                        <div class="summary-value" id="summaryReturnTime">19:00</div>
+                    </div>
+                    <button type="button" class="btn-search" onclick="submitSearch()">
+                        <i class="fas fa-search"></i>
+                        SEARCH
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -275,6 +213,170 @@
         </div>
     </main>
 
+    <!-- Search Modal -->
+    <div id="searchModal" class="search-modal">
+        <div class="search-modal-content">
+            <div class="search-modal-header">
+                <h3>Search Cars</h3>
+                <button class="search-modal-close" onclick="closeSearchModal()">&times;</button>
+            </div>
+            <div class="search-modal-body">
+                <!-- Location -->
+                <div class="search-field">
+                    <label>
+                        <i class="fas fa-map-marker-alt"></i>
+                        Pick-up Location
+                    </label>
+                    <div class="search-input" onclick="toggleLocationDropdown()">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="selectedLocation">Select location</span>
+                    </div>
+                    <div class="location-dropdown" id="locationDropdown">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Pick-up Date & Time -->
+                <div class="search-field-row">
+                    <div class="search-field">
+                        <label>
+                            <i class="fas fa-calendar"></i>
+                            Pick-up Date
+                        </label>
+                        <div class="search-input" onclick="toggleCalendar('pickup')">
+                            <i class="fas fa-calendar"></i>
+                            <span id="selectedPickupDate">18/10/2025</span>
+                        </div>
+                    </div>
+                    <div class="search-field">
+                        <label>
+                            <i class="fas fa-clock"></i>
+                            Pick-up Time
+                        </label>
+                        <div class="search-input" onclick="toggleTimePicker('pickup')">
+                            <i class="fas fa-clock"></i>
+                            <span id="selectedPickupTime">15:00</span>
+                        </div>
+                        <div class="time-picker-dropdown" id="pickupTimePicker">
+                            <div class="time-picker-label">Choose pick-up time</div>
+                            <div class="time-picker-options">
+                                <div class="time-option" data-time="06:00">06:00</div>
+                                <div class="time-option" data-time="07:00">07:00</div>
+                                <div class="time-option" data-time="08:00">08:00</div>
+                                <div class="time-option" data-time="09:00">09:00</div>
+                                <div class="time-option" data-time="10:00">10:00</div>
+                                <div class="time-option" data-time="11:00">11:00</div>
+                                <div class="time-option" data-time="12:00">12:00</div>
+                                <div class="time-option" data-time="13:00">13:00</div>
+                                <div class="time-option" data-time="14:00">14:00</div>
+                                <div class="time-option" data-time="15:00">15:00</div>
+                                <div class="time-option" data-time="16:00">16:00</div>
+                                <div class="time-option" data-time="17:00">17:00</div>
+                                <div class="time-option" data-time="18:00">18:00</div>
+                                <div class="time-option" data-time="19:00">19:00</div>
+                                <div class="time-option" data-time="20:00">20:00</div>
+                                <div class="time-option" data-time="21:00">21:00</div>
+                                <div class="time-option" data-time="22:00">22:00</div>
+                                <div class="time-option" data-time="23:00">23:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Return Date & Time -->
+                <div class="search-field-row">
+                    <div class="search-field">
+                        <label>
+                            <i class="fas fa-calendar-check"></i>
+                            Return Date
+                        </label>
+                        <div class="search-input" onclick="toggleCalendar('return')">
+                            <i class="fas fa-calendar-check"></i>
+                            <span id="selectedReturnDate">20/10/2025</span>
+                        </div>
+                    </div>
+                    <div class="search-field">
+                        <label>
+                            <i class="fas fa-clock"></i>
+                            Return Time
+                        </label>
+                        <div class="search-input" onclick="toggleTimePicker('return')">
+                            <i class="fas fa-clock"></i>
+                            <span id="selectedReturnTime">19:00</span>
+                        </div>
+                        <div class="time-picker-dropdown" id="returnTimePicker">
+                            <div class="time-picker-label">Choose return time</div>
+                            <div class="time-picker-options">
+                                <div class="time-option" data-time="06:00">06:00</div>
+                                <div class="time-option" data-time="07:00">07:00</div>
+                                <div class="time-option" data-time="08:00">08:00</div>
+                                <div class="time-option" data-time="09:00">09:00</div>
+                                <div class="time-option" data-time="10:00">10:00</div>
+                                <div class="time-option" data-time="11:00">11:00</div>
+                                <div class="time-option" data-time="12:00">12:00</div>
+                                <div class="time-option" data-time="13:00">13:00</div>
+                                <div class="time-option" data-time="14:00">14:00</div>
+                                <div class="time-option" data-time="15:00">15:00</div>
+                                <div class="time-option" data-time="16:00">16:00</div>
+                                <div class="time-option" data-time="17:00">17:00</div>
+                                <div class="time-option" data-time="18:00">18:00</div>
+                                <div class="time-option" data-time="19:00">19:00</div>
+                                <div class="time-option" data-time="20:00">20:00</div>
+                                <div class="time-option" data-time="21:00">21:00</div>
+                                <div class="time-option" data-time="22:00">22:00</div>
+                                <div class="time-option" data-time="23:00">23:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar Widget -->
+                <div class="calendar-widget" id="calendarWidget">
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button onclick="changeMonth(-1)">&lt;</button>
+                            <span id="calendarMonth">October 2025</span>
+                            <button onclick="changeMonth(1)">&gt;</button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div>Sun</div>
+                            <div>Mon</div>
+                            <div>Tue</div>
+                            <div>Wed</div>
+                            <div>Thu</div>
+                            <div>Fri</div>
+                            <div>Sat</div>
+                        </div>
+                        <div class="calendar-days" id="calendarDays">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rental Duration Info -->
+                <div class="rental-duration">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>Rental Duration</strong>
+                        <p id="rentalDurationText">2 days 4 hours</p>
+                    </div>
+                </div>
+
+                <!-- Warning -->
+                <div class="rental-warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Minimum rental duration is 1 hour. Same-day rentals are available. To ensure cars are properly prepared and meet environmental standards, please book at least 2 hours in advance.</p>
+                </div>
+
+                <!-- Search Button -->
+                <button class="btn-search-submit" onclick="submitSearch()">
+                    <i class="fas fa-search"></i>
+                    Search Cars
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer">
         <div class="container">
             <p>&copy; 2025 FEC. All rights reserved.</p>
@@ -314,6 +416,354 @@
         // ============= GLOBAL STATE =============
         let currentStationId = null;
         let currentSearchParams = {};
+
+        // ============= SEARCH DATA =============
+        const today = new Date();
+        const searchData = {
+            location: '',
+            locationName: '',
+            pickupDate: `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`,
+            pickupTime: '15:00',
+            returnDate: `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${(today.getDate() + 2).toString().padStart(2, '0')}`,
+            returnTime: '19:00',
+            currentMonth: today.getMonth(),
+            currentYear: today.getFullYear(),
+            calendarMode: 'pickup' // 'pickup' or 'return'
+        };
+
+        // ============= SEARCH MODAL FUNCTIONS =============
+        function openSearchModal() {
+            document.getElementById('searchModal').classList.add('active');
+            loadLocations();
+        }
+
+        function closeSearchModal() {
+            document.getElementById('searchModal').classList.remove('active');
+            // Close all dropdowns
+            document.querySelectorAll('.location-dropdown, .time-picker-dropdown, .calendar-widget').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+
+        function toggleLocationDropdown() {
+            const dropdown = document.getElementById('locationDropdown');
+            const isActive = dropdown.classList.toggle('active');
+            
+            // Close others
+            document.querySelectorAll('.time-picker-dropdown, .calendar-widget').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            if (isActive && dropdown.children.length === 0) {
+                loadLocations();
+            }
+        }
+
+        async function loadLocations() {
+            const dropdown = document.getElementById('locationDropdown');
+            
+            try {
+                const stations = await window.API.getAllStations(1, 500);
+                const stationList = stations.data || stations.items || stations;
+                
+                if (!stationList || stationList.length === 0) {
+                    dropdown.innerHTML = '<div class="location-option" style="color: #999;">No locations available</div>';
+                    return;
+                }
+                
+                dropdown.innerHTML = stationList.map(station => {
+                    const stationName = station.stationName || station.name || 'Unknown Location';
+                    const stationId = station.id || station.stationId;
+                    const safeName = stationName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    
+                    return `
+                        <div class="location-option" onclick="selectLocation('${stationId}', '${safeName}')">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${stationName}</span>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load locations:', error);
+                dropdown.innerHTML = '<div class="location-option" style="color: red; padding: 12px;">Failed to load locations</div>';
+            }
+        }
+
+        function selectLocation(id, name) {
+            searchData.location = id;
+            searchData.locationName = name;
+            document.getElementById('selectedLocation').textContent = name;
+            document.getElementById('summaryLocation').textContent = name;
+            document.getElementById('locationDropdown').classList.remove('active');
+        }
+
+        function toggleTimePicker(type) {
+            const pickerId = type === 'pickup' ? 'pickupTimePicker' : 'returnTimePicker';
+            const picker = document.getElementById(pickerId);
+            const isActive = picker.classList.toggle('active');
+            
+            // Close others
+            const otherId = type === 'pickup' ? 'returnTimePicker' : 'pickupTimePicker';
+            document.getElementById(otherId).classList.remove('active');
+            document.getElementById('locationDropdown').classList.remove('active');
+            document.getElementById('calendarWidget').classList.remove('active');
+            
+            // Highlight selected time
+            if (isActive) {
+                const selectedTime = type === 'pickup' ? searchData.pickupTime : searchData.returnTime;
+                picker.querySelectorAll('.time-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.time === selectedTime);
+                });
+            }
+        }
+
+        function selectTime(type, time) {
+            if (type === 'pickup') {
+                searchData.pickupTime = time;
+                document.getElementById('selectedPickupTime').textContent = time;
+                document.getElementById('summaryPickupTime').textContent = time;
+                document.getElementById('pickupTimePicker').classList.remove('active');
+            } else {
+                searchData.returnTime = time;
+                document.getElementById('selectedReturnTime').textContent = time;
+                document.getElementById('summaryReturnTime').textContent = time;
+                document.getElementById('returnTimePicker').classList.remove('active');
+            }
+            updateRentalDuration();
+        }
+
+        function toggleCalendar(mode) {
+            const calendar = document.getElementById('calendarWidget');
+            searchData.calendarMode = mode;
+            
+            const isActive = calendar.classList.toggle('active');
+            
+            // Close others
+            document.querySelectorAll('.location-dropdown, .time-picker-dropdown').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            if (isActive) {
+                renderCalendar();
+            }
+        }
+
+        function changeMonth(delta) {
+            searchData.currentMonth += delta;
+            if (searchData.currentMonth > 11) {
+                searchData.currentMonth = 0;
+                searchData.currentYear++;
+            } else if (searchData.currentMonth < 0) {
+                searchData.currentMonth = 11;
+                searchData.currentYear--;
+            }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            document.getElementById('calendarMonth').textContent = 
+                `${monthNames[searchData.currentMonth]} ${searchData.currentYear}`;
+            
+            const firstDay = new Date(searchData.currentYear, searchData.currentMonth, 1);
+            const lastDay = new Date(searchData.currentYear, searchData.currentMonth + 1, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let html = '';
+            
+            // Empty cells for days before month starts
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                html += '<div class="calendar-day"></div>';
+            }
+            
+            // Days of month
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                // Create dateStr directly without Date object to avoid timezone issues
+                const dateStr = `${searchData.currentYear}-${(searchData.currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                
+                // Use Date object only for comparison
+                const date = new Date(searchData.currentYear, searchData.currentMonth, day);
+                const isToday = date.toDateString() === today.toDateString();
+                const isPast = date < today;
+                const isSelected = dateStr === (searchData.calendarMode === 'pickup' ? searchData.pickupDate : searchData.returnDate);
+                
+                let classes = ['calendar-day'];
+                if (isPast) classes.push('disabled');
+                if (isToday) classes.push('today');
+                if (isSelected) classes.push('selected');
+                
+                html += `<div class="${classes.join(' ')}" 
+                             onclick="${isPast ? '' : `selectDate('${dateStr}')`}">
+                            ${day}
+                         </div>`;
+            }
+            
+            document.getElementById('calendarDays').innerHTML = html;
+        }
+
+        function selectDate(dateStr) {
+            // Parse date correctly to avoid timezone issues
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const formattedDate = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+            
+            if (searchData.calendarMode === 'pickup') {
+                searchData.pickupDate = dateStr;
+                document.getElementById('selectedPickupDate').textContent = formattedDate;
+                document.getElementById('summaryPickupDate').textContent = formattedDate;
+                
+                // Only auto-adjust return date if return datetime is before pickup datetime
+                const pickupDateTime = new Date(`${dateStr}T${searchData.pickupTime}`);
+                const returnDateTime = new Date(`${searchData.returnDate}T${searchData.returnTime}`);
+                
+                if (returnDateTime < pickupDateTime) {
+                    // Set return date same as pickup date, but time +2 hours
+                    searchData.returnDate = dateStr;
+                    const pickupHour = parseInt(searchData.pickupTime.split(':')[0]);
+                    const newReturnHour = Math.min(pickupHour + 2, 23);
+                    searchData.returnTime = `${newReturnHour.toString().padStart(2, '0')}:00`;
+                    
+                    document.getElementById('selectedReturnDate').textContent = formattedDate;
+                    document.getElementById('summaryReturnDate').textContent = formattedDate;
+                    document.getElementById('selectedReturnTime').textContent = searchData.returnTime;
+                    document.getElementById('summaryReturnTime').textContent = searchData.returnTime;
+                }
+            } else {
+                searchData.returnDate = dateStr;
+                document.getElementById('selectedReturnDate').textContent = formattedDate;
+                document.getElementById('summaryReturnDate').textContent = formattedDate;
+            }
+            
+            document.getElementById('calendarWidget').classList.remove('active');
+            updateRentalDuration();
+        }
+
+        function updateRentalDuration() {
+            const pickup = new Date(`${searchData.pickupDate}T${searchData.pickupTime}`);
+            const returnTime = new Date(`${searchData.returnDate}T${searchData.returnTime}`);
+            const diffMs = returnTime - pickup;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const days = Math.floor(diffHours / 24);
+            const hours = diffHours % 24;
+            
+            let durationText = '';
+            if (diffHours < 0) {
+                durationText = 'Invalid duration';
+            } else if (diffHours === 0) {
+                durationText = 'Less than 1 hour';
+            } else {
+                if (days > 0) durationText += `${days} day${days > 1 ? 's' : ''} `;
+                if (hours > 0) durationText += `${hours} hour${hours > 1 ? 's' : ''}`;
+            }
+            
+            document.getElementById('rentalDurationText').textContent = durationText.trim() || '0 hours';
+        }
+
+        function updateSummaryBar() {
+            // Format dates from YYYY-MM-DD to DD/MM/YYYY
+            const formatDate = (dateStr) => {
+                const [year, month, day] = dateStr.split('-');
+                return `${day}/${month}/${year}`;
+            };
+
+            // Update summary bar
+            document.getElementById('summaryLocation').textContent = searchData.locationName || 'Select location';
+            document.getElementById('summaryPickupDate').textContent = formatDate(searchData.pickupDate);
+            document.getElementById('summaryPickupTime').textContent = searchData.pickupTime;
+            document.getElementById('summaryReturnDate').textContent = formatDate(searchData.returnDate);
+            document.getElementById('summaryReturnTime').textContent = searchData.returnTime;
+
+            // Update modal fields
+            document.getElementById('selectedLocation').textContent = searchData.locationName || 'Select location';
+            document.getElementById('selectedPickupDate').textContent = formatDate(searchData.pickupDate);
+            document.getElementById('selectedPickupTime').textContent = searchData.pickupTime;
+            document.getElementById('selectedReturnDate').textContent = formatDate(searchData.returnDate);
+            document.getElementById('selectedReturnTime').textContent = searchData.returnTime;
+        }
+
+        function submitSearch() {
+            if (!searchData.location) {
+                alert('Please select a pick-up location');
+                return;
+            }
+            
+            // Validate datetime
+            const pickupDateTime = new Date(`${searchData.pickupDate}T${searchData.pickupTime}`);
+            const returnDateTime = new Date(`${searchData.returnDate}T${searchData.returnTime}`);
+            
+            if (returnDateTime <= pickupDateTime) {
+                alert('Return date and time must be after pick-up date and time.\n\nPlease select a later return time or date.');
+                return;
+            }
+            
+            // Check minimum rental duration (at least 1 hour)
+            const diffMs = returnDateTime - pickupDateTime;
+            const diffHours = diffMs / (1000 * 60 * 60);
+            
+            if (diffHours < 1) {
+                alert('Minimum rental duration is 1 hour.\n\nPlease adjust your return time.');
+                return;
+            }
+            
+            // Save rental context
+            const rentalContext = {
+                stationId: searchData.location,
+                stationName: searchData.locationName,
+                pickupDate: searchData.pickupDate,
+                pickupTime: searchData.pickupTime,
+                returnDate: searchData.returnDate,
+                returnTime: searchData.returnTime,
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                localStorage.setItem('rentalContext', JSON.stringify(rentalContext));
+            } catch (e) {
+                console.error('Failed to save rental context:', e);
+            }
+            
+            // Update URL and reload cars
+            const params = new URLSearchParams({
+                location: searchData.location,
+                'pickup-date': searchData.pickupDate,
+                'pickup-time': searchData.pickupTime,
+                'return-date': searchData.returnDate,
+                'return-time': searchData.returnTime
+            });
+            
+            window.location.href = `car_list_page.html?${params.toString()}`;
+        }
+
+        // Add click handlers to time options
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('time-option')) {
+                const time = e.target.dataset.time;
+                const picker = e.target.closest('.time-picker-dropdown');
+                const type = picker.id === 'pickupTimePicker' ? 'pickup' : 'return';
+                selectTime(type, time);
+            }
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-field') && !e.target.closest('.calendar-widget')) {
+                document.querySelectorAll('.location-dropdown, .time-picker-dropdown, .calendar-widget').forEach(el => {
+                    el.classList.remove('active');
+                });
+            }
+            
+            // Close modal when clicking on overlay
+            if (e.target.id === 'searchModal') {
+                closeSearchModal();
+            }
+            
+            // Close calendar when clicking on overlay
+            if (e.target.id === 'calendarWidget') {
+                document.getElementById('calendarWidget').classList.remove('active');
+            }
+        });
 
         // ============= NOTIFICATION =============
         function showNotification(message, type = 'success') {
@@ -763,11 +1213,44 @@
 
             console.log('🔗 URL Parameters:', { stationId, pickupDate, pickupTime, returnDate, returnTime });
 
-            // Fill form with URL params
-            if (pickupDate) document.getElementById('pickup-date').value = pickupDate;
-            if (pickupTime) document.getElementById('pickup-time').value = pickupTime;
-            if (returnDate) document.getElementById('return-date').value = returnDate;
-            if (returnTime) document.getElementById('return-time').value = returnTime;
+            // Update searchData from URL params or rentalContext
+            if (stationId) {
+                searchData.location = stationId;
+                
+                // Try to get station name from rentalContext first
+                try {
+                    const rentalContext = JSON.parse(localStorage.getItem('rentalContext') || '{}');
+                    if (rentalContext.stationName && rentalContext.stationId === stationId) {
+                        searchData.locationName = rentalContext.stationName;
+                    }
+                } catch (e) {
+                    console.error('Failed to load rentalContext:', e);
+                }
+                
+                // If not found, try to get from API (after stations are loaded)
+                if (!searchData.locationName) {
+                    setTimeout(async () => {
+                        try {
+                            const stations = await window.API.getAllStations(1, 500);
+                            const stationList = stations.data || stations.items || stations;
+                            const station = stationList.find(s => s.id == stationId || s.stationId == stationId);
+                            if (station) {
+                                searchData.locationName = station.stationName || station.name || 'Unknown Location';
+                                updateSummaryBar();
+                            }
+                        } catch (e) {
+                            console.error('Failed to load station name:', e);
+                        }
+                    }, 500);
+                }
+            }
+            if (pickupDate) searchData.pickupDate = pickupDate;
+            if (pickupTime) searchData.pickupTime = pickupTime;
+            if (returnDate) searchData.returnDate = returnDate;
+            if (returnTime) searchData.returnTime = returnTime;
+
+            // Update summary bar with search data
+            updateSummaryBar();
 
             // Load cars if stationId provided
             if (stationId) {
@@ -776,12 +1259,12 @@
                 displayNoCars('Please select a location to view available cars');
             }
 
-            // Attach search form handler
-            const searchForm = document.getElementById('car-search-form');
-            if (searchForm) {
-                searchForm.addEventListener('submit', handleSearchFormSubmit);
-                console.log('✅ Search form handler attached');
-            }
+            // Attach search form handler - REMOVED since we use new search bar
+            // const searchForm = document.getElementById('car-search-form');
+            // if (searchForm) {
+            //     searchForm.addEventListener('submit', handleSearchFormSubmit);
+            //     console.log('✅ Search form handler attached');
+            // }
 
             // Wire up filter buttons (client-side)
             const applyBtn = document.getElementById('applyFiltersBtn');
