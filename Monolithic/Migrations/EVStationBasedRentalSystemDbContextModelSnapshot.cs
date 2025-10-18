@@ -186,6 +186,12 @@ namespace Monolithic.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CarId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ConfirmationToken")
                         .HasColumnType("nvarchar(max)");
 
@@ -215,7 +221,13 @@ namespace Monolithic.Migrations
                     b.Property<DateTime?>("TokenExpiry")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("BookingId")
+                        .IsUnique();
 
                     b.ToTable("Contracts");
                 });
@@ -478,6 +490,17 @@ namespace Monolithic.Migrations
                     b.Navigation("CurrentStation");
                 });
 
+            modelBuilder.Entity("Monolithic.Models.Contract", b =>
+                {
+                    b.HasOne("Monolithic.Models.Booking", "Booking")
+                        .WithOne("Contract")
+                        .HasForeignKey("Monolithic.Models.Contract", "BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+                });
+
             modelBuilder.Entity("Monolithic.Models.Feedback", b =>
                 {
                     b.HasOne("Monolithic.Models.Booking", null)
@@ -514,6 +537,9 @@ namespace Monolithic.Migrations
 
             modelBuilder.Entity("Monolithic.Models.Booking", b =>
                 {
+                    b.Navigation("Contract")
+                        .IsRequired();
+
                     b.Navigation("Feedbacks");
                 });
 

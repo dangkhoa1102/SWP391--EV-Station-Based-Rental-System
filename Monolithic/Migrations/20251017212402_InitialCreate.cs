@@ -44,7 +44,9 @@ namespace Monolithic.Migrations
                     DateOfBirth = table.Column<DateOnly>(type: "date", nullable: false),
                     DriverLicenseNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DriverLicenseExpiry = table.Column<DateOnly>(type: "date", nullable: true),
-                    UserRole = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "Customer"),
+                    UserRole = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "EV Renter"),
+                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RefreshTokenExpiry = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -92,11 +94,15 @@ namespace Monolithic.Migrations
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CarId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PickupStationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DropoffStationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ReturnStationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ActualReturnDateTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    HourlyRate = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    DailyRate = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Pending"),
+                    BookingStatus = table.Column<int>(type: "int", maxLength: 50, nullable: false),
+                    PaymentStatus = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
@@ -111,17 +117,17 @@ namespace Monolithic.Migrations
                         principalColumn: "CarId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Bookings_Stations_DropoffStationId",
-                        column: x => x.DropoffStationId,
-                        principalTable: "Stations",
-                        principalColumn: "StationId",
-                        onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
                         name: "FK_Bookings_Stations_PickupStationId",
                         column: x => x.PickupStationId,
                         principalTable: "Stations",
                         principalColumn: "StationId",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Bookings_Stations_ReturnStationId",
+                        column: x => x.ReturnStationId,
+                        principalTable: "Stations",
+                        principalColumn: "StationId",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_Bookings_Users_UserId",
                         column: x => x.UserId,
@@ -134,33 +140,30 @@ namespace Monolithic.Migrations
                 name: "Contracts",
                 columns: table => new
                 {
-                    ContractId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SoHopDong = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BookingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RenterId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    StaffId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ContractContent = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
-                    ContractContentHash = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    SignatureType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    SignatureValue = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    SignerEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    ConfirmationTokenHash = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
-                    TokenExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsConfirmed = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    ConfirmedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ConfirmedFromIp = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    ConfirmedUserAgent = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CarId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    HoTenBenA = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    BienSoXe = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    ConfirmationToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TokenExpiry = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    NgayTao = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    NgayKy = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    NgayHetHan = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Contracts", x => x.ContractId);
+                    table.PrimaryKey("PK_Contracts", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Contracts_Bookings_BookingId",
                         column: x => x.BookingId,
                         principalTable: "Bookings",
                         principalColumn: "BookingId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -203,19 +206,14 @@ namespace Monolithic.Migrations
                 name: "Incidents",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     BookingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    Images = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ReportedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ResolvedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ResolutionNotes = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    CostIncurred = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    ResolvedBy = table.Column<int>(type: "int", nullable: true),
-                    ReportedBy = table.Column<int>(type: "int", nullable: false),
-                    StationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Reported"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -234,14 +232,14 @@ namespace Monolithic.Migrations
                 column: "CarId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bookings_DropoffStationId",
-                table: "Bookings",
-                column: "DropoffStationId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Bookings_PickupStationId",
                 table: "Bookings",
                 column: "PickupStationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_ReturnStationId",
+                table: "Bookings",
+                column: "ReturnStationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_StartTime_EndTime",
@@ -267,12 +265,8 @@ namespace Monolithic.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Contracts_BookingId",
                 table: "Contracts",
-                column: "BookingId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Contracts_RenterId",
-                table: "Contracts",
-                column: "RenterId");
+                column: "BookingId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Feedbacks_BookingId",
@@ -293,21 +287,6 @@ namespace Monolithic.Migrations
                 name: "IX_Incidents_BookingId",
                 table: "Incidents",
                 column: "BookingId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Incidents_ReportedAt",
-                table: "Incidents",
-                column: "ReportedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Incidents_StationId",
-                table: "Incidents",
-                column: "StationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Incidents_Status",
-                table: "Incidents",
-                column: "Status");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",

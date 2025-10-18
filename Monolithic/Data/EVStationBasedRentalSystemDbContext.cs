@@ -225,6 +225,16 @@ namespace Monolithic.Data
                       .OnDelete(DeleteBehavior.Restrict); // Ng?n vi?c xóa Booking n?u v?n còn Incident liên quan
             });
 
+            // Configure Contract entity            
+            builder.Entity<Contract>(entity =>
+            {
+                // M?t Booking ch? có m?t H?p ??ng (quan h? 1-1)
+                entity.HasOne(h => h.Booking)
+                  .WithOne(b => b.Contract) // Thêm navigation property vào class Booking
+                  .HasForeignKey<Contract>(h => h.BookingId)
+                  .OnDelete(DeleteBehavior.Cascade); // Xóa Booking thì xóa luôn H?p ??ng
+            });
+
             // Configure indexes for better performance
             builder.Entity<Car>()
                 .HasIndex(c => c.LicensePlate)

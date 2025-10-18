@@ -15,13 +15,15 @@ namespace Monolithic.Services.Implementation
         private readonly ICarRepository _carRepository;
         private readonly IStationRepository _stationRepository;
         private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public BookingServiceImpl(IBookingRepository bookingRepository, ICarRepository carRepository, IStationRepository stationRepository, IMapper mapper)
+        public BookingServiceImpl(IBookingRepository bookingRepository, ICarRepository carRepository, IStationRepository stationRepository, IMapper mapper, IUnitOfWork unitOfWork)
         {
             _bookingRepository = bookingRepository;
             _carRepository = carRepository;
             _stationRepository = stationRepository;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
 
         #region Main Booking Flow
@@ -121,13 +123,43 @@ namespace Monolithic.Services.Implementation
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                // Save booking
-                var created = await _bookingRepository.AddAsync(booking);
+                //// Save booking
+                //var created = await _bookingRepository.AddAsync(booking);
 
-                // Update car status to reserved
-                await _carRepository.UpdateCarStatusAsync(request.CarId, false);
+                //// Update car status to reserved
+                //await _carRepository.UpdateCarStatusAsync(request.CarId, false);
 
-                return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(created), "Booking created successfully. Please proceed to payment.");
+                //return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(created), "Booking created successfully. Please proceed to payment.");
+                // ✨ BƯỚC QUAN TRỌNG: TẠO VÀ LIÊN KẾT HỢP ĐỒNG ✨
+                var newContract = new Contract
+                {
+                    Id = Guid.NewGuid(),
+                    SoHopDong = $"HD-{DateTime.UtcNow:yyyyMMdd}-{booking.BookingId.ToString().Substring(0, 4)}",
+                    Status = ContractStatus.Pending, // Trạng thái chờ ký
+                    NgayTao = DateTime.UtcNow,
+                    // Bạn có thể thêm các thông tin khác nếu cần
+                };
+
+                // Liên kết Contract với Booking thông qua Navigation Property
+                // EF Core sẽ tự động hiểu newContract.BookingId = booking.BookingId
+                booking.Contract = newContract;
+
+                // BẮT ĐẦU GIAO DỊCH
+                // 1. Thêm booking vào context (EF sẽ tự động thêm cả contract)
+                await _bookingRepository.AddAsync(booking);
+
+                // 2. Cập nhật trạng thái xe (chỉ thay đổi trong context)
+                car.IsAvailable = false;
+                await _carRepository.UpdateAsync(car); // Giả sử có phương thức UpdateAsync không gọi SaveChanges
+
+                // 3. ✅ GỌI SAVECHANGES MỘT LẦN DUY NHẤT ✅
+                // Đây là lúc tất cả thay đổi (tạo booking, tạo contract, cập nhật xe)
+                // được ghi xuống database trong một giao dịch.
+                await _unitOfWork.SaveChangesAsync();
+
+                // Ánh xạ booking đã được tạo (giờ đã có ID) sang DTO
+                var bookingDto = _mapper.Map<BookingDto>(booking);
+                return ResponseDto<BookingDto>.Success(bookingDto, "Booking created successfully. Please proceed to payment.");
             }
             catch (Exception ex)
             {

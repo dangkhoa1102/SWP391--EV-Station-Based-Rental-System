@@ -11,5 +11,6 @@ namespace Monolithic.Repositories.Interfaces
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

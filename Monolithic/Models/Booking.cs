@@ -60,6 +60,7 @@ namespace Monolithic.Models
         public virtual Station? ReturnStation { get; set; }
 
         public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+        public virtual Contract Contract { get; set; } // Navigation property
     }
 
     public enum BookingStatus

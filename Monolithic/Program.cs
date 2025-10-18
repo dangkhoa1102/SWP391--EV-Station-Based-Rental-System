@@ -158,6 +158,7 @@ builder.Services.AddScoped<IBookingRepository, BookingRepositoryImpl>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepositoryImpl>();
 builder.Services.AddScoped<IContractRepository, ContractRepositoryImpl>();
 builder.Services.AddScoped<IIncidentRepository, IncidentRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Services - Using separate implementation classes
 builder.Services.AddScoped<IStationService, StationServiceImpl>();

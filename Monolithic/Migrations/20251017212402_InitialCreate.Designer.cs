@@ -12,8 +12,8 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    [Migration("20251015200638_AddIncidentDb")]
-    partial class AddIncidentDb
+    [Migration("20251017212402_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -181,79 +181,56 @@ namespace Monolithic.Migrations
 
             modelBuilder.Entity("Monolithic.Models.Contract", b =>
                 {
-                    b.Property<Guid>("ContractId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BienSoXe")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("BookingId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ConfirmationTokenHash")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<DateTime?>("ConfirmedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ConfirmedFromIp")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("ConfirmedUserAgent")
-                        .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
-
-                    b.Property<string>("ContractContent")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<string>("ContractContentHash")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<bool>("IsConfirmed")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<Guid>("RenterId")
+                    b.Property<Guid>("CarId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("SignatureType")
+                    b.Property<string>("ConfirmationToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HoTenBenA")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("SignatureValue")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
-                    b.Property<string>("SignerEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                    b.Property<DateTime?>("NgayHetHan")
+                        .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("StaffId")
+                    b.Property<DateTime?>("NgayKy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SoHopDong")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("TokenExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("TokenExpiresAt")
-                        .HasColumnType("datetime2");
+                    b.HasKey("Id");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("ContractId");
-
-                    b.HasIndex("BookingId");
-
-                    b.HasIndex("RenterId");
+                    b.HasIndex("BookingId")
+                        .IsUnique();
 
                     b.ToTable("Contracts");
                 });
@@ -518,11 +495,13 @@ namespace Monolithic.Migrations
 
             modelBuilder.Entity("Monolithic.Models.Contract", b =>
                 {
-                    b.HasOne("Monolithic.Models.Booking", null)
-                        .WithMany()
-                        .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("Monolithic.Models.Booking", "Booking")
+                        .WithOne("Contract")
+                        .HasForeignKey("Monolithic.Models.Contract", "BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Booking");
                 });
 
             modelBuilder.Entity("Monolithic.Models.Feedback", b =>
@@ -561,6 +540,9 @@ namespace Monolithic.Migrations
 
             modelBuilder.Entity("Monolithic.Models.Booking", b =>
                 {
+                    b.Navigation("Contract")
+                        .IsRequired();
+
                     b.Navigation("Feedbacks");
                 });
 
