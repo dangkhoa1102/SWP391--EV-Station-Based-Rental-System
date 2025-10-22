@@ -34,3 +34,9 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+/* Center Profile page content */
+#profile.section {
+  justify-content: center; /* center vertically */
+  align-items: center;     /* center horizontally */
+}
