@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import * as API from '../services/api'
-import '../styles/transaction_page.css'
+import * as API from '../../services/api'
+import '../../styles/transaction_page.css'
 
 const TransactionPage = () => {
   const navigate = useNavigate()

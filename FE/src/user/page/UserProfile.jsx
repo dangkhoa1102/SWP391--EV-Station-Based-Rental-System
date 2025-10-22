@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
-import API from '../services/api'
-import { uploadToCloudinary } from '../utils/cloudinary'
-import '../styles/user_profile.css'
+import API from '../../services/api'
+import { uploadToCloudinary } from '../../utils/cloudinary'
+import '../../styles/user_profile.css'
 
 export default function UserProfile(){
   const [profile, setProfile] = useState({})

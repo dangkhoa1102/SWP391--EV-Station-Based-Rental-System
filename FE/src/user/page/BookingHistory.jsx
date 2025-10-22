@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import API from '../services/api'
-import '../styles/booking_history.css'
+import API from '../../services/api'
+import '../../styles/booking_history.css'
 
 export default function BookingHistory(){
   const navigate = useNavigate()
