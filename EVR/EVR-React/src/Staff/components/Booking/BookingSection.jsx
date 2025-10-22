@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import BookingCard from './BookingCard';
 import BookingModal from './BookingModal';
+import './Booking.css';
 
 export default function BookingSection({ bookings, search, setSearch, statusFilter, setStatusFilter, onConfirm, onComplete, onDeny }) {
   const [selected, setSelected] = useState(null);

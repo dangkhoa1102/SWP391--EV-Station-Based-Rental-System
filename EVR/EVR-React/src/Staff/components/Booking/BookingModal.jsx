@@ -1,5 +1,6 @@
 // src/components/Booking/BookingModal.jsx
 import React from 'react';
+import '../../styles/modals.css';
 
 export default function BookingModal({ booking, onClose, onConfirm, onComplete, onDeny }) {
   if (!booking) return null;

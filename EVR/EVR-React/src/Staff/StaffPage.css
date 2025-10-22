@@ -1,0 +1,36 @@
+/* Base layout and page-wide styles */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  display: flex;
+  background: #f5f5f5;
+  transition: background 0.3s ease;
+  overflow-x: hidden;
+}
+
+.main-content {
+  flex: 1;
+  padding: 30px;
+  margin-top: 80px;
+  margin-left: 0;
+  transition: margin-left 0.3s ease;
+  text-align: left;
+}
+
+.sidebar-wrapper.visible ~ .main-content { margin-left: 240px; }
+
+@media (max-width: 720px) {
+  .sidebar-wrapper.visible ~ .main-content { margin-left: 0; }
+}
+
+.section {
+  position: relative;
+  margin-left: 250px;
+  margin-top: 70px;
+  padding: 20px 40px;
+  min-height: calc(100vh - 70px);
+  box-sizing: border-box;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}

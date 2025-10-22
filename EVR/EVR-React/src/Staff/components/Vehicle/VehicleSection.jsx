@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import VehicleCard from './VehicleCard';
 import AddVehicleModal from './AddVehicleModal';
 import UpdateVehicleModal from './UpdateVehicleModal';
+import './Vehicle.css';
 
 export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate }) {
   const [selected, setSelected] = useState(null);

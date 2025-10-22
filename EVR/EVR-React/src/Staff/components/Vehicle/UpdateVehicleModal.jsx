@@ -1,5 +1,6 @@
 // src/components/Vehicle/UpdateVehicleModal.jsx
 import React, { useEffect, useState } from 'react';
+import './Vehicle.css';
 
 export default function UpdateVehicleModal({ open, onClose, vehicle, onSubmit }) {
   const [battery, setBattery] = useState('');

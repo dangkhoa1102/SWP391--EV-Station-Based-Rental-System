@@ -1,5 +1,6 @@
 // src/components/Vehicle/AddVehicleModal.jsx
 import React, { useState } from 'react';
+import './Vehicle.css';
 
 export default function AddVehicleModal({ open, onClose, onSubmit }) {
   const [name, setName] = useState('');

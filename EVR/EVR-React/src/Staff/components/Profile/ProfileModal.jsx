@@ -1,5 +1,6 @@
 // src/components/Profile/ProfileModal.jsx
 import React from 'react';
+import './Profile.css';
 
 export default function ProfileModal({ open, onClose }) {
   if (!open) return null;

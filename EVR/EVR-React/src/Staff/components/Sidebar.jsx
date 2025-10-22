@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import './Sidebar.css';
 
 export default function Sidebar({ onSelect, isOpen, toggleSidebar }) {
   // ✅ Add/remove CSS class to <body> for push effect
