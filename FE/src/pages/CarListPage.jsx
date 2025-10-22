@@ -34,6 +34,7 @@ export default function CarListPage(){
     }
   })
   const [rentalDurationText, setRentalDurationText] = useState('')
+  const [searchModalOpen, setSearchModalOpen] = useState(false)
 
   useEffect(()=>{
     loadStations()
@@ -51,10 +52,13 @@ export default function CarListPage(){
     try{
       setLoading(true)
       
+      let selectedStationId = null
+      
       // Try to use saved rentalContext (set by HomePage.submitSearch)
       try{
         const rc = JSON.parse(localStorage.getItem('rentalContext') || 'null')
         if(rc){
+          selectedStationId = rc.stationId
           setSearchData(prev => ({
             ...prev,
             location: rc.stationId,
@@ -67,8 +71,21 @@ export default function CarListPage(){
         }
       }catch(e){}
 
-      // Always load all cars - let the search form filter by station when needed
-      const carsList = await API.getAllCars(1, 100)
+      // Load cars by station if available, otherwise load all cars
+      let carsList = []
+      if(selectedStationId){
+        console.log('🔍 Loading cars for station:', selectedStationId)
+        try{
+          carsList = await API.getAvailableCarsByStation(selectedStationId)
+          console.log('✅ Found', carsList.length, 'cars at this station')
+        }catch(err){
+          console.error('Failed to load cars by station, falling back to all cars', err)
+          carsList = await API.getAllCars(1, 100)
+        }
+      } else {
+        carsList = await API.getAllCars(1, 100)
+      }
+      
       setCars(carsList || [])
       setFilteredCars(carsList || [])
     }catch(e){ 
@@ -146,6 +163,17 @@ export default function CarListPage(){
       if(hours > 0) txt += `${hours} hour${hours>1? 's':''}`
       setRentalDurationText(txt.trim() || '0 hours')
     }catch(e){ setRentalDurationText('') }
+  }
+
+  function openSearchModal(){ 
+    setSearchModalOpen(true)
+    updateRentalDuration() 
+  }
+  
+  function closeSearchModal(){ 
+    setSearchModalOpen(false)
+    setShowLocationDropdown(false)
+    setSearchData(d => ({ ...d, calendarMode: null }))
   }
 
   function submitSearch(){
@@ -228,111 +256,151 @@ export default function CarListPage(){
   return (
     <main className="car-list-main">
       <div className="container">
-        {/* Search Form (copied from HomePage) */}
+        {/* Search Summary Bar */}
         <div className="search-form" style={{marginBottom:'2rem'}}>
           <h2>Find Your Perfect Rental Car</h2>
-          
-          <div className="search-field">
-            <label><i className="fas fa-map-marker-alt"></i> Pick-up Location</label>
-            <div className="search-input" onClick={()=> setShowLocationDropdown(!showLocationDropdown)}>
-              <i className="fas fa-map-marker-alt"></i>
-              <span>{searchData.locationName}</span>
-            </div>
-            <div className={`location-dropdown ${showLocationDropdown ? 'active':''}`}>
-              {stations.length === 0 && <div style={{ padding: 12, color: '#999' }}>No locations available</div>}
-              {stations.map((s, i)=>{
-                const name = s.stationName || s.name || 'Unknown'
-                const id = s.id || s.Id || s.stationId || i
-                return <div key={id} className="location-option" onClick={()=>{ toggleLocation(id, name); }}>{name}</div>
-              })}
-            </div>
-          </div>
 
-          <div className="search-field-row">
-            <div className="search-field">
-              <label><i className="fas fa-calendar"></i> Pick-up Date</label>
-              <div className="search-input" onClick={()=> toggleCalendar('pickup')}>
-                <i className="fas fa-calendar"></i>
-                <span>{new Date(searchData.pickupDate).toLocaleDateString()}</span>
-              </div>
-              {searchData.calendarMode === 'pickup' && (
-                <div className="calendar-dropdown active">
-                  <div className="calendar-header">
-                    <button onClick={()=> changeMonth(-1)}>&lt;</button>
-                    <span>{new Date(searchData.currentYear, searchData.currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                    <button onClick={()=> changeMonth(1)}>&gt;</button>
-                  </div>
-                  <div className="calendar-weekdays">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                  </div>
-                  <div className="calendar-days">
-                    {renderCalendar()}
-                  </div>
-                </div>
-              )}
+          <div className="search-summary">
+            <div className="summary-item" onClick={openSearchModal}>
+              <div className="summary-label"><i className="fas fa-map-marker-alt"></i> Pick-up Location</div>
+              <div className="summary-value">{searchData.locationName}</div>
             </div>
-            <div className="search-field">
-              <label><i className="fas fa-clock"></i> Pick-up Time</label>
-              <div className="search-input" onClick={()=> toggleTimePicker('pickup')}>
-                <i className="fas fa-clock"></i>
-                <span>{searchData.pickupTime}</span>
-              </div>
-              <div className={`time-picker-dropdown ${searchData.calendarMode === 'pickup-time' ? 'active' : ''}`}>
-                <div className="time-picker-label">Choose pick-up time</div>
-                <div className="time-picker-options">
-                  {timeOptions.map(t=> <div key={t} className={`time-option ${t===searchData.pickupTime? 'selected':''}`} onClick={()=> selectTime('pickup', t)}>{t}</div>)}
-                </div>
-              </div>
+            <div className="summary-item" onClick={openSearchModal}>
+              <div className="summary-label"><i className="fas fa-calendar"></i> Pick-up Date</div>
+              <div className="summary-value">{new Date(searchData.pickupDate).toLocaleDateString()}</div>
             </div>
+            <div className="summary-item" onClick={openSearchModal}>
+              <div className="summary-label"><i className="fas fa-clock"></i> Pick-up Time</div>
+              <div className="summary-value">{searchData.pickupTime}</div>
+            </div>
+            <div className="summary-item" onClick={openSearchModal}>
+              <div className="summary-label"><i className="fas fa-calendar-check"></i> Return Date</div>
+              <div className="summary-value">{new Date(searchData.returnDate).toLocaleDateString()}</div>
+            </div>
+            <div className="summary-item" onClick={openSearchModal}>
+              <div className="summary-label"><i className="fas fa-clock"></i> Return Time</div>
+              <div className="summary-value">{searchData.returnTime}</div>
+            </div>
+            <button className="btn-search-submit" onClick={openSearchModal}>
+              <i className="fas fa-search"></i> Search Cars
+            </button>
           </div>
+        </div>
 
-          <div className="search-field-row">
-            <div className="search-field">
-              <label><i className="fas fa-calendar-check"></i> Return Date</label>
-              <div className="search-input" onClick={()=> toggleCalendar('return')}>
-                <i className="fas fa-calendar-check"></i>
-                <span>{new Date(searchData.returnDate).toLocaleDateString()}</span>
-              </div>
-              {searchData.calendarMode === 'return' && (
-                <div className="calendar-dropdown active">
-                  <div className="calendar-header">
-                    <button onClick={()=> changeMonth(-1)}>&lt;</button>
-                    <span>{new Date(searchData.currentYear, searchData.currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                    <button onClick={()=> changeMonth(1)}>&gt;</button>
-                  </div>
-                  <div className="calendar-weekdays">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                  </div>
-                  <div className="calendar-days">
-                    {renderCalendar()}
-                  </div>
-                </div>
-              )}
+        {/* Search Modal */}
+        <div className={`search-modal ${searchModalOpen ? 'active' : ''}`} style={{ display: searchModalOpen ? 'block' : 'none' }} onClick={closeSearchModal}>
+          <div className="search-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="search-modal-header">
+              <h3>Search Cars</h3>
+              <button className="search-modal-close" onClick={closeSearchModal}>&times;</button>
             </div>
-            <div className="search-field">
-              <label><i className="fas fa-clock"></i> Return Time</label>
-              <div className="search-input" onClick={()=> toggleTimePicker('return')}>
-                <i className="fas fa-clock"></i>
-                <span>{searchData.returnTime}</span>
-              </div>
-              <div className={`time-picker-dropdown ${searchData.calendarMode === 'return-time' ? 'active' : ''}`}>
-                <div className="time-picker-label">Choose return time</div>
-                <div className="time-picker-options">
-                  {timeOptions.map(t=> <div key={t} className={`time-option ${t===searchData.returnTime? 'selected':''}`} onClick={()=> selectTime('return', t)}>{t}</div>)}
+            <div className="search-modal-body">
+              <div className="search-field">
+                <label><i className="fas fa-map-marker-alt"></i> Pick-up Location</label>
+                <div className="search-input" onClick={()=> setShowLocationDropdown(!showLocationDropdown)}>
+                  <i className="fas fa-map-marker-alt"></i>
+                  <span>{searchData.locationName}</span>
+                </div>
+                <div className={`location-dropdown ${showLocationDropdown ? 'active':''}`}>
+                  {stations.length === 0 && <div style={{ padding: 12, color: '#999' }}>No locations available</div>}
+                  {stations.map((s, i)=>{
+                    const name = s.stationName || s.name || 'Unknown'
+                    const id = s.id || s.Id || s.stationId || i
+                    return <div key={id} className="location-option" onClick={()=>{ toggleLocation(id, name); }}>{name}</div>
+                  })}
                 </div>
               </div>
+              <div className="search-field-row">
+                <div className="search-field">
+                  <label><i className="fas fa-calendar"></i> Pick-up Date</label>
+                  <div className="search-input" onClick={()=> toggleCalendar('pickup')}>
+                    <i className="fas fa-calendar"></i>
+                    <span>{new Date(searchData.pickupDate).toLocaleDateString()}</span>
+                  </div>
+                  {searchData.calendarMode === 'pickup' && (
+                    <div className="calendar-dropdown active">
+                      <div className="calendar-header">
+                        <button onClick={()=> changeMonth(-1)}>&lt;</button>
+                        <span>{new Date(searchData.currentYear, searchData.currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+                        <button onClick={()=> changeMonth(1)}>&gt;</button>
+                      </div>
+                      <div className="calendar-weekdays">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                      </div>
+                      <div className="calendar-days">
+                        {renderCalendar()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="search-field">
+                  <label><i className="fas fa-clock"></i> Pick-up Time</label>
+                  <div className="search-input" onClick={()=> toggleTimePicker('pickup')}>
+                    <i className="fas fa-clock"></i>
+                    <span>{searchData.pickupTime}</span>
+                  </div>
+                  <div className={`time-picker-dropdown ${searchData.calendarMode === 'pickup-time' ? 'active' : ''}`}>
+                    <div className="time-picker-label">Choose pick-up time</div>
+                    <div className="time-picker-options">
+                      {timeOptions.map(t=> <div key={t} className={`time-option ${t===searchData.pickupTime? 'selected':''}`} onClick={()=> selectTime('pickup', t)}>{t}</div>)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="search-field-row">
+                <div className="search-field">
+                  <label><i className="fas fa-calendar-check"></i> Return Date</label>
+                  <div className="search-input" onClick={()=> toggleCalendar('return')}>
+                    <i className="fas fa-calendar-check"></i>
+                    <span>{new Date(searchData.returnDate).toLocaleDateString()}</span>
+                  </div>
+                  {searchData.calendarMode === 'return' && (
+                    <div className="calendar-dropdown active">
+                      <div className="calendar-header">
+                        <button onClick={()=> changeMonth(-1)}>&lt;</button>
+                        <span>{new Date(searchData.currentYear, searchData.currentMonth).toLocaleString('default', { month: 'numeric' })}</span>
+                        <button onClick={()=> changeMonth(1)}>&gt;</button>
+                      </div>
+                      <div className="calendar-weekdays">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                      </div>
+                      <div className="calendar-days">
+                        {renderCalendar()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="search-field">
+                  <label><i className="fas fa-clock"></i> Return Time</label>
+                  <div className="search-input" onClick={()=> toggleTimePicker('return')}>
+                    <i className="fas fa-clock"></i>
+                    <span>{searchData.returnTime}</span>
+                  </div>
+                  <div className={`time-picker-dropdown ${searchData.calendarMode === 'return-time' ? 'active' : ''}`}>
+                    <div className="time-picker-label">Choose return time</div>
+                    <div className="time-picker-options">
+                      {timeOptions.map(t=> <div key={t} className={`time-option ${t===searchData.returnTime? 'selected':''}`} onClick={()=> selectTime('return', t)}>{t}</div>)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="rental-duration">
+                <i className="fas fa-info-circle"></i>
+                <div>
+                  <strong>Rental Duration</strong>
+                  <p>{rentalDurationText}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="search-modal-footer">
+              <button className="btn-search-submit" onClick={()=>{ submitSearch(); closeSearchModal(); }}>
+                <i className="fas fa-search"></i> Search Cars
+              </button>
             </div>
           </div>
-
-          <div className="rental-duration">
-            <i className="fas fa-info-circle"></i>
-            <div>
-              <strong>Rental Duration</strong>
-              <p>{rentalDurationText}</p>
-            </div>
-          </div>
-
-          <button className="btn-search-submit" onClick={submitSearch}><i className="fas fa-search"></i> Search Cars</button>
         </div>
 
         {/* Filters */}
@@ -395,22 +463,24 @@ export default function CarListPage(){
             const img = car.imageUrl || car.image || '/Picture/E car 1.jpg'
             const price = parseFloat(car.rentalPricePerHour || car.RentalPricePerHour || 0)
             const seats = car.seats || car.Seats || 5
-            const range = car.batteryCapacity || 300
+            const year = car.year || ''
+            const color = car.color || 'N/A'
+            
             return (
               <div className="car-card" key={idx} onClick={()=> window.location.href = `/cars/${id}`}>
                 <div className="car-image">
-                  <img src={img} alt={name} onError={e=> e.currentTarget.src='/Picture/E car 1.jpg'} style={{width:'100%',height:'100%',objectFit:'cover'}} />
-                  <span className="car-tag">Electric</span>
+                  <img src={img} alt={name} onError={e=> e.currentTarget.src='/Picture/E car 1.jpg'} />
                 </div>
                 <div className="car-info">
-                  <div className="car-header">
-                    <h3 className="car-name">{name}</h3>
-                    <div className="car-price">${price.toFixed(2)}/hour</div>
+                  <div className="car-name">{name} {year}</div>
+                  <div className="car-location">{searchData.locationName || 'Location'}</div>
+                  <div className="car-pricing">
+                    <div className="car-price">{price}K/hour</div>
                   </div>
-                  <div className="car-features">
-                    <span><i className="fas fa-battery-three-quarters"></i> {range}km Range</span>
-                    <span><i className="fas fa-bolt"></i> Fast Charging</span>
-                    <span><i className="fas fa-user"></i> {seats} seats</span>
+                  <div className="car-details">
+                    <span>Color: {color}</span>
+                    <span>Year: {year}</span>
+                    <span>Seats: {seats}</span>
                   </div>
                 </div>
               </div>

@@ -186,7 +186,7 @@
 }
 
 .btn-search {
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
     color: white;
     border: none;
     padding: 0.75rem 2rem;
@@ -195,7 +195,7 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
     text-transform: uppercase;
     letter-spacing: 1px;
     display: flex;
@@ -206,9 +206,9 @@
 }
 
 .btn-search:hover {
-    background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+    background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
 }
 
 .btn-search:active {

@@ -71,14 +71,17 @@ export default function PaymentPage(){
         return
       }
 
-      // Create booking
+      // Create booking with ISO DateTime format
+      const pickupDateTime = new Date(`${rentalContext.pickupDate}T${rentalContext.pickupTime}`).toISOString()
+      const returnDateTime = new Date(`${rentalContext.returnDate}T${rentalContext.returnTime}`).toISOString()
+      
       const bookingData = {
         carId: car.id || car.Id,
         userId: userId,
         pickupStationId: rentalContext.stationId,
         returnStationId: rentalContext.stationId,
-        pickupDateTime: `${rentalContext.pickupDate}T${rentalContext.pickupTime}`,
-        expectedReturnDateTime: `${rentalContext.returnDate}T${rentalContext.returnTime}`,
+        pickupDateTime: pickupDateTime,
+        expectedReturnDateTime: returnDateTime,
         totalAmount: calculateTotalPrice()
       }
 

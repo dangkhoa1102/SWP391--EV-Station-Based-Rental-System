@@ -101,7 +101,7 @@ export default function UserProfile(){
           <div className="documents-grid">
             {/* CCCD Front */}
             <div className="document-upload-box">
-              <label>CCCD (Mặt trước)</label>
+              <label>ID (Front)</label>
               <div className="upload-area" onClick={()=> fileRefs.cccdFront.current?.click()}>
                 {documents.cccdFront ? (
                   <img src={documents.cccdFront} alt="CCCD Front" className="doc-preview" />
@@ -118,7 +118,7 @@ export default function UserProfile(){
 
             {/* CCCD Back */}
             <div className="document-upload-box">
-              <label>CCCD (Mặt sau)</label>
+              <label>ID (Back)</label>
               <div className="upload-area" onClick={()=> fileRefs.cccdBack.current?.click()}>
                 {documents.cccdBack ? (
                   <img src={documents.cccdBack} alt="CCCD Back" className="doc-preview" />
@@ -135,7 +135,7 @@ export default function UserProfile(){
 
             {/* License Front */}
             <div className="document-upload-box">
-              <label>Bằng lái (Mặt trước)</label>
+              <label>Driver license (Front)</label>
               <div className="upload-area" onClick={()=> fileRefs.licenseFront.current?.click()}>
                 {documents.licenseFront ? (
                   <img src={documents.licenseFront} alt="License Front" className="doc-preview" />
@@ -152,7 +152,7 @@ export default function UserProfile(){
 
             {/* License Back */}
             <div className="document-upload-box">
-              <label>Bằng lái (Mặt sau)</label>
+              <label>Driver license (Back)</label>
               <div className="upload-area" onClick={()=> fileRefs.licenseBack.current?.click()}>
                 {documents.licenseBack ? (
                   <img src={documents.licenseBack} alt="License Back" className="doc-preview" />
