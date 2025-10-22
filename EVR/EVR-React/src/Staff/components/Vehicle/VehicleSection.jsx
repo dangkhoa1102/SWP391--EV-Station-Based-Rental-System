@@ -2,16 +2,22 @@ import React, { useState } from 'react';
 import VehicleCard from './VehicleCard';
 import AddVehicleModal from './AddVehicleModal';
 import UpdateVehicleModal from './UpdateVehicleModal';
+import VehicleDetailsModal from './VehicleDetailsModal';
 import './Vehicle.css';
 
 export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate }) {
   const [selected, setSelected] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
 
   function openForUpdate(v) {
     setSelected(v);
     setUpdateOpen(true);
+  }
+  function openDetails(v) {
+    setSelected(v);
+    setDetailsOpen(true);
   }
 
   return (
@@ -21,13 +27,14 @@ export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate }) 
       <div className="vehicle-grid" id="vehicleGrid">
         {vehicles.map(v => (
           <div key={v.id}>
-            <VehicleCard vehicle={v} onOpen={() => setSelected(v)} onRemove={onRemove} onOpenUpdate={() => openForUpdate(v)} />
+            <VehicleCard vehicle={v} onOpen={() => openDetails(v)} onRemove={onRemove} onOpenUpdate={() => openForUpdate(v)} />
           </div>
         ))}
       </div>
 
       <AddVehicleModal open={addOpen} onClose={() => setAddOpen(false)} onSubmit={onAdd} />
       <UpdateVehicleModal open={updateOpen} onClose={() => setUpdateOpen(false)} vehicle={selected} onSubmit={onUpdate} />
+      <VehicleDetailsModal open={detailsOpen} vehicle={selected} onClose={() => setDetailsOpen(false)} />
     </div>
   );
 }

@@ -7,11 +7,25 @@
 }
 .filter-bar input[type="text"],
 .filter-bar select {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #d0d0d0;
+  background: #f0f0f0; /* light gray */
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); /* subtle shade */
 }
-.filter-bar input[type="text"] { flex: 1; }
+/* Make the search input half width, not full flex */
+.filter-bar input[type="text"] {
+  flex: 0 0 50%;
+  width: 50%;
+  min-width: 260px;
+  max-width: 560px;
+}
+@media (max-width: 720px) {
+  .filter-bar input[type="text"] {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
 
 /* Booking grid and cards */
 .booking-grid {
