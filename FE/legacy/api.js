@@ -95,8 +95,13 @@ window.API = {
     return data;
   },
 
-  changePassword: async (userId, currentPassword, newPassword) => {
-    const res = await apiClient.post('/Auth/Change-Password', { userId, currentPassword, newPassword });
+  changePassword: async (currentPassword, newPassword) => {
+    console.log('changePassword called');
+    const res = await apiClient.post('/Users/Change-Password', { 
+      currentPassword: currentPassword, 
+      newPassword: newPassword 
+    });
+    console.log('changePassword response:', res.data);
     return res.data;
   },
 
@@ -228,6 +233,13 @@ window.API = {
     }
     console.log('getUserBookings returning empty array');
     return [];
+  },
+
+  updateUserAvatar: async (userId, avatarUrl) => {
+    console.log('updateUserAvatar called with userId:', userId, 'avatarUrl:', avatarUrl);
+    const res = await apiClient.post(`/Users/${encodeURIComponent(userId)}/avatar`, { avatarUrl });
+    console.log('updateUserAvatar response:', res.data);
+    return res.data?.data || res.data || {};
   }
 };
 

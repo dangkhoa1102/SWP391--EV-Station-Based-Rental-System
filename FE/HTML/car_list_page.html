@@ -869,6 +869,10 @@
         }
 
         // ============= STATION DROPDOWN =============
+        // DEPRECATED: Old dropdown population (replaced by search module)
+        // The old form with <select id="location"> has been removed
+        // Stations are now loaded by modules/search.js in the search modal
+        /*
         async function populateStationDropdown() {
             const dropdown = document.getElementById('location');
             if (!dropdown) {
@@ -918,6 +922,7 @@
                 showNotification('❌ Failed to load stations', 'error');
             }
         }
+        */
 
         // ============= LOAD CARS BY STATION =============
         async function loadCarsByStation(stationId) {
@@ -1048,6 +1053,9 @@
             const div = document.createElement('div');
             div.className = 'car-card';
             div.onclick = () => {
+                // Debug: Log current searchData
+                console.log('🚗 Clicking car, current searchData:', searchData);
+                
                 // Save rental context before navigating
                 saveRentalContext();
                 window.location.href = `car_detail.html?id=${car.id || car.carId}`;
@@ -1128,16 +1136,24 @@
         }
 
         // ============= RENTAL CONTEXT =============
+        // Save rental context from searchData (used by search module)
         function saveRentalContext() {
+            // Validate that we have essential data
+            if (!searchData.location) {
+                console.warn('⚠️ Cannot save rental context: missing location');
+                return;
+            }
+
             const rentalContext = {
-                stationId: document.getElementById('location').value,
-                stationName: document.getElementById('location').options[document.getElementById('location').selectedIndex]?.text || '',
-                pickupDate: document.getElementById('pickup-date').value,
-                pickupTime: document.getElementById('pickup-time').value,
-                returnDate: document.getElementById('return-date').value,
-                returnTime: document.getElementById('return-time').value,
+                stationId: searchData.location,
+                stationName: searchData.locationName || 'Unknown Location',
+                pickupDate: searchData.pickupDate,
+                pickupTime: searchData.pickupTime,
+                returnDate: searchData.returnDate,
+                returnTime: searchData.returnTime,
                 createdAt: new Date().toISOString()
             };
+            
             try {
                 localStorage.setItem('rentalContext', JSON.stringify(rentalContext));
                 console.log('💾 Rental context saved:', rentalContext);
@@ -1147,51 +1163,8 @@
         }
 
         // ============= SEARCH FORM =============
-        function handleSearchFormSubmit(e) {
-            e.preventDefault();
-
-            const stationId = document.getElementById('location').value;
-            const pickupDate = document.getElementById('pickup-date').value;
-            const pickupTime = document.getElementById('pickup-time').value;
-            const returnDate = document.getElementById('return-date').value;
-            const returnTime = document.getElementById('return-time').value;
-
-            console.log('🔍 Search form submitted:', { stationId, pickupDate, pickupTime, returnDate, returnTime });
-
-            if (!stationId) {
-                showNotification('⚠️ Please select a location', 'error');
-                return;
-            }
-
-            // Validate dates
-            if (pickupDate && returnDate && pickupTime && returnTime) {
-                const pickup = new Date(`${pickupDate}T${pickupTime}`);
-                const returnDt = new Date(`${returnDate}T${returnTime}`);
-                
-                if (returnDt <= pickup) {
-                    showNotification('⚠️ Return time must be after pickup time', 'error');
-                    return;
-                }
-            }
-
-            // Save rental context
-            saveRentalContext();
-
-            // Update URL params
-            const params = new URLSearchParams();
-            params.set('location', stationId);
-            if (pickupDate) params.set('pickup-date', pickupDate);
-            if (pickupTime) params.set('pickup-time', pickupTime);
-            if (returnDate) params.set('return-date', returnDate);
-            if (returnTime) params.set('return-time', returnTime);
-
-            // Update URL without reload
-            const newUrl = `${window.location.pathname}?${params.toString()}`;
-            window.history.pushState({}, '', newUrl);
-
-            // Reload cars
-            loadCarsByStation(stationId);
-        }
+        // NOTE: Search functionality now handled by search module (modules/search.js)
+        // Old form-based search has been replaced with new search bar + modal
 
         // ============= INITIALIZATION =============
         document.addEventListener('DOMContentLoaded', async function() {
@@ -1200,8 +1173,8 @@
             // Check auth
             checkAuthStatus();
 
-            // Populate station dropdown
-            await populateStationDropdown();
+            // DEPRECATED: Old station dropdown population (replaced by search module)
+            // await populateStationDropdown();
 
             // Get URL parameters
             const params = new URLSearchParams(window.location.search);

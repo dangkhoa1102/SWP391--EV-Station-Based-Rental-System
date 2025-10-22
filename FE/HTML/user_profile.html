@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../CSS/user_profile.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../cloudinary-config.js"></script>
     <script src="../api.js"></script>
 </head>
 
@@ -56,16 +57,32 @@
         <div class="profile-container">
             <h2>USER PROFILE</h2>
 
-            <div class="profile-field">
-                <input type="text" id="username" placeholder="Username" value="JohnDoe" readonly>
+            <!-- Avatar Upload Section -->
+            <div class="avatar-section">
+                <div class="avatar-wrapper">
+                    <img id="avatarPreview" src="../assets/default-avatar.png" alt="Profile Avatar" class="avatar-img">
+                    <div class="avatar-overlay">
+                        <i class="fas fa-camera"></i>
+                        <span>Change Photo</span>
+                    </div>
+                    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                </div>
+                <div id="uploadStatus" class="upload-status"></div>
             </div>
 
             <div class="profile-field">
-                <input type="email" id="email" placeholder="Email" value="john.doe@example.com">
+                <label>Full Name</label>
+                <input type="text" id="username" placeholder="Full Name" value="JohnDoe" readonly disabled>
             </div>
 
             <div class="profile-field">
-                <input type="tel" id="phone" placeholder="Phone Number" value="+1234567890">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="Email" value="john.doe@example.com" readonly disabled>
+            </div>
+
+            <div class="profile-field">
+                <label>Phone Number</label>
+                <input type="tel" id="phone" placeholder="Phone Number" value="+1234567890" readonly disabled>
             </div>
 
             <div class="document-upload">
@@ -227,6 +244,10 @@
         // Load user data on page load
         window.addEventListener('DOMContentLoaded', async function() {
             checkAuthStatus();
+            
+            // Initialize Firebase
+            initializeFirebase();
+            
             // Check if user is logged in
             const token = localStorage.getItem('token');
             if (!token) {
@@ -245,7 +266,7 @@
                 const response = await window.API.getMyProfile();
                 console.log('📦 Profile response:', response);
                 
-                // Response structure: { isSuccess, message, data: { id, email, firstName, lastName, phoneNumber, ... } }
+                // Response structure: { isSuccess, message, data: { id, email, firstName, lastName, phoneNumber, avatarUrl, ... } }
                 const profile = response.data || response;
                 
                 console.log('✅ Profile data:', profile);
@@ -265,7 +286,6 @@
                 if (profile.email) {
                     localStorage.setItem('userEmail', profile.email);
                     document.getElementById('email').value = profile.email;
-                    document.getElementById('email').readOnly = true; // Email should not be editable
                     console.log('✅ Saved email:', profile.email);
                 }
                 
@@ -280,12 +300,14 @@
                     document.getElementById('phone').value = profile.phoneNumber;
                     localStorage.setItem('userPhone', profile.phoneNumber);
                     console.log('✅ Updated phone:', profile.phoneNumber);
-                } else {
-                    // If no phone from API, try cached value
-                    const cachedPhone = localStorage.getItem('userPhone');
-                    if (cachedPhone) {
-                        document.getElementById('phone').value = cachedPhone;
-                    }
+                }
+                
+                // Load avatar from localStorage or profile
+                const avatarUrl = profile.avatarUrl || localStorage.getItem('userAvatar');
+                if (avatarUrl) {
+                    document.getElementById('avatarImage').src = avatarUrl;
+                    localStorage.setItem('userAvatar', avatarUrl);
+                    console.log('✅ Loaded avatar:', avatarUrl);
                 }
                 
                 showNotification('✅ Profile loaded successfully!', 'success');
@@ -305,16 +327,12 @@
                 const userEmail = localStorage.getItem('userEmail');
                 const username = localStorage.getItem('username');
                 const userPhone = localStorage.getItem('userPhone');
+                const userAvatar = localStorage.getItem('userAvatar');
                 
-                if (userEmail) {
-                    document.getElementById('email').value = userEmail;
-                }
-                if (username) {
-                    document.getElementById('username').value = username;
-                }
-                if (userPhone) {
-                    document.getElementById('phone').value = userPhone;
-                }
+                if (userEmail) document.getElementById('email').value = userEmail;
+                if (username) document.getElementById('username').value = username;
+                if (userPhone) document.getElementById('phone').value = userPhone;
+                if (userAvatar) document.getElementById('avatarImage').src = userAvatar;
                 
                 showNotification('⚠️ Could not fetch latest profile. Showing cached data.', 'error');
             }
@@ -330,6 +348,9 @@
             const fileName = e.target.files[0]?.name || 'No file selected';
             this.previousElementSibling.textContent = fileName;
         });
+
+        // Initialize Cloudinary avatar upload
+        window.CloudinaryConfig.initAvatarUpload();
 
         // Change Password Modal Functions
         function openChangePasswordModal() {
@@ -414,7 +435,7 @@
             // Validate password strength
             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
             if (!passwordRegex.test(newPassword)) {
-                showNotification('⚠️ Password must contain uppercase, lowercase, digit, and special character', 'error');
+                showNotification('⚠️ Password must be at least 8 characters with uppercase, lowercase, digit, and special character', 'error');
                 return;
             }
 
@@ -425,43 +446,37 @@
                     console.error('window.API:', window.API);
                     return;
                 }
+                
+                console.log('🔄 Calling API.changePassword...');
+                showNotification('⏳ Changing password...', 'info');
+                
+                // Call API with only currentPassword and newPassword
+                const response = await window.API.changePassword(currentPassword, newPassword);
+                
+                console.log('✅ Change password response:', response);
 
-                // Get userId from localStorage first
-                let userId = localStorage.getItem('userId');
-                
-                // If no userId in localStorage, fetch from API
-                if (!userId) {
-                    console.log('UserId not in localStorage. Fetching from API...');
-                    try {
-                        const userData = await window.API.getMe();
-                        userId = userData.userId;
-                        
-                        if (userId) {
-                            localStorage.setItem('userId', userId);
-                            console.log('✅ Fetched and saved userId:', userId);
-                        }
-                    } catch (error) {
-                        console.error('Failed to fetch userId:', error);
-                    }
-                }
-                
-                // Final check
-                if (!userId) {
-                    showNotification('❌ User ID not found. Please logout and login again.', 'error');
-                    console.error('userId not found. User needs to login again.');
-                    return;
-                }
-                
-                console.log('Calling API.changePassword with userId:', userId);
-                const response = await window.API.changePassword(userId, currentPassword, newPassword);
-
-                if (response) {
+                if (response && (response.isSuccess || response.success)) {
                     showNotification('✅ Password changed successfully!', 'success');
                     closeChangePasswordModal();
+                    
+                    // Optionally logout user to re-login with new password
+                    setTimeout(() => {
+                        showNotification('💡 Please login again with your new password', 'info');
+                        setTimeout(() => {
+                            logout();
+                        }, 2000);
+                    }, 1500);
+                } else {
+                    const errorMsg = response?.message || 'Failed to change password';
+                    showNotification(`❌ ${errorMsg}`, 'error');
                 }
             } catch (error) {
-                console.error('Change password error:', error);
-                const errorMessage = error.message || 
+                console.error('❌ Change password error:', error);
+                console.error('Error response:', error.response?.data);
+                
+                const errorMessage = error.response?.data?.message || 
+                                   error.response?.data?.errors?.[0] ||
+                                   error.message || 
                                    'Failed to change password. Please check your current password.';
                 showNotification(`❌ ${errorMessage}`, 'error');
             }

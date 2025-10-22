@@ -108,11 +108,10 @@
     </main>
 
     <!-- Booking Detail Modal -->
-    <div id="bookingModal" class="modal">
+    <div id="bookingModal" class="modal" onclick="closeBookingModalOnBackdrop(event)">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Booking Details</h2>
-                <button class="close-btn" onclick="closeBookingModal()">×</button>
             </div>
             <div id="bookingDetails" class="modal-body">
                 <!-- Populated by JavaScript -->
@@ -386,59 +385,103 @@
             const booking = allBookings.find(b => b.bookingId === bookingId);
             if (!booking) return;
 
+            // Debug: Log full booking object structure
+            console.log('📋 Full Booking Object:', JSON.stringify(booking, null, 2));
+            console.log('� Booking keys:', Object.keys(booking));
+
             const status = getBookingStatus(booking.bookingStatus);
-            const pickupDateTime = formatDateTime(booking.startTime);
-            const returnDateTime = formatDateTime(booking.endTime);
+            
+            // Try different possible field names for pickup/return time
+            const pickupDateTime = formatDateTime(
+                booking.startTime || 
+                booking.pickupTime || 
+                booking.pickUpTime || 
+                booking.startDate || 
+                booking.rentalStartTime
+            );
+            const returnDateTime = formatDateTime(
+                booking.endTime || 
+                booking.returnTime || 
+                booking.endDate || 
+                booking.rentalEndTime
+            );
+
+            console.log('✅ Formatted pickupDateTime:', pickupDateTime);
+            console.log('✅ Formatted returnDateTime:', returnDateTime);
 
             const details = `
-                <div class="details-grid">
-                    <div class="detail-item" style="display: none;">
-                        <label>Booking ID:</label>
-                        <p class="booking-id-display">${booking.bookingId}</p>
+                <!-- Car Info Section -->
+                <div class="detail-section car-section">
+                    <div class="section-icon">🚗</div>
+                    <div class="section-content">
+                        <h3>${booking.carInfo}</h3>
+                        <div class="status-row">
+                            <span class="status-badge ${status.class}">${status.text}</span>
+                            <span class="booking-id-chip" style="display: none;">#${booking.bookingId.substring(0, 8)}</span>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <label>Car:</label>
-                        <p>${booking.carInfo}</p>
+                </div>
+
+                <!-- DateTime Section -->
+                <div class="detail-section datetime-section">
+                    <div class="datetime-card pickup">
+                        <div class="datetime-icon">📍</div>
+                        <div class="datetime-info">
+                            <label>Pick-up</label>
+                            <p class="location">${booking.pickupStationName}</p>
+                            <p class="time">${pickupDateTime}</p>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <label>Status:</label>
-                        <p><span class="status-badge ${status.class}">${status.text}</span></p>
+                    <div class="datetime-arrow">→</div>
+                    <div class="datetime-card return">
+                        <div class="datetime-icon">🏁</div>
+                        <div class="datetime-info">
+                            <label>Return</label>
+                            <p class="location">${booking.returnStationName}</p>
+                            <p class="time">${returnDateTime}</p>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <label>Pick-up Station:</label>
-                        <p>${booking.pickupStationName}</p>
+                </div>
+
+                <!-- Pricing Section -->
+                <div class="detail-section pricing-section">
+                    <div class="pricing-grid">
+                        <div class="pricing-item">
+                            <span class="pricing-icon">⏱️</span>
+                            <div>
+                                <label>Hourly Rate</label>
+                                <p>$${(booking.hourlyRate || 0).toFixed(2)}/hour</p>
+                            </div>
+                        </div>
+                        <div class="pricing-item">
+                            <span class="pricing-icon">📅</span>
+                            <div>
+                                <label>Daily Rate</label>
+                                <p>$${(booking.dailyRate || 0).toFixed(2)}/day</p>
+                            </div>
+                        </div>
+                        <div class="pricing-item">
+                            <span class="pricing-icon">💳</span>
+                            <div>
+                                <label>Payment Status</label>
+                                <p>${booking.paymentStatus || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div class="pricing-item">
+                            <span class="pricing-icon">🕒</span>
+                            <div>
+                                <label>Created At</label>
+                                <p>${formatDateTime(booking.createdAt)}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <label>Return Station:</label>
-                        <p>${booking.returnStationName}</p>
-                    </div>
-                    <div class="detail-item">
-                        <label>Pick-up Time:</label>
-                        <p>${pickupDateTime}</p>
-                    </div>
-                    <div class="detail-item">
-                        <label>Return Time:</label>
-                        <p>${returnDateTime}</p>
-                    </div>
-                    <div class="detail-item">
-                        <label>Hourly Rate:</label>
-                        <p>$${(booking.hourlyRate || 0).toFixed(2)}/hour</p>
-                    </div>
-                    <div class="detail-item">
-                        <label>Daily Rate:</label>
-                        <p>$${(booking.dailyRate || 0).toFixed(2)}/day</p>
-                    </div>
-                    <div class="detail-item highlight">
-                        <label>Total Amount:</label>
-                        <p>$${(booking.totalAmount || 0).toFixed(2)}</p>
-                    </div>
-                    <div class="detail-item">
-                        <label>Payment Status:</label>
-                        <p>${booking.paymentStatus || 'N/A'}</p>
-                    </div>
-                    <div class="detail-item">
-                        <label>Created At:</label>
-                        <p>${formatDateTime(booking.createdAt)}</p>
+                </div>
+
+                <!-- Total Section -->
+                <div class="detail-section total-section">
+                    <div class="total-content">
+                        <span class="total-label">Total Amount</span>
+                        <span class="total-amount">$${(booking.totalAmount || 0).toFixed(2)}</span>
                     </div>
                 </div>
             `;
@@ -450,6 +493,13 @@
         // ========== Modal Functions ==========
         function closeBookingModal() {
             document.getElementById('bookingModal').style.display = 'none';
+        }
+
+        function closeBookingModalOnBackdrop(event) {
+            // Only close if clicking the backdrop, not the modal content
+            if (event.target.id === 'bookingModal') {
+                closeBookingModal();
+            }
         }
 
         // ========== Cancel Booking ==========
