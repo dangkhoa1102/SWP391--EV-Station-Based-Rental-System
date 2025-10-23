@@ -236,8 +236,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Configure default ports
-app.Urls.Add("https://localhost:5054");
-app.Urls.Add("http://localhost:5054");
+// Ports are configured in appsettings.Development.json
+// Remove hardcoded URLs to avoid conflicts
 
 app.Run();

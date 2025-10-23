@@ -14,10 +14,10 @@ namespace Monolithic.Models
         [Required]
         public Guid CarId { get; set; }
 
-        [Required]
-        public Guid PickupStationId { get; set; }
+        //[Required]
+        //public Guid? PickupStationId { get; set; }
 
-        public Guid? ReturnStationId { get; set; }
+        //public Guid? ReturnStationId { get; set; }
 
         [Required]
         public DateTime StartTime { get; set; }
@@ -25,6 +25,7 @@ namespace Monolithic.Models
         public DateTime? EndTime { get; set; }
 
         public DateTime? ActualReturnDateTime { get; set; }
+
         [Column(TypeName = "decimal(10,2)")]
         public decimal HourlyRate { get; set; }
 
@@ -77,13 +78,6 @@ namespace Monolithic.Models
 
         [ForeignKey("CarId")]
         public virtual Car Car { get; set; } = null!;
-
-        [ForeignKey("PickupStationId")]
-        public virtual Station PickupStation { get; set; } = null!;
-
-        [ForeignKey("ReturnStationId")]
-        public virtual Station? ReturnStation { get; set; }
-
         public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
     }
 

@@ -96,8 +96,8 @@ namespace Monolithic.Controllers
                 var result = new
                 {
                     StationId = stationId,
-                    FromDate = fromDate ?? DateTime.UtcNow.AddDays(-30),
-                    ToDate = toDate ?? DateTime.UtcNow,
+                    FromDate = (fromDate ?? DateTime.UtcNow.AddDays(-30)).ToString("yyyy-MM-dd HH:mm"),
+                    ToDate = (toDate ?? DateTime.UtcNow).ToString("yyyy-MM-dd HH:mm"),
                     Message = "Feature in development - Sẽ hiển thị lịch sử check-in/check-out tại trạm này"
                 };
 
@@ -279,7 +279,7 @@ namespace Monolithic.Controllers
                             TotalDamageFees = totalDamageFees,
                             RiskLevel = cancelledCount >= 5 ? "HIGH" : 
                                        cancelledCount >= 3 ? "MEDIUM" : "LOW",
-                            LastBookingDate = userBookings.OrderByDescending(b => b.CreatedAt).FirstOrDefault()?.CreatedAt
+                            LastBookingDate = userBookings.OrderByDescending(b => b.CreatedAt).FirstOrDefault()?.CreatedAt.ToString("yyyy-MM-dd HH:mm")
                         });
                     }
                 }
@@ -386,8 +386,8 @@ namespace Monolithic.Controllers
                     StaffName = $"{staff.FirstName} {staff.LastName}",
                     Period = new
                     {
-                        From = fromDate ?? DateTime.UtcNow.AddDays(-30),
-                        To = toDate ?? DateTime.UtcNow
+                        From = (fromDate ?? DateTime.UtcNow.AddDays(-30)).ToString("yyyy-MM-dd HH:mm"),
+                        To = (toDate ?? DateTime.UtcNow).ToString("yyyy-MM-dd HH:mm")
                     },
                     Metrics = new
                     {
@@ -597,8 +597,8 @@ namespace Monolithic.Controllers
                 {
                     Period = new
                     {
-                        From = from,
-                        To = to,
+                        From = from.ToString("yyyy-MM-dd HH:mm"),
+                        To = to.ToString("yyyy-MM-dd HH:mm"),
                         Days = (to - from).Days
                     },
                     Summary = new
@@ -710,8 +710,8 @@ namespace Monolithic.Controllers
                 {
                     Period = new
                     {
-                        From = from,
-                        To = to,
+                        From = from.ToString("yyyy-MM-dd HH:mm"),
+                        To = to.ToString("yyyy-MM-dd HH:mm"),
                         Days = totalDays
                     },
                     Summary = new
@@ -823,8 +823,8 @@ namespace Monolithic.Controllers
                 {
                     Period = new
                     {
-                        From = from,
-                        To = to,
+                        From = from.ToString("yyyy-MM-dd HH:mm"),
+                        To = to.ToString("yyyy-MM-dd HH:mm"),
                         Days = (to - from).Days
                     },
                     Summary = new
@@ -940,7 +940,7 @@ namespace Monolithic.Controllers
                             .Select(g => new
                             {
                                 Period = g.Key.ToString("yyyy-MM-dd"),
-                                Date = g.Key,
+                                Date = g.Key.ToString("yyyy-MM-dd"),
                                 TotalBookings = g.Count(),
                                 Revenue = g.Sum(b => b.TotalAmount),
                                 AverageBookingValue = g.Average(b => b.TotalAmount)
@@ -954,8 +954,8 @@ namespace Monolithic.Controllers
                 {
                     Period = new
                     {
-                        From = from,
-                        To = to,
+                        From = from.ToString("yyyy-MM-dd HH:mm"),
+                        To = to.ToString("yyyy-MM-dd HH:mm"),
                         GroupBy = groupBy
                     },
                     Summary = new
