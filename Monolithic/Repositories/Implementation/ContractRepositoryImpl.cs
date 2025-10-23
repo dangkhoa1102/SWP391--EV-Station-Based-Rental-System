@@ -33,6 +33,12 @@ public class ContractRepositoryImpl : IContractRepository
             .FirstOrDefaultAsync(h => h.ConfirmationToken == token);
     }
 
+    public async Task<Contract?> GetByBookingIdAsync(Guid bookingId)
+    {
+        return await _context.Contracts
+            .FirstOrDefaultAsync(c => c.BookingId == bookingId && !c.IsDeleted);
+    }
+
     public async Task UpdateAsync(Contract c)
     {
         _context.Contracts.Update(c);

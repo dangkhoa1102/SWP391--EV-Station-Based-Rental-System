@@ -25,7 +25,7 @@ namespace Monolithic.Controllers
         /// Đặt xe    
         /// </summary>
 
-        [HttpPost("Create")]
+        [HttpPost("Create")]        
         public async Task<ActionResult<ResponseDto<BookingDto>>> CreateBooking([FromQuery] string userId, [FromBody] CreateBookingDto request)
         {
             var result = await _bookingService.CreateBookingAsync(userId, request);

@@ -48,3 +48,15 @@ public record ThongTinGPLX(
 public record HopDongXacNhanDto(string SoHopDong, string NguoiKy, DateTime? NgayTao, string NoiDungHtml);
 public record KyHopDongRequestDto(string Token);
 public record GuiEmailRequestDto(string Email);
+
+// DTO Response cho việc tạo hợp đồng
+public record ContractResponseDto
+{
+    public Guid ContractId { get; set; }
+    public string SoHopDong { get; set; } = string.Empty;
+    public string HoTenBenA { get; set; } = string.Empty;
+    public string BienSoXe { get; set; } = string.Empty;
+    public DateTime NgayTao { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
+}
