@@ -51,6 +51,18 @@ namespace Monolithic.Models
 
         [StringLength(512)]
         public string? ConfirmedUserAgent { get; set; }
+
+        // Thông tin ký hợp đồng
+        [StringLength(500)]
+        public string? StaffSignature { get; set; } // Chữ ký của staff
+
+        [StringLength(500)]
+        public string? CustomerSignature { get; set; } // Chữ ký của khách hàng
+
+        public DateTime? SignedAt { get; set; } // Thời gian ký hợp đồng
+
+        [StringLength(1000)]
+        public string? ContractNotes { get; set; } // Ghi chú về hợp đồng
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

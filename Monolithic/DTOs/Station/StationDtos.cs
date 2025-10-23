@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Monolithic.DTOs.Car;
+using Monolithic.Common;
 
 namespace Monolithic.DTOs.Station
 {
@@ -11,7 +13,9 @@ namespace Monolithic.DTOs.Station
         public int TotalSlots { get; set; }
         public int AvailableSlots { get; set; }
         public bool IsActive { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime CreatedAt { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime UpdatedAt { get; set; }
         public List<CarDto>? AvailableCars { get; set; }
     }

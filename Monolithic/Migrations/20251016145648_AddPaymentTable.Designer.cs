@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251016145648_AddPaymentTable")]
+    partial class AddPaymentTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,15 +42,6 @@ namespace Monolithic.Migrations
                     b.Property<Guid>("CarId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("CheckInAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("CheckOutAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ContractApprovedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -55,13 +49,6 @@ namespace Monolithic.Migrations
 
                     b.Property<decimal>("DailyRate")
                         .HasColumnType("decimal(10,2)");
-
-                    b.Property<decimal>("DepositAmount")
-                        .HasColumnType("decimal(10,2)");
-
-                    b.Property<string>("DepositTransactionId")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
@@ -74,13 +61,6 @@ namespace Monolithic.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
-                    b.Property<bool>("IsContractApproved")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("PaymentMethod")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -88,13 +68,6 @@ namespace Monolithic.Migrations
 
                     b.Property<Guid>("PickupStationId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("RentalAmount")
-                        .HasColumnType("decimal(10,2)");
-
-                    b.Property<string>("RentalTransactionId")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid?>("ReturnStationId")
                         .HasColumnType("uniqueidentifier");
@@ -241,18 +214,10 @@ namespace Monolithic.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
-                    b.Property<string>("ContractNotes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<string>("CustomerSignature")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<bool>("IsConfirmed")
                         .ValueGeneratedOnAdd()
@@ -271,19 +236,12 @@ namespace Monolithic.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<DateTime?>("SignedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("SignerEmail")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<Guid?>("StaffId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("StaffSignature")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime?>("TokenExpiresAt")
                         .HasColumnType("datetime2");
@@ -461,11 +419,6 @@ namespace Monolithic.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("PaymentStatus")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("PaymentType")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");

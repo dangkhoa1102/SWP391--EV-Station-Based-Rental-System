@@ -6,6 +6,7 @@ using Monolithic.DTOs.Station;
 using Monolithic.DTOs.Booking;
 using Monolithic.DTOs.Feedback;
 using Monolithic.DTOs.Contract;
+using Monolithic.DTOs.Payment;
 
 namespace Monolithic.Mappings
 {
@@ -120,6 +121,34 @@ namespace Monolithic.Mappings
                 .ForMember(dest => dest.ContractContent, opt => opt.MapFrom(src => src.ContractContent))
                 .ForMember(dest => dest.SignatureValue, opt => opt.MapFrom(src => src.SignatureValue))
                 .ForMember(dest => dest.SignerEmail, opt => opt.MapFrom(src => src.SignerEmail));
+
+            // Payment mappings
+            CreateMap<Payment, PaymentDto>()
+                .ForMember(dest => dest.PaymentId, opt => opt.MapFrom(src => src.PaymentId))
+                .ForMember(dest => dest.BookingId, opt => opt.MapFrom(src => src.BookingId))
+                .ForMember(dest => dest.TransactionId, opt => opt.MapFrom(src => src.TransactionId))
+                .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
+                .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PaymentMethod))
+                .ForMember(dest => dest.PaymentStatus, opt => opt.MapFrom(src => src.PaymentStatus))
+                .ForMember(dest => dest.GatewayName, opt => opt.MapFrom(src => src.GatewayName))
+                .ForMember(dest => dest.GatewayTransactionId, opt => opt.MapFrom(src => src.GatewayTransactionId))
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+                .ForMember(dest => dest.FailureReason, opt => opt.MapFrom(src => src.FailureReason))
+                .ForMember(dest => dest.ProcessedAt, opt => opt.MapFrom(src => src.ProcessedAt))
+                .ForMember(dest => dest.ExpiredAt, opt => opt.MapFrom(src => src.ExpiredAt))
+                .ForMember(dest => dest.RefundTransactionId, opt => opt.MapFrom(src => src.RefundTransactionId))
+                .ForMember(dest => dest.RefundedAt, opt => opt.MapFrom(src => src.RefundedAt))
+                .ForMember(dest => dest.RefundReason, opt => opt.MapFrom(src => src.RefundReason))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt));
+
+            CreateMap<CreatePaymentDto, Payment>()
+                .ForMember(dest => dest.PaymentId, opt => opt.MapFrom(src => Guid.NewGuid()))
+                .ForMember(dest => dest.TransactionId, opt => opt.MapFrom(src => "")) // Will be set in service
+                .ForMember(dest => dest.PaymentStatus, opt => opt.MapFrom(src => PaymentStatus.Pending))
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
         }
 
         private static string GetFirstName(string fullName)
