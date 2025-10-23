@@ -10,7 +10,7 @@ CarAPI và StationAPI đã được kết nối với nhau thông qua **HTTP Cli
 ┌─────────────┐         HTTP Request          ┌──────────────┐
 │             │ ──────────────────────────────> │              │
 │   CarAPI    │                                 │  StationAPI  │
-│  (Port TBD) │ <────────────────────────────── │  (Port 7001) │
+│  (Port TBD) │ <────────────────────────────── │  (Port 5054) │
 │             │         HTTP Response           │              │
 └─────────────┘                                 └──────────────┘
       │                                                │
@@ -92,7 +92,7 @@ public class StationClient : IStationClient
 ```json
 {
   "ServiceUrls": {
-    "StationAPI": "https://localhost:7001"
+    "StationAPI": "http://localhost:5054"
   }
 }
 ```
@@ -103,7 +103,7 @@ public class StationClient : IStationClient
 builder.Services.AddHttpClient<IStationClient, StationClient>(client =>
 {
     var stationApiUrl = builder.Configuration["ServiceUrls:StationAPI"];
-    client.BaseAddress = new Uri(stationApiUrl ?? "https://localhost:7001");
+    client.BaseAddress = new Uri(stationApiUrl ?? "http://localhost:5054");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 ```
@@ -186,7 +186,7 @@ Client Request → CarAPI → Get Car → StationAPI → Get Station → Merged 
 // CarAPI appsettings.json
 {
   "ServiceUrls": {
-    "StationAPI": "https://localhost:7001"
+    "StationAPI": "http://localhost:5054"
   }
 }
 ```

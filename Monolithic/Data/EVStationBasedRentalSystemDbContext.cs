@@ -17,6 +17,7 @@ namespace Monolithic.Data
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<Incident> Incidents { get; set; }
         public DbSet<Contract> Contracts { get; set; }
+        public DbSet<Payment> Payments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -182,6 +183,42 @@ namespace Monolithic.Data
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => e.StationId);
                 entity.HasIndex(e => e.ReportedAt);
+            });
+
+            // Payment configuration
+            builder.Entity<Payment>(entity =>
+            {
+                entity.HasKey(p => p.PaymentId);
+                entity.Property(p => p.PaymentId).HasDefaultValueSql("NEWID()");
+                entity.Property(p => p.BookingId).IsRequired();
+                entity.Property(p => p.TransactionId).IsRequired().HasMaxLength(100);
+                entity.Property(p => p.Amount).HasPrecision(10, 2);
+                entity.Property(p => p.PaymentMethod).IsRequired().HasConversion<string>();
+                entity.Property(p => p.PaymentStatus).IsRequired().HasConversion<string>();
+                entity.Property(p => p.GatewayName).HasMaxLength(50);
+                entity.Property(p => p.GatewayTransactionId).HasMaxLength(500);
+                entity.Property(p => p.GatewayResponse).HasMaxLength(1000);
+                entity.Property(p => p.Description).HasMaxLength(500);
+                entity.Property(p => p.FailureReason).HasMaxLength(1000);
+                entity.Property(p => p.RefundTransactionId).HasMaxLength(100);
+                entity.Property(p => p.RefundReason).HasMaxLength(500);
+                entity.Property(p => p.IsActive).HasDefaultValue(true);
+                entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(p => p.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                // Payment-Booking relationship
+                entity.HasOne(p => p.Booking)
+                      .WithMany()
+                      .HasForeignKey(p => p.BookingId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Indexes for better performance
+                entity.HasIndex(p => p.BookingId);
+                entity.HasIndex(p => p.TransactionId).IsUnique();
+                entity.HasIndex(p => p.PaymentMethod);
+                entity.HasIndex(p => p.PaymentStatus);
+                entity.HasIndex(p => p.CreatedAt);
+                entity.HasIndex(p => p.ExpiredAt);
             });
 
             // Configure indexes for better performance

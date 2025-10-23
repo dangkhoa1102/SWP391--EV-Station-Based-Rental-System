@@ -19,16 +19,15 @@ namespace Monolithic.Controllers
             _bookingService = bookingService;
         }
 
-        #region Main Booking Flow
+        #region New Main Booking Flow
 
         /// <summary>
-        /// Đặt xe    
+        /// Bước 1: Đặt xe + thanh toán đặt cọc
         /// </summary>
-
-        [HttpPost("Create")]
-        public async Task<ActionResult<ResponseDto<BookingDto>>> CreateBooking([FromQuery] string userId, [FromBody] CreateBookingDto request)
+        [HttpPost("Create-With-Deposit")]
+        public async Task<ActionResult<ResponseDto<BookingDto>>> CreateBookingWithDeposit([FromQuery] string userId, [FromBody] CreateBookingDto request)
         {
-            var result = await _bookingService.CreateBookingAsync(userId, request);
+            var result = await _bookingService.CreateBookingWithDepositAsync(userId, request);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             
@@ -36,12 +35,12 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Xác nhận booking sau khi thanh toán 
+        /// Bước 2: Approve hợp đồng
         /// </summary>
-        [HttpPost("Confirm")]
-        public async Task<ActionResult<ResponseDto<BookingDto>>> ConfirmBooking([FromBody] ConfirmBookingDto request)
+        [HttpPost("Approve-Contract")]
+        public async Task<ActionResult<ResponseDto<BookingDto>>> ApproveContract([FromBody] ApproveContractDto request)
         {
-            var result = await _bookingService.ConfirmBookingAsync(request);
+            var result = await _bookingService.ApproveContractAsync(request);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             
@@ -49,13 +48,12 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Check-in - Nhận xe 
+        /// Bước 3: Check-in với ký hợp đồng
         /// </summary>
-        [HttpPost("Check-In")]
-        [Authorize(Roles = $"{AppRoles.EVRenter},{AppRoles.StationStaff}")]
-        public async Task<ActionResult<ResponseDto<BookingDto>>> CheckIn([FromBody] CheckInDto request)
+        [HttpPost("Check-In-With-Contract")]
+        public async Task<ActionResult<ResponseDto<BookingDto>>> CheckInWithContract([FromBody] CheckInWithContractDto request)
         {
-            var result = await _bookingService.CheckInAsync(request);
+            var result = await _bookingService.CheckInWithContractAsync(request);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             
@@ -63,27 +61,12 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Check-out - Trả xe 
+        /// Bước 5: Check-out với thanh toán tiền thuê
         /// </summary>
-        [HttpPost("Check-Out")]
-        [Authorize(Roles = $"{AppRoles.EVRenter},{AppRoles.StationStaff}")]
-        public async Task<ActionResult<ResponseDto<BookingDto>>> CheckOut([FromBody] CheckOutDto request)
+        [HttpPost("Check-Out-With-Payment")]
+        public async Task<ActionResult<ResponseDto<BookingDto>>> CheckOutWithPayment([FromBody] CheckOutWithPaymentDto request)
         {
-            var result = await _bookingService.CheckOutAsync(request);
-            if (!result.IsSuccess) 
-                return BadRequest(result);
-            
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Hoàn tất booking 
-        /// </summary>
-        [HttpPost("Complete-By-{bookingId}")]
-        [Authorize(Roles = $"{AppRoles.EVRenter},{AppRoles.StationStaff},{AppRoles.Admin}")]
-        public async Task<ActionResult<ResponseDto<BookingDto>>> CompleteBooking(Guid bookingId)
-        {
-            var result = await _bookingService.CompleteBookingAsync(bookingId);
+            var result = await _bookingService.CheckOutWithPaymentAsync(request);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             
@@ -91,6 +74,7 @@ namespace Monolithic.Controllers
         }
 
         #endregion
+
 
         #region Booking Management
 

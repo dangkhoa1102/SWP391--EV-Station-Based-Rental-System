@@ -2,11 +2,11 @@
     "Routes": [
         {
             "DownstreamPathTemplate": "/api/auth/{everything}",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
                     "Host": "localhost",
-                    "Port": 7001
+                    "Port": 5054
                 }
             ],
             "UpstreamPathTemplate": "/api/auth/{everything}",

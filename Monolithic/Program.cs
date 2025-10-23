@@ -2,17 +2,27 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json;
 using Monolithic.Data;
 using Monolithic.Services.Interfaces;
 using Monolithic.Repositories.Interfaces;
 using Monolithic.Repositories.Implementation;
 using Monolithic.Services.Implementation;
 using Monolithic.Mappings;
+using Monolithic.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Configure JSON serialization to use custom DateTime converters
+        options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
+        options.JsonSerializerOptions.Converters.Add(new NullableDateTimeConverter());
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -156,6 +166,7 @@ builder.Services.AddScoped<ICarRepository, CarRepositoryImpl>();
 builder.Services.AddScoped<IBookingRepository, BookingRepositoryImpl>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepositoryImpl>();
 builder.Services.AddScoped<IContractRepository, ContractRepositoryImpl>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepositoryImpl>();
 
 // Services - Using separate implementation classes
 builder.Services.AddScoped<IStationService, StationServiceImpl>();
@@ -165,6 +176,7 @@ builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IContractService, ContractServiceImpl>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPaymentService, PaymentServiceImpl>();
 
 // Auth Services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenServiceImpl>();
@@ -223,5 +235,9 @@ if (app.Environment.IsDevelopment())
         }
     });
 }
+
+// Configure default ports
+app.Urls.Add("https://localhost:5054");
+app.Urls.Add("http://localhost:5054");
 
 app.Run();

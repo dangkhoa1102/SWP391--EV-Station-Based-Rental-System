@@ -1,4 +1,7 @@
-﻿namespace Monolithic.DTOs.Incident.Response
+﻿using System.Text.Json.Serialization;
+using Monolithic.Common;
+
+namespace Monolithic.DTOs.Incident.Response
 {
     public class IncidentResponse
     {
@@ -6,7 +9,9 @@
         public Guid BookingId { get; set; }
         public string Description { get; set; }
         public List<string>? Images { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime ReportedAt { get; set; }
+        [JsonConverter(typeof(NullableDateTimeConverter))]
         public DateTime? ResolvedAt { get; set; }
         public string Status { get; set; }
         public string? ResolutionNotes { get; set; }
