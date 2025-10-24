@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using Monolithic.Common;
 
 namespace Monolithic.DTOs.Feedback
 {
@@ -12,7 +14,9 @@ namespace Monolithic.DTOs.Feedback
         public int Rating { get; set; }
         public string? Comment { get; set; }
         public bool IsActive { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime CreatedAt { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime UpdatedAt { get; set; }
     }
 

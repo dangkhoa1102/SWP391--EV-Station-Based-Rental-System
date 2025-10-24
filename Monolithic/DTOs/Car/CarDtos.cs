@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using Monolithic.Common;
 
 namespace Monolithic.DTOs.Car
 {
@@ -17,7 +19,9 @@ namespace Monolithic.DTOs.Car
         public Guid CurrentStationId { get; set; }
         public string CurrentStationName { get; set; } = string.Empty;
         public bool IsActive { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime CreatedAt { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime UpdatedAt { get; set; }
     }
 

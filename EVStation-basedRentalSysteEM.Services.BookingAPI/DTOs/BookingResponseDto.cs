@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace EVStation_basedRentalSystem.Services.BookingAPI.DTOs
 {
     public class BookingResponseDto
@@ -10,11 +12,16 @@ namespace EVStation_basedRentalSystem.Services.BookingAPI.DTOs
         public string? PickupStationName { get; set; }
         public int ReturnStationId { get; set; }
         public string? ReturnStationName { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime PickupDateTime { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime ExpectedReturnDateTime { get; set; }
+        [JsonConverter(typeof(NullableDateTimeConverter))]
         public DateTime? ActualReturnDateTime { get; set; }
         public string BookingStatus { get; set; } = string.Empty;
+        [JsonConverter(typeof(NullableDateTimeConverter))]
         public DateTime? CheckInDateTime { get; set; }
+        [JsonConverter(typeof(NullableDateTimeConverter))]
         public DateTime? CheckOutDateTime { get; set; }
         public decimal HourlyRate { get; set; }
         public decimal DailyRate { get; set; }
@@ -25,6 +32,7 @@ namespace EVStation_basedRentalSystem.Services.BookingAPI.DTOs
         public decimal? DamageFee { get; set; }
         public string? PaymentStatus { get; set; }
         public string? PaymentMethod { get; set; }
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime CreatedAt { get; set; }
     }
 }

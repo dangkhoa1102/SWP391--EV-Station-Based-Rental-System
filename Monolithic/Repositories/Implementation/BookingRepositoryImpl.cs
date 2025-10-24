@@ -17,8 +17,7 @@ namespace Monolithic.Repositories.Implementation
             
             return await _dbContext.Bookings.Where(b => b.IsActive && b.UserId == userGuid) // Use Guid for comparison
                 .Include(b => b.Car)
-                .Include(b => b.PickupStation)
-                .Include(b => b.ReturnStation)
+                .Include(b => b.StationId)                
                 .OrderByDescending(b => b.CreatedAt)
                 .AsNoTracking().ToListAsync();
         }
@@ -28,8 +27,7 @@ namespace Monolithic.Repositories.Implementation
             if (!Guid.TryParse(userId, out var userGuid)) return null;
 
             return await _dbContext.Bookings.Include(b => b.Car)
-                .Include(b => b.PickupStation)
-                .Include(b => b.ReturnStation)
+                .Include(b => b.StationId)                
                 .FirstOrDefaultAsync(b => b.IsActive && b.UserId == userGuid && 
                     b.BookingStatus != BookingStatus.Completed && 
                     b.BookingStatus != BookingStatus.Cancelled);
@@ -39,8 +37,7 @@ namespace Monolithic.Repositories.Implementation
         {
             return await _dbContext.Bookings.Include(b => b.User)
                 .Include(b => b.Car)
-                .Include(b => b.PickupStation)
-                .Include(b => b.ReturnStation)
+                .Include(b => b.StationId)               
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId && b.IsActive); // Use BookingId
         }
 
@@ -52,7 +49,7 @@ namespace Monolithic.Repositories.Implementation
 
         public async Task<IEnumerable<Booking>> GetBookingsByStationAsync(Guid stationId)
         {
-            return await _dbContext.Bookings.Where(b => b.IsActive && (b.PickupStationId == stationId || b.ReturnStationId == stationId))
+            return await _dbContext.Bookings.Where(b => b.IsActive && (b.StationId == stationId))
                 .AsNoTracking().ToListAsync();
         }
 

@@ -20,7 +20,7 @@ builder.Services.AddDbContext<CarDbContext>(options =>
 builder.Services.AddHttpClient<IStationClient, StationClient>(client =>
 {
     var stationApiUrl = builder.Configuration["ServiceUrls:StationAPI"];
-    client.BaseAddress = new Uri(stationApiUrl ?? "https://localhost:7001");
+    client.BaseAddress = new Uri(stationApiUrl ?? "http://localhost:5054");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 

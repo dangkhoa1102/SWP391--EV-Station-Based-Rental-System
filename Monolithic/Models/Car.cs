@@ -40,12 +40,17 @@ namespace Monolithic.Models
         public decimal RentalPricePerHour { get; set; }
 
         [Required]
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal RentalPricePerDay { get; set; }
+
+        [Required]
         public bool IsAvailable { get; set; } = true;
 
         [Required]
         public Guid CurrentStationId { get; set; }
 
         public bool IsActive { get; set; } = true;
+        public string ImageUrl { get; set; } = string.Empty;    
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

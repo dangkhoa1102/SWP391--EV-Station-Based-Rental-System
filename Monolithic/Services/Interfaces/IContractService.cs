@@ -5,34 +5,11 @@ namespace Monolithic.Services.Interfaces
 {
     public interface IContractService
     {
-        /// <summary>
-        /// T?o h?p ??ng t? thông tin booking (auto-generate t? user + booking info)
-        /// </summary>
-        Task<ResponseDto<ContractResponseDto>> TaoHopDongTuBookingAsync(Guid bookingId);
-        
-        /// <summary>
-        /// G?i email v?i file h?p ??ng và link xác nh?n ký
-        /// </summary>
-        Task<ResponseDto<string>> GuiEmailXacNhanKyAsync(Guid contractId);
-        
-        /// <summary>
-        /// L?y thông tin h?p ??ng ?? hi?n th? trang xác nh?n (t? token)
-        /// </summary>
-        Task<ResponseDto<HopDongXacNhanDto>> LayThongTinHopDongTheoTokenAsync(string token);
-        
-        /// <summary>
-        /// Xác nh?n ký h?p ??ng (khi user click vào link trong email)
-        /// </summary>
-        Task<ResponseDto<string>> XacNhanKyHopDongAsync(string token);
-        
-        /// <summary>
-        /// Xóa m?m h?p ??ng
-        /// </summary>
-        Task<ResponseDto<string>> XoaMemHopDongAsync(Guid id);
-        
-        // Legacy methods (keep for backward compatibility)
-        Task<Guid> LuuHopDongVaTaoFileAsync(TaoHopDongDto request);
-        Task GuiEmailXacNhanAsync(Guid hopDongId, string email);
-        Task<HopDongXacNhanDto> LayHopDongDeXacNhanAsync(string token);
+        Task<ResponseDto<ContractDto>> CreateContractAsync(CreateContractDto request);
+        Task<ResponseDto<ContractDto>> FillContractAsync(Monolithic.DTOs.Contract.FillContractFieldsDto request, Guid callerUserId, string callerRole);
+        Task<ResponseDto<string>> RequestConfirmationAsync(Guid contractId, string email);
+        Task<ResponseDto<ContractDto>> ConfirmContractAsync(Guid contractId, string token, string requesterIp, string userAgent);
+        Task<ResponseDto<ContractDto>> GetContractByBookingIdAsync(Guid bookingId);
+        Task<ResponseDto<List<ContractDto>>> GetContractsByRenterAsync(Guid renterId);
     }
 }

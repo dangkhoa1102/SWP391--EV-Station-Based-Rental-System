@@ -1,12 +1,11 @@
 using Monolithic.Models;
 
-namespace Monolithic.Repositories.Interfaces;
-
-public interface IContractRepository 
+namespace Monolithic.Repositories.Interfaces
 {
-    Task AddAsync(Contract c);
-    Task<Contract?> GetByIdAsync(Guid id);
-    Task<Contract?> GetByTokenAsync(string token);
-    Task<Contract?> GetByBookingIdAsync(Guid bookingId);
-    Task UpdateAsync(Contract c);
+    public interface IContractRepository : IGenericRepository<Contract>
+    {
+        Task<Contract?> GetByBookingIdAsync(Guid bookingId);
+        Task<IEnumerable<Contract>> GetByRenterIdAsync(Guid renterId);
+        Task<Contract> UpsertDraftAsync(Contract contract);
+    }
 }

@@ -1,144 +1,95 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Monolithic.Common;
 using Monolithic.DTOs.Common;
 using Monolithic.DTOs.Contract;
 using Monolithic.Services.Interfaces;
 
-namespace Monolithic.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-[Authorize] // Yêu cầu xác thực
-public class ContractsController : ControllerBase
+namespace Monolithic.Controllers
 {
-    private readonly IContractService _contractService;
-    
-    public ContractsController(IContractService contractService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ContractsController : ControllerBase
     {
-        _contractService = contractService;
-    }
+        private readonly IContractService _contractService;
 
-    /// <summary>
-    /// API MỚI: Tạo hợp đồng tự động từ Booking
-    /// </summary>
-    [HttpPost("tao-tu-booking/{bookingId}")]
-    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff},{AppRoles.EVRenter}")]
-    public async Task<ActionResult<ResponseDto<ContractResponseDto>>> TaoHopDongTuBooking(Guid bookingId)
-    {
-        var result = await _contractService.TaoHopDongTuBookingAsync(bookingId);
-        if (!result.IsSuccess)
+        public ContractsController(IContractService contractService)
         {
-            return BadRequest(result);
-        }
-        return Ok(result);
-    }
-
-    /// <summary>
-    /// API MỚI: Gửi email xác nhận ký hợp đồng (với file DOCX đính kèm)
-    /// </summary>
-    [HttpPost("gui-email-xac-nhan/{contractId}")]
-    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
-    public async Task<ActionResult<ResponseDto<string>>> GuiEmailXacNhanKy(Guid contractId)
-    {
-        var result = await _contractService.GuiEmailXacNhanKyAsync(contractId);
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-        return Ok(result);
-    }
-
-    /// <summary>
-    /// API MỚI: Lấy thông tin hợp đồng để hiển thị trang xác nhận (public - dùng token)
-    /// </summary>
-    [HttpGet("xem-hop-dong")]
-    [AllowAnonymous] // Không cần đăng nhập, dùng token
-    public async Task<ActionResult<ResponseDto<HopDongXacNhanDto>>> XemHopDongTheoToken([FromQuery] string token)
-    {
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            return BadRequest(ResponseDto<HopDongXacNhanDto>.Failure("Token không hợp lệ"));
+            _contractService = contractService;
         }
 
-        var result = await _contractService.LayThongTinHopDongTheoTokenAsync(token);
-        if (!result.IsSuccess)
+        /// <summary>
+        /// Tạo hợp đồng mới
+        /// </summary>
+        [HttpPost("Create")]
+        public async Task<ActionResult<ResponseDto<ContractDto>>> CreateContract([FromBody] CreateContractDto request)
         {
-            return BadRequest(result);
-        }
-        return Ok(result);
-    }
-
-    /// <summary>
-    /// API MỚI: Xác nhận ký hợp đồng (public - dùng token)
-    /// </summary>
-    [HttpPost("xac-nhan-ky")]
-    [AllowAnonymous] // Không cần đăng nhập, dùng token
-    public async Task<ActionResult<ResponseDto<string>>> XacNhanKyHopDong([FromBody] KyHopDongRequestDto request)
-    {
-        if (string.IsNullOrWhiteSpace(request.Token))
-        {
-            return BadRequest(ResponseDto<string>.Failure("Token không hợp lệ"));
+            var result = await _contractService.CreateContractAsync(request);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
         }
 
-        var result = await _contractService.XacNhanKyHopDongAsync(request.Token);
-        if (!result.IsSuccess)
+        /// <summary>
+        /// Điền thông tin hợp đồng
+        /// </summary>
+        [HttpPost("Fill")]
+        public async Task<ActionResult<ResponseDto<ContractDto>>> FillContract([FromBody] Monolithic.DTOs.Contract.FillContractFieldsDto request)
         {
-            return BadRequest(result);
-        }
-        return Ok(result);
-    }
+            if (!ModelState.IsValid) return BadRequest(ResponseDto<ContractDto>.Failure("Validation failed"));
 
-    /// <summary>
-    /// Xóa mềm hợp đồng (Admin only)
-    /// </summary>
-    [HttpDelete("{id}")]
-    [Authorize(Roles = AppRoles.Admin)]
-    public async Task<ActionResult<ResponseDto<string>>> XoaHopDong(Guid id)
-    {
-        var result = await _contractService.XoaMemHopDongAsync(id);
-        if (!result.IsSuccess)
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(ResponseDto<ContractDto>.Failure("Unauthorized"));
+            }
+
+            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Customer";
+            var result = await _contractService.FillContractAsync(request, userId, role);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Yêu cầu xác nhận hợp đồng qua email
+        /// </summary>
+        [HttpPost("Request-Confirmation-By-{contractId}")]
+        public async Task<ActionResult<ResponseDto<string>>> RequestConfirmation(Guid contractId, [FromBody] RequestConfirmationDto body)
         {
-            return NotFound(result);
+            var result = await _contractService.RequestConfirmationAsync(contractId, body.Email);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
         }
-        return Ok(result);
-    }
 
-    #region Legacy APIs (Backward compatibility)
-
-    // Endpoint tạo hợp đồng (cũ - giữ lại cho backward compatibility)
-    [HttpPost("tao-hop-dong")]
-    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
-    public async Task<IActionResult> TaoHopDong([FromBody] TaoHopDongDto request)
-    {
-        var contractId = await _contractService.LuuHopDongVaTaoFileAsync(request);
-        return Ok(new { HopDongId = contractId });
-    }
-
-    // Endpoint gửi email (cũ)
-    [HttpPost("{id}/gui-xac-nhan")]
-    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
-    public async Task<IActionResult> GuiEmailXacNhan(Guid id, [FromBody] GuiEmailRequestDto request)
-    {
-        await _contractService.GuiEmailXacNhanAsync(id, request.Email);
-        return Ok(new { message = "Email xác nhận đã được gửi đi." });
-    }
-
-    // Endpoint cho frontend lấy nội dung hợp đồng (cũ)
-    [HttpGet("xac-nhan/{token}")]
-    [AllowAnonymous]
-    public async Task<IActionResult> LayNoiDung(string token)
-    {
-        try
+        /// <summary>
+        /// Xác nhận hợp đồng với token
+        /// </summary>
+        [HttpPost("Confirm")]
+        public async Task<ActionResult<ResponseDto<ContractDto>>> Confirm([FromBody] ConfirmContractDto body)
         {
-            var data = await _contractService.LayHopDongDeXacNhanAsync(token);
-            return Ok(data);
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+            var ua = Request.Headers["User-Agent"].ToString();
+            var result = await _contractService.ConfirmContractAsync(body.ContractId, body.Token, ip, ua);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
         }
-        catch (Exception ex)
+
+        /// <summary>
+        /// Lấy hợp đồng theo booking ID
+        /// </summary>
+        [HttpGet("Get-By-Booking/{bookingId}")]
+        public async Task<ActionResult<ResponseDto<ContractDto>>> GetByBooking(Guid bookingId)
         {
-            return BadRequest(new { message = ex.Message });
+            var result = await _contractService.GetContractByBookingIdAsync(bookingId);
+            if (!result.IsSuccess) return NotFound(result);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy danh sách hợp đồng của người thuê
+        /// </summary>
+        [HttpGet("Get-By-Renter/{renterId}")]
+        public async Task<ActionResult<ResponseDto<List<ContractDto>>>> GetByRenter(Guid renterId)
+        {
+            var result = await _contractService.GetContractsByRenterAsync(renterId);
+            return Ok(result);
         }
     }
-
-    #endregion
 }

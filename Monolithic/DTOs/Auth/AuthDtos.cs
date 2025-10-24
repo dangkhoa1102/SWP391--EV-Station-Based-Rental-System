@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using Monolithic.Common;
 
 namespace Monolithic.DTOs.Auth
 {
@@ -45,7 +47,9 @@ namespace Monolithic.DTOs.Auth
         public string LastName { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
         public string UserRole { get; set; } = string.Empty;
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime CreatedAt { get; set; }
+        [JsonConverter(typeof(NullableDateTimeConverter))]
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; }
     }

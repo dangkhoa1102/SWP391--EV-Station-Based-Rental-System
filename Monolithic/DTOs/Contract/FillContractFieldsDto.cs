@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using Monolithic.Common;
 
 namespace Monolithic.DTOs.Contract
 {
@@ -27,8 +29,10 @@ namespace Monolithic.DTOs.Contract
         public string PhoneNumber { get; set; } = string.Empty;
 
         [Required]
+        [JsonConverter(typeof(DateTimeConverter))]
         public DateTime StartTime { get; set; }
 
+        [JsonConverter(typeof(NullableDateTimeConverter))]
         public DateTime? EndTime { get; set; }
 
         [Required]
@@ -45,4 +49,6 @@ namespace Monolithic.DTOs.Contract
 
         [Required]
         [Range(typeof(bool), "true", "true", ErrorMessage = "AcceptTerms must be true")]
-        public bool AcceptTerms { get; set; }    }}
+        public bool AcceptTerms { get; set; }
+    }
+}

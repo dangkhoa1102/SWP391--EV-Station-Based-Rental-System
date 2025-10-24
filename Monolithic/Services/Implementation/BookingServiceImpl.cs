@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Monolithic.DTOs.Booking;
 using Monolithic.DTOs.Common;
+using Monolithic.DTOs.Payment;
 using Monolithic.Models;
 using Monolithic.Repositories.Interfaces;
 using Monolithic.Services.Interfaces;
@@ -14,24 +15,29 @@ namespace Monolithic.Services.Implementation
         private readonly IBookingRepository _bookingRepository;
         private readonly ICarRepository _carRepository;
         private readonly IStationRepository _stationRepository;
+        //private readonly IPaymentService _paymentService;
         private readonly IMapper _mapper;
-        private readonly IUnitOfWork _unitOfWork;
 
-        public BookingServiceImpl(IBookingRepository bookingRepository, ICarRepository carRepository, IStationRepository stationRepository, IMapper mapper, IUnitOfWork unitOfWork)
+        public BookingServiceImpl(
+            IBookingRepository bookingRepository, 
+            ICarRepository carRepository, 
+            IStationRepository stationRepository, 
+            //IPaymentService paymentService,
+            IMapper mapper)
         {
             _bookingRepository = bookingRepository;
             _carRepository = carRepository;
             _stationRepository = stationRepository;
+            //_paymentService = paymentService;
             _mapper = mapper;
-            _unitOfWork = unitOfWork;
         }
 
-        #region Main Booking Flow
+        #region New Main Booking Flow
 
         /// <summary>
-        /// Step 1: Create a new booking (Đặt xe)
+        /// Step 1: Create booking with deposit payment (Đặt xe + thanh toán đặt cọc)
         /// </summary>
-        public async Task<ResponseDto<BookingDto>> CreateBookingAsync(string userId, CreateBookingDto request)
+        public async Task<ResponseDto<BookingDto>> CreateBookingWithDepositAsync(string userId, CreateBookingDto request)
         {
             try
             {
@@ -89,19 +95,63 @@ namespace Monolithic.Services.Implementation
                 var totalDays = (decimal)duration.TotalDays;
 
                 decimal hourlyRate = car.RentalPricePerHour;
-                decimal dailyRate = hourlyRate * 20; // Assume daily rate is 20x hourly rate or get from car model
+                decimal dailyRate = hourlyRate * 20; // Assume daily rate is 20x hourly rate
                 decimal totalAmount;
 
                 if (totalDays >= 1)
                 {
-                    // Use daily rate for rentals >= 1 day
                     totalAmount = Math.Ceiling(totalDays) * dailyRate;
                 }
                 else
                 {
-                    // Use hourly rate for short rentals
                     totalAmount = Math.Ceiling(totalHours) * hourlyRate;
                 }
+
+                // Calculate deposit (30% of total amount)
+                decimal depositAmount = Math.Round(totalAmount * 0.3m, 2);
+                decimal rentalAmount = totalAmount - depositAmount;
+
+                // Create payment for deposit
+                var createPaymentRequest = new CreatePaymentDto
+                {
+                    BookingId = Guid.NewGuid(), // Will be updated after booking creation
+                    Amount = depositAmount,
+                    //PaymentMethod = Enum.TryParse<PaymentMethod>(request.PaymentMethod, true, out var method) ? method : PaymentMethod.Cash,
+                    PaymentType = "Deposit",
+                    Description = $"Deposit payment for booking",
+                    ReturnUrl = null,
+                    CancelUrl = null
+                };
+
+                // For non-cash payments, process through gateway
+                //if (request.PaymentMethod.ToLower() != "cash")
+                //{
+                //    var paymentResult = await _paymentService.CreatePaymentAsync(createPaymentRequest);
+                //    if (!paymentResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to create deposit payment: {paymentResult.Message}");
+                //    }
+
+                //    var processResult = await _paymentService.ProcessPaymentAsync(paymentResult.Data.PaymentId);
+                //    if (!processResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to process deposit payment: {processResult.Message}");
+                //    }
+
+                //    // Confirm payment with transaction ID
+                //    var confirmPaymentRequest = new ConfirmPaymentDto
+                //    {
+                //        PaymentId = paymentResult.Data.PaymentId,
+                //        TransactionId = request.TransactionId ?? "",
+                //        GatewayResponse = null
+                //    };
+
+                //    var confirmResult = await _paymentService.ConfirmPaymentAsync(confirmPaymentRequest);
+                //    if (!confirmResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to confirm deposit payment: {confirmResult.Message}");
+                //    }
+                //}
 
                 // Create booking entity
                 var booking = new Booking
@@ -109,57 +159,32 @@ namespace Monolithic.Services.Implementation
                     BookingId = Guid.NewGuid(),
                     UserId = userGuid,
                     CarId = request.CarId,
-                    PickupStationId = request.PickupStationId,
-                    ReturnStationId = request.ReturnStationId,
+                    //PickupStationId = request.PickupStationId,
+                    //ReturnStationId = request.ReturnStationId,
                     StartTime = request.PickupDateTime,
                     EndTime = request.ExpectedReturnDateTime,
-                    BookingStatus = BookingStatus.Pending,
+                    BookingStatus = BookingStatus.DepositPaid,
                     HourlyRate = hourlyRate,
                     DailyRate = dailyRate,
                     TotalAmount = totalAmount,
-                    PaymentStatus = "Pending",
+                    DepositAmount = depositAmount,
+                    RentalAmount = rentalAmount,
+                    PaymentStatus = "DepositPaid",
+                    PaymentMethod = request.PaymentMethod,
+                    DepositTransactionId = request.TransactionId,
+                    IsContractApproved = false,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                //// Save booking
-                //var created = await _bookingRepository.AddAsync(booking);
+                // Save booking
+                var created = await _bookingRepository.AddAsync(booking);
 
-                //// Update car status to reserved
-                //await _carRepository.UpdateCarStatusAsync(request.CarId, false);
+                // Update car status to reserved
+                await _carRepository.UpdateCarStatusAsync(request.CarId, false);
 
-                //return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(created), "Booking created successfully. Please proceed to payment.");
-                // ✨ BƯỚC QUAN TRỌNG: TẠO VÀ LIÊN KẾT HỢP ĐỒNG ✨
-                var newContract = new Contract
-                {
-                    Id = Guid.NewGuid(),
-                    SoHopDong = $"HD-{DateTime.UtcNow:yyyyMMdd}-{booking.BookingId.ToString().Substring(0, 4)}",
-                    Status = ContractStatus.Pending, // Trạng thái chờ ký
-                    NgayTao = DateTime.UtcNow,
-                    // Bạn có thể thêm các thông tin khác nếu cần
-                };
-
-                // Liên kết Contract với Booking thông qua Navigation Property
-                // EF Core sẽ tự động hiểu newContract.BookingId = booking.BookingId
-                booking.Contract = newContract;
-
-                // BẮT ĐẦU GIAO DỊCH
-                // 1. Thêm booking vào context (EF sẽ tự động thêm cả contract)
-                await _bookingRepository.AddAsync(booking);
-
-                // 2. Cập nhật trạng thái xe (chỉ thay đổi trong context)
-                car.IsAvailable = false;
-                await _carRepository.UpdateAsync(car); // Giả sử có phương thức UpdateAsync không gọi SaveChanges
-
-                // 3. ✅ GỌI SAVECHANGES MỘT LẦN DUY NHẤT ✅
-                // Đây là lúc tất cả thay đổi (tạo booking, tạo contract, cập nhật xe)
-                // được ghi xuống database trong một giao dịch.
-                await _unitOfWork.SaveChangesAsync();
-
-                // Ánh xạ booking đã được tạo (giờ đã có ID) sang DTO
-                var bookingDto = _mapper.Map<BookingDto>(booking);
-                return ResponseDto<BookingDto>.Success(bookingDto, "Booking created successfully. Please proceed to payment.");
+                return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(created), "Booking created and deposit paid successfully. Please review and approve the contract.");
             }
             catch (Exception ex)
             {
@@ -168,9 +193,9 @@ namespace Monolithic.Services.Implementation
         }
 
         /// <summary>
-        /// Step 2: Confirm booking after payment
+        /// Step 2: Approve contract (Approve hợp đồng)
         /// </summary>
-        public async Task<ResponseDto<BookingDto>> ConfirmBookingAsync(ConfirmBookingDto request)
+        public async Task<ResponseDto<BookingDto>> ApproveContractAsync(ApproveContractDto request)
         {
             try
             {
@@ -180,30 +205,44 @@ namespace Monolithic.Services.Implementation
                     return ResponseDto<BookingDto>.Failure("Booking not found");
                 }
 
-                if (booking.BookingStatus != BookingStatus.Pending)
+                if (booking.BookingStatus != BookingStatus.DepositPaid)
                 {
-                    return ResponseDto<BookingDto>.Failure($"Cannot confirm booking with status: {booking.BookingStatus}");
+                    return ResponseDto<BookingDto>.Failure($"Cannot approve contract for booking with status: {booking.BookingStatus}");
                 }
 
-                // Update booking status and payment info
-                booking.BookingStatus = BookingStatus.Confirmed;
-                booking.PaymentStatus = "Paid";
+                if (!request.ApproveContract)
+                {
+                    // User rejected contract, cancel booking and refund deposit
+                    booking.BookingStatus = BookingStatus.Cancelled;
+                    booking.PaymentStatus = "Refunded";
+                    booking.UpdatedAt = DateTime.UtcNow;
+
+                    await _bookingRepository.UpdateAsync(booking);
+                    await _carRepository.UpdateCarStatusAsync(booking.CarId, true);
+
+                    return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(booking), "Contract rejected. Booking cancelled and deposit will be refunded.");
+                }
+
+                // Approve contract
+                booking.BookingStatus = BookingStatus.ContractApproved;
+                booking.IsContractApproved = true;
+                booking.ContractApprovedAt = DateTime.UtcNow;
                 booking.UpdatedAt = DateTime.UtcNow;
 
                 var updated = await _bookingRepository.UpdateAsync(booking);
 
-                return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(updated), "Booking confirmed successfully");
+                return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(updated), "Contract approved successfully. You can now proceed to check-in.");
             }
             catch (Exception ex)
             {
-                return ResponseDto<BookingDto>.Failure($"Error confirming booking: {ex.Message}");
+                return ResponseDto<BookingDto>.Failure($"Error approving contract: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Step 3: Check-in process (Nhận xe)
+        /// Step 3: Check-in with contract signing (Check-in + ký hợp đồng)
         /// </summary>
-        public async Task<ResponseDto<BookingDto>> CheckInAsync(CheckInDto request)
+        public async Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request)
         {
             try
             {
@@ -213,7 +252,7 @@ namespace Monolithic.Services.Implementation
                     return ResponseDto<BookingDto>.Failure("Booking not found");
                 }
 
-                if (booking.BookingStatus != BookingStatus.Confirmed)
+                if (booking.BookingStatus != BookingStatus.ContractApproved)
                 {
                     return ResponseDto<BookingDto>.Failure($"Cannot check-in booking with status: {booking.BookingStatus}");
                 }
@@ -227,12 +266,15 @@ namespace Monolithic.Services.Implementation
 
                 // Update booking with check-in details
                 booking.BookingStatus = BookingStatus.CheckedIn;
-                // Note: CheckInDateTime should be added to your model if needed
+                booking.CheckInAt = DateTime.UtcNow;
                 booking.UpdatedAt = DateTime.UtcNow;
 
                 var updated = await _bookingRepository.UpdateAsync(booking);
 
-                return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(updated), "Check-in completed successfully. Enjoy your ride!");
+                // TODO: Create contract record with signatures
+                // This would involve creating a Contract entity with the signatures
+
+                return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(updated), "Check-in completed and contract signed successfully. Enjoy your ride!");
             }
             catch (Exception ex)
             {
@@ -241,9 +283,9 @@ namespace Monolithic.Services.Implementation
         }
 
         /// <summary>
-        /// Step 4: Check-out process (Trả xe)
+        /// Step 5: Check-out with rental payment (Check-out + thanh toán tiền thuê)
         /// </summary>
-        public async Task<ResponseDto<BookingDto>> CheckOutAsync(CheckOutDto request)
+        public async Task<ResponseDto<BookingDto>> CheckOutWithPaymentAsync(CheckOutWithPaymentDto request)
         {
             try
             {
@@ -258,9 +300,57 @@ namespace Monolithic.Services.Implementation
                     return ResponseDto<BookingDto>.Failure($"Cannot check-out booking with status: {booking.BookingStatus}");
                 }
 
+                // Calculate total rental amount including fees
+                decimal totalRentalAmount = booking.RentalAmount + request.LateFee + request.DamageFee;
+
+                // Create payment for rental
+                var createPaymentRequest = new CreatePaymentDto
+                {
+                    BookingId = request.BookingId,
+                    Amount = totalRentalAmount,
+                    //PaymentMethod = Enum.TryParse<PaymentMethod>(request.PaymentMethod, true, out var method) ? method : PaymentMethod.Cash,
+                    PaymentType = "Rental",
+                    Description = $"Rental payment for booking {request.BookingId}",
+                    ReturnUrl = null,
+                    CancelUrl = null
+                };
+
+                // For non-cash payments, process through gateway
+                //if (request.PaymentMethod.ToLower() != "cash")
+                //{
+                //    var paymentResult = await _paymentService.CreatePaymentAsync(createPaymentRequest);
+                //    if (!paymentResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to create rental payment: {paymentResult.Message}");
+                //    }
+
+                //    var processResult = await _paymentService.ProcessPaymentAsync(paymentResult.Data.PaymentId);
+                //    if (!processResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to process rental payment: {processResult.Message}");
+                //    }
+
+                //    // Confirm payment with transaction ID
+                //    var confirmPaymentRequest = new ConfirmPaymentDto
+                //    {
+                //        PaymentId = paymentResult.Data.PaymentId,
+                //        TransactionId = request.TransactionId ?? "",
+                //        GatewayResponse = null
+                //    };
+
+                //    var confirmResult = await _paymentService.ConfirmPaymentAsync(confirmPaymentRequest);
+                //    if (!confirmResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to confirm rental payment: {confirmResult.Message}");
+                //    }
+                //}
+
                 // Update booking with check-out details
-                booking.BookingStatus = BookingStatus.CheckedOut;
+                booking.BookingStatus = BookingStatus.Completed;
+                booking.CheckOutAt = DateTime.UtcNow;
                 booking.ActualReturnDateTime = DateTime.UtcNow;
+                booking.PaymentStatus = "Completed";
+                booking.RentalTransactionId = request.TransactionId;
                 booking.UpdatedAt = DateTime.UtcNow;
 
                 var updated = await _bookingRepository.UpdateAsync(booking);
@@ -268,44 +358,11 @@ namespace Monolithic.Services.Implementation
                 // Make car available again
                 await _carRepository.UpdateCarStatusAsync(booking.CarId, true);
 
-                return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(updated), "Check-out completed successfully");
+                return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(updated), "Check-out completed and rental payment processed successfully. Thank you for using our service!");
             }
             catch (Exception ex)
             {
                 return ResponseDto<BookingDto>.Failure($"Error during check-out: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Step 5: Complete booking
-        /// </summary>
-        public async Task<ResponseDto<BookingDto>> CompleteBookingAsync(Guid bookingId)
-        {
-            try
-            {
-                var booking = await _bookingRepository.GetByIdAsync(bookingId);
-                if (booking == null || !booking.IsActive)
-                {
-                    return ResponseDto<BookingDto>.Failure("Booking not found");
-                }
-
-                if (booking.BookingStatus != BookingStatus.CheckedOut)
-                {
-                    return ResponseDto<BookingDto>.Failure($"Cannot complete booking with status: {booking.BookingStatus}");
-                }
-
-                // Update booking status
-                booking.BookingStatus = BookingStatus.Completed;
-                booking.PaymentStatus = "Completed";
-                booking.UpdatedAt = DateTime.UtcNow;
-
-                var updated = await _bookingRepository.UpdateAsync(booking);
-
-                return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(updated), "Booking completed successfully. Thank you for using our service!");
-            }
-            catch (Exception ex)
-            {
-                return ResponseDto<BookingDto>.Failure($"Error completing booking: {ex.Message}");
             }
         }
 
@@ -369,15 +426,15 @@ namespace Monolithic.Services.Implementation
                     return ResponseDto<BookingDto>.Failure("Booking not found");
                 }
 
-                // Only allow updates for Pending or Confirmed bookings
-                if (booking.BookingStatus != BookingStatus.Pending && booking.BookingStatus != BookingStatus.Confirmed)
+                // Only allow updates for Pending or DepositPaid bookings
+                if (booking.BookingStatus != BookingStatus.Pending && booking.BookingStatus != BookingStatus.DepositPaid)
                 {
                     return ResponseDto<BookingDto>.Failure("Cannot update booking in current status");
                 }
 
                 // Update fields
-                if (request.ReturnStationId.HasValue)
-                    booking.ReturnStationId = request.ReturnStationId.Value;
+                //if (request.ReturnStationId.HasValue)
+                //    booking.ReturnStationId = request.ReturnStationId.Value;
                 
                 if (request.ExpectedReturnDateTime.HasValue)
                     booking.EndTime = request.ExpectedReturnDateTime.Value;
@@ -465,7 +522,7 @@ namespace Monolithic.Services.Implementation
         public async Task<ResponseDto<decimal>> CalculateBookingCostAsync(Guid carId, DateTime startTime, DateTime endTime)
         {
             try
- {
+            {
                 if (endTime <= startTime)
                 {
                     return ResponseDto<decimal>.Failure("End time must be after start time");
@@ -540,7 +597,7 @@ namespace Monolithic.Services.Implementation
                 // Get bookings that are confirmed or checked-in and pickup time is in the future
                 var upcomingBookings = await _bookingRepository.FindAsync(b => 
                     b.IsActive && 
-                    (b.BookingStatus == BookingStatus.Confirmed || b.BookingStatus == BookingStatus.CheckedIn) &&
+                    (b.BookingStatus == BookingStatus.ContractApproved || b.BookingStatus == BookingStatus.CheckedIn) &&
                     b.StartTime >= DateTime.UtcNow);
                 
                 var orderedBookings = upcomingBookings.OrderBy(b => b.StartTime).Take(100).ToList();

@@ -74,7 +74,7 @@ builder.Services.AddScoped<IAuthorizeService, AuthorizeService>();
 // ✅ Properly register UserServiceClient with base URL
 builder.Services.AddHttpClient<UserServiceClient>(client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7002"); // <-- Change to your UserAPI port
+    client.BaseAddress = new Uri("http://localhost:5054"); // <-- Monolithic API port
 });
 
 // ----------------------------

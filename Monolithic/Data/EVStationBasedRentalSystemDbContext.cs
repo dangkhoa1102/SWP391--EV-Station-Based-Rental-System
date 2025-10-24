@@ -17,6 +17,7 @@ namespace Monolithic.Data
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<Incident> Incidents { get; set; }
         public DbSet<Contract> Contracts { get; set; }
+        public DbSet<Payment> Payments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -37,33 +38,33 @@ namespace Monolithic.Data
             });
 
             // Contract configuration
-            //builder.Entity<Contract>(entity =>
-            //{
-            //    entity.HasKey(c => c.ContractId);
-            //    entity.Property(c => c.ContractId).HasDefaultValueSql("NEWID()");
-            //    entity.Property(c => c.BookingId).IsRequired();
-            //    entity.Property(c => c.RenterId).IsRequired();
-            //    entity.Property(c => c.ContractContent).IsRequired().HasMaxLength(4000);
-            //    entity.Property(c => c.ContractContentHash).IsRequired().HasMaxLength(128);
-            //    entity.Property(c => c.SignatureType).IsRequired().HasMaxLength(50);
-            //    entity.Property(c => c.SignatureValue).HasMaxLength(256);
-            //    entity.Property(c => c.SignerEmail).HasMaxLength(256);
-            //    entity.Property(c => c.ConfirmationTokenHash).HasMaxLength(128);
-            //    entity.Property(c => c.TokenExpiresAt);
-            //    entity.Property(c => c.IsConfirmed).HasDefaultValue(false);
-            //    entity.Property(c => c.ConfirmedAt);
-            //    entity.Property(c => c.ConfirmedFromIp).HasMaxLength(100);
-            //    entity.Property(c => c.ConfirmedUserAgent).HasMaxLength(512);
-            //    entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            builder.Entity<Contract>(entity =>
+            {
+                entity.HasKey(c => c.ContractId);
+                entity.Property(c => c.ContractId).HasDefaultValueSql("NEWID()");
+                entity.Property(c => c.BookingId).IsRequired();
+                entity.Property(c => c.RenterId).IsRequired();
+                entity.Property(c => c.ContractContent).IsRequired().HasMaxLength(4000);
+                entity.Property(c => c.ContractContentHash).IsRequired().HasMaxLength(128);
+                entity.Property(c => c.SignatureType).IsRequired().HasMaxLength(50);
+                entity.Property(c => c.SignatureValue).HasMaxLength(256);
+                entity.Property(c => c.SignerEmail).HasMaxLength(256);
+                entity.Property(c => c.ConfirmationTokenHash).HasMaxLength(128);
+                entity.Property(c => c.TokenExpiresAt);
+                entity.Property(c => c.IsConfirmed).HasDefaultValue(false);
+                entity.Property(c => c.ConfirmedAt);
+                entity.Property(c => c.ConfirmedFromIp).HasMaxLength(100);
+                entity.Property(c => c.ConfirmedUserAgent).HasMaxLength(512);
+                entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 
-            //    entity.HasOne<Booking>()
-            //          .WithMany()
-            //          .HasForeignKey(c => c.BookingId)
-            //          .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne<Booking>()
+                      .WithMany()
+                      .HasForeignKey(c => c.BookingId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
-            //    entity.HasIndex(c => c.BookingId);
-            //    entity.HasIndex(c => c.RenterId);
-            //});
+                entity.HasIndex(c => c.BookingId);
+                entity.HasIndex(c => c.RenterId);
+            });
 
             // Configure Station entity
             builder.Entity<Station>(entity =>
@@ -126,16 +127,16 @@ namespace Monolithic.Data
                       .OnDelete(DeleteBehavior.Restrict);
 
                 // Booking-PickupStation relationship
-                entity.HasOne(b => b.PickupStation)
-                      .WithMany(s => s.PickupBookings)
-                      .HasForeignKey(b => b.PickupStationId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                //entity.HasOne(b => b.PickupStation)
+                //      .WithMany(s => s.PickupBookings)
+                //      .HasForeignKey(b => b.PickupStationId)
+                //      .OnDelete(DeleteBehavior.Restrict);
 
-                // Booking-DropoffStation relationship (optional)
-                entity.HasOne(b => b.ReturnStation)
-                      .WithMany(s => s.DropoffBookings)
-                      .HasForeignKey(b => b.ReturnStationId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                //// Booking-DropoffStation relationship (optional)
+                //entity.HasOne(b => b.ReturnStation)
+                //      .WithMany(s => s.DropoffBookings)
+                //      .HasForeignKey(b => b.ReturnStationId)
+                //      .OnDelete(DeleteBehavior.SetNull);
             });
 
             // Configure Feedback entity
@@ -164,76 +165,68 @@ namespace Monolithic.Data
             });
 
             // Incident configuration
-            //builder.Entity<Incident>(entity =>
-            //{
-            //    entity.HasKey(e => e.Id);
-            //    entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
-            //    entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
-            //    entity.Property(e => e.ResolutionNotes).HasMaxLength(500);
+            builder.Entity<Incident>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.ResolutionNotes).HasMaxLength(500);
 
-            //    // Relationship with Booking
-            //    entity.HasOne(e => e.Booking)
+                // Relationship with Booking
+                entity.HasOne(e => e.Booking)
+                      .WithMany()
+                      .HasForeignKey(e => e.BookingId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Indexes for better performance
+                entity.HasIndex(e => e.BookingId);
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.StationId);
+                entity.HasIndex(e => e.ReportedAt);
+            });
+
+            builder.Entity<Booking>()
+       .HasOne(b => b.Station)
+       .WithMany(s => s.Bookings)
+       .HasForeignKey(b => b.StationId)
+       .OnDelete(DeleteBehavior.Restrict);
+
+
+            // Payment configuration
+            //builder.Entity<Payment>(entity =>
+            //{
+            //    entity.HasKey(p => p.PaymentId);
+            //    entity.Property(p => p.PaymentId).HasDefaultValueSql("NEWID()");
+            //    entity.Property(p => p.BookingId).IsRequired();
+            //    entity.Property(p => p.TransactionId).IsRequired().HasMaxLength(100);
+            //    entity.Property(p => p.Amount).HasPrecision(10, 2);
+            //    entity.Property(p => p.PaymentMethod).IsRequired().HasConversion<string>();
+            //    entity.Property(p => p.PaymentStatus).IsRequired().HasConversion<string>();
+            //    entity.Property(p => p.GatewayName).HasMaxLength(50);
+            //    entity.Property(p => p.GatewayTransactionId).HasMaxLength(500);
+            //    entity.Property(p => p.GatewayResponse).HasMaxLength(1000);
+            //    entity.Property(p => p.Description).HasMaxLength(500);
+            //    entity.Property(p => p.FailureReason).HasMaxLength(1000);
+            //    entity.Property(p => p.RefundTransactionId).HasMaxLength(100);
+            //    entity.Property(p => p.RefundReason).HasMaxLength(500);
+            //    entity.Property(p => p.IsActive).HasDefaultValue(true);
+            //    entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            //    entity.Property(p => p.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            //    // Payment-Booking relationship
+            //    entity.HasOne(p => p.Booking)
             //          .WithMany()
-            //          .HasForeignKey(e => e.BookingId)
+            //          .HasForeignKey(p => p.BookingId)
             //          .OnDelete(DeleteBehavior.Restrict);
 
             //    // Indexes for better performance
-            //    entity.HasIndex(e => e.BookingId);
-            //    entity.HasIndex(e => e.Status);
-            //    entity.HasIndex(e => e.StationId);
-            //    entity.HasIndex(e => e.ReportedAt);
+            //    entity.HasIndex(p => p.BookingId);
+            //    entity.HasIndex(p => p.TransactionId).IsUnique();
+            //    entity.HasIndex(p => p.PaymentMethod);
+            //    entity.HasIndex(p => p.PaymentStatus);
+            //    entity.HasIndex(p => p.CreatedAt);
+            //    entity.HasIndex(p => p.ExpiredAt);
             //});
-            builder.Entity<Incident>(entity =>
-            {
-                // --- Khóa chính ---
-                entity.HasKey(e => e.Id);
-
-                // --- C?u hình thu?c tính ---
-                entity.Property(e => e.Description)
-                      .IsRequired()
-                      .HasMaxLength(1000);
-
-                // C?u hình cho Enum Status, l?u d??i d?ng chu?i trong DB cho d? ??c
-                entity.Property(e => e.Status)
-                      .IsRequired()
-                      .HasConversion<string>()
-                      .HasMaxLength(50)
-                      .HasDefaultValue(IncidentStatus.Reported);
-
-                // ResolvedAt có th? null vì s? c? có th? ch?a ???c gi?i quy?t
-                entity.Property(e => e.ResolvedAt)
-                      .IsRequired(false);
-
-                // --- C?u hình giá tr? m?c ??nh & t? ??ng ---
-                // ?? DB t? gán ngày gi? t?o (UTC)
-                entity.Property(e => e.CreatedAt)
-                      .HasDefaultValueSql("GETUTCDATE()");
-
-                // UpdatedAt nên ???c x? lý b?i logic trong DbContext.SaveChangesAsync ?? t? ??ng c?p nh?t
-                // N?u b?n mu?n DB x? lý, b?n s? c?n trigger, nên cách dùng DbContext t?t h?n.
-                entity.Property(e => e.UpdatedAt)
-                      .IsRequired();
-
-                entity.Property(e => e.ReportedAt)
-                      .IsRequired();
-
-                // --- C?u hình quan h? ---
-                // Quan h? m?t-nhi?u: M?t Booking có th? có nhi?u Incident
-                entity.HasOne(i => i.Booking)          // M?t Incident thu?c v? m?t Booking
-                      .WithMany()                     // M?t Booking có th? có nhi?u Incident (không c?n ch? rõ navigation property trong Booking)
-                      .HasForeignKey(i => i.BookingId)  // Khóa ngo?i là BookingId
-                      .OnDelete(DeleteBehavior.Restrict); // Ng?n vi?c xóa Booking n?u v?n còn Incident liên quan
-            });
-
-            // Configure Contract entity            
-            builder.Entity<Contract>(entity =>
-            {
-                // M?t Booking ch? có m?t H?p ??ng (quan h? 1-1)
-                entity.HasOne(h => h.Booking)
-                  .WithOne(b => b.Contract) // Thêm navigation property vào class Booking
-                  .HasForeignKey<Contract>(h => h.BookingId)
-                  .OnDelete(DeleteBehavior.Cascade); // Xóa Booking thì xóa luôn H?p ??ng
-            });
 
             // Configure indexes for better performance
             builder.Entity<Car>()
