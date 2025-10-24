@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251024194351_AddDocumentImageUrlsToRenter")]
+    partial class AddDocumentImageUrlsToRenter
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -521,18 +524,6 @@ namespace Monolithic.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CccdImagePublicId_Back")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CccdImagePublicId_Front")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CccdImageUrl_Back")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CccdImageUrl_Front")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -556,25 +547,10 @@ namespace Monolithic.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("GplxImagePublicId_Back")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GplxImagePublicId_Front")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GplxImageUrl_Back")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GplxImageUrl_Front")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
-
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("bit");
 
                     b.Property<string>("LastName")
                         .IsRequired()

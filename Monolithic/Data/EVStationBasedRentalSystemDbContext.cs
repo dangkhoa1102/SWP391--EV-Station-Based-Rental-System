@@ -127,16 +127,16 @@ namespace Monolithic.Data
                       .OnDelete(DeleteBehavior.Restrict);
 
                 // Booking-PickupStation relationship
-                entity.HasOne(b => b.PickupStation)
-                      .WithMany(s => s.PickupBookings)
-                      .HasForeignKey(b => b.PickupStationId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                //entity.HasOne(b => b.PickupStation)
+                //      .WithMany(s => s.PickupBookings)
+                //      .HasForeignKey(b => b.PickupStationId)
+                //      .OnDelete(DeleteBehavior.Restrict);
 
-                // Booking-DropoffStation relationship (optional)
-                entity.HasOne(b => b.ReturnStation)
-                      .WithMany(s => s.DropoffBookings)
-                      .HasForeignKey(b => b.ReturnStationId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                //// Booking-DropoffStation relationship (optional)
+                //entity.HasOne(b => b.ReturnStation)
+                //      .WithMany(s => s.DropoffBookings)
+                //      .HasForeignKey(b => b.ReturnStationId)
+                //      .OnDelete(DeleteBehavior.SetNull);
             });
 
             // Configure Feedback entity
@@ -185,41 +185,48 @@ namespace Monolithic.Data
                 entity.HasIndex(e => e.ReportedAt);
             });
 
+            builder.Entity<Booking>()
+       .HasOne(b => b.Station)
+       .WithMany(s => s.Bookings)
+       .HasForeignKey(b => b.StationId)
+       .OnDelete(DeleteBehavior.Restrict);
+
+
             // Payment configuration
-            builder.Entity<Payment>(entity =>
-            {
-                entity.HasKey(p => p.PaymentId);
-                entity.Property(p => p.PaymentId).HasDefaultValueSql("NEWID()");
-                entity.Property(p => p.BookingId).IsRequired();
-                entity.Property(p => p.TransactionId).IsRequired().HasMaxLength(100);
-                entity.Property(p => p.Amount).HasPrecision(10, 2);
-                entity.Property(p => p.PaymentMethod).IsRequired().HasConversion<string>();
-                entity.Property(p => p.PaymentStatus).IsRequired().HasConversion<string>();
-                entity.Property(p => p.GatewayName).HasMaxLength(50);
-                entity.Property(p => p.GatewayTransactionId).HasMaxLength(500);
-                entity.Property(p => p.GatewayResponse).HasMaxLength(1000);
-                entity.Property(p => p.Description).HasMaxLength(500);
-                entity.Property(p => p.FailureReason).HasMaxLength(1000);
-                entity.Property(p => p.RefundTransactionId).HasMaxLength(100);
-                entity.Property(p => p.RefundReason).HasMaxLength(500);
-                entity.Property(p => p.IsActive).HasDefaultValue(true);
-                entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-                entity.Property(p => p.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            //builder.Entity<Payment>(entity =>
+            //{
+            //    entity.HasKey(p => p.PaymentId);
+            //    entity.Property(p => p.PaymentId).HasDefaultValueSql("NEWID()");
+            //    entity.Property(p => p.BookingId).IsRequired();
+            //    entity.Property(p => p.TransactionId).IsRequired().HasMaxLength(100);
+            //    entity.Property(p => p.Amount).HasPrecision(10, 2);
+            //    entity.Property(p => p.PaymentMethod).IsRequired().HasConversion<string>();
+            //    entity.Property(p => p.PaymentStatus).IsRequired().HasConversion<string>();
+            //    entity.Property(p => p.GatewayName).HasMaxLength(50);
+            //    entity.Property(p => p.GatewayTransactionId).HasMaxLength(500);
+            //    entity.Property(p => p.GatewayResponse).HasMaxLength(1000);
+            //    entity.Property(p => p.Description).HasMaxLength(500);
+            //    entity.Property(p => p.FailureReason).HasMaxLength(1000);
+            //    entity.Property(p => p.RefundTransactionId).HasMaxLength(100);
+            //    entity.Property(p => p.RefundReason).HasMaxLength(500);
+            //    entity.Property(p => p.IsActive).HasDefaultValue(true);
+            //    entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            //    entity.Property(p => p.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 
-                // Payment-Booking relationship
-                entity.HasOne(p => p.Booking)
-                      .WithMany()
-                      .HasForeignKey(p => p.BookingId)
-                      .OnDelete(DeleteBehavior.Restrict);
+            //    // Payment-Booking relationship
+            //    entity.HasOne(p => p.Booking)
+            //          .WithMany()
+            //          .HasForeignKey(p => p.BookingId)
+            //          .OnDelete(DeleteBehavior.Restrict);
 
-                // Indexes for better performance
-                entity.HasIndex(p => p.BookingId);
-                entity.HasIndex(p => p.TransactionId).IsUnique();
-                entity.HasIndex(p => p.PaymentMethod);
-                entity.HasIndex(p => p.PaymentStatus);
-                entity.HasIndex(p => p.CreatedAt);
-                entity.HasIndex(p => p.ExpiredAt);
-            });
+            //    // Indexes for better performance
+            //    entity.HasIndex(p => p.BookingId);
+            //    entity.HasIndex(p => p.TransactionId).IsUnique();
+            //    entity.HasIndex(p => p.PaymentMethod);
+            //    entity.HasIndex(p => p.PaymentStatus);
+            //    entity.HasIndex(p => p.CreatedAt);
+            //    entity.HasIndex(p => p.ExpiredAt);
+            //});
 
             // Configure indexes for better performance
             builder.Entity<Car>()

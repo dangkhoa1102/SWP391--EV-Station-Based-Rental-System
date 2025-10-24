@@ -15,20 +15,20 @@ namespace Monolithic.Services.Implementation
         private readonly IBookingRepository _bookingRepository;
         private readonly ICarRepository _carRepository;
         private readonly IStationRepository _stationRepository;
-        private readonly IPaymentService _paymentService;
+        //private readonly IPaymentService _paymentService;
         private readonly IMapper _mapper;
 
         public BookingServiceImpl(
             IBookingRepository bookingRepository, 
             ICarRepository carRepository, 
             IStationRepository stationRepository, 
-            IPaymentService paymentService,
+            //IPaymentService paymentService,
             IMapper mapper)
         {
             _bookingRepository = bookingRepository;
             _carRepository = carRepository;
             _stationRepository = stationRepository;
-            _paymentService = paymentService;
+            //_paymentService = paymentService;
             _mapper = mapper;
         }
 
@@ -116,7 +116,7 @@ namespace Monolithic.Services.Implementation
                 {
                     BookingId = Guid.NewGuid(), // Will be updated after booking creation
                     Amount = depositAmount,
-                    PaymentMethod = Enum.TryParse<PaymentMethod>(request.PaymentMethod, true, out var method) ? method : PaymentMethod.Cash,
+                    //PaymentMethod = Enum.TryParse<PaymentMethod>(request.PaymentMethod, true, out var method) ? method : PaymentMethod.Cash,
                     PaymentType = "Deposit",
                     Description = $"Deposit payment for booking",
                     ReturnUrl = null,
@@ -124,34 +124,34 @@ namespace Monolithic.Services.Implementation
                 };
 
                 // For non-cash payments, process through gateway
-                if (request.PaymentMethod.ToLower() != "cash")
-                {
-                    var paymentResult = await _paymentService.CreatePaymentAsync(createPaymentRequest);
-                    if (!paymentResult.IsSuccess)
-                    {
-                        return ResponseDto<BookingDto>.Failure($"Failed to create deposit payment: {paymentResult.Message}");
-                    }
+                //if (request.PaymentMethod.ToLower() != "cash")
+                //{
+                //    var paymentResult = await _paymentService.CreatePaymentAsync(createPaymentRequest);
+                //    if (!paymentResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to create deposit payment: {paymentResult.Message}");
+                //    }
 
-                    var processResult = await _paymentService.ProcessPaymentAsync(paymentResult.Data.PaymentId);
-                    if (!processResult.IsSuccess)
-                    {
-                        return ResponseDto<BookingDto>.Failure($"Failed to process deposit payment: {processResult.Message}");
-                    }
+                //    var processResult = await _paymentService.ProcessPaymentAsync(paymentResult.Data.PaymentId);
+                //    if (!processResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to process deposit payment: {processResult.Message}");
+                //    }
 
-                    // Confirm payment with transaction ID
-                    var confirmPaymentRequest = new ConfirmPaymentDto
-                    {
-                        PaymentId = paymentResult.Data.PaymentId,
-                        TransactionId = request.TransactionId ?? "",
-                        GatewayResponse = null
-                    };
+                //    // Confirm payment with transaction ID
+                //    var confirmPaymentRequest = new ConfirmPaymentDto
+                //    {
+                //        PaymentId = paymentResult.Data.PaymentId,
+                //        TransactionId = request.TransactionId ?? "",
+                //        GatewayResponse = null
+                //    };
 
-                    var confirmResult = await _paymentService.ConfirmPaymentAsync(confirmPaymentRequest);
-                    if (!confirmResult.IsSuccess)
-                    {
-                        return ResponseDto<BookingDto>.Failure($"Failed to confirm deposit payment: {confirmResult.Message}");
-                    }
-                }
+                //    var confirmResult = await _paymentService.ConfirmPaymentAsync(confirmPaymentRequest);
+                //    if (!confirmResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to confirm deposit payment: {confirmResult.Message}");
+                //    }
+                //}
 
                 // Create booking entity
                 var booking = new Booking
@@ -159,8 +159,8 @@ namespace Monolithic.Services.Implementation
                     BookingId = Guid.NewGuid(),
                     UserId = userGuid,
                     CarId = request.CarId,
-                    PickupStationId = request.PickupStationId,
-                    ReturnStationId = request.ReturnStationId,
+                    //PickupStationId = request.PickupStationId,
+                    //ReturnStationId = request.ReturnStationId,
                     StartTime = request.PickupDateTime,
                     EndTime = request.ExpectedReturnDateTime,
                     BookingStatus = BookingStatus.DepositPaid,
@@ -308,7 +308,7 @@ namespace Monolithic.Services.Implementation
                 {
                     BookingId = request.BookingId,
                     Amount = totalRentalAmount,
-                    PaymentMethod = Enum.TryParse<PaymentMethod>(request.PaymentMethod, true, out var method) ? method : PaymentMethod.Cash,
+                    //PaymentMethod = Enum.TryParse<PaymentMethod>(request.PaymentMethod, true, out var method) ? method : PaymentMethod.Cash,
                     PaymentType = "Rental",
                     Description = $"Rental payment for booking {request.BookingId}",
                     ReturnUrl = null,
@@ -316,34 +316,34 @@ namespace Monolithic.Services.Implementation
                 };
 
                 // For non-cash payments, process through gateway
-                if (request.PaymentMethod.ToLower() != "cash")
-                {
-                    var paymentResult = await _paymentService.CreatePaymentAsync(createPaymentRequest);
-                    if (!paymentResult.IsSuccess)
-                    {
-                        return ResponseDto<BookingDto>.Failure($"Failed to create rental payment: {paymentResult.Message}");
-                    }
+                //if (request.PaymentMethod.ToLower() != "cash")
+                //{
+                //    var paymentResult = await _paymentService.CreatePaymentAsync(createPaymentRequest);
+                //    if (!paymentResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to create rental payment: {paymentResult.Message}");
+                //    }
 
-                    var processResult = await _paymentService.ProcessPaymentAsync(paymentResult.Data.PaymentId);
-                    if (!processResult.IsSuccess)
-                    {
-                        return ResponseDto<BookingDto>.Failure($"Failed to process rental payment: {processResult.Message}");
-                    }
+                //    var processResult = await _paymentService.ProcessPaymentAsync(paymentResult.Data.PaymentId);
+                //    if (!processResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to process rental payment: {processResult.Message}");
+                //    }
 
-                    // Confirm payment with transaction ID
-                    var confirmPaymentRequest = new ConfirmPaymentDto
-                    {
-                        PaymentId = paymentResult.Data.PaymentId,
-                        TransactionId = request.TransactionId ?? "",
-                        GatewayResponse = null
-                    };
+                //    // Confirm payment with transaction ID
+                //    var confirmPaymentRequest = new ConfirmPaymentDto
+                //    {
+                //        PaymentId = paymentResult.Data.PaymentId,
+                //        TransactionId = request.TransactionId ?? "",
+                //        GatewayResponse = null
+                //    };
 
-                    var confirmResult = await _paymentService.ConfirmPaymentAsync(confirmPaymentRequest);
-                    if (!confirmResult.IsSuccess)
-                    {
-                        return ResponseDto<BookingDto>.Failure($"Failed to confirm rental payment: {confirmResult.Message}");
-                    }
-                }
+                //    var confirmResult = await _paymentService.ConfirmPaymentAsync(confirmPaymentRequest);
+                //    if (!confirmResult.IsSuccess)
+                //    {
+                //        return ResponseDto<BookingDto>.Failure($"Failed to confirm rental payment: {confirmResult.Message}");
+                //    }
+                //}
 
                 // Update booking with check-out details
                 booking.BookingStatus = BookingStatus.Completed;
@@ -433,8 +433,8 @@ namespace Monolithic.Services.Implementation
                 }
 
                 // Update fields
-                if (request.ReturnStationId.HasValue)
-                    booking.ReturnStationId = request.ReturnStationId.Value;
+                //if (request.ReturnStationId.HasValue)
+                //    booking.ReturnStationId = request.ReturnStationId.Value;
                 
                 if (request.ExpectedReturnDateTime.HasValue)
                     booking.EndTime = request.ExpectedReturnDateTime.Value;

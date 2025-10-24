@@ -1,17 +1,36 @@
-using Microsoft.EntityFrameworkCore;
+using CloudinaryDotNet;
+using dotenv.net;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Monolithic.Common;
+using Monolithic.Data;
+using Monolithic.Mappings;
+using Monolithic.Models;
+using Monolithic.Repositories.Implementation;
+using Monolithic.Repositories.Interfaces;
+using Monolithic.Services.Implementation;
+using Monolithic.Services.Interfaces;
 using System.Text;
 using System.Text.Json;
-using Monolithic.Data;
-using Monolithic.Services.Interfaces;
-using Monolithic.Repositories.Interfaces;
-using Monolithic.Repositories.Implementation;
-using Monolithic.Services.Implementation;
-using Monolithic.Mappings;
-using Monolithic.Common;
+
+// Load environment variables from .env file
+Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
+
+//DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
+//Cloudinary cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
+//cloudinary.Api.Secure = true;
+
+// Ghi đè bằng biến môi trường
+builder.Services.PostConfigure<CloudinarySettings>(settings =>
+{
+    settings.CloudName = Environment.GetEnvironmentVariable("CLOUD_NAME") ?? settings.CloudName;
+    settings.ApiKey = Environment.GetEnvironmentVariable("API_KEY") ?? settings.ApiKey;
+    settings.ApiSecret = Environment.GetEnvironmentVariable("API_SECRET") ?? settings.ApiSecret;
+});
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -166,7 +185,7 @@ builder.Services.AddScoped<ICarRepository, CarRepositoryImpl>();
 builder.Services.AddScoped<IBookingRepository, BookingRepositoryImpl>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepositoryImpl>();
 builder.Services.AddScoped<IContractRepository, ContractRepositoryImpl>();
-builder.Services.AddScoped<IPaymentRepository, PaymentRepositoryImpl>();
+//builder.Services.AddScoped<IPaymentRepository, PaymentRepositoryImpl>();
 
 // Services - Using separate implementation classes
 builder.Services.AddScoped<IStationService, StationServiceImpl>();
@@ -176,11 +195,18 @@ builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IContractService, ContractServiceImpl>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IPaymentService, PaymentServiceImpl>();
+//builder.Services.AddScoped<IPaymentService, PaymentServiceImpl>();
 
 // Auth Services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenServiceImpl>();
 builder.Services.AddScoped<IAuthService, AuthServiceImpl>();
+
+// 1. Dạy cho app cách đọc section "CloudinarySettings" từ appsettings.json
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+
+// 2. Đăng ký PhotoService với Dependency Injection
+// (Khi ai đó hỏi IPhotoService, hãy tạo một PhotoService)
+builder.Services.AddScoped<IPhotoService, PhotoService>();
 
 var app = builder.Build();
 
@@ -206,35 +232,35 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Auto-open browser in development
-if (app.Environment.IsDevelopment())
-{
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+//if (app.Environment.IsDevelopment())
+//{
+//    var logger = app.Services.GetRequiredService<ILogger<Program>>();
     
-    app.Lifetime.ApplicationStarted.Register(() =>
-    {
-        var urls = app.Urls;
-        if (urls.Any())
-        {
-            var httpUrl = urls.FirstOrDefault(u => u.StartsWith("http://")) ?? urls.First();
-            var swaggerUrl = $"{httpUrl}/swagger";
-            logger.LogInformation("Opening Swagger UI at: {SwaggerUrl}", swaggerUrl);
+//    app.Lifetime.ApplicationStarted.Register(() =>
+//    {
+//        var urls = app.Urls;
+//        if (urls.Any())
+//        {
+//            var httpUrl = urls.FirstOrDefault(u => u.StartsWith("http://")) ?? urls.First();
+//            var swaggerUrl = $"{httpUrl}/swagger";
+//            logger.LogInformation("Opening Swagger UI at: {SwaggerUrl}", swaggerUrl);
             
-            try
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = swaggerUrl,
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning("Could not automatically open browser: {Error}", ex.Message);
-                logger.LogInformation("Please manually navigate to: {SwaggerUrl}", swaggerUrl);
-            }
-        }
-    });
-}
+//            try
+//            {
+//                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+//                {
+//                    FileName = swaggerUrl,
+//                    UseShellExecute = true
+//                });
+//            }
+//            catch (Exception ex)
+//            {
+//                logger.LogWarning("Could not automatically open browser: {Error}", ex.Message);
+//                logger.LogInformation("Please manually navigate to: {SwaggerUrl}", swaggerUrl);
+//            }
+//        }
+//    });
+//}
 
 // Ports are configured in appsettings.Development.json
 // Remove hardcoded URLs to avoid conflicts

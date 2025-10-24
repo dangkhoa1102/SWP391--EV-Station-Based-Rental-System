@@ -28,7 +28,9 @@ namespace Monolithic.Models
 
         // Navigation properties
         public virtual ICollection<Car> Cars { get; set; } = new List<Car>();
-        public virtual ICollection<Booking> PickupBookings { get; set; } = new List<Booking>();
-        public virtual ICollection<Booking> DropoffBookings { get; set; } = new List<Booking>();
+        //public virtual ICollection<Booking> PickupBookings { get; set; } = new List<Booking>();
+        //public virtual ICollection<Booking> DropoffBookings { get; set; } = new List<Booking>();
+        public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
     }
 }

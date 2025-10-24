@@ -51,6 +51,22 @@ namespace Monolithic.Models
         // Convenience property
         public string FullName => $"{FirstName} {LastName}".Trim();
 
+        // --- ?nh CCCD ---
+        public string? CccdImageUrl_Front { get; set; }
+        public string? CccdImagePublicId_Front { get; set; }
+        public string? CccdImageUrl_Back { get; set; }
+        public string? CccdImagePublicId_Back { get; set; }
+
+        // --- ?nh GPLX ---
+        // (GPLX ? VN th??ng ch? c?n m?t tr??c, nh?ng ta c? làm 2 m?t cho ??y ??)
+        public string? GplxImageUrl_Front { get; set; }
+        public string? GplxImagePublicId_Front { get; set; }
+        public string? GplxImageUrl_Back { get; set; }
+        public string? GplxImagePublicId_Back { get; set; }
+
+        // Có th? thêm tr?ng thái xác th?c
+        public bool IsVerified { get; set; } = false;
+
         // Navigation properties
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
         public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();

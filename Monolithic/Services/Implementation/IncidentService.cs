@@ -56,7 +56,7 @@ namespace Monolithic.Services.Implementation
                 ReportedAt = DateTime.UtcNow,
                 Status = "Pending",
                 ReportedBy = request.ReportedBy,
-                StationId = booking.PickupStationId
+                StationId = booking.StationId
             };
 
             _context.Incidents.Add(incident);

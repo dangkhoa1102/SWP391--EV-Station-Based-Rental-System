@@ -14,6 +14,9 @@ namespace Monolithic.Models
         [Required]
         public Guid CarId { get; set; }
 
+        [Required]
+        public Guid StationId { get; set; }
+
         //[Required]
         //public Guid? PickupStationId { get; set; }
 
@@ -79,6 +82,8 @@ namespace Monolithic.Models
         [ForeignKey("CarId")]
         public virtual Car Car { get; set; } = null!;
         public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+        [ForeignKey("StationId")]
+        public virtual Station Station { get; set; } = null!;
     }
 
     public enum BookingStatus
