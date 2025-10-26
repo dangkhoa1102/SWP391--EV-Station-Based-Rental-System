@@ -89,7 +89,8 @@ namespace Monolithic.Data
                 entity.Property(c => c.LicensePlate).IsRequired().HasMaxLength(20);
                 entity.Property(c => c.BatteryCapacity).HasPrecision(5, 2);
                 entity.Property(c => c.CurrentBatteryLevel).HasPrecision(5, 2).HasDefaultValue(100);
-                entity.Property(c => c.RentalPricePerHour).HasPrecision(10, 2);
+                builder.Entity<Car>().Property(c => c.RentalPricePerHour).HasColumnType("decimal(10,2)");
+                builder.Entity<Car>().Property(c => c.RentalPricePerDay).HasColumnType("decimal(10,2)");
                 entity.Property(c => c.IsAvailable).HasDefaultValue(true);
                 entity.Property(c => c.IsActive).HasDefaultValue(true);
                 entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
@@ -183,6 +184,33 @@ namespace Monolithic.Data
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => e.StationId);
                 entity.HasIndex(e => e.ReportedAt);
+            });
+            builder.Entity<Payment>(entity =>
+            {
+                entity.HasKey(p => p.PaymentId);
+                entity.Property(p => p.PaymentId).HasDefaultValueSql("NEWID()");
+
+                entity.Property(p => p.BookingId).IsRequired();
+                entity.Property(p => p.TransactionId).HasMaxLength(255);
+                entity.Property(p => p.OrderCode);
+                entity.Property(p => p.Amount).HasPrecision(10, 2).IsRequired();
+                entity.Property(p => p.PaymentStatus).IsRequired();
+                entity.Property(p => p.PaymentType).IsRequired();
+                entity.Property(p => p.PaidAt);
+                entity.Property(p => p.RefundedAt);
+                entity.Property(p => p.RefundReason).HasMaxLength(500);
+                entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(p => p.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                // Payment-Booking relationship
+                entity.HasOne(p => p.Booking)
+                      .WithMany(b => b.Payments)
+                      .HasForeignKey(p => p.BookingId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Indexes
+                entity.HasIndex(p => p.BookingId);
+                entity.HasIndex(p => p.TransactionId).IsUnique(false); // can be unique if needed
             });
 
             builder.Entity<Booking>()

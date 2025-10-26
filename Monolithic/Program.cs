@@ -10,6 +10,7 @@ using Monolithic.Mappings;
 using Monolithic.Models;
 using Monolithic.Repositories.Implementation;
 using Monolithic.Repositories.Interfaces;
+using Monolithic.Services;
 using Monolithic.Services.Implementation;
 using Monolithic.Services.Interfaces;
 using System.Text;
@@ -180,12 +181,12 @@ builder.Services.AddCors(options =>
 });
 
 // Repository pattern - Using separate implementation classes
+
 builder.Services.AddScoped<IStationRepository, StationRepositoryImpl>();
 builder.Services.AddScoped<ICarRepository, CarRepositoryImpl>();
 builder.Services.AddScoped<IBookingRepository, BookingRepositoryImpl>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepositoryImpl>();
 builder.Services.AddScoped<IContractRepository, ContractRepositoryImpl>();
-//builder.Services.AddScoped<IPaymentRepository, PaymentRepositoryImpl>();
 
 // Services - Using separate implementation classes
 builder.Services.AddScoped<IStationService, StationServiceImpl>();
@@ -195,7 +196,8 @@ builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IContractService, ContractServiceImpl>();
 builder.Services.AddScoped<IUserService, UserService>();
-//builder.Services.AddScoped<IPaymentService, PaymentServiceImpl>();
+builder.Services.AddScoped<IPaymentService, PaymentServiceImpl>();
+builder.Services.AddScoped<PayOSService>();
 
 // Auth Services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenServiceImpl>();

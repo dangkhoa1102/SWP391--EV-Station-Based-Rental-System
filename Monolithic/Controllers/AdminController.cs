@@ -494,7 +494,7 @@ namespace Monolithic.Controllers
                     {
                         Total = bookingsResult.Data?.TotalItems ?? 0,
                         Pending = bookingsResult.Data?.Data.Count(b => b.BookingStatus == Models.BookingStatus.Pending) ?? 0,
-                        Confirmed = bookingsResult.Data?.Data.Count(b => b.BookingStatus == Models.BookingStatus.ContractApproved) ?? 0,
+                      
                         CheckedIn = bookingsResult.Data?.Data.Count(b => b.BookingStatus == Models.BookingStatus.CheckedIn) ?? 0,
                         Completed = bookingsResult.Data?.Data.Count(b => b.BookingStatus == Models.BookingStatus.Completed) ?? 0,
                         Cancelled = bookingsResult.Data?.Data.Count(b => b.BookingStatus == Models.BookingStatus.Cancelled) ?? 0

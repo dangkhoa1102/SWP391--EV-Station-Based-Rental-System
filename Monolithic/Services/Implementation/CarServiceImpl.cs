@@ -64,6 +64,7 @@ namespace Monolithic.Services.Implementation
             if (request.BatteryCapacity.HasValue) car.BatteryCapacity = request.BatteryCapacity.Value;
             if (request.CurrentBatteryLevel.HasValue) car.CurrentBatteryLevel = request.CurrentBatteryLevel.Value;
             if (request.RentalPricePerHour.HasValue) car.RentalPricePerHour = request.RentalPricePerHour.Value;
+            if (request.RentalPricePerDate.HasValue) car.RentalPricePerDay = request.RentalPricePerDate.Value;
             car.UpdatedAt = DateTime.UtcNow;
 
             var updated = await _carRepository.UpdateAsync(car);

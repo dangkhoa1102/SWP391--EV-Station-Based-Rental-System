@@ -6,8 +6,8 @@ namespace Monolithic.Services.Interfaces
     public interface IBookingService
     {
         // Main booking flow methods (New Flow)
-        Task<ResponseDto<BookingDto>> CreateBookingWithDepositAsync(string userId, CreateBookingDto request);
-        Task<ResponseDto<BookingDto>> ApproveContractAsync(ApproveContractDto request);
+        Task<ResponseDto<BookingDto>> CreateBookingAsync(string userId, CreateBookingDto request);
+        
         Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request);
         Task<ResponseDto<BookingDto>> CheckOutWithPaymentAsync(CheckOutWithPaymentDto request);
         

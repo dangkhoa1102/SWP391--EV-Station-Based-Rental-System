@@ -50,12 +50,7 @@ namespace Monolithic.Models
         [StringLength(50)]
         public BookingStatus BookingStatus { get; set; } = BookingStatus.Pending;
 
-        [Required]
-        [StringLength(50)]
-        public string PaymentStatus { get; set; } = "Pending"; // Pending, DepositPaid, RentalPaid, Completed, Refunded
-
-        [StringLength(50)]
-        public string? PaymentMethod { get; set; } // Phương thức thanh toán đặt cọc
+      
 
         [StringLength(100)]
         public string? DepositTransactionId { get; set; } // Transaction ID của thanh toán đặt cọc
@@ -74,8 +69,18 @@ namespace Monolithic.Models
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        [StringLength(500)]
+        public string? CheckOutNotes { get; set; }
 
-        // Navigation properties
+        [StringLength(1000)]
+        public string? CheckOutPhotoUrl { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal LateFee { get; set; } = 0;
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal DamageFee { get; set; } = 0;
+        public bool DepositRefunded { get; set; } = false;
         [ForeignKey("UserId")]
         public virtual User User { get; set; } = null!;
 
@@ -84,14 +89,19 @@ namespace Monolithic.Models
         public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
         [ForeignKey("StationId")]
         public virtual Station Station { get; set; } = null!;
+
+        public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+
+
     }
 
     public enum BookingStatus
     {
         Pending,           // Đang chờ thanh toán đặt cọc
         DepositPaid,       // Đã thanh toán đặt cọc, chờ approve hợp đồng
-        ContractApproved,  // Đã approve hợp đồng, chờ check-in
+        CheckedInPendingPayment,
         CheckedIn,         // Đã nhận xe, đang sử dụng
+        CheckedOutPendingPayment,
         CheckedOut,        // Đã trả xe, chờ thanh toán tiền thuê
         Completed,         // Hoàn thành
         Cancelled          // Đã hủy

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251026051116_addpayment2db")]
+    partial class addpayment2db
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,14 +48,6 @@ namespace Monolithic.Migrations
                     b.Property<DateTime?>("CheckOutAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("CheckOutNotes")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("CheckOutPhotoUrl")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
                     b.Property<DateTime?>("ContractApprovedAt")
                         .HasColumnType("datetime2");
 
@@ -64,14 +59,8 @@ namespace Monolithic.Migrations
                     b.Property<decimal>("DailyRate")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<decimal>("DamageFee")
-                        .HasColumnType("decimal(10,2)");
-
                     b.Property<decimal>("DepositAmount")
                         .HasColumnType("decimal(10,2)");
-
-                    b.Property<bool>("DepositRefunded")
-                        .HasColumnType("bit");
 
                     b.Property<string>("DepositTransactionId")
                         .HasMaxLength(100)
@@ -90,9 +79,6 @@ namespace Monolithic.Migrations
 
                     b.Property<bool>("IsContractApproved")
                         .HasColumnType("bit");
-
-                    b.Property<decimal>("LateFee")
-                        .HasColumnType("decimal(10,2)");
 
                     b.Property<decimal>("RentalAmount")
                         .HasColumnType("decimal(10,2)");
@@ -195,6 +181,7 @@ namespace Monolithic.Migrations
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<decimal>("RentalPricePerHour")
+                        .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("UpdatedAt")

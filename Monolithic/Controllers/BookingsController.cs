@@ -27,7 +27,7 @@ namespace Monolithic.Controllers
         [HttpPost("Create-With-Deposit")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CreateBookingWithDeposit([FromQuery] string userId, [FromBody] CreateBookingDto request)
         {
-            var result = await _bookingService.CreateBookingWithDepositAsync(userId, request);
+            var result = await _bookingService.CreateBookingAsync(userId, request);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             
@@ -37,15 +37,7 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Bước 2: Approve hợp đồng
         /// </summary>
-        [HttpPost("Approve-Contract")]
-        public async Task<ActionResult<ResponseDto<BookingDto>>> ApproveContract([FromBody] ApproveContractDto request)
-        {
-            var result = await _bookingService.ApproveContractAsync(request);
-            if (!result.IsSuccess) 
-                return BadRequest(result);
-            
-            return Ok(result);
-        }
+      
 
         /// <summary>
         /// Bước 3: Check-in với ký hợp đồng
