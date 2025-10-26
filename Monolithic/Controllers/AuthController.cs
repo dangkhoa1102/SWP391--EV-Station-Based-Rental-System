@@ -325,5 +325,61 @@ namespace Monolithic.Controllers
 
             //    return Ok(new { url = renter.GplxImageUrl });
         }
+
+        [HttpGet("me")]
+        [Authorize] // Chỉ Renter mới được gọi
+        public async Task<IActionResult> GetMyDocuments()
+        {
+            if (!TryGetCurrentRenterId(out Guid renterId))
+            {
+                return Unauthorized("Không thể xác định người dùng.");
+            }
+
+            var user = await _context.Users.FindAsync(renterId);
+            if (user == null)
+            {
+                return NotFound("Không tìm thấy tài khoản User.");
+            }
+
+            // Tạo DTO để trả về
+            var documentUrls = new UserDocumentsDto
+            {
+                CccdImageUrl_Front = user.CccdImageUrl_Front,
+                CccdImageUrl_Back = user.CccdImageUrl_Back,
+                GplxImageUrl_Front = user.GplxImageUrl_Front,
+                GplxImageUrl_Back = user.GplxImageUrl_Back,
+                IsVerified = user.IsVerified
+            };
+
+            return Ok(documentUrls);
+        }
+
+        [HttpGet("user/{userId}")]
+        [Authorize(Roles = "Admin, StationStaff")] // Chỉ Admin hoặc Staff
+        public async Task<IActionResult> GetDocumentsForUser(Guid userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return NotFound("Không tìm thấy tài khoản User.");
+            }
+
+            // Chỉ cho phép xem giấy tờ của Renter
+            if (user.UserRole != "Renter") // (Đây là lý do bạn nên dùng Identity Roles)
+            {
+                return BadRequest("Đây không phải là tài khoản Renter.");
+            }
+
+            var documentUrls = new UserDocumentsDto
+            {
+                CccdImageUrl_Front = user.CccdImageUrl_Front,
+                CccdImageUrl_Back = user.CccdImageUrl_Back,
+                GplxImageUrl_Front = user.GplxImageUrl_Front,
+                GplxImageUrl_Back = user.GplxImageUrl_Back,
+                IsVerified = user.IsVerified
+            };
+
+            return Ok(documentUrls);
+        }
     }
 }

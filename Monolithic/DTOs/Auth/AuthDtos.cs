@@ -66,4 +66,13 @@ namespace Monolithic.DTOs.Auth
         public string CurrentPassword { get; set; } = string.Empty;
         public string NewPassword { get; set; } = string.Empty;
     }
+
+    public class UserDocumentsDto
+    {
+        public string? CccdImageUrl_Front { get; set; }
+        public string? CccdImageUrl_Back { get; set; }
+        public string? GplxImageUrl_Front { get; set; }
+        public string? GplxImageUrl_Back { get; set; }
+        public bool IsVerified { get; set; } // Tr?ng thái xác th?c
+    }
 }
