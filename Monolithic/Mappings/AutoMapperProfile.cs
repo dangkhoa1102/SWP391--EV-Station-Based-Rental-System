@@ -98,15 +98,31 @@ namespace Monolithic.Mappings
 
             // Feedback mappings
             CreateMap<Feedback, FeedbackDto>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.FeedbackId)) // Use FeedbackId
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => $"{src.User.FirstName} {src.User.LastName}"))
-                .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => $"{src.Car.Brand} {src.Car.Model} ({src.Car.LicensePlate})"));
+                .ForMember(dest => dest.FeedbackId, opt => opt.MapFrom(src => src.FeedbackId))
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId.ToString()))
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}" : ""))
+                .ForMember(dest => dest.BookingId, opt => opt.MapFrom(src => src.BookingId))
+                .ForMember(dest => dest.CarId, opt => opt.MapFrom(src => src.CarId))
+                .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => src.Car != null ? $"{src.Car.Brand} {src.Car.Model} ({src.Car.LicensePlate})" : ""))
+                .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Rating))
+                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.Comment))
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt));
 
             CreateMap<CreateFeedbackDto, Feedback>()
-                .ForMember(dest => dest.FeedbackId, opt => opt.MapFrom(src => Guid.NewGuid())) // Use FeedbackId
+                .ForMember(dest => dest.FeedbackId, opt => opt.MapFrom(src => Guid.NewGuid()))
+                .ForMember(dest => dest.BookingId, opt => opt.MapFrom(src => src.BookingId))
+                .ForMember(dest => dest.CarId, opt => opt.MapFrom(src => src.CarId))
+                .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Rating))
+                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.Comment))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore()) // Set manually in service
+                .ForMember(dest => dest.User, opt => opt.Ignore())
+                .ForMember(dest => dest.Car, opt => opt.Ignore())
+                .ForMember(dest => dest.Booking, opt => opt.Ignore());
 
             // Contract mappings
             CreateMap<Contract, ContractDto>()

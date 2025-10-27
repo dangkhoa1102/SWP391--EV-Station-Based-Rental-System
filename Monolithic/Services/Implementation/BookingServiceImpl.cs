@@ -156,6 +156,13 @@ namespace Monolithic.Services.Implementation
             // Set status to pending payment
             booking.BookingStatus = BookingStatus.CheckedInPendingPayment;
 
+            // ⭐ UPDATE: Xe rời station → AvailableSlots tăng lên
+            var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+            if (!stationUpdateResult)
+            {
+                return ResponseDto<BookingDto>.Failure("Failed to update station slots");
+            }
+
             var updated = await _bookingRepository.UpdateAsync(booking);
 
             return ResponseDto<BookingDto>.Success(
@@ -219,6 +226,13 @@ namespace Monolithic.Services.Implementation
                 // 3️⃣ Set status
                 booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
                 booking.UpdatedAt = DateTime.UtcNow;
+
+                // ⭐ UPDATE: Xe về lại station → AvailableSlots giảm xuống
+                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, -1);
+                if (!stationUpdateResult)
+                {
+                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on check-out");
+                }
 
                 var updatedBooking = await _bookingRepository.UpdateAsync(booking);
 
