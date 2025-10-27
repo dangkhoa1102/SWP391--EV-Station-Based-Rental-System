@@ -327,7 +327,7 @@ namespace Monolithic.Controllers
         }
 
         [HttpGet("me")]
-        [Authorize] // Chỉ Renter mới được gọi
+        [Authorize] // Chỉ Renter mới được gọi, tuy nhiên role renter đang trục trặc nên tui để tạm authorize chung
         public async Task<IActionResult> GetMyDocuments()
         {
             if (!TryGetCurrentRenterId(out Guid renterId))

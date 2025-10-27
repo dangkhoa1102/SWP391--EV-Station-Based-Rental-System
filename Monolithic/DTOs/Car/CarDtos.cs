@@ -63,6 +63,9 @@ namespace Monolithic.DTOs.Car
 
         [Required]
         public Guid CurrentStationId { get; set; }
+
+        // Optional: Car image file
+        public IFormFile? CarImage { get; set; }
     }
 
     public class UpdateCarDto

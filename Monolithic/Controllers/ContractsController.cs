@@ -10,10 +10,12 @@ namespace Monolithic.Controllers
     public class ContractsController : ControllerBase
     {
         private readonly IContractService _contractService;
+        private readonly IContractFileService _contractFileService;
 
-        public ContractsController(IContractService contractService)
+        public ContractsController(IContractService contractService, IContractFileService contractFileService)
         {
             _contractService = contractService;
+            _contractFileService = contractFileService;
         }
 
         /// <summary>
@@ -90,6 +92,121 @@ namespace Monolithic.Controllers
         {
             var result = await _contractService.GetContractsByRenterAsync(renterId);
             return Ok(result);
+        }
+
+        /// <summary>
+        /// Tạo file Word hợp đồng từ thông tin động
+        /// </summary>
+        [HttpPost("tao-file-word")]
+        public async Task<IActionResult> TaoHopDong([FromBody] TaoHopDongDto request)
+        {
+            try
+            {
+                var fileStream = await _contractFileService.TaoHopDongFileAsync(request);
+                var fileName = $"HopDong_{request.SoHopDong.Replace("/", "-")}.docx";
+                var contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+                return File(fileStream, contentType, fileName);
+            }
+            catch (FileNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Lỗi hệ thống: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Tạo file Word hợp đồng với liên kết bookingId
+        /// </summary>
+        [HttpPost("tao-file-word/booking/{bookingId}")]
+        public async Task<IActionResult> TaoHopDongWithBooking(Guid bookingId, [FromBody] TaoHopDongDto request)
+        {
+            try
+            {
+                var fileStream = await _contractFileService.TaoHopDongFileWithBookingAsync(bookingId, request);
+                var fileName = $"HopDong_{request.SoHopDong.Replace("/", "-")}.docx";
+                var contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+                return File(fileStream, contentType, fileName);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (FileNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Lỗi hệ thống: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Lấy thông tin hợp đồng theo bookingId (File Service)
+        /// </summary>
+        [HttpGet("file-service/booking/{bookingId}")]
+        public async Task<ActionResult<ResponseDto<ContractDto>>> GetContractFileServiceByBooking(Guid bookingId)
+        {
+            try
+            {
+                var contract = await _contractFileService.GetContractByBookingIdAsync(bookingId);
+                return Ok(ResponseDto<ContractDto>.Success(contract));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ResponseDto<ContractDto>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<ContractDto>.Failure($"Lỗi hệ thống: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật hợp đồng theo bookingId
+        /// </summary>
+        [HttpPut("update/booking/{bookingId}")]
+        public async Task<ActionResult<ResponseDto<bool>>> UpdateContractByBooking(Guid bookingId, [FromBody] TaoHopDongDto request)
+        {
+            try
+            {
+                var result = await _contractFileService.UpdateContractByBookingIdAsync(bookingId, request);
+                return Ok(ResponseDto<bool>.Success(result));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ResponseDto<bool>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<bool>.Failure($"Lỗi hệ thống: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Xóa hợp đồng theo bookingId
+        /// </summary>
+        [HttpDelete("delete/booking/{bookingId}")]
+        public async Task<ActionResult<ResponseDto<bool>>> DeleteContractByBooking(Guid bookingId)
+        {
+            try
+            {
+                var result = await _contractFileService.DeleteContractByBookingIdAsync(bookingId);
+                return Ok(ResponseDto<bool>.Success(result));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ResponseDto<bool>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<bool>.Failure($"Lỗi hệ thống: {ex.Message}"));
+            }
         }
     }
 }

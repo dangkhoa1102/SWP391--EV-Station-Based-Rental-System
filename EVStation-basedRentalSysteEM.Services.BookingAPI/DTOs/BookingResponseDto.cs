@@ -1,3 +1,4 @@
+using EVStation_basedRentalSystem.Services.BookingAPI.Common;
 using System.Text.Json.Serialization;
 
 namespace EVStation_basedRentalSystem.Services.BookingAPI.DTOs

@@ -11,11 +11,13 @@ namespace Monolithic.Services.Implementation
     public class CarServiceImpl : ICarService
     {
         private readonly ICarRepository _carRepository;
+        private readonly IPhotoService _photoService;
         private readonly IMapper _mapper;
 
-        public CarServiceImpl(ICarRepository carRepository, IMapper mapper)
+        public CarServiceImpl(ICarRepository carRepository, IPhotoService photoService, IMapper mapper)
         {
             _carRepository = carRepository;
+            _photoService = photoService;
             _mapper = mapper;
         }
 
@@ -48,6 +50,20 @@ namespace Monolithic.Services.Implementation
         public async Task<ResponseDto<CarDto>> CreateCarAsync(CreateCarDto request)
         {
             var car = _mapper.Map<Car>(request);
+
+            // X? lý upload ?nh n?u có
+            if (request.CarImage != null && request.CarImage.Length > 0)
+            {
+                var uploadResult = await _photoService.AddPhotoAsync(request.CarImage, "rental_app/cars");
+                if (uploadResult.Error != null)
+                {
+                    return ResponseDto<CarDto>.Failure($"L?i upload ?nh: {uploadResult.Error.Message}");
+                }
+
+                car.ImageUrl = uploadResult.SecureUrl.ToString();
+                car.CarImagePublicId = uploadResult.PublicId;
+            }
+
             var created = await _carRepository.AddAsync(car);
             return ResponseDto<CarDto>.Success(_mapper.Map<CarDto>(created), "Car created");
         }

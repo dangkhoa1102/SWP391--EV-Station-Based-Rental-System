@@ -29,10 +29,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
 	  <PackageReference Include="payOS" Version="1.0.9" />
 	  <PackageReference Include="QRCoder" Version="1.7.0" />
+	  <PackageReference Include="Xceed.Words.NET" Version="2.7.20241.1119" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Migrations\" />
     <Folder Include="Models\Constants\" />
   </ItemGroup>
 

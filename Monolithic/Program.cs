@@ -195,6 +195,7 @@ builder.Services.AddScoped<IBookingService, BookingServiceImpl>();
 builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IContractService, ContractServiceImpl>();
+builder.Services.AddScoped<IContractFileService, ContractFileService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPaymentService, PaymentServiceImpl>();
 builder.Services.AddScoped<PayOSService>();
