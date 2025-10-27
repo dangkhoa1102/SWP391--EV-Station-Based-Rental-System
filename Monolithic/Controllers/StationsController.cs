@@ -93,9 +93,22 @@ namespace Monolithic.Controllers
         /// Cập nhật số lượng chỗ đỗ xe
         /// </summary>
         [HttpPatch("Update-Slots-By-{id}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
         public async Task<ActionResult<ResponseDto<string>>> UpdateSlots(Guid id, [FromQuery] int totalSlots)
         {
             var result = await _stationService.UpdateStationSlotsAsync(id, totalSlots);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Tính toán lại AvailableSlots dựa trên số xe thực tế tại station (Admin/Staff)
+        /// </summary>
+        [HttpPost("Recalculate-Slots-By-{id}")]
+        [Authorize] // Cho phép tất cả user đã đăng nhập (cho mục đích testing)
+        public async Task<ActionResult<ResponseDto<string>>> RecalculateSlots(Guid id)
+        {
+            var result = await _stationService.RecalculateStationAvailableSlotsAsync(id);
             if (!result.IsSuccess) return BadRequest(result);
             return Ok(result);
         }

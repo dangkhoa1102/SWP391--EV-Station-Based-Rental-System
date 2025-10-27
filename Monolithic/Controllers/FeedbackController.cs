@@ -59,13 +59,30 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
+        /// Xem đánh giá theo booking ID
+        /// </summary>
+        [HttpGet("Get-By-Booking/{bookingId}")]
+        public async Task<ActionResult<ResponseDto<FeedbackDto>>> GetFeedbackByBooking(Guid bookingId)
+        {
+            var result = await _feedbackService.GetFeedbackByBookingIdAsync(bookingId);
+            if (!result.IsSuccess) return NotFound(result);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Tạo đánh giá mới (yêu cầu đăng nhập)
         /// </summary>
         [HttpPost("Create-By-User/{userId}")]
         [Authorize]
         public async Task<ActionResult<ResponseDto<FeedbackDto>>> CreateFeedback(string userId, [FromBody] CreateFeedbackDto request)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ResponseDto<FeedbackDto>.Failure("Invalid request data"));
+            }
+
             var result = await _feedbackService.CreateFeedbackAsync(userId, request);
+            if (!result.IsSuccess) return BadRequest(result);
             return Ok(result);
         }
 
@@ -76,8 +93,13 @@ namespace Monolithic.Controllers
         [Authorize]
         public async Task<ActionResult<ResponseDto<FeedbackDto>>> UpdateFeedback(Guid id, [FromQuery] string userId, [FromBody] UpdateFeedbackDto request)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ResponseDto<FeedbackDto>.Failure("Invalid request data"));
+            }
+
             var result = await _feedbackService.UpdateFeedbackAsync(id, userId, request);
-            if (!result.IsSuccess) return NotFound(result);
+            if (!result.IsSuccess) return BadRequest(result);
             return Ok(result);
         }
 
@@ -89,7 +111,7 @@ namespace Monolithic.Controllers
         public async Task<ActionResult<ResponseDto<string>>> DeleteFeedback(Guid id, [FromQuery] string userId)
         {
             var result = await _feedbackService.DeleteFeedbackAsync(id, userId);
-            if (!result.IsSuccess) return NotFound(result);
+            if (!result.IsSuccess) return BadRequest(result);
             return Ok(result);
         }
 
@@ -98,6 +120,16 @@ namespace Monolithic.Controllers
         /// </summary>
         [HttpGet("Get-Summary-By-Car/{carId}")]
         public async Task<ActionResult<ResponseDto<FeedbackSummaryDto>>> GetCarFeedbackSummary(Guid carId)
+        {
+            var result = await _feedbackService.GetCarFeedbackSummaryAsync(carId);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Xem điểm trung bình đánh giá của xe
+        /// </summary>
+        [HttpGet("Get-Average-Rating-By-Car/{carId}")]
+        public async Task<ActionResult<ResponseDto<FeedbackSummaryDto>>> GetCarAverageRating(Guid carId)
         {
             var result = await _feedbackService.GetCarFeedbackSummaryAsync(carId);
             return Ok(result);

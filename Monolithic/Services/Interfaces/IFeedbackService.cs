@@ -9,6 +9,7 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<FeedbackDto>> GetFeedbackByIdAsync(Guid id);
         Task<ResponseDto<List<FeedbackDto>>> GetCarFeedbacksAsync(Guid carId);
         Task<ResponseDto<List<FeedbackDto>>> GetUserFeedbacksAsync(string userId);
+        Task<ResponseDto<FeedbackDto>> GetFeedbackByBookingIdAsync(Guid bookingId);
         Task<ResponseDto<FeedbackDto>> CreateFeedbackAsync(string userId, CreateFeedbackDto request);
         Task<ResponseDto<FeedbackDto>> UpdateFeedbackAsync(Guid id, string userId, UpdateFeedbackDto request);
         Task<ResponseDto<string>> DeleteFeedbackAsync(Guid id, string userId);

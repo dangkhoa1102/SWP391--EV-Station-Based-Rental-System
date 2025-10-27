@@ -141,5 +141,37 @@ namespace Monolithic.Services.Implementation
 
             return ResponseDto<string>.Success(string.Empty, "Slots updated");
         }
+
+        /// <summary>
+        /// Tính toán lại AvailableSlots dựa trên số xe thực tế tại station
+        /// AvailableSlots = TotalSlots - (số xe hiện tại tại station)
+        /// </summary>
+        public async Task<ResponseDto<string>> RecalculateStationAvailableSlotsAsync(Guid stationId)
+        {
+            var station = await _stationRepository.GetStationWithCarsAsync(stationId);
+            if (station == null || !station.IsActive)
+            {
+                return ResponseDto<string>.Failure("Station not found");
+            }
+
+            // Đếm số xe hiện tại tại station (kể cả available và unavailable)
+            var carsAtStation = station.Cars.Count(c => c.IsActive);
+
+            // AvailableSlots = TotalSlots - số xe đang có
+            var calculatedAvailableSlots = station.TotalSlots - carsAtStation;
+
+            // Đảm bảo không âm
+            calculatedAvailableSlots = Math.Max(0, calculatedAvailableSlots);
+
+            // Update
+            station.AvailableSlots = calculatedAvailableSlots;
+            station.UpdatedAt = DateTime.UtcNow;
+            await _stationRepository.UpdateAsync(station);
+
+            return ResponseDto<string>.Success(
+                string.Empty, 
+                $"Recalculated: {carsAtStation} cars at station, {calculatedAvailableSlots} slots available"
+            );
+        }
     }
 }
