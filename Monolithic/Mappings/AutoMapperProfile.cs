@@ -67,22 +67,33 @@ namespace Monolithic.Mappings
             CreateMap<Booking, BookingDto>()
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}" : ""))
-                .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => src.Car != null ? $"{src.Car.Brand} {src.Car.Model} ({src.Car.LicensePlate})" : ""));
+                .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => src.Car != null ? $"{src.Car.Brand} {src.Car.Model} ({src.Car.LicensePlate})" : ""))
+                .ForMember(dest => dest.StationId, opt => opt.MapFrom(src => src.StationId))
+                .ForMember(dest => dest.StationName, opt => opt.MapFrom(src => src.Station != null ? src.Station.Name : ""))
+                .ForMember(dest => dest.PickupDateTime, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.ExpectedReturnDateTime, opt => opt.MapFrom(src => src.EndTime));
 
 
             CreateMap<CreateBookingDto, Booking>()
+                .ForMember(dest => dest.StationId, opt => opt.MapFrom(src => src.PickupStationId))
+                .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.PickupDateTime))
+                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.ExpectedReturnDateTime))
                 .ForMember(dest => dest.BookingStatus, opt => opt.MapFrom(src => BookingStatus.Pending))
-                .ForMember(dest => dest.Payments, opt => opt.MapFrom(src => PaymentStatus.Pending))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
 
             CreateMap<Booking, BookingStatusDto>()
-                .ForMember(dest => dest.Car, opt => opt.MapFrom(src => src.Car));
+                .ForMember(dest => dest.Car, opt => opt.MapFrom(src => src.Car))
+                .ForMember(dest => dest.Station, opt => opt.MapFrom(src => src.Station))
+                .ForMember(dest => dest.PickupDateTime, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.ExpectedReturnDateTime, opt => opt.MapFrom(src => src.EndTime));
 
 
             CreateMap<Booking, BookingHistoryDto>()
-                .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => src.Car != null ? $"{src.Car.Brand} {src.Car.Model}" : ""));
+                .ForMember(dest => dest.CarInfo, opt => opt.MapFrom(src => src.Car != null ? $"{src.Car.Brand} {src.Car.Model}" : ""))
+                .ForMember(dest => dest.StationName, opt => opt.MapFrom(src => src.Station != null ? src.Station.Name : ""))
+                .ForMember(dest => dest.PickupDateTime, opt => opt.MapFrom(src => src.StartTime));
 
 
             // Feedback mappings

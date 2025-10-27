@@ -17,7 +17,7 @@ namespace Monolithic.Repositories.Implementation
             
             return await _dbContext.Bookings.Where(b => b.IsActive && b.UserId == userGuid) // Use Guid for comparison
                 .Include(b => b.Car)
-                .Include(b => b.StationId)                
+                .Include(b => b.Station)                
                 .OrderByDescending(b => b.CreatedAt)
                 .AsNoTracking().ToListAsync();
         }
@@ -27,7 +27,7 @@ namespace Monolithic.Repositories.Implementation
             if (!Guid.TryParse(userId, out var userGuid)) return null;
 
             return await _dbContext.Bookings.Include(b => b.Car)
-                .Include(b => b.StationId)                
+                .Include(b => b.Station)                
                 .FirstOrDefaultAsync(b => b.IsActive && b.UserId == userGuid && 
                     b.BookingStatus != BookingStatus.Completed && 
                     b.BookingStatus != BookingStatus.Cancelled);
@@ -37,7 +37,7 @@ namespace Monolithic.Repositories.Implementation
         {
             return await _dbContext.Bookings.Include(b => b.User)
                 .Include(b => b.Car)
-                .Include(b => b.StationId)               
+                .Include(b => b.Station)               
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId && b.IsActive); // Use BookingId
         }
 
@@ -55,7 +55,9 @@ namespace Monolithic.Repositories.Implementation
 
         public async Task<bool> HasActiveBookingForCarAsync(Guid carId)
         {
-            return await _dbContext.Bookings.AnyAsync(b => b.IsActive && b.CarId == carId && !b.BookingStatus.Equals("Completed") && !b.BookingStatus.Equals("Cancelled"));
+            return await _dbContext.Bookings.AnyAsync(b => b.IsActive && b.CarId == carId && 
+                b.BookingStatus != BookingStatus.Completed && 
+                b.BookingStatus != BookingStatus.Cancelled);
         }
     }
 }
