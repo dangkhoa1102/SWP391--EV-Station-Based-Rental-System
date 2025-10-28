@@ -565,13 +565,13 @@ namespace Monolithic.Controllers
                     return BadRequest(stationsResult);
                 }
 
-                // Group bookings by pickup station
+                // Group bookings by station
                 var revenueByStation = completedBookings
-                    .GroupBy(b => new { b.PickupStationId, b.PickupStationName })
+                    .GroupBy(b => new { b.StationId, b.StationName })
                     .Select(g => new
                     {
-                        StationId = g.Key.PickupStationId,
-                        StationName = g.Key.PickupStationName,
+                        StationId = g.Key.StationId,
+                        StationName = g.Key.StationName,
                         TotalBookings = g.Count(),
                         TotalRevenue = g.Sum(b => b.TotalAmount),
                         AverageRevenuePerBooking = g.Average(b => b.TotalAmount),

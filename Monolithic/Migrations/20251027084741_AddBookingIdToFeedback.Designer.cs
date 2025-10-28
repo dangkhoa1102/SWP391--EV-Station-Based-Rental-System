@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251027084741_AddBookingIdToFeedback")]
+    partial class AddBookingIdToFeedback
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -621,22 +624,6 @@ namespace Monolithic.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 28, 8, 30, 27, 190, DateTimeKind.Utc).AddTicks(4118),
-                            DateOfBirth = new DateOnly(1, 1, 1),
-                            Email = "admin@ev.com",
-                            FirstName = "Admin",
-                            IsActive = true,
-                            IsVerified = true,
-                            LastName = "User",
-                            PasswordHash = "JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=",
-                            UserName = "admin@ev.com",
-                            UserRole = "Admin"
-                        });
                 });
 
             modelBuilder.Entity("Monolithic.Models.Booking", b =>

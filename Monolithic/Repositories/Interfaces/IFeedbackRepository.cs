@@ -6,6 +6,8 @@ namespace Monolithic.Repositories.Interfaces
     {
         Task<IEnumerable<Feedback>> GetFeedbacksByCarAsync(Guid carId);
         Task<IEnumerable<Feedback>> GetFeedbacksByUserAsync(string userId);
+        Task<Feedback?> GetFeedbackByBookingIdAsync(Guid bookingId);
+        Task<bool> HasUserFeedbackForBookingAsync(string userId, Guid bookingId);
         Task<double> GetAverageRatingForCarAsync(Guid carId);
         Task<int> GetFeedbackCountForCarAsync(Guid carId);
     }
