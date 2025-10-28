@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import API from '../../services/api'
+import { formatVND } from '../../utils/currency'
+import { useToast } from '../../components/ToastProvider'
 
 export default function HomePage(){
   const [stations, setStations] = useState([])
@@ -33,6 +35,7 @@ export default function HomePage(){
   const [rentalDurationText, setRentalDurationText] = useState('')
 
   const overlayRef = useRef(null)
+  const { showToast } = useToast()
 
   useEffect(()=>{
     // load stations and cars
@@ -99,7 +102,16 @@ export default function HomePage(){
       const header = document.querySelector('.header')
       const headerHeight = header ? header.offsetHeight : 80
       const shouldSticky = window.scrollY > headerHeight + 50
-      overlay.classList.toggle('sticky', shouldSticky)
+      // Toggle sticky class and set inline top so the fixed overlay sits below the header
+      if(shouldSticky){
+        overlay.classList.add('sticky')
+        // set top to header height so it does not hide behind the header
+        overlay.style.top = `${headerHeight}px`
+      } else {
+        overlay.classList.remove('sticky')
+        // reset top to allow absolute positioning inside hero
+        overlay.style.top = ''
+      }
     }
     window.addEventListener('scroll', handleScroll, { passive: true })
     handleScroll()
@@ -116,8 +128,12 @@ export default function HomePage(){
   }
 
   function selectTime(type, time){
-    setSearchData(d => ({ ...d, [type+'Time']: time }))
-    updateRentalDuration()
+    // Update state and compute rental duration using the new state immediately
+    setSearchData(d => {
+      const next = { ...d, [type+'Time']: time }
+      updateRentalDuration(next)
+      return next
+    })
   }
 
   // Advance carousel safely (limited to number of cards)
@@ -277,7 +293,22 @@ export default function HomePage(){
                   <div className="summary-label">Return Time</div>
                   <div className="summary-value">{searchData.returnTime}</div>
                 </div>
-                <button type="button" className="btn-search" onClick={openSearchModal}><i className="fas fa-search"></i> SEARCH</button>
+                <button
+                  type="button"
+                  className="btn-search"
+                  onClick={() => {
+                    // If a pick-up location is selected, run the search.
+                    // Otherwise show a clear prompt asking the user to choose a location.
+                    if (searchData.location) {
+                      submitSearch()
+                    } else {
+                      // Use toast to show a non-blocking, friendly message
+                      // anchor the toast to the pick-up location element for clarity
+                      const anchorEl = document.getElementById('summaryLocation')
+                      showToast('Please select a pick-up location before searching.', 'error', 3500, anchorEl)
+                    }
+                  }}
+                ><i className="fas fa-search"></i> SEARCH</button>
               </div>
             </div>
           </div>
@@ -424,7 +455,7 @@ export default function HomePage(){
                       </div>
                       <div className="car-info">
                         <h3 className="car-name">{carName}</h3>
-                        <div className="car-price-simple"><span className="price-amount">${pricePerHour.toFixed(2)}</span><span className="price-label">/hour</span></div>
+                        <div className="car-price-simple"><span className="price-amount">{formatVND(pricePerHour)}</span><span className="price-label">/hour</span></div>
                         <div className="car-specs">{seats ? <span><i className="fas fa-users"></i> {seats} Seats</span> : null}</div>
                       </div>
                     </div>

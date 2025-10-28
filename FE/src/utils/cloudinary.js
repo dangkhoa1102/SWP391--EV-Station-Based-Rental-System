@@ -1,16 +1,32 @@
-export const CLOUD_NAME = 'YOUR_CLOUD_NAME'
-export const UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET'
+export const CLOUD_NAME = 'diahkjog'
+export const UPLOAD_PRESET = 'rental_app'  // Thay thế bằng upload preset thực tế của bạn
 
 export async function uploadToCloudinary(file){
   if(!file) throw new Error('No file')
   if(!file.type.startsWith('image/')) throw new Error('Only image files allowed')
   if(file.size > 5*1024*1024) throw new Error('Max size 5MB')
+  
   const fd = new FormData();
   fd.append('file', file)
   fd.append('upload_preset', UPLOAD_PRESET)
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method:'POST', body: fd })
-  if(!res.ok) throw new Error('Upload failed')
+  
+  console.log('📤 Uploading to Cloudinary:', CLOUD_NAME, UPLOAD_PRESET)
+  
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { 
+    method:'POST', 
+    body: fd 
+  })
+  
+  console.log('📡 Cloudinary response status:', res.status)
+  
+  if(!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    console.error('❌ Cloudinary error:', errorData)
+    throw new Error(`Upload failed: ${errorData.error?.message || res.statusText}`)
+  }
+  
   const data = await res.json()
+  console.log('✅ Upload successful:', data)
   return { url: data.secure_url, publicId: data.public_id }
 }
 

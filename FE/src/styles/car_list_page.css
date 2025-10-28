@@ -5,6 +5,7 @@
 /* SEARCH CARD */
 .car-list-main .search-form {
   background: transparent;
+  margin-top: 100px; /* push the search bar down a bit under the header */
   margin-bottom: 1.6rem;
   padding: 0;
 }
@@ -433,6 +434,10 @@
 
 @media (max-width:1000px){
   .car-list { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width:900px){
+  .car-list-main .search-form { margin-top: 20px; }
 }
 
 @media (max-width:900px){

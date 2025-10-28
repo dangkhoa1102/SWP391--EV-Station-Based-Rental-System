@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import API from '../../services/api'
 import '../../styles/car_list_page.css'
+import { formatVND } from '../../utils/currency'
 
 export default function CarListPage(){
   const [cars, setCars] = useState([])
@@ -102,8 +103,12 @@ export default function CarListPage(){
   }
 
   function selectTime(type, time){
-    setSearchData(d => ({ ...d, [type+'Time']: time }))
-    updateRentalDuration()
+    // Ensure rental duration recalculates using the updated state immediately
+    setSearchData(d => {
+      const next = { ...d, [type+'Time']: time }
+      updateRentalDuration(next)
+      return next
+    })
   }
 
   function toggleCalendar(mode){
@@ -475,7 +480,7 @@ export default function CarListPage(){
                   <div className="car-name">{name} {year}</div>
                   <div className="car-location">{searchData.locationName || 'Location'}</div>
                   <div className="car-pricing">
-                    <div className="car-price">{price}K/hour</div>
+                    <div className="car-price">{formatVND(price)}/hour</div>
                   </div>
                   <div className="car-details">
                     <span>Color: {color}</span>

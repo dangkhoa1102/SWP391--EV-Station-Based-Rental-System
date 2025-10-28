@@ -77,7 +77,17 @@ const API = {
   refreshToken: async () => { const res = await apiClient.post('/Auth/Refresh-Token'); return res.data },
   logout: async () => { const res = await apiClient.post('/Auth/Logout'); localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); localStorage.removeItem('user'); localStorage.removeItem('userEmail'); return res.data },
   forgotPassword: async (email) => { const res = await apiClient.post('/Auth/forgot-password', { email }); return res.data },
-  getMe: async () => { const res = await apiClient.get('/Auth/Me'); return res.data },
+  getMe: async () => { 
+    const res = await apiClient.get('/Auth/Me')
+    console.log('📡 Raw /Auth/Me response:', res.data)
+    
+    // Handle nested response structure
+    // If response has { data: { ...profileData } } or direct profileData
+    const data = res.data?.data || res.data || {}
+    console.log('📄 Extracted /Auth/Me data:', data)
+    
+    return data
+  },
 
   getMyProfile: async () => {
     const res = await apiClient.get('/Users/Get-My-Profile')
@@ -275,10 +285,12 @@ const API = {
       console.log('📝 Creating booking for user:', userId)
       console.log('📝 Booking data:', bookingData)
       
-      // Send userId in both query param AND body to support different API designs
-      const res = await apiClient.post(`/Bookings/Create?userId=${encodeURIComponent(userId)}`, {
+      // Use the Create-With-Deposit endpoint which accepts deposit amount in request body
+      const res = await apiClient.post(`/Bookings/Create-With-Deposit?userId=${encodeURIComponent(userId)}`, {
         ...bookingData,
-        userId: userId // Also include userId in body
+        userId: userId, // Also include userId in body
+        paymentMethod: 'PayOS', // Payment method is required
+        transactionId: '' // Transaction ID (empty until payment is processed)
       })
       console.log('✅ Booking created:', res.data)
       return res.data?.data || res.data || {}
@@ -319,19 +331,233 @@ const API = {
 
   getUserBookings: async (userId) => {
     try {
-      console.log('📋 Fetching bookings for user:', userId)
-      const res = await apiClient.get(`/Bookings/Get-By-User/${encodeURIComponent(userId)}`)
-      console.log('✅ User bookings response:', res.data)
-      const responseData = res.data
-      
-      if (Array.isArray(responseData)) return responseData
-      if (responseData.data && Array.isArray(responseData.data)) return responseData.data
-      if (responseData.items && Array.isArray(responseData.items)) return responseData.items
-      
+      console.log('📋 Fetching bookings for current user from:', `${SWAGGER_ROOT}/Bookings/My-Bookings`)
+      const res = await apiClient.get('/Bookings/My-Bookings')
+      console.log('✅ Raw /Bookings/My-Bookings response:', res.data)
+      const responseData = res.data || {}
+
+      // Common response shapes handled below
+      // 1) Direct array: [ ... ]
+      if (Array.isArray(responseData)) {
+        console.log('ℹ️ Returning bookings (direct array), count:', responseData.length)
+        return responseData
+      }
+
+      // 2) { data: [ ... ] }
+      if (responseData.data && Array.isArray(responseData.data)) {
+        console.log('ℹ️ Returning bookings from response.data, count:', responseData.data.length)
+        return responseData.data
+      }
+
+      // 3) { data: { data: [ ... ] } } nested
+      if (responseData.data && responseData.data.data && Array.isArray(responseData.data.data)) {
+        console.log('ℹ️ Returning bookings from response.data.data, count:', responseData.data.data.length)
+        return responseData.data.data
+      }
+
+      // 4) { data: { items: [ ... ] } }
+      if (responseData.data && responseData.data.items && Array.isArray(responseData.data.items)) {
+        console.log('ℹ️ Returning bookings from response.data.items, count:', responseData.data.items.length)
+        return responseData.data.items
+      }
+
+      // 5) { items: [ ... ] }
+      if (responseData.items && Array.isArray(responseData.items)) {
+        console.log('ℹ️ Returning bookings from response.items, count:', responseData.items.length)
+        return responseData.items
+      }
+
+      // 6) Some backends return an object keyed by 'bookings' or similar
+      if (responseData.bookings && Array.isArray(responseData.bookings)) {
+        console.log('ℹ️ Returning bookings from response.bookings, count:', responseData.bookings.length)
+        return responseData.bookings
+      }
+
+      // If it's a single booking object, return it as array
+      if (responseData && (responseData.id || responseData.bookingId || responseData.bookingStatus)) {
+        console.log('ℹ️ Response looks like a single booking object, wrapping in array')
+        return [responseData]
+      }
+
+      console.warn('⚠️ No bookings array found in /Bookings/My-Bookings response; returning empty array')
       return []
     } catch (e) {
       console.error('❌ Error fetching user bookings:', e.response?.data || e.message)
+      // If unauthorized, rethrow so caller can handle (e.g., redirect to login)
+      if (e.response && e.response.status === 401) {
+        throw e
+      }
+      // For other errors return empty list to avoid breaking UI
       return []
+    }
+  },
+
+  cancelBooking: async (bookingId, userId) => {
+    try {
+      console.log('🚫 Cancelling booking:', bookingId)
+      const res = await apiClient.post(`/Bookings/Cancel-By-${encodeURIComponent(bookingId)}`, null, {
+        params: { userId }
+      })
+      console.log('✅ Booking cancelled:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error cancelling booking:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Feedback APIs
+  createFeedback: async (userId, feedbackData) => {
+    try {
+      console.log('📝 Creating feedback for user:', userId)
+      console.log('📝 Feedback data:', feedbackData)
+      const res = await apiClient.post(`/Feedback/Create-By-User/${encodeURIComponent(userId)}`, feedbackData)
+      console.log('✅ Feedback created:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error creating feedback:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  updateFeedback: async (feedbackId, userId, feedbackData) => {
+    try {
+      console.log('✏️ Updating feedback:', feedbackId)
+      console.log('📝 Updated data:', feedbackData)
+      const res = await apiClient.put(`/Feedback/Update-By-${encodeURIComponent(feedbackId)}`, feedbackData, {
+        params: { userId }
+      })
+      console.log('✅ Feedback updated:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error updating feedback:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Upload CCCD documents (both front and back)
+  uploadCCCD: async (frontFile, backFile) => {
+    try {
+      console.log('📤 Uploading CCCD documents')
+      const formData = new FormData()
+      
+      if (frontFile) {
+        formData.append('fileFront', frontFile, frontFile.name)
+        console.log('📄 Added fileFront:', frontFile.name, 'size:', frontFile.size, 'type:', frontFile.type)
+      }
+      if (backFile) {
+        formData.append('fileBack', backFile, backFile.name)
+        console.log('📄 Added fileBack:', backFile.name, 'size:', backFile.size, 'type:', backFile.type)
+      }
+      
+      // Log FormData contents
+      for (let pair of formData.entries()) {
+        console.log('📦 FormData entry:', pair[0], pair[1])
+      }
+      
+      const res = await apiClient.post('/Auth/cccd', formData, {
+        headers: {
+          // Remove Content-Type to let browser set it with proper boundary
+          'Content-Type': undefined
+        },
+        // Increase timeout for large files
+        timeout: 30000
+      })
+      
+      console.log('✅ CCCD uploaded successfully:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ CCCD upload error:', e)
+      console.error('❌ Error response:', e.response?.data)
+      console.error('❌ Error status:', e.response?.status)
+      throw e
+    }
+  },
+
+  // Upload GPLX documents (both front and back)
+  uploadGPLX: async (frontFile, backFile) => {
+    try {
+      console.log('📤 Uploading GPLX documents')
+      const formData = new FormData()
+      
+      if (frontFile) {
+        formData.append('fileFront', frontFile, frontFile.name)
+        console.log('📄 Added fileFront:', frontFile.name, 'size:', frontFile.size, 'type:', frontFile.type)
+      }
+      if (backFile) {
+        formData.append('fileBack', backFile, backFile.name)
+        console.log('📄 Added fileBack:', backFile.name, 'size:', backFile.size, 'type:', backFile.type)
+      }
+      
+      // Log FormData contents
+      for (let pair of formData.entries()) {
+        console.log('📦 FormData entry:', pair[0], pair[1])
+      }
+      
+      const res = await apiClient.post('/Auth/gplx', formData, {
+        headers: {
+          // Remove Content-Type to let browser set it with proper boundary
+          'Content-Type': undefined
+        },
+        // Increase timeout for large files
+        timeout: 30000
+      })
+      
+      console.log('✅ GPLX uploaded successfully:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ GPLX upload error:', e)
+      console.error('❌ Error response:', e.response?.data)
+      console.error('❌ Error status:', e.response?.status)
+      throw e
+    }
+  },
+
+  // Old method - deprecated, keeping for compatibility
+  uploadUserDocument: async (type, file) => {
+    try {
+      console.log(`📤 Uploading ${type} document file:`, file.name)
+      
+      // Create FormData
+      const formData = new FormData()
+      
+      // Determine field name and endpoint based on type
+      if (type.startsWith('cccd')) {
+        // CCCD endpoint: /Auth/cccd with fileFront or fileBack
+        if (type === 'cccdFront') {
+          formData.append('fileFront', file)
+          // Don't send fileBack if not uploading it
+        } else {
+          formData.append('fileBack', file)
+          // Don't send fileFront if not uploading it
+        }
+        
+        console.log(`📄 Sending to /Auth/cccd`)
+        console.log('📦 FormData:', type === 'cccdFront' ? 'fileFront' : 'fileBack', file.name)
+        
+        const res = await apiClient.post('/Auth/cccd', formData)
+        console.log(`✅ CCCD uploaded successfully:`, res.data)
+        return res.data?.data || res.data || {}
+      } else {
+        // GPLX endpoint: /Auth/gplx with fileFront or fileBack
+        if (type === 'licenseFront') {
+          formData.append('fileFront', file)
+        } else {
+          formData.append('fileBack', file)
+        }
+        
+        console.log(`📄 Sending to /Auth/gplx`)
+        console.log('📦 FormData:', type === 'licenseFront' ? 'fileFront' : 'fileBack', file.name)
+        
+        const res = await apiClient.post('/Auth/gplx', formData)
+        console.log(`✅ GPLX uploaded successfully:`, res.data)
+        return res.data?.data || res.data || {}
+      }
+    } catch (e) {
+      console.error(`❌ Error uploading ${type}:`, e)
+      console.error(`❌ Response data:`, e.response?.data)
+      console.error(`❌ Response status:`, e.response?.status)
+      throw e
     }
   }
 }

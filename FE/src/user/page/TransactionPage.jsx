@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import * as API from '../../services/api'
+import { formatVND } from '../../utils/currency'
 import '../../styles/transaction_page.css'
 
 const TransactionPage = () => {
@@ -110,15 +111,15 @@ const TransactionPage = () => {
                   <div className="detail-card">
                     <div className="detail-row">
                       <span className="label">Deposit Amount:</span>
-                      <span className="value highlight">${depositAmount?.toFixed(2) || '0.00'}</span>
+                      <span className="value highlight">{formatVND(depositAmount)}</span>
                     </div>
                     <div className="detail-row">
                       <span className="label">Total Rental Cost:</span>
-                      <span className="value">${totalAmount?.toFixed(2) || '0.00'}</span>
+                      <span className="value">{formatVND(totalAmount)}</span>
                     </div>
                     <div className="detail-row">
                       <span className="label">Remaining Balance:</span>
-                      <span className="value">${((totalAmount || 0) - (depositAmount || 0)).toFixed(2)}</span>
+                      <span className="value">{formatVND((totalAmount || 0) - (depositAmount || 0))}</span>
                     </div>
                   </div>
 
