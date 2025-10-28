@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Monolithic.Models;
 using System.Reflection.Emit;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Monolithic.Data
 {
@@ -19,9 +21,50 @@ namespace Monolithic.Data
         public DbSet<Contract> Contracts { get; set; }
         public DbSet<Payment> Payments { get; set; }
 
+        // Helper method to hash password
+        private static string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(hashedBytes);
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            // Seed admin user
+            var adminUserId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+            var adminUser = new User
+            {
+                UserId = adminUserId,
+                UserName = "admin@ev.com",
+                Email = "admin@ev.com",
+                FirstName = "Admin",
+                LastName = "User",
+                PasswordHash = HashPassword("admin123"), // Password: admin123
+                UserRole = "Admin",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                PhoneNumber = null,
+                Address = null,
+                DateOfBirth = default,
+                DriverLicenseNumber = null,
+                DriverLicenseExpiry = null,
+                RefreshToken = null,
+                RefreshTokenExpiry = null,
+                CccdImageUrl_Front = null,
+                CccdImagePublicId_Front = null,
+                CccdImageUrl_Back = null,
+                CccdImagePublicId_Back = null,
+                GplxImageUrl_Front = null,
+                GplxImagePublicId_Front = null,
+                GplxImageUrl_Back = null,
+                GplxImagePublicId_Back = null,
+                IsVerified = true
+            };
+
+            builder.Entity<User>().HasData(adminUser);
 
             // Configure User entity
             builder.Entity<User>(entity =>
