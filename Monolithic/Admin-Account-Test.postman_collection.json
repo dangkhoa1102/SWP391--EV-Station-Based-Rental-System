@@ -1,0 +1,274 @@
+{
+  "info": {
+    "name": "Admin Account Test Collection",
+    "description": "Test collection for hardcoded admin account",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "api_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has access token', function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.token).to.exist;",
+              "    pm.collectionVariables.set('access_token', jsonData.data.token);",
+              "});",
+              "",
+              "pm.test('User is admin', function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.user.userRole).to.equal('Admin');",
+              "});",
+              "",
+              "pm.test('Email is correct', function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.user.email).to.equal('admin@ev.com');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@ev.com\",\n  \"password\": \"admin\"\n}"
+        },
+        "url": {
+          "raw": "{{api_url}}/api/auth/Login",
+          "host": [
+            "{{api_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "Login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Current User Info",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('User ID is correct', function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.id).to.equal('00000000-0000-0000-0000-000000000001');",
+              "});",
+              "",
+              "pm.test('Email is admin@ev.com', function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.email).to.equal('admin@ev.com');",
+              "});",
+              "",
+              "pm.test('Role is Admin', function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.userRole).to.equal('Admin');",
+              "});",
+              "",
+              "pm.test('Account is active', function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.isActive).to.equal(true);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{api_url}}/api/auth/me",
+          "host": [
+            "{{api_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login with Invalid Password",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400', function() {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Error message is returned', function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.isSuccess).to.equal(false);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@ev.com\",\n  \"password\": \"wrongpassword\"\n}"
+        },
+        "url": {
+          "raw": "{{api_url}}/api/auth/Login",
+          "host": [
+            "{{api_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "Login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login with Invalid Email",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400', function() {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Error message is returned', function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.isSuccess).to.equal(false);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"nonexistent@ev.com\",\n  \"password\": \"admin\"\n}"
+        },
+        "url": {
+          "raw": "{{api_url}}/api/auth/Login",
+          "host": [
+            "{{api_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "Login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Current User Without Token (Should Fail)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401', function() {",
+              "    pm.response.to.have.status(401);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{api_url}}/api/auth/me",
+          "host": [
+            "{{api_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

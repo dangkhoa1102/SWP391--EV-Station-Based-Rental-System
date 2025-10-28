@@ -47,18 +47,7 @@ namespace Monolithic.Services.Implementation
                 {
                     Token = accessToken,
                     RefreshToken = refreshToken,
-                    User = new UserDto
-                    {
-                        Id = user.UserId.ToString(),
-                        Email = user.Email ?? "",
-                        FirstName = user.FirstName,
-                        LastName = user.LastName,
-                        PhoneNumber = user.PhoneNumber,
-                        UserRole = user.UserRole,
-                        CreatedAt = user.CreatedAt,
-                        UpdatedAt = user.UpdatedAt,
-                        IsActive = user.IsActive
-                    }
+                    User = MapToUserDto(user)
                 };
 
                 return ResponseDto<LoginResponseDto>.Success(response, "Login successful");
@@ -109,20 +98,7 @@ namespace Monolithic.Services.Implementation
                 _dbContext.Users.Add(user);
                 await _dbContext.SaveChangesAsync();
 
-                var userDto = new UserDto
-                {
-                    Id = user.UserId.ToString(),
-                    Email = user.Email ?? "",
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    PhoneNumber = user.PhoneNumber,
-                    UserRole = user.UserRole,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    IsActive = user.IsActive
-                };
-
-                return ResponseDto<UserDto>.Success(userDto, "User registered successfully");
+                return ResponseDto<UserDto>.Success(MapToUserDto(user), "User registered successfully");
             }
             catch (Exception ex)
             {
@@ -183,20 +159,7 @@ namespace Monolithic.Services.Implementation
                     return ResponseDto<UserDto>.Failure("User not found");
                 }
 
-                var userDto = new UserDto
-                {
-                    Id = user.UserId.ToString(),
-                    Email = user.Email ?? "",
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    PhoneNumber = user.PhoneNumber,
-                    UserRole = user.UserRole,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    IsActive = user.IsActive
-                };
-
-                return ResponseDto<UserDto>.Success(userDto);
+                return ResponseDto<UserDto>.Success(MapToUserDto(user));
             }
             catch (Exception ex)
             {
@@ -214,27 +177,19 @@ namespace Monolithic.Services.Implementation
                     return ResponseDto<UserDto>.Failure("User not found");
                 }
 
+                // Update fields if provided
                 if (!string.IsNullOrWhiteSpace(request.FirstName)) user.FirstName = request.FirstName;
                 if (!string.IsNullOrWhiteSpace(request.LastName)) user.LastName = request.LastName;
                 if (!string.IsNullOrWhiteSpace(request.PhoneNumber)) user.PhoneNumber = request.PhoneNumber;
+                if (!string.IsNullOrWhiteSpace(request.Address)) user.Address = request.Address;
+                if (request.DateOfBirth.HasValue) user.DateOfBirth = request.DateOfBirth.Value;
+                if (!string.IsNullOrWhiteSpace(request.DriverLicenseNumber)) user.DriverLicenseNumber = request.DriverLicenseNumber;
+                if (request.DriverLicenseExpiry.HasValue) user.DriverLicenseExpiry = request.DriverLicenseExpiry.Value;
 
                 user.UpdatedAt = DateTime.UtcNow;
                 await _dbContext.SaveChangesAsync();
 
-                var userDto = new UserDto
-                {
-                    Id = user.UserId.ToString(),
-                    Email = user.Email ?? "",
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    PhoneNumber = user.PhoneNumber,
-                    UserRole = user.UserRole,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    IsActive = user.IsActive
-                };
-
-                return ResponseDto<UserDto>.Success(userDto, "User updated successfully");
+                return ResponseDto<UserDto>.Success(MapToUserDto(user), "User updated successfully");
             }
             catch (Exception ex)
             {
@@ -269,6 +224,33 @@ namespace Monolithic.Services.Implementation
             {
                 return ResponseDto<string>.Failure($"Password change failed: {ex.Message}");
             }
+        }
+
+        // Helper method to map User to UserDto
+        private UserDto MapToUserDto(User user)
+        {
+            return new UserDto
+            {
+                Id = user.UserId.ToString(),
+                Email = user.Email ?? "",
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber,
+                Address = user.Address,
+                DateOfBirth = user.DateOfBirth,
+                DriverLicenseNumber = user.DriverLicenseNumber,
+                DriverLicenseExpiry = user.DriverLicenseExpiry,
+                UserRole = user.UserRole,
+                IsVerified = user.IsVerified,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+                IsActive = user.IsActive,
+                CccdImageUrl_Front = user.CccdImageUrl_Front,
+                CccdImageUrl_Back = user.CccdImageUrl_Back,
+                GplxImageUrl_Front = user.GplxImageUrl_Front,
+                GplxImageUrl_Back = user.GplxImageUrl_Back
+            };
         }
 
         // Helper methods for password hashing

@@ -16,6 +16,7 @@ namespace Monolithic.Repositories.Implementation
             return await _dbContext.Feedbacks.Where(f => f.IsActive && f.CarId == carId)
                 .Include(f => f.User)
                 .Include(f => f.Car)
+                .Include(f => f.Booking)
                 .OrderByDescending(f => f.CreatedAt)
                 .AsNoTracking().ToListAsync();
         }
@@ -24,10 +25,30 @@ namespace Monolithic.Repositories.Implementation
         {
             if (!Guid.TryParse(userId, out var userGuid)) return new List<Feedback>();
             
-            return await _dbContext.Feedbacks.Where(f => f.IsActive && f.UserId == userGuid) // Use Guid for comparison
+            return await _dbContext.Feedbacks.Where(f => f.IsActive && f.UserId == userGuid)
                 .Include(f => f.Car)
+                .Include(f => f.Booking)
                 .OrderByDescending(f => f.CreatedAt)
                 .AsNoTracking().ToListAsync();
+        }
+
+        public async Task<Feedback?> GetFeedbackByBookingIdAsync(Guid bookingId)
+        {
+            return await _dbContext.Feedbacks
+                .Where(f => f.IsActive && f.BookingId == bookingId)
+                .Include(f => f.User)
+                .Include(f => f.Car)
+                .Include(f => f.Booking)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> HasUserFeedbackForBookingAsync(string userId, Guid bookingId)
+        {
+            if (!Guid.TryParse(userId, out var userGuid)) return false;
+            
+            return await _dbContext.Feedbacks
+                .AnyAsync(f => f.UserId == userGuid && f.BookingId == bookingId && f.IsActive);
         }
 
         public async Task<double> GetAverageRatingForCarAsync(Guid carId)

@@ -94,12 +94,20 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Get user's bookings
+        /// Get current user's bookings (from JWT token)
         /// </summary>
-        [HttpGet("Get-By-User/{userId}")]
-        public async Task<ActionResult<ResponseDto<List<BookingDto>>>> GetUserBookings(string userId)
+        [HttpGet("My-Bookings")]
+        public async Task<ActionResult<ResponseDto<List<BookingDto>>>> GetMyBookings()
         {
-            var result = await _bookingService.GetUserBookingsAsync(userId);
+            // Lấy userId từ JWT token claims
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized(ResponseDto<List<BookingDto>>.Failure("User not authenticated"));
+            }
+            
+            var result = await _bookingService.GetUserBookingsAsync(userIdClaim);
             return Ok(result);
         }
 
@@ -154,12 +162,19 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Get user's active booking
+        /// Get current user's active booking (from JWT token)
         /// </summary>
-        [HttpGet("Get-Active-By-User/{userId}")]
-        public async Task<ActionResult<ResponseDto<BookingStatusDto>>> GetActiveBooking(string userId)
+        [HttpGet("My-Active-Booking")]
+        public async Task<ActionResult<ResponseDto<BookingStatusDto>>> GetMyActiveBooking()
         {
-            var result = await _bookingService.GetActiveBookingAsync(userId);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized(ResponseDto<BookingStatusDto>.Failure("User not authenticated"));
+            }
+            
+            var result = await _bookingService.GetActiveBookingAsync(userIdClaim);
             if (!result.IsSuccess) 
                 return NotFound(result);
             
@@ -167,12 +182,19 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Get user's booking history
+        /// Get current user's booking history (from JWT token)
         /// </summary>
-        [HttpGet("Get-History-By-User/{userId}")]
-        public async Task<ActionResult<ResponseDto<List<BookingHistoryDto>>>> GetBookingHistory(string userId)
+        [HttpGet("My-Booking-History")]
+        public async Task<ActionResult<ResponseDto<List<BookingHistoryDto>>>> GetMyBookingHistory()
         {
-            var result = await _bookingService.GetBookingHistoryAsync(userId);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized(ResponseDto<List<BookingHistoryDto>>.Failure("User not authenticated"));
+            }
+            
+            var result = await _bookingService.GetBookingHistoryAsync(userIdClaim);
             return Ok(result);
         }
 

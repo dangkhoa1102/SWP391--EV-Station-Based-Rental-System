@@ -14,10 +14,8 @@ namespace Monolithic.DTOs.Booking
         public string UserName { get; set; } = string.Empty;
         public Guid CarId { get; set; }
         public string CarInfo { get; set; } = string.Empty;
-        public Guid PickupStationId { get; set; }
-        public string PickupStationName { get; set; } = string.Empty;
-        public Guid? ReturnStationId { get; set; }
-        public string? ReturnStationName { get; set; }
+        public Guid StationId { get; set; }
+        public string StationName { get; set; } = string.Empty;
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime PickupDateTime { get; set; }
         [JsonConverter(typeof(DateTimeConverter))]
@@ -98,8 +96,7 @@ namespace Monolithic.DTOs.Booking
         public DateTime? ActualReturnDateTime { get; set; }
         public decimal TotalAmount { get; set; }
         public CarDto Car { get; set; } = new();
-        public StationDto PickupStation { get; set; } = new();
-        public StationDto? ReturnStation { get; set; }
+        public StationDto Station { get; set; } = new();
     }
 
     public class CheckAvailabilityDto
@@ -156,8 +153,7 @@ namespace Monolithic.DTOs.Booking
     {
         public Guid BookingId { get; set; }
         public string CarInfo { get; set; } = string.Empty;
-        public string PickupStationName { get; set; } = string.Empty;
-        public string ReturnStationName { get; set; } = string.Empty;
+        public string StationName { get; set; } = string.Empty;
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime PickupDateTime { get; set; }
         [JsonConverter(typeof(NullableDateTimeConverter))]
