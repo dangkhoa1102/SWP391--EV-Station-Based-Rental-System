@@ -39,6 +39,7 @@ namespace Monolithic.Mappings
             // Car mappings
             CreateMap<Car, CarDto>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.CarId)) // Use CarId
+                .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ImageUrl))
                 .ForMember(dest => dest.CurrentStationName, opt => opt.MapFrom(src => src.CurrentStation != null ? src.CurrentStation.Name : ""));
 
             CreateMap<CreateCarDto, Car>()

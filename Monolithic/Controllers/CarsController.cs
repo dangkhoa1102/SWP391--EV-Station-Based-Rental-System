@@ -76,11 +76,13 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Tạo xe mới (Admin, Station Staff)
+        /// Tạo xe mới (Admin, Station Staff) - hỗ trợ upload ảnh
         /// </summary>
         [HttpPost("Create")]
-        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
-        public async Task<ActionResult<ResponseDto<CarDto>>> CreateCar([FromBody] CreateCarDto request)
+        //[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        [Authorize]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ResponseDto<CarDto>>> CreateCar([FromForm] CreateCarDto request)
         {
             if (!ModelState.IsValid)
             {
