@@ -42,25 +42,40 @@ namespace Monolithic.Services.Implementation
                 email.Subject = "Xác nh?n H?p ??ng Thuê xe c?a b?n";
 
                 var senderName = emailSettings["SenderName"] ?? "Công ty cho thuê xe FEC";
+
+                //var body = new BodyBuilder
+                //{
+                //    HtmlBody = $@"
+                //    <html>
+                //        <head>
+                //            <meta charset=""UTF-8"">
+                //        </head>
+                //        <body>
+                //            <p>Chào b?n,</p>
+                //            <p>Vui lòng nh?p vào liên k?t d??i ?ây ?? xem l?i và ký h?p ??ng thuê xe c?a b?n.</p>
+                //            <p><a href='{confirmationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Xem và Ký H?p ??ng</a></p>
+                //            <p>B?n c?ng có th? t?i xu?ng file h?p ??ng Word (.docx) ?? xem tr??c:</p>
+                //            <p><a href='{downloadLink}' style='background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>T?i xu?ng H?p ??ng (DOCX)</a></p>
+                //            <p>Liên k?t này s? h?t h?n trong vòng 24 gi?.</p>
+                //            <hr />
+                //            <p>Trân tr?ng,<br/><strong>{senderName}</strong></p>
+                //        </body>
+                //    </html>"
+                //};
+
                 var body = new BodyBuilder
                 {
                     HtmlBody = $@"
-                    <html>
-                        <head>
-                            <meta charset=""UTF-8"">
-                        </head>
-                        <body>
-                            <p>Chào b?n,</p>
-                            <p>Vui lòng nh?p vào liên k?t d??i ?ây ?? xem l?i và ký h?p ??ng thuê xe c?a b?n.</p>
-                            <p><a href='{confirmationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Xem và Ký H?p ??ng</a></p>
-                            <p>B?n c?ng có th? t?i xu?ng file h?p ??ng Word (.docx) ?? xem tr??c:</p>
-                            <p><a href='{downloadLink}' style='background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>T?i xu?ng H?p ??ng (DOCX)</a></p>
-                            <p>Liên k?t này s? h?t h?n trong vòng 24 gi?.</p>
-                            <hr />
-                            <p>Trân tr?ng,<br/><strong>{senderName}</strong></p>
-                        </body>
-                    </html>"
+                    <p>Chào b?n,</p>
+                    <p>Vui lòng nh?p vào liên k?t d??i ?ây ?? xem l?i và ký h?p ??ng thuê xe c?a b?n.</p>
+                    <p><a href='{confirmationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Xem và Ký H?p ??ng</a></p>
+                    <p>B?n c?ng có th? t?i xu?ng file h?p ??ng Word (.docx) ?? xem tr??c:</p>
+                    <p><a href='{downloadLink}' style='background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>T?i xu?ng H?p ??ng (DOCX)</a></p>
+                    <p>Liên k?t này s? h?t h?n trong vòng 24 gi?.</p>
+                    <hr />
+                    <p>Trân tr?ng,<br/><strong>{senderName}</strong></p>"
                 };
+
                 email.Body = body.ToMessageBody();
 
                 var portString = emailSettings["Port"];

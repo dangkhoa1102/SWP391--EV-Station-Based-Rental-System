@@ -11,12 +11,10 @@ namespace Monolithic.Controllers;
 public class IncidentsController : ControllerBase
 {
     private readonly IIncidentService _incidentService;
-    private readonly IWebHostEnvironment _environment;
 
-    public IncidentsController(IIncidentService incidentService, IWebHostEnvironment environment)
+    public IncidentsController(IIncidentService incidentService)
     {
         _incidentService = incidentService;
-        _environment = environment;
     }
 
     /// <summary>
@@ -181,50 +179,5 @@ public class IncidentsController : ControllerBase
         {
             return StatusCode(500, new { message = "An error occurred while deleting the incident", error = ex.Message });
         }
-    }
-
-    /// <summary>
-    /// Tải xuống hình ảnh sự cố
-    /// </summary>
-    [HttpGet("Download-Image/{imageName}")]
-    public async Task<IActionResult> DownloadImage(string imageName)
-    {
-        try
-        {
-            var imagePath = Path.Combine(_environment.WebRootPath, "uploads", "incidents", imageName);
-
-            if (!System.IO.File.Exists(imagePath))
-            {
-                return NotFound(new { message = "Image not found" });
-            }
-
-            var memory = new MemoryStream();
-            using (var stream = new FileStream(imagePath, FileMode.Open))
-            {
-                await stream.CopyToAsync(memory);
-            }
-            memory.Position = 0;
-
-            var contentType = GetContentType(imagePath);
-            return File(memory, contentType, Path.GetFileName(imagePath));
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while downloading the image", error = ex.Message });
-        }
-    }
-
-    private string GetContentType(string path)
-    {
-        var types = new Dictionary<string, string>
-            {
-                { ".png", "image/png" },
-                { ".jpg", "image/jpeg" },
-                { ".jpeg", "image/jpeg" },
-                { ".gif", "image/gif" }
-            };
-
-        var ext = Path.GetExtension(path).ToLowerInvariant();
-        return types.ContainsKey(ext) ? types[ext] : "application/octet-stream";
     }
 }

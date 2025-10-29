@@ -4,34 +4,21 @@ using Monolithic.DTOs.Incident.Request;
 using Monolithic.DTOs.Incident.Response;
 using Monolithic.Models;
 using Monolithic.Services.Interfaces;
+using System.Text.Json;
 
 namespace Monolithic.Services.Implementation
 {
     public class IncidentService : IIncidentService
     {
         private readonly EVStationBasedRentalSystemDbContext _context;
-        private readonly IWebHostEnvironment _environment;
-        private readonly IConfiguration _configuration;
-        private readonly string _imageUploadPath;
+        private readonly IPhotoService _photoService;
 
-        public IncidentService(EVStationBasedRentalSystemDbContext context, IWebHostEnvironment environment, IConfiguration configuration)
+        public IncidentService(
+            EVStationBasedRentalSystemDbContext context, 
+            IPhotoService photoService)
         {
             _context = context;
-            _environment = environment;
-            _configuration = configuration;
-            // WebRootPath can be null in some hosting scenarios (e.g., when web root is not configured).
-            // Fall back to ContentRootPath + "wwwroot" or current directory if necessary.
-            var webRoot = !string.IsNullOrEmpty(_environment?.WebRootPath)
-                ? _environment.WebRootPath
-                : Path.Combine(_environment?.ContentRootPath ?? Directory.GetCurrentDirectory(), "wwwroot");
-
-            _imageUploadPath = Path.Combine(webRoot, "uploads", "incidents");
-
-            // Tạo thư mục nếu chưa tồn tại
-            if (!Directory.Exists(_imageUploadPath))
-            {
-                Directory.CreateDirectory(_imageUploadPath);
-            }
+            _photoService = photoService;
         }
 
         public async Task<IncidentResponse> CreateIncidentAsync(CreateIncidentFormRequest request)
@@ -45,10 +32,7 @@ namespace Monolithic.Services.Implementation
                 throw new ArgumentException("Booking not found");
             }
 
-            // Upload images nếu có
-            List<string> imageUrls = new List<string>();
-
-            // Tạo incident tạm để lấy ID
+            // Tạo incident
             var incident = new Incident
             {
                 BookingId = request.BookingId,
@@ -62,11 +46,11 @@ namespace Monolithic.Services.Implementation
             _context.Incidents.Add(incident);
             await _context.SaveChangesAsync();
 
-            // Upload images sau khi có ID
+            // Upload images nếu có
             if (request.Images != null && request.Images.Any())
             {
-                imageUrls = await UploadImagesAsync(request.Images, incident.Id);
-                incident.Images = System.Text.Json.JsonSerializer.Serialize(imageUrls);
+                var imageUrls = await UploadImagesToCloudinaryAsync(request.Images, incident.Id);
+                incident.Images = JsonSerializer.Serialize(imageUrls);
                 await _context.SaveChangesAsync();
             }
 
@@ -84,29 +68,29 @@ namespace Monolithic.Services.Implementation
                 throw new UnauthorizedAccessException("Only staff and admin can update incidents");
             }
 
-            // Xử lý upload ảnh mới
-            List<string> currentImages = new List<string>();
+            // Xử lý ảnh
+            List<ImageInfo> currentImages = new List<ImageInfo>();
             if (!string.IsNullOrEmpty(incident.Images))
             {
-                currentImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(incident.Images) ?? new List<string>();
+                currentImages = JsonSerializer.Deserialize<List<ImageInfo>>(incident.Images) ?? new List<ImageInfo>();
             }
 
             // Xóa ảnh cũ nếu có
             if (request.ImagesToRemove != null && request.ImagesToRemove.Any())
             {
-                RemoveImages(request.ImagesToRemove);
-                currentImages = currentImages.Where(img => !request.ImagesToRemove.Contains(img)).ToList();
+                await RemoveImagesFromCloudinaryAsync(request.ImagesToRemove, currentImages);
+                currentImages = currentImages.Where(img => !request.ImagesToRemove.Contains(img.Url)).ToList();
             }
 
             // Thêm ảnh mới
             if (request.NewImages != null && request.NewImages.Any())
             {
-                var uploadedImages = await UploadImagesAsync(request.NewImages, id);
+                var uploadedImages = await UploadImagesToCloudinaryAsync(request.NewImages, id);
                 currentImages.AddRange(uploadedImages);
             }
 
             // Cập nhật danh sách ảnh
-            incident.Images = System.Text.Json.JsonSerializer.Serialize(currentImages);
+            incident.Images = JsonSerializer.Serialize(currentImages);
 
             // Update các field khác
             if (!string.IsNullOrEmpty(request.Status))
@@ -141,10 +125,10 @@ namespace Monolithic.Services.Implementation
             return MapToResponse(incident);
         }
 
-        // Các phương thức khác giữ nguyên...
-        private async Task<List<string>> UploadImagesAsync(List<IFormFile> images, int incidentId)
+        // Upload images lên Cloudinary
+        private async Task<List<ImageInfo>> UploadImagesToCloudinaryAsync(List<IFormFile> images, int incidentId)
         {
-            var uploadedImageUrls = new List<string>();
+            var uploadedImages = new List<ImageInfo>();
 
             foreach (var image in images)
             {
@@ -165,48 +149,69 @@ namespace Monolithic.Services.Implementation
                         throw new ArgumentException($"File {image.FileName} is too large. Maximum size is 5MB");
                     }
 
-                    // Tạo tên file unique
-                    var fileName = $"{incidentId}_{Guid.NewGuid()}{fileExtension}";
-                    var filePath = Path.Combine(_imageUploadPath, fileName);
+                    // Upload lên Cloudinary
+                    var uploadResult = await _photoService.AddPhotoAsync(image, $"incidents/{incidentId}");
 
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    if (uploadResult.Error != null)
                     {
-                        await image.CopyToAsync(stream);
+                        throw new Exception($"Failed to upload image: {uploadResult.Error.Message}");
                     }
 
-                    // Lưu URL ảnh
-                    var imageUrl = $"/uploads/incidents/{fileName}";
-                    uploadedImageUrls.Add(imageUrl);
+                    // Lưu thông tin ảnh
+                    uploadedImages.Add(new ImageInfo
+                    {
+                        Url = uploadResult.SecureUrl.ToString(),
+                        PublicId = uploadResult.PublicId
+                    });
                 }
             }
 
-            return uploadedImageUrls;
+            return uploadedImages;
         }
 
-        private void RemoveImages(List<string> imageUrls)
+        // Xóa images từ Cloudinary
+        private async Task RemoveImagesFromCloudinaryAsync(List<string> imageUrls, List<ImageInfo> currentImages)
         {
             foreach (var imageUrl in imageUrls)
             {
-                var fileName = Path.GetFileName(imageUrl);
-                var filePath = Path.Combine(_imageUploadPath, fileName);
-
-                if (File.Exists(filePath))
+                var imageInfo = currentImages.FirstOrDefault(img => img.Url == imageUrl);
+                if (imageInfo != null && !string.IsNullOrEmpty(imageInfo.PublicId))
                 {
-                    File.Delete(filePath);
+                    var deletionResult = await _photoService.DeletePhotoAsync(imageInfo.PublicId);
+                    
+                    if (deletionResult.Error != null)
+                    {
+                        // Log error nhưng không throw exception
+                        Console.WriteLine($"Failed to delete image from Cloudinary: {deletionResult.Error.Message}");
+                    }
                 }
             }
         }
 
         private static IncidentResponse MapToResponse(Incident incident)
         {
+            List<string> imageUrls = new List<string>();
+            
+            if (!string.IsNullOrEmpty(incident.Images))
+            {
+                try
+                {
+                    var imageInfos = JsonSerializer.Deserialize<List<ImageInfo>>(incident.Images);
+                    imageUrls = imageInfos?.Select(img => img.Url).ToList() ?? new List<string>();
+                }
+                catch
+                {
+                    // Fallback for old format (plain string array)
+                    imageUrls = JsonSerializer.Deserialize<List<string>>(incident.Images) ?? new List<string>();
+                }
+            }
+
             return new IncidentResponse
             {
                 Id = incident.Id,
                 BookingId = incident.BookingId,
                 Description = incident.Description,
-                Images = !string.IsNullOrEmpty(incident.Images)
-                    ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(incident.Images)
-                    : new List<string>(),
+                Images = imageUrls,
                 ReportedAt = incident.ReportedAt,
                 ResolvedAt = incident.ResolvedAt,
                 Status = incident.Status,
@@ -218,7 +223,6 @@ namespace Monolithic.Services.Implementation
             };
         }
 
-        // Các phương thức khác giữ nguyên...
         public async Task<IncidentListResponse> GetIncidentsAsync(Guid? stationId, string? status, DateTime? dateFrom, DateTime? dateTo, int page = 1, int pageSize = 20)
         {
             var query = _context.Incidents.AsQueryable();
@@ -308,9 +312,40 @@ namespace Monolithic.Services.Implementation
             var incident = await _context.Incidents.FindAsync(id);
             if (incident == null) return false;
 
+            // Xóa tất cả ảnh từ Cloudinary trước khi xóa incident
+            if (!string.IsNullOrEmpty(incident.Images))
+            {
+                try
+                {
+                    var imageInfos = JsonSerializer.Deserialize<List<ImageInfo>>(incident.Images);
+                    if (imageInfos != null && imageInfos.Any())
+                    {
+                        foreach (var imageInfo in imageInfos)
+                        {
+                            if (!string.IsNullOrEmpty(imageInfo.PublicId))
+                            {
+                                await _photoService.DeletePhotoAsync(imageInfo.PublicId);
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Log error nhưng vẫn tiếp tục xóa incident
+                    Console.WriteLine("Failed to delete some images from Cloudinary");
+                }
+            }
+
             _context.Incidents.Remove(incident);
             await _context.SaveChangesAsync();
             return true;
         }
+    }
+
+    // Helper class để lưu thông tin ảnh
+    public class ImageInfo
+    {
+        public string Url { get; set; } = string.Empty;
+        public string PublicId { get; set; } = string.Empty;
     }
 }

@@ -55,5 +55,22 @@ namespace Monolithic.Repositories.Implementation
                 throw;
             }
         }
+
+        public async Task<Contract?> GetByTokenAsync(string token)
+        {
+            return await _dbContext.Contracts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.ConfirmationToken == token);
+        }
+
+        public async Task<Contract?> GetByConfirmationTokenAsync(string token)
+        {
+            return await _dbContext.Contracts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.ConfirmationToken == token 
+                    && c.TokenExpiry.HasValue 
+                    && c.TokenExpiry > DateTime.UtcNow
+                    && !c.IsDeleted);
+        }
     }
 }
