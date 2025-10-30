@@ -77,7 +77,11 @@ const API = {
   refreshToken: async () => { const res = await apiClient.post('/Auth/Refresh-Token'); return res.data },
   logout: async () => { const res = await apiClient.post('/Auth/Logout'); localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); localStorage.removeItem('user'); localStorage.removeItem('userEmail'); return res.data },
   forgotPassword: async (email) => { const res = await apiClient.post('/Auth/forgot-password', { email }); return res.data },
-  getMe: async () => { const res = await apiClient.get('/Auth/Me'); return res.data },
+  getMe: async () => { 
+    const res = await apiClient.get('/Auth/Me');
+    const data = res?.data?.data ?? res?.data ?? {};
+    return data;
+  },
 
   getMyProfile: async () => {
     const res = await apiClient.get('/Users/Get-My-Profile')
@@ -262,6 +266,19 @@ const API = {
     const body = res.data
     return body && typeof body === 'object' && 'data' in body ? body.data : body
   },
+  getCarBattery: async (carId) => {
+    const res = await apiClient.get(`/car/${encodeURIComponent(carId)}`)
+    const body = res.data
+    const car = body && typeof body === 'object' && 'data' in body ? body.data : body
+    return car?.currentBatteryLevel ?? car?.CurrentBatteryLevel ?? null
+  },
+  getCarCapacity: async (carId) => {
+    const res = await apiClient.get(`/car/${encodeURIComponent(carId)}`)
+    const body = res.data
+    const car = body && typeof body === 'object' && 'data' in body ? body.data : body
+    // Try common field names for capacity
+    return car?.batteryCapacity ?? car?.BatteryCapacity ?? car?.capacity ?? car?.capacityKWh ?? car?.batteryCapacityKWh ?? null
+  },
 
   getAvailableCarsByStation: async (stationId) => {
     try {
@@ -339,6 +356,63 @@ const API = {
   },
 
   // Bookings
+  // Station-scoped bookings with multiple backend fallbacks
+  getBookingsByStation: async (stationId) => {
+    if (!stationId) return []
+    const id = encodeURIComponent(stationId)
+    const attempts = [
+      // Legacy
+      { url: `/Bookings/Get-By-Station/${id}` },
+      { url: '/Bookings/Get-By-Station', opts: { params: { stationId } } },
+      { url: '/Bookings/Get-All', opts: { params: { stationId } } },
+      { url: `/Stations/${id}/Bookings` },
+      // REST style
+      { url: `/booking/station/${id}` },
+      { url: '/booking', opts: { params: { stationId } } },
+      { url: '/booking', opts: { params: { station: stationId } } }
+    ]
+    for (const a of attempts) {
+      try {
+        const res = await apiClient.get(a.url, a.opts)
+        const body = res.data
+        if (Array.isArray(body)) return body
+        if (Array.isArray(body?.data?.data)) return body.data.data
+        if (Array.isArray(body?.data?.items)) return body.data.items
+        if (Array.isArray(body?.data)) return body.data
+        if (Array.isArray(body?.items)) return body.items
+        if (Array.isArray(body?.bookings)) return body.bookings
+        if (Array.isArray(body?.results)) return body.results
+        if (body && (body.id || body.bookingId || body.BookingId)) return [body]
+      } catch (e) {
+        // try next
+      }
+    }
+    return []
+  },
+
+  listBookings: async (opts = { page: 1, pageSize: 100 }) => {
+    const attempts = [
+      { url: '/Bookings/Get-All', opts: { params: { pageNumber: opts.page, pageSize: opts.pageSize } } },
+      { url: '/booking', opts: { params: { page: opts.page, pageSize: opts.pageSize } } }
+    ]
+    for (const a of attempts) {
+      try {
+        const res = await apiClient.get(a.url, a.opts)
+        const body = res.data
+        if (Array.isArray(body)) return body
+        if (Array.isArray(body?.data?.data)) return body.data.data
+        if (Array.isArray(body?.data?.items)) return body.data.items
+        if (Array.isArray(body?.data)) return body.data
+        if (Array.isArray(body?.items)) return body.items
+        if (Array.isArray(body?.bookings)) return body.bookings
+        if (Array.isArray(body?.results)) return body.results
+        if (body && (body.id || body.bookingId || body.BookingId)) return [body]
+      } catch (e) {
+        // continue
+      }
+    }
+    return []
+  },
   createBooking: async (bookingData, userId) => {
     try {
       console.log('📝 Creating booking for user:', userId)

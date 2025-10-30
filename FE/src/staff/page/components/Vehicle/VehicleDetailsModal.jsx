@@ -57,6 +57,9 @@ export default function VehicleDetailsModal({ open, vehicle, onClose }) {
               <strong>Battery:</strong> {vehicle.battery ?? 'N/A'}%
             </div>
             <div style={{ background: 'rgba(255,255,255,0.85)', padding: 12, borderRadius: 10, marginBottom: 10 }}>
+              <strong>Capacity:</strong> {vehicle.capacity ?? 'N/A'}
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.85)', padding: 12, borderRadius: 10, marginBottom: 10 }}>
               <strong>Condition:</strong> {vehicle.tech ?? 'N/A'}
             </div>
             <div style={{ background: 'rgba(255,255,255,0.85)', padding: 12, borderRadius: 10 }}>

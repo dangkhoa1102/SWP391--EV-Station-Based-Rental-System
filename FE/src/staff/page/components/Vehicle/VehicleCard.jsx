@@ -9,6 +9,7 @@ export default function VehicleCard({ vehicle, onOpen, onRemove, onOpenUpdate })
       <div className="vehicle-info">
         <div className="vehicle-title">{vehicle.name}</div>
         <div className="vehicle-battery">Battery: {vehicle.battery ?? 'N/A'}%</div>
+        <div className="vehicle-capacity">Capacity: {vehicle.capacity ?? 'N/A'}</div>
         <div className="vehicle-tech">Condition: {vehicle.tech ?? 'N/A'}</div>
         <div className="vehicle-issue">Issue: {vehicle.issue ?? 'None'}</div>
       </div>

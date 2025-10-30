@@ -57,7 +57,27 @@ export default function StaffPage() {
   // Vehicle actions
   const addVehicle = (vehicle) => setVehicles(prev => [...prev, vehicle]);
   const removeVehicle = (id) => setVehicles(prev => prev.filter(v => v.id !== id));
-  const updateVehicle = (id, payload) => setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...payload } : v));
+  const updateVehicle = async (id, payload) => {
+    try {
+      if (payload.battery !== undefined && payload.battery !== '') {
+        let val = Number(payload.battery)
+        if (!Number.isNaN(val)) {
+          val = Math.max(0, Math.min(100, Math.round(val)))
+          await StaffAPI.updateBatteryLevel(id, val)
+        }
+      }
+      if (payload.tech) {
+        await StaffAPI.updateStatus(id, payload.tech)
+      }
+      if (payload.issue) {
+        try { await StaffAPI.updateCarDescription(id, payload.issue) }
+        catch { await StaffAPI.updateCar(id, { description: payload.issue }) }
+      }
+    } catch (e) {
+      setError(e?.message || 'Failed to update vehicle')
+    }
+    setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...payload } : v));
+  };
 
   // Handle global body class to trigger CSS margin transitions
   useEffect(() => {
@@ -98,17 +118,60 @@ export default function StaffPage() {
         setLoadingVehicles(true)
         let cars = []
         if (stationId) {
-          cars = await StaffAPI.getAvailableCarsByStation(stationId)
+          try { cars = await StaffAPI.getAvailableCarsByStation(stationId) }
+          catch { try { cars = await StaffAPI.getCarsByStation(stationId) } catch { cars = [] } }
         } else {
-          cars = await StaffAPI.getAllCars(1, 100)
+          try { cars = await StaffAPI.getAllCars(1, 100) }
+          catch { try { cars = await StaffAPI.listCars({ page: 1, pageSize: 100 }) } catch { cars = [] } }
         }
         if (!mounted) return
+        const normalizePercent = (v) => {
+          const n = Number(v); if (Number.isFinite(n) && n >= 0 && n <= 100) return Math.round(n); return null
+        }
         const mapped = (cars || []).map(c => ({
           id: c.id || c.Id,
           name: c.name || c.Name || c.model || c.CarName || 'Car',
-          img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || 'Car')}`
+          img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || 'Car')}`,
+          battery: normalizePercent(c.currentBatteryLevel ?? c.CurrentBatteryLevel ?? c.batteryPercent ?? c.battery),
+          tech: c.condition ?? c.status ?? c.Status ?? null,
+          issue: c.issue ?? c.issueDescription ?? null,
+          capacity: c.batteryCapacity ?? c.BatteryCapacity ?? c.capacity ?? c.capacityKWh ?? c.batteryCapacityKWh ?? null
         }))
         setVehicles(mapped)
+
+        // Opportunistically fetch battery percent for vehicles missing it
+        const needBattery = mapped.filter(v => v.battery == null)
+        const needCapacity = mapped.filter(v => v.capacity == null)
+        if (needBattery.length > 0) {
+          try {
+            const updates = await Promise.all(needBattery.map(async v => {
+              try {
+                const b = await StaffAPI.getCarBattery(v.id)
+                return { id: v.id, battery: normalizePercent(b) }
+              } catch { return { id: v.id, battery: null } }
+            }))
+            if (!mounted) return
+            setVehicles(prev => prev.map(v => {
+              const u = updates.find(x => x.id === v.id)
+              return u && u.battery != null ? { ...v, battery: u.battery } : v
+            }))
+          } catch {}
+        }
+        if (needCapacity.length > 0) {
+          try {
+            const updatesCap = await Promise.all(needCapacity.map(async v => {
+              try {
+                const cap = await StaffAPI.getCarCapacity(v.id)
+                return { id: v.id, capacity: cap }
+              } catch { return { id: v.id, capacity: null } }
+            }))
+            if (!mounted) return
+            setVehicles(prev => prev.map(v => {
+              const u = updatesCap.find(x => x.id === v.id)
+              return u && u.capacity != null ? { ...v, capacity: u.capacity } : v
+            }))
+          } catch {}
+        }
       } catch (e) {
         if (!mounted) return
         setError(e?.message || 'Failed to load vehicles')
@@ -123,34 +186,17 @@ export default function StaffPage() {
   // Load bookings for station when station changes
   useEffect(() => {
     let mounted = true
-    const unwrapToArray = (r) => {
-      if (Array.isArray(r)) return r
-      if (Array.isArray(r?.data?.data)) return r.data.data
-      if (Array.isArray(r?.data?.items)) return r.data.items
-      if (Array.isArray(r?.data)) return r.data
-      if (Array.isArray(r?.items)) return r.items
-      return []
-    }
     async function loadBookings() {
       try {
         setLoadingBookings(true)
-        let res = []
+        let items = []
         if (stationId) {
-          // Try several common station-booking endpoints
-          try {
-            res = await StaffAPI.get(`/Bookings/Get-By-Station/${encodeURIComponent(stationId)}`)
-          } catch {
-            try { res = await StaffAPI.get('/Bookings/Get-All', { params: { stationId } }) } catch {
-              try { res = await StaffAPI.get(`/Stations/${encodeURIComponent(stationId)}/Bookings`) } catch {}
-            }
-          }
+          items = await StaffAPI.getBookingsByStation(stationId)
         } else {
-          try { res = await StaffAPI.get('/Bookings/Get-All', { params: { pageNumber: 1, pageSize: 100 } }) } catch {}
+          items = await StaffAPI.listBookings({ page: 1, pageSize: 100 })
         }
-
         if (!mounted) return
-        const items = unwrapToArray(res)
-        const mapped = items.map(b => {
+        const mapped = (items || []).map(b => {
           const id = b.id || b.Id || b.bookingId || b.BookingId
           const carName = b.carName || b.vehicleName || b.car?.name || b.car?.Name || 'Booking'
           const customerName = b.customerName || b.userFullName || b.user?.fullName || b.customer?.name || 'Customer'
@@ -209,16 +255,33 @@ export default function StaffPage() {
           </div>
         )}
         {section === 'booking' && (
-          <BookingSection
-            bookings={bookings}
-            search={search}
-            setSearch={setSearch}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            onConfirm={confirmBooking}
-            onComplete={completeBooking}
-            onDeny={denyBooking}
-          />
+          <>
+            <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:12}}>
+              <label style={{fontWeight:600}}>Station:</label>
+              <select value={stationId} onChange={e=>setStationId(e.target.value)} disabled={loadingStations}>
+                <option value="">All stations</option>
+                {stations.map(s => {
+                  const id = s.id || s.Id
+                  const name = s.name || s.Name || s.stationName || `Station ${id}`
+                  return <option key={id} value={id}>{name}</option>
+                })}
+              </select>
+              {loadingBookings && <span>Loading bookings…</span>}
+            </div>
+            {!loadingBookings && bookings.length === 0 && (
+              <div style={{padding:'10px 12px', color:'#555'}}>No bookings to display for this station.</div>
+            )}
+            <BookingSection
+              bookings={bookings}
+              search={search}
+              setSearch={setSearch}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              onConfirm={confirmBooking}
+              onComplete={completeBooking}
+              onDeny={denyBooking}
+            />
+          </>
         )}
         {section === 'vehicle' && (
           <>

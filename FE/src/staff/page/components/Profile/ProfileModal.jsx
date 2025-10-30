@@ -17,11 +17,29 @@ export default function ProfileModal({ open, onClose }) {
         setLoading(true)
         setError('')
         // Fetch staff profile and auth info (same endpoints as user, via staff API)
-        const p = await StaffAPI.getMyProfile()
-        const a = await StaffAPI.getMe()
+        let p = {}
+        let a = {}
+        try {
+          p = await StaffAPI.getMyProfile()
+        } catch (e1) {
+          if (e1?.response?.status === 401) {
+            console.warn('Get-My-Profile unauthorized (401)')
+          }
+        }
+        try {
+          a = await StaffAPI.getMe()
+        } catch (e2) {
+          if (e2?.response?.status === 401) {
+            console.warn('/Auth/Me unauthorized (401)')
+          }
+        }
         if (!mounted) return
         setProfile(p || {})
         setAuth(a || {})
+        if ((!p || Object.keys(p).length === 0) && (!a || Object.keys(a).length === 0)) {
+          const hasToken = typeof localStorage !== 'undefined' && !!localStorage.getItem('token')
+          setError(hasToken ? 'You may not have permission to view this profile.' : 'You are not logged in. Please log in with a staff account.')
+        }
       } catch (e) {
         if (!mounted) return
         setError(e?.message || 'Failed to load profile')
