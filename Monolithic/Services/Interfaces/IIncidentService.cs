@@ -7,9 +7,10 @@ namespace Monolithic.Services.Interfaces
     {
         Task<IncidentResponse> CreateIncidentAsync(CreateIncidentFormRequest request);
         Task<IncidentListResponse> GetIncidentsAsync(Guid? stationId, string? status, DateTime? dateFrom, DateTime? dateTo, int page = 1, int pageSize = 20);
-        Task<IncidentResponse?> GetIncidentByIdAsync(int id, int userId, string userRole);
-        Task<IncidentResponse?> UpdateIncidentAsync(int id, UpdateIncidentFormRequest request, int userId, string userRole);
-        Task<bool> ResolveIncidentAsync(int id, UpdateIncidentRequest request, int userId);
-        Task<bool> DeleteIncidentAsync(int id);
+        Task<IncidentResponse?> GetIncidentByIdAsync(Guid id, Guid userId, string userRole);
+        Task<IncidentResponse?> UpdateIncidentAsync(Guid id, UpdateIncidentFormRequest request, Guid userId, string userRole);
+        Task<bool> ResolveIncidentAsync(Guid id, UpdateIncidentRequest request, Guid userId);
+        Task<bool> DeleteIncidentAsync(Guid id);
+        Task<IncidentListResponse> GetRenterIncidentsAsync(string renterId, int page = 1, int pageSize = 20);
     }
 }

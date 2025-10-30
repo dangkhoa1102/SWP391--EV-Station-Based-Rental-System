@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030164157_AddUserStationRelation")]
+    partial class AddUserStationRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -360,16 +363,17 @@ namespace Monolithic.Migrations
 
             modelBuilder.Entity("Monolithic.Models.Incident", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<Guid>("BookingId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("CostIncurred")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -382,6 +386,9 @@ namespace Monolithic.Migrations
                     b.Property<DateTime>("ReportedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ReportedBy")
+                        .HasColumnType("int");
+
                     b.Property<string>("ResolutionNotes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -389,11 +396,8 @@ namespace Monolithic.Migrations
                     b.Property<DateTime?>("ResolvedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ResolvedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("StaffId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("ResolvedBy")
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("StationId")
                         .HasColumnType("uniqueidentifier");
@@ -408,8 +412,6 @@ namespace Monolithic.Migrations
                     b.HasIndex("BookingId");
 
                     b.HasIndex("ReportedAt");
-
-                    b.HasIndex("StaffId");
 
                     b.HasIndex("StationId");
 
@@ -632,7 +634,7 @@ namespace Monolithic.Migrations
                         new
                         {
                             UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 30, 17, 10, 6, 921, DateTimeKind.Utc).AddTicks(999),
+                            CreatedAt = new DateTime(2025, 10, 30, 16, 41, 56, 486, DateTimeKind.Utc).AddTicks(9984),
                             DateOfBirth = new DateOnly(1, 1, 1),
                             Email = "admin@ev.com",
                             FirstName = "Admin",
@@ -727,14 +729,7 @@ namespace Monolithic.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Monolithic.Models.User", "Staff")
-                        .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Booking");
-
-                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Monolithic.Models.Payment", b =>
