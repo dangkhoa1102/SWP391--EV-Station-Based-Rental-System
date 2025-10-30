@@ -180,6 +180,34 @@ namespace Monolithic.Services.Implementation
             return true;
         }
 
+        public async Task<DTOs.Common.ResponseDto<string>> AssignStaffToStationAsync(string staffId, Guid? stationId)
+        {
+            if (!Guid.TryParse(staffId, out var staffGuid))
+                return DTOs.Common.ResponseDto<string>.Failure("staffId không hợp lệ");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == staffGuid);
+            if (user == null)
+                return DTOs.Common.ResponseDto<string>.Failure("Không tìm thấy nhân viên");
+
+            // Chỉ cho phép gán station cho nhân viên Station Staff
+            if (user.UserRole != Common.AppRoles.StationStaff)
+                return DTOs.Common.ResponseDto<string>.Failure("Chỉ áp dụng cho nhân viên có vai trò Station Staff");
+
+            if (stationId.HasValue)
+            {
+                var stationExists = await _context.Stations.AnyAsync(s => s.StationId == stationId.Value && s.IsActive);
+                if (!stationExists)
+                    return DTOs.Common.ResponseDto<string>.Failure("Không tìm thấy trạm");
+            }
+
+            user.StationId = stationId;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return DTOs.Common.ResponseDto<string>.Success(stationId.HasValue 
+                ? "Gán nhân viên vào trạm thành công" 
+                : "Đã bỏ gán nhân viên khỏi trạm");
+        }
+
         public async Task<int> GetTotalUsersCountAsync()
         {
             return await _context.Users.CountAsync(u => u.IsActive);

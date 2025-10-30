@@ -13,7 +13,7 @@ namespace Monolithic.DTOs.Incident.Request
         [Range(0, double.MaxValue)]
         public decimal? CostIncurred { get; set; }
 
-        public int? ResolvedBy { get; set; } // UserId of admin/staff
+        public Guid? ResolvedBy { get; set; } // UserId of admin/staff
 
         // Thêm phần upload ảnh mới
         public List<IFormFile>? NewImages { get; set; }

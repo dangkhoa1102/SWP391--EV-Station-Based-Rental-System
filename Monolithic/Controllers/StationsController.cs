@@ -12,10 +12,12 @@ namespace Monolithic.Controllers
     public class StationsController : ControllerBase
     {
         private readonly IStationService _stationService;
+        private readonly IUserService _userService;
 
-        public StationsController(IStationService stationService)
+        public StationsController(IStationService stationService, IUserService userService)
         {
             _stationService = stationService;
+            _userService = userService;
         }
 
         /// <summary>
@@ -109,6 +111,42 @@ namespace Monolithic.Controllers
         public async Task<ActionResult<ResponseDto<string>>> RecalculateSlots(Guid id)
         {
             var result = await _stationService.RecalculateStationAvailableSlotsAsync(id);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Gán nhân viên (Station Staff) vào một trạm
+        /// </summary>
+        [HttpPost("{stationId}/Assign-Staff")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<string>>> AssignStaffToStation(Guid stationId, [FromQuery] string staffId)
+        {
+            var result = await _userService.AssignStaffToStationAsync(staffId, stationId);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Bỏ gán nhân viên khỏi trạm (staff rời trạm)
+        /// </summary>
+        [HttpPost("Unassign-Staff")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<string>>> UnassignStaffFromStation([FromQuery] string staffId)
+        {
+            var result = await _userService.AssignStaffToStationAsync(staffId, null);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Chuyển nhân viên từ trạm này sang trạm khác
+        /// </summary>
+        [HttpPost("Reassign-Staff")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<string>>> ReassignStaff([FromQuery] string staffId, [FromQuery] Guid toStationId)
+        {
+            var result = await _userService.AssignStaffToStationAsync(staffId, toStationId);
             if (!result.IsSuccess) return BadRequest(result);
             return Ok(result);
         }

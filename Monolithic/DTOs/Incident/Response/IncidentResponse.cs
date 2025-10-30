@@ -5,7 +5,7 @@ namespace Monolithic.DTOs.Incident.Response
 {
     public class IncidentResponse
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public Guid BookingId { get; set; }
         public string Description { get; set; }
         public List<string>? Images { get; set; }
@@ -16,13 +16,13 @@ namespace Monolithic.DTOs.Incident.Response
         public string Status { get; set; }
         public string? ResolutionNotes { get; set; }
         public decimal? CostIncurred { get; set; }
-        public int? ResolvedBy { get; set; }
-        public int ReportedBy { get; set; }
+        public Guid? ResolvedBy { get; set; }
         public Guid? StationId { get; set; }
+        public Guid? StaffId { get; set; }
 
         // Additional info for better response
         public string? BookingInfo { get; set; }
-        public string? ReporterName { get; set; }
+        public string? StaffName { get; set; }
         public string? ResolverName { get; set; }
     }
 }

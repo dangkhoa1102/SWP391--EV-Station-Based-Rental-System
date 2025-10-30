@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030165837_RemoveReportedByFromIncident")]
+    partial class RemoveReportedByFromIncident
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -360,9 +363,11 @@ namespace Monolithic.Migrations
 
             modelBuilder.Entity("Monolithic.Models.Incident", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<Guid>("BookingId")
                         .HasColumnType("uniqueidentifier");
@@ -389,8 +394,8 @@ namespace Monolithic.Migrations
                     b.Property<DateTime?>("ResolvedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ResolvedBy")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("ResolvedBy")
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("StaffId")
                         .HasColumnType("uniqueidentifier");
@@ -632,7 +637,7 @@ namespace Monolithic.Migrations
                         new
                         {
                             UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 30, 17, 10, 6, 921, DateTimeKind.Utc).AddTicks(999),
+                            CreatedAt = new DateTime(2025, 10, 30, 16, 58, 37, 302, DateTimeKind.Utc).AddTicks(6027),
                             DateOfBirth = new DateOnly(1, 1, 1),
                             Email = "admin@ev.com",
                             FirstName = "Admin",
