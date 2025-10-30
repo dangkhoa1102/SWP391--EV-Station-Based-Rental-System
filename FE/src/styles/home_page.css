@@ -73,8 +73,8 @@
 
 .search-form-overlay {
     position: absolute;
-    /* place search overlay at the top of the hero slideshow */
-    top: 16px;
+    /* place search overlay lower inside the hero slideshow */
+    top: 100px; /* moved down so it doesn't hug the header */
     left: 50%;
     transform: translate(-50%, 0);
     width: calc(100% - 40px);

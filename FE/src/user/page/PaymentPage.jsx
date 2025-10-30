@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import API from '../../services/api'
+import { formatVND } from '../../utils/currency'
 import '../../styles/payment_page.css'
 
 export default function PaymentPage(){
@@ -43,7 +44,7 @@ export default function PaymentPage(){
   }
 
   const calculateDepositAmount = () => {
-    return calculateTotalPrice() * 0.25 // 25% deposit
+    return calculateTotalPrice() * 0.3 // 25% deposit
   }
 
   const handleCreateBooking = async () => {
@@ -96,28 +97,36 @@ export default function PaymentPage(){
       
       console.log('✅ Booking created with ID:', newBookingId)
       
-      // Navigate to Transaction page with booking details
-      navigate('/transaction', {
-        state: {
+      // Step 2: Save booking ID and calculate deposit (30%)
+      const depositAmount = calculateTotalPrice() * 0.30
+      try {
+        localStorage.setItem('currentBookingId', newBookingId)
+        localStorage.setItem('depositAmount', depositAmount.toString())
+      } catch (e) {
+        console.warn('Failed to save booking ID:', e)
+      }
+      
+      // Step 3: Create payment via PayOS API
+      console.log('💳 Creating payment with deposit amount:', depositAmount)
+      try {
+        const paymentResponse = await API.post('/Payment/create', {
           bookingId: newBookingId,
-          depositAmount: calculateDepositAmount(),
-          totalAmount: calculateTotalPrice(),
-          carInfo: {
-            brand: car.brand,
-            model: car.model,
-            color: car.color,
-            seats: car.seats,
-            year: car.year
-          },
-          rentalInfo: {
-            stationName: rentalContext.stationName,
-            pickupDate: rentalContext.pickupDate,
-            pickupTime: rentalContext.pickupTime,
-            returnDate: rentalContext.returnDate,
-            returnTime: rentalContext.returnTime
-          }
+          amount: Math.round(depositAmount)
+        })
+        
+        const checkoutUrl = paymentResponse.checkoutUrl
+        if (!checkoutUrl) {
+          throw new Error('No checkout URL received from payment service')
         }
-      })
+        
+        console.log('🔗 Redirecting to PayOS:', checkoutUrl)
+        // Redirect to PayOS for payment
+        window.location.href = checkoutUrl
+      } catch (paymentError) {
+        console.error('Payment creation failed:', paymentError)
+        alert('Failed to create payment. Please try again.')
+        setLoading(false)
+      }
 
     } catch (error) {
       console.error('Error creating booking:', error)
@@ -169,7 +178,7 @@ export default function PaymentPage(){
                   <p><strong>Color:</strong> {car.color}</p>
                   <p><strong>Seats:</strong> {car.seats}</p>
                   <p><strong>Year:</strong> {car.year}</p>
-                  <p><strong>Price:</strong> ${parseFloat(car.rentalPricePerHour || 0).toFixed(2)}/hour</p>
+                  <p><strong>Price:</strong> {formatVND(parseFloat(car.rentalPricePerHour || 0))}/hour</p>
                 </div>
               </div>
             </div>
@@ -179,11 +188,11 @@ export default function PaymentPage(){
                 <h3 className="section-heading">Price Summary</h3>
               <div className="info-row">
                 <span className="info-label">Total Rental Cost:</span>
-                <span className="info-value">${totalPrice.toFixed(2)}</span>
+                <span className="info-value">{formatVND(totalPrice)}</span>
               </div>
               <div className="info-row deposit-row">
-                <span className="info-label">Deposit Required (25%):</span>
-                <span className="info-value">${depositAmount.toFixed(2)}</span>
+                <span className="info-label">Deposit Required (30%):</span>
+                <span className="info-value">{formatVND(depositAmount)}</span>
               </div>
             </div>
 
@@ -194,11 +203,11 @@ export default function PaymentPage(){
           {/* Right Column - Summary & CTA */}
           <aside className="payment-summary-column" aria-label="Payment summary">
             <div className="summary-card">
-              <div className="summary-pricing">
+                <div className="summary-pricing">
                 <div className="label">Total Rental Cost</div>
-                <div className="price-large">${totalPrice.toFixed(2)}</div>
-                <div className="label small">Deposit Required (25%)</div>
-                <div className="deposit-badge">${depositAmount.toFixed(2)}</div>
+                <div className="price-large">{formatVND(totalPrice)}</div>
+                <div className="label small">Deposit Required (30%)</div>
+                <div className="deposit-badge">{formatVND(depositAmount)}</div>
               </div>
             </div>
           </aside>

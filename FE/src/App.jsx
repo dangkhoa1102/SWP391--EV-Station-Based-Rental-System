@@ -5,6 +5,7 @@ import HomePage from './user/page/HomePage'
 import CarListPage from './user/page/CarListPage'
 import CarDetail from './user/page/CarDetail'
 import PaymentPage from './user/page/PaymentPage'
+import PaymentSuccess from './user/page/PaymentSuccess'
 import TransactionPage from './user/page/TransactionPage'
 import BookingHistory from './user/page/BookingHistory'
 import TestApi from './user/page/TestApi'
@@ -21,6 +22,7 @@ export default function App(){
         <Route path="/cars" element={<CarListPage />} />
         <Route path="/cars/:id" element={<CarDetail />} />
         <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/transaction" element={<TransactionPage />} />
         <Route path="/booking-history" element={<BookingHistory />} />
         <Route path="/profile" element={<UserProfile />} />

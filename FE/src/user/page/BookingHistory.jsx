@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import API from '../../services/api'
+import { formatVND } from '../../utils/currency'
 import '../../styles/booking_history.css'
 
 export default function BookingHistory(){
@@ -8,10 +9,17 @@ export default function BookingHistory(){
   const [allBookings, setAllBookings] = useState([])
   const [filteredBookings, setFilteredBookings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [sortFilter, setSortFilter] = useState('newest')
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [feedbackData, setFeedbackData] = useState({ carId: '', rating: 5, comment: '' })
+  const [isEditingFeedback, setIsEditingFeedback] = useState(false)
+  const [currentFeedbackId, setCurrentFeedbackId] = useState(null)
+
+  console.log('🔍 BookingHistory render - showFeedbackModal:', showFeedbackModal, 'selectedBooking:', selectedBooking)
 
   useEffect(()=>{
     loadBookings()
@@ -24,18 +32,29 @@ export default function BookingHistory(){
   const loadBookings = async ()=>{
     try{
       setLoading(true)
-      const uid = localStorage.getItem('userId')
-      if(!uid){
-        console.error('No userId found')
-        setLoading(false)
+      console.log('Fetching bookings for current user')
+      setFetchError('')
+      // ensure user has a token locally before calling
+      const token = localStorage.getItem('token')
+      if (!token || token === 'null') {
+        console.warn('No auth token found in localStorage')
+        setAllBookings([])
+        setFetchError('You are not signed in. Please sign in to view your bookings.')
         return
       }
-      console.log('Fetching bookings for userId:', uid)
-      const res = await API.getUserBookings(uid)
+
+      const res = await API.getUserBookings()
       console.log('Bookings loaded:', res)
       setAllBookings(res || [])
     }catch(e){ 
       console.error('Error loading bookings:', e)
+      // If request was unauthorized, show helpful message
+      if (e && e.response && e.response.status === 401) {
+        setFetchError('Session expired or unauthorized. Please sign in again.')
+        setAllBookings([])
+        return
+      }
+      setFetchError('Failed to load bookings. Please try again later.')
     }finally{
       setLoading(false)
     }
@@ -66,14 +85,18 @@ export default function BookingHistory(){
     setFilteredBookings(filtered)
   }
 
-  const getBookingStatus = (status)=>{
+  const getBookingStatus = (status) => {
     const statuses = {
       0: { text: 'Pending', class: 'status-pending' },
       1: { text: 'Active', class: 'status-active' },
       2: { text: 'Completed', class: 'status-completed' },
-      3: { text: 'Cancelled', class: 'status-cancelled' }
+      3: { text: 'Cancelled', class: 'status-cancelled' },
+      7: { text: 'Cancelled', class: 'status-cancelled' } // BookingStatus 7 = Cancelled
     }
-    return statuses[status] || { text: 'Unknown', class: 'status-unknown' }
+
+    const idx = Number(status)
+    if (Number.isNaN(idx) || !(idx in statuses)) return statuses[3]
+    return statuses[idx]
   }
 
   const formatDateTime = (dateString)=>{
@@ -96,21 +119,143 @@ export default function BookingHistory(){
 
   // Details view removed: bookings are shown without a "Details" button
 
-  const contactSupport = (booking) => {
-    const supportEmail = 'support@fec.com'
-    const bookingId = booking.id || booking.bookingId || booking.bookingIdString || 'N/A'
-    const subject = encodeURIComponent(`Booking Support: ${bookingId}`)
-    const body = encodeURIComponent(`Hello,%0A%0AI need help with my booking.%0A%0ABooking ID: ${bookingId}%0ACar: ${booking.carInfo || ''}%0A%0APlease describe your issue here:`)
-    window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`
+  const handleCancelBooking = async (booking, event) => {
+    // Prevent event bubbling
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    
+    const bookingId = booking.id || booking.bookingId || booking.bookingIdString
+    if (!bookingId) {
+      alert('Cannot cancel: Booking ID not found')
+      return
+    }
+
+    // If booking is already cancelled (status 7) do not proceed
+    if (Number(booking.bookingStatus) === 7) {
+      alert('This booking has already been cancelled.')
+      return
+    }
+
+    const confirmCancel = window.confirm(`Are you sure you want to cancel booking for "${booking.carInfo || 'this car'}"?`)
+    if (!confirmCancel) return
+
+    try {
+      const userId = localStorage.getItem('userId')
+      if (!userId) {
+        alert('User ID not found. Please login again.')
+        return
+      }
+
+      console.log('🚫 Cancelling booking:', bookingId, 'for user:', userId)
+      await API.cancelBooking(bookingId, userId)
+      alert('Booking cancelled successfully!')
+      
+      // Reload bookings to reflect the change
+      loadBookings()
+    } catch (e) {
+      console.error('❌ Error cancelling booking:', e)
+      alert('Failed to cancel booking. Please try again.')
+    }
   }
 
-  const reportIssue = (booking) => {
-    const bookingId = booking.id || booking.bookingId || 'N/A'
-    const reason = window.prompt(`Please describe the issue you want to report for booking ${bookingId}:`)
-    if (!reason) return
-    // In a real app this would POST to a support/report endpoint. For now we log and show confirmation.
-    console.log('Report submitted', { bookingId, reason })
-    alert('Thank you. Your report has been submitted. Our team will review it shortly.')
+  const handleOpenFeedbackModal = (booking, event) => {
+    // Prevent event bubbling and multiple triggers
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    
+    // Prevent opening if already open
+    if (showFeedbackModal) {
+      console.log('⚠️ Modal already open, ignoring click')
+      return
+    }
+    
+    console.log('📝 Opening feedback modal for booking:', booking)
+    const bookingId = booking.id || booking.bookingId || booking.bookingIdString || ''
+    const carId = booking.carId || booking.car?.id || booking.car?.carId || ''
+    console.log('📋 Extracted bookingId:', bookingId)
+    console.log('� Extracted carId:', carId)
+    
+    if (!bookingId) {
+      alert('Cannot create feedback: Booking ID not found.')
+      return
+    }
+    
+    if (!carId) {
+      alert('Cannot create feedback: Car ID not found in booking data. Please contact support.')
+      return
+    }
+    
+    // Check if booking has existing feedback
+    if (booking.feedbackId) {
+      // Edit mode
+      setIsEditingFeedback(true)
+      setCurrentFeedbackId(booking.feedbackId)
+      setFeedbackData({
+        carId: carId,
+        rating: booking.feedbackRating || 5,
+        comment: booking.feedbackComment || ''
+      })
+    } else {
+      // Create mode
+      setIsEditingFeedback(false)
+      setCurrentFeedbackId(null)
+      setFeedbackData({
+        carId: carId,
+        rating: 5,
+        comment: ''
+      })
+    }
+    
+    setSelectedBooking(booking)
+    setShowFeedbackModal(true)
+    console.log('✅ Modal state set to true, selectedBooking:', booking)
+  }
+
+  const handleSubmitFeedback = async () => {
+    try {
+      const userId = localStorage.getItem('userId')
+      if (!userId) {
+        alert('User ID not found. Please login again.')
+        return
+      }
+
+      if (!feedbackData.carId) {
+        alert('Car ID not found for this booking.')
+        return
+      }
+
+      if (!feedbackData.comment.trim()) {
+        alert('Please enter your feedback comment.')
+        return
+      }
+
+      console.log('📝 Submitting feedback:', feedbackData)
+
+      if (isEditingFeedback && currentFeedbackId) {
+        // Update existing feedback
+        await API.updateFeedback(currentFeedbackId, userId, feedbackData)
+        alert('Feedback updated successfully!')
+      } else {
+        // Create new feedback
+        await API.createFeedback(userId, feedbackData)
+        alert('Feedback submitted successfully!')
+      }
+
+      setShowFeedbackModal(false)
+      setFeedbackData({ carId: '', rating: 5, comment: '' })
+      setIsEditingFeedback(false)
+      setCurrentFeedbackId(null)
+      
+      // Reload bookings to reflect feedback status
+      loadBookings()
+    } catch (e) {
+      console.error('❌ Error submitting feedback:', e)
+      alert('Failed to submit feedback. Please try again.')
+    }
   }
 
   return (
@@ -135,6 +280,7 @@ export default function BookingHistory(){
               <option value="1">Active</option>
               <option value="2">Completed</option>
               <option value="3">Cancelled</option>
+              <option value="7">Cancelled</option>
             </select>
           </div>
           <div className="filter-group">
@@ -200,16 +346,29 @@ export default function BookingHistory(){
                       </div>
                       <div className="info-row price">
                         <span className="label"><i className="fas fa-tag"></i> Total:</span>
-                        <span className="value">${(booking.totalAmount || 0).toFixed(2)}</span>
+                        <span className="value">{formatVND(booking.totalAmount || 0)}</span>
                       </div>
                     </div>
                   </div>
                   <div className="booking-footer">
-                    <button className="btn btn-sm btn-primary" onClick={() => contactSupport(booking)}>
-                      <i className="fas fa-envelope"></i> Contact Support
+                    <button 
+                      className="btn btn-sm btn-primary" 
+                      onClick={(e) => handleOpenFeedbackModal(booking, e)}
+                      type="button"
+                    >
+                      <i className="fas fa-comment"></i> {booking.feedbackId ? 'Edit Feedback' : 'Feedback'}
                     </button>
-                    <button className="btn btn-sm btn-danger" onClick={() => reportIssue(booking)}>
-                      <i className="fas fa-flag"></i> Report
+                    {
+                      /* Disable Cancel when bookingStatus === 7 */
+                    }
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={(e) => handleCancelBooking(booking, e)}
+                      disabled={Number(booking.bookingStatus) === 7}
+                      title={Number(booking.bookingStatus) === 7 ? 'Already cancelled' : 'Cancel booking'}
+                      type="button"
+                    >
+                      <i className="fas fa-times-circle"></i> Cancel
                     </button>
                   </div>
                 </div>
@@ -269,14 +428,14 @@ export default function BookingHistory(){
                     <span className="pricing-icon">⏱️</span>
                     <div>
                       <label>Hourly Rate</label>
-                      <p>${(selectedBooking.hourlyRate || 0).toFixed(2)}/hour</p>
+                      <p>{formatVND(selectedBooking.hourlyRate || 0)}/hour</p>
                     </div>
                   </div>
                   <div className="pricing-item">
                     <span className="pricing-icon">📅</span>
                     <div>
                       <label>Daily Rate</label>
-                      <p>${(selectedBooking.dailyRate || 0).toFixed(2)}/day</p>
+                      <p>{formatVND(selectedBooking.dailyRate || 0)}/day</p>
                     </div>
                   </div>
                   <div className="pricing-item">
@@ -293,7 +452,63 @@ export default function BookingHistory(){
               <div className="detail-section total-section">
                 <div className="total-content">
                   <span className="total-label">Total Amount</span>
-                  <span className="total-amount">${(selectedBooking.totalAmount || 0).toFixed(2)}</span>
+                  <span className="total-amount">{formatVND(selectedBooking.totalAmount || 0)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <div className="modal-overlay" onClick={() => setShowFeedbackModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>We want your opinion!</h2>
+              <button className="modal-close" onClick={() => setShowFeedbackModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="feedback-form">
+                <div className="form-group">
+                  <label>Car: {selectedBooking?.carInfo || 'N/A'}</label>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="rating">Rating</label>
+                  <div className="rating-input">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        className={`star-btn ${feedbackData.rating >= star ? 'active' : ''}`}
+                        onClick={() => setFeedbackData({ ...feedbackData, rating: star })}
+                      >
+                        <i className={`fas fa-star ${feedbackData.rating >= star ? '' : 'far'}`}></i>
+                      </button>
+                    ))}
+                    <span className="rating-text">{feedbackData.rating} / 5</span>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="comment">Comment</label>
+                  <textarea
+                    id="comment"
+                    rows="5"
+                    value={feedbackData.comment}
+                    onChange={(e) => setFeedbackData({ ...feedbackData, comment: e.target.value })}
+                    placeholder="Share your experience with this car..."
+                  />
+                </div>
+
+                <div className="modal-actions">
+                  <button className="btn btn-secondary" onClick={() => setShowFeedbackModal(false)}>
+                    Cancel
+                  </button>
+                  <button className="btn btn-continue" onClick={handleSubmitFeedback}>
+                    {isEditingFeedback ? 'Update' : 'Continue'}
+                  </button>
                 </div>
               </div>
             </div>

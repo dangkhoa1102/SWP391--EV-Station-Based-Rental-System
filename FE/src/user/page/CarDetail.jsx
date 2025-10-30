@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import API from '../../services/api'
 import '../../styles/car_detail.css'
+import { formatVND } from '../../utils/currency'
 
 export default function CarDetail(){
   const { id } = useParams()
@@ -125,8 +126,8 @@ export default function CarDetail(){
 
               <div className="price-section">
                 <div className="price-label">Rental Price</div>
-                <div className="price-value">{price}K/hour</div>
-                <div className="price-note">Estimated daily rate: {Math.round(price * 24)}K/day</div>
+                  <div className="price-value">{formatVND(price)}/hour</div>
+                  <div className="price-note">Estimated daily rate: {formatVND(Math.round(price * 24))}/day</div>
               </div>
 
               <div className="rental-info">
