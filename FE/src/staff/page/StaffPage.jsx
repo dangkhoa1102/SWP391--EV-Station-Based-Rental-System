@@ -55,8 +55,39 @@ export default function StaffPage() {
   };
 
   // Vehicle actions
-  const addVehicle = (vehicle) => setVehicles(prev => [...prev, vehicle]);
-  const removeVehicle = (id) => setVehicles(prev => prev.filter(v => v.id !== id));
+  const addVehicle = async (payload) => {
+    try {
+      if (!stationId) {
+        setError('Please select a station before creating a vehicle.')
+        return
+      }
+      const created = await StaffAPI.createCar(payload)
+      // Map created car to view model
+      const c = created || {}
+      const map = (c) => ({
+        id: c.id || c.Id || c.carId || c.CarId,
+        name: c.name || c.Name || [c.brand, c.model].filter(Boolean).join(' ') || 'Car',
+        img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || c.model || 'Car')}`,
+        battery: Number.isFinite(c.currentBatteryLevel) ? Math.round(c.currentBatteryLevel) : undefined,
+        tech: c.condition ?? c.status ?? c.Status ?? null,
+        issue: c.issue ?? c.issueDescription ?? null,
+        capacity: c.batteryCapacity ?? c.BatteryCapacity ?? c.capacity ?? c.capacityKWh ?? c.batteryCapacityKWh ?? null
+      })
+      setVehicles(prev => [...prev, map(c)])
+      return created
+    } catch (e) {
+      setError(e?.message || 'Failed to create vehicle')
+      throw e
+    }
+  }
+  const removeVehicle = async (id) => {
+    try {
+      await StaffAPI.deleteCar(id)
+      setVehicles(prev => prev.filter(v => v.id !== id))
+    } catch (e) {
+      setError(e?.message || 'Failed to delete vehicle')
+    }
+  }
   const updateVehicle = async (id, payload) => {
     try {
       if (payload.battery !== undefined && payload.battery !== '') {
@@ -110,7 +141,7 @@ export default function StaffPage() {
     return () => { mounted = false }
   }, [])
 
-  // Load vehicles when station changes
+  // Load vehicles when station changes (and when stations list updates for name mapping)
   useEffect(() => {
     let mounted = true
     async function loadVehicles() {
@@ -128,15 +159,21 @@ export default function StaffPage() {
         const normalizePercent = (v) => {
           const n = Number(v); if (Number.isFinite(n) && n >= 0 && n <= 100) return Math.round(n); return null
         }
-        const mapped = (cars || []).map(c => ({
-          id: c.id || c.Id,
+        const mapped = (cars || []).map(c => {
+          const stId = c.currentStationId || c.stationId || c.StationId || c.station?.id || c.station?.Id || ''
+          const stName = stations.find(s => (s.id || s.Id) === stId)?.name || stations.find(s => (s.id || s.Id) === stId)?.Name
+          return {
+          id: c.id || c.Id || c.carId || c.CarId,
           name: c.name || c.Name || c.model || c.CarName || 'Car',
           img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || 'Car')}`,
           battery: normalizePercent(c.currentBatteryLevel ?? c.CurrentBatteryLevel ?? c.batteryPercent ?? c.battery),
           tech: c.condition ?? c.status ?? c.Status ?? null,
           issue: c.issue ?? c.issueDescription ?? null,
-          capacity: c.batteryCapacity ?? c.BatteryCapacity ?? c.capacity ?? c.capacityKWh ?? c.batteryCapacityKWh ?? null
-        }))
+          capacity: c.batteryCapacity ?? c.BatteryCapacity ?? c.capacity ?? c.capacityKWh ?? c.batteryCapacityKWh ?? null,
+          stationId: stId,
+          stationName: stName || null
+        }
+        })
         setVehicles(mapped)
 
         // Opportunistically fetch battery percent for vehicles missing it
@@ -181,7 +218,7 @@ export default function StaffPage() {
     }
     loadVehicles()
     return () => { mounted = false }
-  }, [stationId])
+  }, [stationId, stations])
 
   // Load bookings for station when station changes
   useEffect(() => {
@@ -302,6 +339,7 @@ export default function StaffPage() {
               onAdd={addVehicle}
               onRemove={removeVehicle}
               onUpdate={updateVehicle}
+              stationId={stationId}
             />
           </>
         )}

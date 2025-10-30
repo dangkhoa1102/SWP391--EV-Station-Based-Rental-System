@@ -5,7 +5,7 @@ import UpdateVehicleModal from './UpdateVehicleModal';
 import VehicleDetailsModal from './VehicleDetailsModal';
 import './Vehicle.css';
 
-export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate }) {
+export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate, stationId }) {
   const [selected, setSelected] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -35,7 +35,7 @@ export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate }) 
         ))}
       </div>
 
-      <AddVehicleModal open={addOpen} onClose={() => setAddOpen(false)} onSubmit={onAdd} />
+  <AddVehicleModal open={addOpen} onClose={() => setAddOpen(false)} onSubmit={onAdd} stationId={stationId} />
       <UpdateVehicleModal open={updateOpen} onClose={() => setUpdateOpen(false)} vehicle={selected} onSubmit={onUpdate} />
       <VehicleDetailsModal open={detailsOpen} vehicle={selected} onClose={() => setDetailsOpen(false)} />
     </div>

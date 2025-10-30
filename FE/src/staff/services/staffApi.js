@@ -18,7 +18,23 @@ apiClient.interceptors.request.use(cfg => {
   return cfg
 })
 
-apiClient.interceptors.response.use(r => r, e => Promise.reject(e))
+apiClient.interceptors.response.use(
+  r => r,
+  e => {
+    try {
+      const cfg = e?.config || {}
+      const method = (cfg.method || 'GET').toUpperCase()
+      const url = (cfg.baseURL || '') + (cfg.url || '')
+      console.error(`🛑 API ${method} ${url} failed`, {
+        status: e?.response?.status,
+        data: e?.response?.data,
+        params: cfg.params,
+        body: cfg.data
+      })
+    } catch {}
+    return Promise.reject(e)
+  }
+)
 
 const API = {
   baseURL: SWAGGER_ROOT,
@@ -216,9 +232,27 @@ const API = {
     return body && typeof body === 'object' && 'data' in body ? body.data : body
   },
   getCarsByStation: async (stationId) => {
-    const res = await apiClient.get(`/car/station/${encodeURIComponent(stationId)}`)
-    const body = res.data
-    return body && typeof body === 'object' && 'data' in body ? body.data : body
+    const id = encodeURIComponent(stationId)
+    const attempts = [
+      `/car/station/${id}`,
+      `/cars/station/${id}`,
+      `/Car/Station/${id}`,
+      `/Cars/Station/${id}`,
+      `/vehicle/station/${id}`,
+      `/vehicles/station/${id}`,
+      `/Vehicle/Station/${id}`,
+      `/Vehicles/Station/${id}`
+    ]
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.get(url)
+        const body = res.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        if (e?.response?.status !== 404) throw e
+      }
+    }
+    return []
   },
   getAvailableCars: async (stationId) => {
     if (stationId) return API.getCarsByStation(stationId)
@@ -227,24 +261,72 @@ const API = {
     return body && typeof body === 'object' && 'data' in body ? body.data : body
   },
   createCar: async (payload) => {
-    const res = await apiClient.post('/car', payload)
-    const body = res.data
-    return body && typeof body === 'object' && 'data' in body ? body.data : body
+    // Try a wide range of common endpoints used across variants
+    const attempts = [
+      // REST base resources
+      '/car', '/cars', '/Car', '/Cars',
+      // Action-style endpoints
+      '/Car/Create', '/Cars/Create', '/Car/Add', '/Cars/Add',
+      '/Car/Create-Car', '/Cars/Create-Car',
+      // Alternate resource name
+      '/vehicle', '/vehicles', '/Vehicle', '/Vehicles',
+      '/Vehicle/Create', '/Vehicles/Create', '/Vehicle/Add', '/Vehicles/Add'
+    ]
+    const tried = []
+    for (const url of attempts) {
+      try {
+        tried.push(url)
+        const res = await apiClient.post(url, payload)
+        const body = res.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        if (e?.response?.status !== 404) throw e
+        // else continue
+      }
+    }
+    throw new Error(`Create car endpoint not found (tried ${tried.join(', ')})`)
   },
   updateCar: async (carId, updatePayload) => {
-    const res = await apiClient.put(`/car/${encodeURIComponent(carId)}`, updatePayload)
-    const body = res.data
-    return body && typeof body === 'object' && 'data' in body ? body.data : body
+    const id = encodeURIComponent(carId)
+    const attempts = [`/car/${id}`, `/cars/${id}`, `/Car/${id}`, `/Cars/${id}`, `/vehicle/${id}`, `/vehicles/${id}`, `/Vehicle/${id}`, `/Vehicles/${id}`]
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.put(url, updatePayload)
+        const body = res.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        if (e?.response?.status !== 404) throw e
+      }
+    }
+    throw new Error('Update car endpoint not found (tried /car/{id}, /cars/{id}, /Car/{id})')
   },
   updateCarDescription: async (carId, description) => {
-    const res = await apiClient.put(`/car/${encodeURIComponent(carId)}`, { description })
-    const body = res.data
-    return body && typeof body === 'object' && 'data' in body ? body.data : body
+    const id = encodeURIComponent(carId)
+    const attempts = [`/car/${id}`, `/cars/${id}`, `/Car/${id}`, `/Cars/${id}`, `/vehicle/${id}`, `/vehicles/${id}`, `/Vehicle/${id}`, `/Vehicles/${id}`]
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.put(url, { description })
+        const body = res.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        if (e?.response?.status !== 404) throw e
+      }
+    }
+    throw new Error('Update description endpoint not found')
   },
   deleteCar: async (carId) => {
-    const res = await apiClient.delete(`/car/${encodeURIComponent(carId)}`)
-    const body = res.data
-    return body && typeof body === 'object' && 'data' in body ? body.data : body
+    const id = encodeURIComponent(carId)
+    const attempts = [`/car/${id}`, `/cars/${id}`, `/Car/${id}`, `/Cars/${id}`, `/vehicle/${id}`, `/vehicles/${id}`, `/Vehicle/${id}`, `/Vehicles/${id}`]
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.delete(url)
+        const body = res.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        if (e?.response?.status !== 404) throw e
+      }
+    }
+    throw new Error('Delete car endpoint not found (tried /car/{id}, /cars/{id}, /Car/{id})')
   },
   updateBatteryLevel: async (carId, batteryLevel) => {
     const res = await apiClient.patch(`/car/${encodeURIComponent(carId)}/battery/${encodeURIComponent(batteryLevel)}`)
