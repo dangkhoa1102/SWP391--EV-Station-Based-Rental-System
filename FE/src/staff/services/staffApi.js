@@ -94,6 +94,7 @@ const API = {
   // simplified: expose generic wrappers
   get: async (endpoint, opts) => (await apiClient.get(endpoint, opts)).data,
   post: async (endpoint, body, opts) => (await apiClient.post(endpoint, body, opts)).data,
+  patch: async (endpoint, body, opts) => (await apiClient.patch(endpoint, body, opts)).data,
 
   updateUserAvatar: async (userId, avatarUrl) => {
     const res = await apiClient.post(`/Users/${encodeURIComponent(userId)}/avatar`, { avatarUrl })
@@ -192,6 +193,74 @@ const API = {
       console.error('❌ Error fetching cars:', e.response?.data || e.message)
       return []
     }
+  },
+
+  // REST-style car endpoints (integrated per provided API spec)
+  listCars: async (opts = { page: 1, pageSize: 20, search: '' }) => {
+    const params = {}
+    if (opts.page) params.page = opts.page
+    if (opts.pageSize) params.pageSize = opts.pageSize
+    if (opts.search) params.search = opts.search
+    const res = await apiClient.get('/car', { params })
+    const body = res.data
+    // unwrap {data} if present
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  getCarByIdRest: async (carId) => {
+    const res = await apiClient.get(`/car/${encodeURIComponent(carId)}`)
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  getCarsByStation: async (stationId) => {
+    const res = await apiClient.get(`/car/station/${encodeURIComponent(stationId)}`)
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  getAvailableCars: async (stationId) => {
+    if (stationId) return API.getCarsByStation(stationId)
+    const res = await apiClient.get('/car/available')
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  createCar: async (payload) => {
+    const res = await apiClient.post('/car', payload)
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  updateCar: async (carId, updatePayload) => {
+    const res = await apiClient.put(`/car/${encodeURIComponent(carId)}`, updatePayload)
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  updateCarDescription: async (carId, description) => {
+    const res = await apiClient.put(`/car/${encodeURIComponent(carId)}`, { description })
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  deleteCar: async (carId) => {
+    const res = await apiClient.delete(`/car/${encodeURIComponent(carId)}`)
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  updateBatteryLevel: async (carId, batteryLevel) => {
+    const res = await apiClient.patch(`/car/${encodeURIComponent(carId)}/battery/${encodeURIComponent(batteryLevel)}`)
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  updateStatus: async (carId, status) => {
+    const res = await apiClient.patch(`/car/${encodeURIComponent(carId)}/status/${encodeURIComponent(status)}`)
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  searchCars: async (term) => {
+    const res = await apiClient.get(`/car/search/${encodeURIComponent(term)}`)
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
+  },
+  listStations: async () => {
+    const res = await apiClient.get('/station')
+    const body = res.data
+    return body && typeof body === 'object' && 'data' in body ? body.data : body
   },
 
   getAvailableCarsByStation: async (stationId) => {

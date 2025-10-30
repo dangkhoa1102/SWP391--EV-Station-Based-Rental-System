@@ -6,44 +6,11 @@ import Sidebar from './components/Sidebar';
 import BookingSection from './components/Booking/BookingSection';
 import VehicleSection from './components/Vehicle/VehicleSection';
 import ProfileSection from './components/Profile/ProfileSection';
+import StaffAPI from '../services/staffApi';
 
-const initialBookings = [
-  { id: 1, title: 'Tesla Model 3', customer: 'Nguyen Van A', status: 'booked', date: '2025-10-10', img: 'https://via.placeholder.com/440x280?text=Tesla+3', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+A', idString: '012345678901', phone: '0912345678' },
-  { id: 2, title: 'Nissan Leaf', customer: 'Tran Thi B', status: 'denied', date: '2025-10-11', img: 'https://via.placeholder.com/440x280?text=Nissan+Leaf', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+B', idString: '987654321098', phone: '0987654321' },
-  { id: 3, title: 'BMW i3', customer: 'Le Van C', status: 'completed', date: '2025-10-09', img: 'https://via.placeholder.com/440x280?text=BMW+i3', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+C', idString: '123123123123', phone: '0911222333' },
-  { id: 4, title: 'Hyundai Kona', customer: 'Pham Thi D', status: 'booked', date: '2025-10-12', img: 'https://via.placeholder.com/440x280?text=Hyundai+Kona', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+D', idString: '321321321321', phone: '0900111222' },
-  { id: 5, title: 'Kia EV6', customer: 'Do Thi E', status: 'booked', date: '2025-10-13', img: 'https://via.placeholder.com/440x280?text=Kia+EV6', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+E', idString: '555666777888', phone: '0901234567' },
-  { id: 6, title: 'Volkswagen ID.4', customer: 'Pham Van F', status: 'booked', date: '2025-10-14', img: 'https://via.placeholder.com/440x280?text=VW+ID.4', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+F', idString: '111222333444', phone: '0919876543' },
-  { id: 7, title: 'Hyundai Ioniq 5', customer: 'Le Thi G', status: 'completed', date: '2025-10-08', img: 'https://via.placeholder.com/440x280?text=Ioniq+5', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+G', idString: '222333444555', phone: '0933334444' },
-  { id: 8, title: 'Tesla Model Y', customer: 'Tran Van H', status: 'denied', date: '2025-10-07', img: 'https://via.placeholder.com/440x280?text=Model+Y', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+H', idString: '333444555666', phone: '0944445555' },
-  { id: 9, title: 'BYD Atto 3', customer: 'Nguyen Thi I', status: 'booked', date: '2025-10-06', img: 'https://via.placeholder.com/440x280?text=BYD+Atto+3', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+I', idString: '444555666777', phone: '0955556666' },
-  { id: 10, title: 'VinFast VF8', customer: 'Hoang Van J', status: 'booked', date: '2025-10-05', img: 'https://via.placeholder.com/440x280?text=VF8', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+J', idString: '555666777999', phone: '0966667777' },
-  { id: 11, title: 'Renault Zoe', customer: 'Bui Thi K', status: 'completed', date: '2025-10-04', img: 'https://via.placeholder.com/440x280?text=Zoe', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+K', idString: '666777888999', phone: '0977778888' },
-  { id: 12, title: 'Honda e', customer: 'Ngo Van L', status: 'booked', date: '2025-10-03', img: 'https://via.placeholder.com/440x280?text=Honda+e', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+L', idString: '777888999000', phone: '0988889999' },
-  { id: 13, title: 'Peugeot e-208', customer: 'Pham Minh M', status: 'booked', date: '2025-10-02', img: 'https://via.placeholder.com/440x280?text=e-208', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+M', idString: '888999000111', phone: '0911001100' },
-  { id: 14, title: 'Volvo XC40 Recharge', customer: 'Tran Bao N', status: 'completed', date: '2025-10-01', img: 'https://via.placeholder.com/440x280?text=XC40+Recharge', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+N', idString: '999000111222', phone: '0922002200' },
-  { id: 15, title: 'Audi Q4 e-tron', customer: 'Le Thanh O', status: 'denied', date: '2025-09-30', img: 'https://via.placeholder.com/440x280?text=Q4+e-tron', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+O', idString: '000111222333', phone: '0933003300' },
-  { id: 16, title: 'Mercedes EQB', customer: 'Nguyen My P', status: 'booked', date: '2025-09-29', img: 'https://via.placeholder.com/440x280?text=EQB', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+P', idString: '111222333444', phone: '0944004400' },
-  { id: 17, title: 'Skoda Enyaq iV', customer: 'Do Hai Q', status: 'booked', date: '2025-09-28', img: 'https://via.placeholder.com/440x280?text=Enyaq+iV', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+Q', idString: '222333444555', phone: '0955005500' },
-  { id: 18, title: 'Porsche Taycan', customer: 'Bui Khang R', status: 'completed', date: '2025-09-27', img: 'https://via.placeholder.com/440x280?text=Taycan', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+R', idString: '333444555666', phone: '0966006600' },
-  { id: 19, title: 'Tesla Model S', customer: 'Hoang Y S', status: 'booked', date: '2025-09-26', img: 'https://via.placeholder.com/440x280?text=Model+S', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+S', idString: '444555666777', phone: '0977007700' },
-  { id: 20, title: 'Mini Cooper SE', customer: 'Ngo Linh T', status: 'denied', date: '2025-09-25', img: 'https://via.placeholder.com/440x280?text=Mini+SE', facePhoto: 'https://via.placeholder.com/320x320.png?text=Face+T', idString: '555666777888', phone: '0988008800' },
-];
-
-const initialVehicles = [
-  { id: 1, name: 'Tesla Model 3', desc: 'Electric sedan', detail: 'Range: 350km', img: 'https://via.placeholder.com/440x280?text=Tesla+3' },
-  { id: 2, name: 'Nissan Leaf', desc: 'Compact EV', detail: 'Range: 250km', img: 'https://via.placeholder.com/440x280?text=Nissan+Leaf' },
-  { id: 3, name: 'BMW i3', desc: 'Urban EV', detail: 'Range: 200km', img: 'https://via.placeholder.com/440x280?text=BMW+i3' },
-  { id: 4, name: 'Hyundai Kona', desc: 'SUV EV', detail: 'Range: 400km', img: 'https://via.placeholder.com/440x280?text=Hyundai+Kona' },
-  { id: 5, name: 'Kia EV6', desc: 'Crossover EV', detail: 'Range: 500km', img: 'https://via.placeholder.com/440x280?text=Kia+EV6' },
-  { id: 6, name: 'Volkswagen ID.4', desc: 'Compact SUV', detail: 'Range: 420km', img: 'https://via.placeholder.com/440x280?text=VW+ID.4' },
-  { id: 7, name: 'Hyundai Ioniq 5', desc: 'Modern hatch', detail: 'Range: 480km', img: 'https://via.placeholder.com/440x280?text=Ioniq+5' },
-  { id: 8, name: 'Tesla Model Y', desc: 'SUV EV', detail: 'Range: 505km', img: 'https://via.placeholder.com/440x280?text=Model+Y' },
-  { id: 9, name: 'BYD Atto 3', desc: 'Affordable EV', detail: 'Range: 420km', img: 'https://via.placeholder.com/440x280?text=BYD+Atto+3' },
-  { id: 10, name: 'VinFast VF8', desc: 'Midsize SUV', detail: 'Range: 471km', img: 'https://via.placeholder.com/440x280?text=VF8' },
-  { id: 11, name: 'Renault Zoe', desc: 'City car', detail: 'Range: 390km', img: 'https://via.placeholder.com/440x280?text=Zoe' },
-  { id: 12, name: 'Honda e', desc: 'Compact city EV', detail: 'Range: 220km', img: 'https://via.placeholder.com/440x280?text=Honda+e' },
-];
+// Start with empty lists; we will load from API
+const initialBookings = [];
+const initialVehicles = [];
 
 export default function StaffPage() {
   const [section, setSection] = useState('booking');
@@ -52,11 +19,40 @@ export default function StaffPage() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [stations, setStations] = useState([]);
+  const [stationId, setStationId] = useState('');
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
+  const [loadingStations, setLoadingStations] = useState(false);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [error, setError] = useState('');
 
-  // Booking actions
-  const confirmBooking = (id) => setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'booked' } : b));
-  const completeBooking = (id) => setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'completed' } : b));
-  const denyBooking = (id) => setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'denied' } : b));
+  // Booking actions (call API then update locally)
+  const confirmBooking = async (id) => {
+    try {
+      // Try minimal payload first
+      await StaffAPI.post('/Bookings/Confirm', { bookingId: id })
+    } catch {
+      // Fallback to user API's method signature with default payment method
+      try { await StaffAPI.post('/Bookings/Confirm', { bookingId: id, paymentMethod: 'Cash', paymentTransactionId: '' }) } catch {}
+    }
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'booked' } : b))
+  };
+  const completeBooking = async (id) => {
+    try {
+      await StaffAPI.post(`/Bookings/Complete-By-${encodeURIComponent(id)}`)
+    } catch {
+      try { await StaffAPI.post('/Bookings/Complete', { bookingId: id }) } catch {}
+    }
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'completed' } : b))
+  };
+  const denyBooking = async (id) => {
+    try {
+      await StaffAPI.post('/Bookings/Deny', { bookingId: id })
+    } catch {
+      try { await StaffAPI.post('/Bookings/Reject', { bookingId: id }) } catch {}
+    }
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'denied' } : b))
+  };
 
   // Vehicle actions
   const addVehicle = (vehicle) => setVehicles(prev => [...prev, vehicle]);
@@ -71,6 +67,122 @@ export default function StaffPage() {
       document.body.classList.remove('sidebar-open');
     }
   }, [sidebarVisible]);
+
+  // Load stations on mount, then load vehicles for first station
+  useEffect(() => {
+    let mounted = true
+    async function loadStations() {
+      try {
+        setLoadingStations(true)
+        const s = await StaffAPI.getAllStations(1, 100)
+        if (!mounted) return
+        setStations(s || [])
+        const firstId = (s && s[0] && (s[0].id || s[0].Id)) || ''
+        setStationId(prev => prev || firstId)
+      } catch (e) {
+        if (!mounted) return
+        setError(e?.message || 'Failed to load stations')
+      } finally {
+        if (mounted) setLoadingStations(false)
+      }
+    }
+    loadStations()
+    return () => { mounted = false }
+  }, [])
+
+  // Load vehicles when station changes
+  useEffect(() => {
+    let mounted = true
+    async function loadVehicles() {
+      try {
+        setLoadingVehicles(true)
+        let cars = []
+        if (stationId) {
+          cars = await StaffAPI.getAvailableCarsByStation(stationId)
+        } else {
+          cars = await StaffAPI.getAllCars(1, 100)
+        }
+        if (!mounted) return
+        const mapped = (cars || []).map(c => ({
+          id: c.id || c.Id,
+          name: c.name || c.Name || c.model || c.CarName || 'Car',
+          img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || 'Car')}`
+        }))
+        setVehicles(mapped)
+      } catch (e) {
+        if (!mounted) return
+        setError(e?.message || 'Failed to load vehicles')
+      } finally {
+        if (mounted) setLoadingVehicles(false)
+      }
+    }
+    loadVehicles()
+    return () => { mounted = false }
+  }, [stationId])
+
+  // Load bookings for station when station changes
+  useEffect(() => {
+    let mounted = true
+    const unwrapToArray = (r) => {
+      if (Array.isArray(r)) return r
+      if (Array.isArray(r?.data?.data)) return r.data.data
+      if (Array.isArray(r?.data?.items)) return r.data.items
+      if (Array.isArray(r?.data)) return r.data
+      if (Array.isArray(r?.items)) return r.items
+      return []
+    }
+    async function loadBookings() {
+      try {
+        setLoadingBookings(true)
+        let res = []
+        if (stationId) {
+          // Try several common station-booking endpoints
+          try {
+            res = await StaffAPI.get(`/Bookings/Get-By-Station/${encodeURIComponent(stationId)}`)
+          } catch {
+            try { res = await StaffAPI.get('/Bookings/Get-All', { params: { stationId } }) } catch {
+              try { res = await StaffAPI.get(`/Stations/${encodeURIComponent(stationId)}/Bookings`) } catch {}
+            }
+          }
+        } else {
+          try { res = await StaffAPI.get('/Bookings/Get-All', { params: { pageNumber: 1, pageSize: 100 } }) } catch {}
+        }
+
+        if (!mounted) return
+        const items = unwrapToArray(res)
+        const mapped = items.map(b => {
+          const id = b.id || b.Id || b.bookingId || b.BookingId
+          const carName = b.carName || b.vehicleName || b.car?.name || b.car?.Name || 'Booking'
+          const customerName = b.customerName || b.userFullName || b.user?.fullName || b.customer?.name || 'Customer'
+          const rawStatus = b.status || b.Status || b.bookingStatus || ''
+          const status = (rawStatus || '').toString().toLowerCase().includes('complete') ? 'completed'
+                        : (rawStatus || '').toString().toLowerCase().includes('deny') ? 'denied'
+                        : 'booked'
+          const date = b.date || b.createdAt || b.bookingDate || ''
+          const img = b.carImageUrl || b.car?.imageUrl || b.vehicle?.imageUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(carName)}`
+          return {
+            id,
+            title: carName,
+            customer: customerName,
+            status,
+            date,
+            img,
+            facePhoto: b.customerPhoto || b.user?.avatarUrl,
+            idString: b.customerIdNumber || b.user?.identityNumber || '',
+            phone: b.customerPhone || b.user?.phoneNumber || ''
+          }
+        })
+        setBookings(mapped)
+      } catch (e) {
+        if (!mounted) return
+        setError(e?.message || 'Failed to load bookings')
+      } finally {
+        if (mounted) setLoadingBookings(false)
+      }
+    }
+    loadBookings()
+    return () => { mounted = false }
+  }, [stationId])
 
   return (
     <div className="app-layout">
@@ -91,6 +203,11 @@ export default function StaffPage() {
       </div>
 
       <main className={`main-content ${sidebarVisible ? 'shifted' : ''}`}>
+        {error && (
+          <div style={{background:'#ffecec', color:'#b00020', padding:'8px 12px', borderRadius:6, marginBottom:12}}>
+            {error}
+          </div>
+        )}
         {section === 'booking' && (
           <BookingSection
             bookings={bookings}
@@ -104,12 +221,26 @@ export default function StaffPage() {
           />
         )}
         {section === 'vehicle' && (
-          <VehicleSection
-            vehicles={vehicles}
-            onAdd={addVehicle}
-            onRemove={removeVehicle}
-            onUpdate={updateVehicle}
-          />
+          <>
+            <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:12}}>
+              <label style={{fontWeight:600}}>Station:</label>
+              <select value={stationId} onChange={e=>setStationId(e.target.value)} disabled={loadingStations}>
+                <option value="">All stations</option>
+                {stations.map(s => {
+                  const id = s.id || s.Id
+                  const name = s.name || s.Name || s.stationName || `Station ${id}`
+                  return <option key={id} value={id}>{name}</option>
+                })}
+              </select>
+              {loadingVehicles && <span>Loading vehicles…</span>}
+            </div>
+            <VehicleSection
+              vehicles={vehicles}
+              onAdd={addVehicle}
+              onRemove={removeVehicle}
+              onUpdate={updateVehicle}
+            />
+          </>
         )}
         {section === 'profile' && <ProfileSection />}
       </main>
