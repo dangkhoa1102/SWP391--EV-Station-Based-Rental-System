@@ -9,6 +9,7 @@ import PaymentSuccess from './user/page/PaymentSuccess'
 import TransactionPage from './user/page/TransactionPage'
 import BookingHistory from './user/page/BookingHistory'
 import TestApi from './user/page/TestApi'
+import StaffPage from './staff/page/StaffPage'
 
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -26,6 +27,7 @@ export default function App(){
         <Route path="/transaction" element={<TransactionPage />} />
         <Route path="/booking-history" element={<BookingHistory />} />
         <Route path="/profile" element={<UserProfile />} />
+        <Route path="/staff" element={<StaffPage />} />
         <Route path="/test-api" element={<TestApi />} />
       </Routes>
       <Footer />

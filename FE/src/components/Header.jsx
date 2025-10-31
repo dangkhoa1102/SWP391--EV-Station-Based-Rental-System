@@ -18,11 +18,21 @@ export default function Header(){
     return () => document.removeEventListener('click', handleClickOutside)
   }, [dropdownOpen])
 
+  // Check if user is Staff (role check)
+  const isStaff = user && (user.userRole === 'Staff' || user.role === 'Staff' || user.Role === 'Staff')
+
   return (
     <header className="header">
       <div className="container header-container">
         <div className="logo"><a href="/">FEC</a></div>
         <nav className="nav">
+          <div className="navbar-left">
+            {isStaff && (
+              <a href="/staff" className="staff-portal-btn">
+                <i className="fas fa-user-shield"></i> Staff Portal
+              </a>
+            )}
+          </div>
           <div className="navbar-right">
             {!user && <button id="loginBtn" onClick={()=> setShowLogin(true)} className="login-nav-btn">Login</button>}
 
