@@ -5,7 +5,7 @@ import UpdateVehicleModal from './UpdateVehicleModal';
 import VehicleDetailsModal from './VehicleDetailsModal';
 import './Vehicle.css';
 
-export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate, stationId }) {
+export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate, stationId, canDelete = true }) {
   const [selected, setSelected] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -30,7 +30,7 @@ export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate, st
         )}
         {vehicles.map(v => (
           <div key={v.id}>
-            <VehicleCard vehicle={v} onOpen={() => openDetails(v)} onRemove={onRemove} onOpenUpdate={() => openForUpdate(v)} />
+            <VehicleCard vehicle={v} onOpen={() => openDetails(v)} onRemove={onRemove} onOpenUpdate={() => openForUpdate(v)} canDelete={canDelete} />
           </div>
         ))}
       </div>

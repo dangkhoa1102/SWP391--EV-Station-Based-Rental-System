@@ -35,8 +35,13 @@ body {
   flex-direction: column;
 }
 
-/* Center Profile page content */
+/* Profile section should allow full-width content (not centered box) */
 #profile.section {
-  justify-content: center; /* center vertically */
-  align-items: center;     /* center horizontally */
+  margin-left: 0;
+  margin-top: 0;
+  width: 100%;
+  justify-content: flex-start;
+  align-items: stretch;
+  background: transparent;
+  padding: 0; /* inline component controls its own padding */
 }

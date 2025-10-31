@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import BookingCard from './BookingCard';
 import BookingModal from './BookingModal';
+import PaymentCard from './PaymentCard';
 import './Booking.css';
 
-export default function BookingSection({ bookings, search, setSearch, statusFilter, setStatusFilter, onConfirm, onComplete, onDeny }) {
+export default function BookingSection({ bookings, search, setSearch, statusFilter, setStatusFilter, onContinuePayment, onCancelBooking }) {
   const [selected, setSelected] = useState(null);
+  const [paymentFor, setPaymentFor] = useState(null);
 
   const filtered = bookings.filter(b =>
-    (b.title.toLowerCase().includes(search.toLowerCase()) || b.customer.toLowerCase().includes(search.toLowerCase())) &&
+    (b.title.toLowerCase().includes(search.toLowerCase()) || (b.customer || '').toLowerCase().includes(search.toLowerCase()) || (b.userName || '').toLowerCase().includes(search.toLowerCase()) || (b.email || '').toLowerCase().includes(search.toLowerCase())) &&
     (statusFilter === '' || b.status === statusFilter)
   );
 
@@ -32,10 +34,16 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
       <BookingModal
         booking={selected}
         onClose={() => setSelected(null)}
-        onConfirm={() => { onConfirm(selected.id); setSelected({...selected, status:'booked'}); }}
-        onComplete={() => { onComplete(selected.id); setSelected({...selected, status:'completed'}); }}
-        onDeny={() => { onDeny(selected.id); setSelected({...selected, status:'denied'}); }}
+        onProceed={() => { if (selected) { setPaymentFor(selected); setSelected(null); } }}
+        onCancel={() => { if (selected) onCancelBooking?.(selected); }}
       />
+
+      {paymentFor && (
+        <PaymentCard
+          booking={paymentFor}
+          onClose={() => setPaymentFor(null)}
+        />
+      )}
     </div>
   );
 }

@@ -27,6 +27,28 @@
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
 }
 
+/* Inline (in-page) variant for better spread on staff page */
+.profile-modal-content.profile-inline {
+  width: 100%;
+  max-width: 1080px;
+  position: static;
+  box-shadow: none;
+  border-radius: 16px;
+  padding: 48px 56px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.profile-modal-content.profile-inline h2 {
+  margin: 4px 0 8px;
+  font-size: 1.6rem;
+}
+
+.profile-modal-content.profile-inline img {
+  width: 160px;
+  height: 160px;
+}
+
 .profile-modal-content h3 { margin-bottom: 10px; font-size: 1.4rem; }
 
 .profile-modal-close {
@@ -56,6 +78,11 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
+
+.profile-modal-content.profile-inline .profile-info-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
 .profile-info-card {
   background: #fafafa;
   border: 1px solid #e5e5e5;
@@ -63,7 +90,16 @@
   padding: 12px 14px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
+
+.profile-modal-content.profile-inline .profile-info-card {
+  padding: 16px 18px;
+}
+
 .profile-info-card strong { display: block; margin-bottom: 4px; color: #333; }
+
+.profile-modal-content.profile-inline .profile-info-card strong {
+  font-size: 0.95rem;
+}
 
 @media (max-width: 720px) {
   .profile-info-grid { grid-template-columns: 1fr; }
