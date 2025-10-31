@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Monolithic.DTOs.Car;
 using Monolithic.DTOs.Common;
 using Monolithic.Models;
@@ -143,6 +144,7 @@ namespace Monolithic.Services.Implementation
             var dto = _mapper.Map<List<CarDto>>(items);
             return ResponseDto<List<CarDto>>.Success(dto, $"Found {total} available cars");
         }
+       
 
         public async Task<ResponseDto<string>> UpdateCarStatusAsync(Guid id, bool isAvailable)
         {

@@ -54,26 +54,25 @@ namespace Monolithic.Services.Implementation
         if (request.ExpectedReturnDateTime <= request.PickupDateTime)
             return ResponseDto<BookingDto>.Failure("Return date must be after pickup date");
 
-        // 3. Check car availability
-        var car = await _carRepository.GetByIdAsync(request.CarId);
-        if (car == null || !car.IsActive || !car.IsAvailable)
-            return ResponseDto<BookingDto>.Failure("Car not available");
+                // 3. Check car availability
+                var car = await _carRepository.GetByIdAsync(request.CarId);
+                //if (car == null || !car.IsActive || !car.IsAvailable)
+                //    return ResponseDto<BookingDto>.Failure("Car not available");
 
-        // 4. Check pickup station
-        var pickupStation = await _stationRepository.GetByIdAsync(request.StationId);
+                // 4. Check pickup station
+                var pickupStation = await _stationRepository.GetByIdAsync(request.StationId);
         if (pickupStation == null || !pickupStation.IsActive)
             return ResponseDto<BookingDto>.Failure("Pickup station invalid");
 
-        // 5. Check return station if specified
-       
-        
-        // 6. Check for existing active booking for the car
-        var hasActiveBooking = await _bookingRepository.HasActiveBookingForCarAsync(request.CarId);
-        if (hasActiveBooking)
-            return ResponseDto<BookingDto>.Failure("Car already has an active booking");
+                // 5. Check return station if specified
 
-        // 7. Calculate rental amounts
-        var duration = request.ExpectedReturnDateTime - request.PickupDateTime;
+
+                var isAvailable = await IsCarAvailableDuringPeriodAsync(request.CarId, request.PickupDateTime, request.ExpectedReturnDateTime);
+                if (!isAvailable)
+                    return ResponseDto<BookingDto>.Failure("Car already has an active booking during the selected period");
+
+                // 7. Calculate rental amounts
+                var duration = request.ExpectedReturnDateTime - request.PickupDateTime;
         var totalHours = (decimal)duration.TotalHours;
         var totalDays = (decimal)duration.TotalDays;
 
@@ -107,7 +106,7 @@ namespace Monolithic.Services.Implementation
         var createdBooking = await _bookingRepository.AddAsync(booking);
 
         // 10. Update car status to reserved (optional: only after payment?)
-        await _carRepository.UpdateCarStatusAsync(request.CarId, false);
+        //await _carRepository.UpdateCarStatusAsync(request.CarId, false);
 
         return ResponseDto<BookingDto>.Success(
             _mapper.Map<BookingDto>(createdBooking),
@@ -316,11 +315,29 @@ namespace Monolithic.Services.Implementation
                 await _carRepository.UpdateCarStatusAsync(b.CarId, true);
             }
         }
+        public async Task<bool> IsCarAvailableDuringPeriodAsync(Guid carId, DateTime startTime, DateTime endTime)
+        {
+            // Lấy danh sách booking đang hoạt động của xe (không bị hủy)
+            var existingBookings = await _bookingRepository.FindAsync(
+                b => b.CarId == carId && b.BookingStatus != BookingStatus.Cancelled
+            );
 
+            foreach (var b in existingBookings)
+            {
+                // Nếu chưa có EndTime (chưa hoàn tất) thì vẫn tính để tránh overlap
+                var existingStart = b.StartTime;
+                var existingEnd = b.EndTime ?? b.StartTime.AddHours(1); // fallback tạm nếu EndTime null
 
+                // Điều kiện overlap:
+                // start < existingEnd && end > existingStart
+                if (startTime < existingEnd && endTime > existingStart)
+                {
+                    return false; // có trùng lịch — xe không khả dụng
+                }
+            }
 
-
-
+            return true; // không trùng — xe có thể đặt
+        }
 
         #endregion
 
@@ -530,6 +547,8 @@ namespace Monolithic.Services.Implementation
         }
 
        
+   
+
 
 
         #endregion

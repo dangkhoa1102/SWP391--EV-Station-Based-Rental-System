@@ -14,6 +14,8 @@ namespace Monolithic.Services.Interfaces
         
         // Booking management methods
         Task<ResponseDto<PaginationDto<BookingDto>>> GetBookingsAsync(PaginationRequestDto request);
+
+        Task<bool> IsCarAvailableDuringPeriodAsync(Guid carId, DateTime startTime, DateTime endTime);
         Task<ResponseDto<BookingDto>> GetBookingByIdAsync(Guid id);
         Task<ResponseDto<List<BookingDto>>> GetUserBookingsAsync(string userId);
         Task<ResponseDto<BookingDto>> UpdateBookingAsync(Guid id, UpdateBookingDto request);
