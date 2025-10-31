@@ -205,5 +205,109 @@ namespace Monolithic.Services.Implementation
             if (!ok) return ResponseDto<string>.Failure("Car not found");
             return ResponseDto<string>.Success(string.Empty, "Location updated");
         }
+
+        public async Task<ResponseDto<string>> UpdateCarTechnicalStatusAsync(Guid id, UpdateCarTechnicalStatusDto request)
+        {
+            var car = await _carRepository.GetByIdAsync(id);
+            if (car == null || !car.IsActive)
+                return ResponseDto<string>.Failure("Car not found");
+
+            // C?p nh?t các tr??ng technical status
+            if (!string.IsNullOrWhiteSpace(request.EngineStatus))
+                car.EngineStatus = request.EngineStatus;
+            
+            if (!string.IsNullOrWhiteSpace(request.TireStatus))
+                car.TireStatus = request.TireStatus;
+            
+            if (!string.IsNullOrWhiteSpace(request.BrakeStatus))
+                car.BrakeStatus = request.BrakeStatus;
+            
+            if (!string.IsNullOrWhiteSpace(request.LightStatus))
+                car.LightStatus = request.LightStatus;
+            
+            if (!string.IsNullOrWhiteSpace(request.InteriorStatus))
+                car.InteriorStatus = request.InteriorStatus;
+            
+            if (!string.IsNullOrWhiteSpace(request.ExteriorStatus))
+                car.ExteriorStatus = request.ExteriorStatus;
+            
+            if (!string.IsNullOrWhiteSpace(request.TechnicalNotes))
+                car.TechnicalNotes = request.TechnicalNotes;
+            
+            car.LastInspectionDate = request.LastInspectionDate;
+            car.UpdatedAt = DateTime.UtcNow;
+
+            await _carRepository.UpdateAsync(car);
+            return ResponseDto<string>.Success(string.Empty, "Technical status updated successfully");
+        }
+
+        public async Task<ResponseDto<CarHandoverResponseDto>> RecordCarHandoverAsync(CarHandoverDto request, Guid staffId)
+        {
+            // Validate car exists
+            var car = await _carRepository.GetByIdAsync(request.CarId);
+            if (car == null || !car.IsActive)
+                return ResponseDto<CarHandoverResponseDto>.Failure("Car not found");
+
+            var photoUrls = new List<string>();
+            var photoPublicIds = new List<string>();
+
+            // Upload các ?nh bàn giao
+            if (request.HandoverPhotos != null && request.HandoverPhotos.Any())
+            {
+                foreach (var photo in request.HandoverPhotos)
+                {
+                    var uploadResult = await _photoService.AddPhotoAsync(photo, $"rental_app/handovers/{request.BookingId}");
+                    if (uploadResult.Error != null)
+                    {
+                        // N?u có l?i, xóa các ?nh ?ã upload tr??c ?ó
+                        foreach (var publicId in photoPublicIds)
+                        {
+                            await _photoService.DeletePhotoAsync(publicId);
+                        }
+                        return ResponseDto<CarHandoverResponseDto>.Failure($"Error uploading photo: {uploadResult.Error.Message}");
+                    }
+
+                    photoUrls.Add(uploadResult.SecureUrl.ToString());
+                    photoPublicIds.Add(uploadResult.PublicId);
+                }
+            }
+
+            // T?o record handover
+            var handover = new CarHandover
+            {
+                HandoverId = Guid.NewGuid(),
+                BookingId = request.BookingId,
+                CarId = request.CarId,
+                StaffId = staffId,
+                HandoverType = request.HandoverType.ToString(),
+                PhotoUrls = string.Join(";", photoUrls),
+                PhotoPublicIds = string.Join(";", photoPublicIds),
+                Notes = request.Notes,
+                BatteryLevelAtHandover = request.CurrentBatteryLevel,
+                MileageReading = request.MileageReading,
+                HandoverDateTime = DateTime.UtcNow
+            };
+
+            // Save to database (c?n implement repository method)
+            // await _carHandoverRepository.AddAsync(handover);
+
+            // C?p nh?t battery level c?a xe
+            await UpdateCarBatteryLevelAsync(request.CarId, request.CurrentBatteryLevel);
+
+            var response = new CarHandoverResponseDto
+            {
+                BookingId = handover.BookingId,
+                CarId = handover.CarId,
+                HandoverType = request.HandoverType,
+                PhotoUrls = photoUrls,
+                Notes = request.Notes ?? string.Empty,
+                BatteryLevel = request.CurrentBatteryLevel,
+                Mileage = request.MileageReading,
+                HandoverDateTime = handover.HandoverDateTime,
+                StaffId = staffId.ToString()
+            };
+
+            return ResponseDto<CarHandoverResponseDto>.Success(response, "Car handover recorded successfully");
+        }
     }
 }

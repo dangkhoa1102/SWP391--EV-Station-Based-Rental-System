@@ -1,3 +1,4 @@
+using Monolithic.DTOs.Payment;
 using Monolithic.Models;
 
 namespace Monolithic.Services.Interfaces
@@ -21,5 +22,10 @@ namespace Monolithic.Services.Interfaces
 
         // Optional: get payments by user
         Task<IEnumerable<Payment>> GetPaymentsByUserIdAsync(Guid userId);
+
+        // Station Staff payment methods
+        Task<StationPaymentResponseDto> RecordStationDepositAsync(RecordDepositDto request, Guid staffId);
+        Task<StationPaymentResponseDto> RecordStationRefundAsync(RecordRefundDto request, Guid staffId);
+        Task<StationPaymentResponseDto> RecordStationPaymentAsync(RecordStationPaymentDto request, Guid staffId);
     }
 }

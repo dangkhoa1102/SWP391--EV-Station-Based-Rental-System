@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251031090718_AddCarTechnicalStatusAndHandover")]
+    partial class AddCarTechnicalStatusAndHandover
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -500,8 +503,7 @@ namespace Monolithic.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("CostIncurred")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -757,7 +759,7 @@ namespace Monolithic.Migrations
                         new
                         {
                             UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 31, 9, 11, 9, 519, DateTimeKind.Utc).AddTicks(1948),
+                            CreatedAt = new DateTime(2025, 10, 31, 9, 7, 17, 981, DateTimeKind.Utc).AddTicks(1515),
                             DateOfBirth = new DateOnly(1, 1, 1),
                             Email = "admin@ev.com",
                             FirstName = "Admin",
