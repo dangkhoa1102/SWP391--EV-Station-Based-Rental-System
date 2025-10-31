@@ -44,7 +44,9 @@ export default function BookingHistory(){
       }
 
       const res = await API.getUserBookings()
-      console.log('Bookings loaded:', res)
+      console.log('📦 Bookings loaded - count:', res?.length)
+      console.log('📦 First booking sample:', res?.[0])
+      console.log('📦 All bookings:', res)
       setAllBookings(res || [])
     }catch(e){ 
       console.error('Error loading bookings:', e)
@@ -279,7 +281,6 @@ export default function BookingHistory(){
               <option value="0">Pending</option>
               <option value="1">Active</option>
               <option value="2">Completed</option>
-              <option value="3">Cancelled</option>
               <option value="7">Cancelled</option>
             </select>
           </div>
@@ -316,60 +317,112 @@ export default function BookingHistory(){
           </div>
         )}
 
-        {/* Bookings List */}
+        {/* Bookings List - Shopee Style */}
         {!loading && filteredBookings.length > 0 && (
           <div className="bookings-list">
             {filteredBookings.map((booking, idx)=>{
               const status = getBookingStatus(booking.bookingStatus)
-              const pickupDate = formatDateTime(booking.startTime || booking.pickupDateTime)
-              const returnDate = formatDateTime(booking.endTime || booking.expectedReturnDateTime)
+              // Handle both PascalCase and camelCase from backend
+              const pickupDate = formatDateTime(
+                booking.startTime || booking.StartTime || 
+                booking.pickupDateTime || booking.PickupDateTime
+              )
+              const returnDate = formatDateTime(
+                booking.endTime || booking.EndTime || 
+                booking.expectedReturnDateTime || booking.ExpectedReturnDateTime
+              )
+              
+              // Handle car info from different sources
+              const carName = booking.carInfo || booking.CarInfo || 
+                             (booking.car?.brand && booking.car?.model ? `${booking.car.brand} ${booking.car.model}` : null) ||
+                             (booking.Car?.Brand && booking.Car?.Model ? `${booking.Car.Brand} ${booking.Car.Model}` : null) ||
+                             'Car Rental'
+              
+              // Handle station name
+              const stationName = booking.pickupStationName || booking.PickupStationName ||
+                                 booking.stationName || booking.StationName ||
+                                 (booking.station?.name || booking.Station?.Name) ||
+                                 'N/A'
+              
+              // Get car image
+              const carImage = booking.carImage || booking.CarImage ||
+                              booking.car?.imageUrl || booking.Car?.ImageUrl ||
+                              '/Picture/E car 1.jpg'
+              
+              // Get booking ID
+              const bookingId = booking.id || booking.bookingId || booking.bookingIdString || 'N/A'
 
               return (
-                <div key={idx} className={`booking-card ${status.class}`}>
-                  <div className="booking-header">
-                    <h3>{booking.carInfo || 'Car Rental'}</h3>
+                <div key={idx} className={`booking-card-shopee ${status.class}`}>
+                  {/* Header with status */}
+                  <div className="booking-card-header">
+                    <div className="booking-id">
+                      <i className="fas fa-hashtag"></i>
+                      Booking ID: {bookingId}
+                    </div>
                     <span className={`status-badge ${status.class}`}>{status.text}</span>
                   </div>
-                  <div className="booking-body">
-                    <div className="booking-info">
-                      <div className="info-row">
-                        <span className="label"><i className="fas fa-map-marker-alt"></i> Pick-up:</span>
-                        <span className="value">{booking.pickupStationName || 'N/A'}</span>
-                      </div>
-                      <div className="info-row">
-                        <span className="label"><i className="fas fa-calendar"></i> Start:</span>
-                        <span className="value">{pickupDate}</span>
-                      </div>
-                      <div className="info-row">
-                        <span className="label"><i className="fas fa-calendar-check"></i> End:</span>
-                        <span className="value">{returnDate}</span>
-                      </div>
-                      <div className="info-row price">
-                        <span className="label"><i className="fas fa-tag"></i> Total:</span>
-                        <span className="value">{formatVND(booking.totalAmount || 0)}</span>
+
+                  {/* Car Info with Image */}
+                  <div className="booking-card-body">
+                    <div className="car-image-container">
+                      <img src={carImage} alt={carName} onError={e => e.currentTarget.src='/Picture/E car 1.jpg'} />
+                    </div>
+                    <div className="booking-details">
+                      <h3 className="car-name">{carName}</h3>
+                      
+                      <div className="booking-info-grid">
+                        <div className="info-item">
+                          <div className="info-label">
+                            <i className="fas fa-map-marker-alt"></i>
+                            Pick-up Location
+                          </div>
+                          <div className="info-value">{stationName}</div>
+                        </div>
+                        
+                        <div className="info-item">
+                          <div className="info-label">
+                            <i className="fas fa-calendar-alt"></i>
+                            Start Date & Time
+                          </div>
+                          <div className="info-value">{pickupDate}</div>
+                        </div>
+                        
+                        <div className="info-item">
+                          <div className="info-label">
+                            <i className="fas fa-calendar-check"></i>
+                            End Date & Time
+                          </div>
+                          <div className="info-value">{returnDate}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="booking-footer">
-                    <button 
-                      className="btn btn-sm btn-primary" 
-                      onClick={(e) => handleOpenFeedbackModal(booking, e)}
-                      type="button"
-                    >
-                      <i className="fas fa-comment"></i> {booking.feedbackId ? 'Edit Feedback' : 'Feedback'}
-                    </button>
-                    {
-                      /* Disable Cancel when bookingStatus === 7 */
-                    }
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={(e) => handleCancelBooking(booking, e)}
-                      disabled={Number(booking.bookingStatus) === 7}
-                      title={Number(booking.bookingStatus) === 7 ? 'Already cancelled' : 'Cancel booking'}
-                      type="button"
-                    >
-                      <i className="fas fa-times-circle"></i> Cancel
-                    </button>
+
+                  {/* Footer with price and actions */}
+                  <div className="booking-card-footer">
+                    <div className="total-price">
+                      <span className="price-label">Total Amount:</span>
+                      <span className="price-value">{formatVND(booking.totalAmount || booking.TotalAmount || 0)}</span>
+                    </div>
+                    <div className="booking-actions">
+                      <button 
+                        className="btn btn-feedback" 
+                        onClick={(e) => handleOpenFeedbackModal(booking, e)}
+                        type="button"
+                      >
+                        <i className="fas fa-comment"></i> {booking.feedbackId ? 'Edit Feedback' : 'Feedback'}
+                      </button>
+                      <button
+                        className="btn btn-cancel"
+                        onClick={(e) => handleCancelBooking(booking, e)}
+                        disabled={Number(booking.bookingStatus) === 7}
+                        title={Number(booking.bookingStatus) === 7 ? 'Already cancelled' : 'Cancel booking'}
+                        type="button"
+                      >
+                        <i className="fas fa-times-circle"></i> Cancel Booking
+                      </button>
+                    </div>
                   </div>
                 </div>
               )

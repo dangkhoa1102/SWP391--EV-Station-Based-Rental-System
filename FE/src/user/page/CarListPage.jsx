@@ -238,7 +238,8 @@ export default function CarListPage(){
     return cells
   }
 
-  const applyFilters = ()=>{
+  // Auto-apply filters whenever cars or filters change
+  useEffect(() => {
     let result = [...cars]
     if(filters.brand) result = result.filter(c => (c.brand||'').toLowerCase().includes(filters.brand.toLowerCase()))
     if(filters.color) result = result.filter(c => (c.color||'').toLowerCase().includes(filters.color.toLowerCase()))
@@ -247,7 +248,7 @@ export default function CarListPage(){
     if(filters.priceMin) result = result.filter(c => parseFloat(c.rentalPricePerHour||0) >= parseFloat(filters.priceMin))
     if(filters.priceMax) result = result.filter(c => parseFloat(c.rentalPricePerHour||0) <= parseFloat(filters.priceMax))
     setFilteredCars(result)
-  }
+  }, [cars, filters])
 
   const resetFilters = ()=>{
     setFilters({brand:'',color:'',seats:'',year:'',priceMin:'',priceMax:''})
@@ -260,39 +261,149 @@ export default function CarListPage(){
 
   return (
     <main className="car-list-main">
-      <div className="container">
-        {/* Search Summary Bar */}
-        <div className="search-form" style={{marginBottom:'2rem'}}>
-          <h2>Find Your Perfect Rental Car</h2>
-
-          <div className="search-summary">
-            <div className="summary-item" onClick={openSearchModal}>
-              <div className="summary-label"><i className="fas fa-map-marker-alt"></i> Pick-up Location</div>
-              <div className="summary-value">{searchData.locationName}</div>
-            </div>
-            <div className="summary-item" onClick={openSearchModal}>
-              <div className="summary-label"><i className="fas fa-calendar"></i> Pick-up Date</div>
-              <div className="summary-value">{new Date(searchData.pickupDate).toLocaleDateString()}</div>
-            </div>
-            <div className="summary-item" onClick={openSearchModal}>
-              <div className="summary-label"><i className="fas fa-clock"></i> Pick-up Time</div>
-              <div className="summary-value">{searchData.pickupTime}</div>
-            </div>
-            <div className="summary-item" onClick={openSearchModal}>
-              <div className="summary-label"><i className="fas fa-calendar-check"></i> Return Date</div>
-              <div className="summary-value">{new Date(searchData.returnDate).toLocaleDateString()}</div>
-            </div>
-            <div className="summary-item" onClick={openSearchModal}>
-              <div className="summary-label"><i className="fas fa-clock"></i> Return Time</div>
-              <div className="summary-value">{searchData.returnTime}</div>
-            </div>
-            <button className="btn-search-submit" onClick={openSearchModal}>
-              <i className="fas fa-search"></i> Search Cars
-            </button>
+      {/* Search Summary Bar - TOP LEVEL */}
+      <div className="search-form-container">
+        <div className="search-summary">
+          <div className="summary-item" onClick={openSearchModal}>
+            <div className="summary-label"><i className="fas fa-map-marker-alt"></i> Pick-up Location</div>
+            <div className="summary-value">{searchData.locationName}</div>
           </div>
+          <div className="summary-item" onClick={openSearchModal}>
+            <div className="summary-label"><i className="fas fa-calendar"></i> Pick-up Date</div>
+            <div className="summary-value">{new Date(searchData.pickupDate).toLocaleDateString()}</div>
+          </div>
+          <div className="summary-item" onClick={openSearchModal}>
+            <div className="summary-label"><i className="fas fa-clock"></i> Pick-up Time</div>
+            <div className="summary-value">{searchData.pickupTime}</div>
+          </div>
+          <div className="summary-item" onClick={openSearchModal}>
+            <div className="summary-label"><i className="fas fa-calendar-check"></i> Return Date</div>
+            <div className="summary-value">{new Date(searchData.returnDate).toLocaleDateString()}</div>
+          </div>
+          <div className="summary-item" onClick={openSearchModal}>
+            <div className="summary-label"><i className="fas fa-clock"></i> Return Time</div>
+            <div className="summary-value">{searchData.returnTime}</div>
+          </div>
+          <button className="btn-search-submit" onClick={openSearchModal}>
+            <i className="fas fa-search"></i> Search Cars
+          </button>
         </div>
+      </div>
 
-        {/* Search Modal */}
+      <div className="container">
+        {/* LEFT SIDEBAR - FILTERS */}
+        <aside className="filters-sidebar">
+          <h3 className="filters-title">Filters</h3>
+          
+          <div className="filter-section">
+            <h4>Brand</h4>
+            <div className="filter-group">
+              <select value={filters.brand} onChange={e => setFilters({...filters, brand:e.target.value})}>
+                <option value="">Any Brand</option>
+                {uniqueBrands.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <h4>Color</h4>
+            <div className="filter-group">
+              <select value={filters.color} onChange={e => setFilters({...filters, color:e.target.value})}>
+                <option value="">Any Color</option>
+                {uniqueColors.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <h4>Specifications</h4>
+            <div className="filter-group">
+              <label>Seats</label>
+              <select value={filters.seats} onChange={e => setFilters({...filters, seats:e.target.value})}>
+                <option value="">Any</option>
+                <option value="2">2</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="7">7</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Year (min)</label>
+              <input type="number" min="1900" max="2100" placeholder="2020" value={filters.year} onChange={e => setFilters({...filters, year:e.target.value})} />
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <h4>Price Range</h4>
+            <div className="filter-group">
+              <label>Min Price (VND/hour)</label>
+              <input type="number" min="0" placeholder="0" value={filters.priceMin} onChange={e => setFilters({...filters, priceMin:e.target.value})} />
+            </div>
+            <div className="filter-group">
+              <label>Max Price (VND/hour)</label>
+              <input type="number" min="0" placeholder="999,000" value={filters.priceMax} onChange={e => setFilters({...filters, priceMax:e.target.value})} />
+            </div>
+          </div>
+
+          <div className="filter-actions">
+            <button type="button" className="btn-reset-filters" onClick={resetFilters}>Reset Filters</button>
+          </div>
+        </aside>
+
+        {/* RIGHT CONTENT - CARS */}
+        <div className="cars-content">
+          {/* Cars Header */}
+          <div className="cars-header">
+            <h2>Available Cars</h2>
+            <div className="cars-count">Showing {filteredCars.length} cars</div>
+          </div>
+
+          {/* Car List */}
+          <div className="car-list">
+          {loading && <div style={{textAlign:'center',padding:'2rem'}}>Loading cars...</div>}
+          {!loading && filteredCars.length === 0 && <div style={{textAlign:'center',padding:'2rem'}}>No cars found</div>}
+          {!loading && filteredCars.map((car, idx)=>{
+            const id = car.id || car.Id
+            const name = `${car.brand || ''} ${car.model || 'Car'}`.trim()
+            const img = car.imageUrl || car.image || '/Picture/E car 1.jpg'
+            const price = parseFloat(car.rentalPricePerHour || car.RentalPricePerHour || 0)
+            const seats = car.seats || car.Seats || 5
+            const year = car.year || ''
+            const color = car.color || 'N/A'
+            
+            return (
+              <div className="car-card" key={idx} onClick={()=> window.location.href = `/cars/${id}`}>
+                <div className="car-image">
+                  <img src={img} alt={name} onError={e=> e.currentTarget.src='/Picture/E car 1.jpg'} />
+                </div>
+                <div className="car-info">
+                  <div className="car-info-top">
+                    <div>
+                      <div className="car-name">{name}</div>
+                      <div className="car-location">
+                        <i className="fas fa-map-marker-alt"></i>
+                        {searchData.locationName || 'Location'}
+                      </div>
+                    </div>
+                    <div className="car-pricing">
+                      <div className="car-price">{formatVND(price)}</div>
+                      <div className="car-price-label">/hour</div>
+                    </div>
+                  </div>
+                  <div className="car-details">
+                    <span><i className="fas fa-palette"></i> {color}</span>
+                    <span><i className="fas fa-calendar"></i> {year || 'N/A'}</span>
+                    <span><i className="fas fa-users"></i> {seats} seats</span>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+          </div>
+        </div> {/* End cars-content */}
+      </div> {/* End container */}
+
+      {/* Search Modal */}
         <div className={`search-modal ${searchModalOpen ? 'active' : ''}`} style={{ display: searchModalOpen ? 'block' : 'none' }} onClick={closeSearchModal}>
           <div className="search-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="search-modal-header">
@@ -407,92 +518,6 @@ export default function CarListPage(){
             </div>
           </div>
         </div>
-
-        {/* Filters */}
-        <div className="filter-section">
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'1rem'}}>
-            <h3>Filters</h3>
-            <div style={{display:'flex',gap:'.5rem',alignItems:'center'}}>
-              <small style={{color:'#666'}}>Showing {filteredCars.length} cars</small>
-              <button type="button" className="btn-apply-filters" style={{background:'#eee',color:'#333',padding:'.4rem .8rem',borderRadius:'6px'}} onClick={resetFilters}>Reset</button>
-              <button type="button" className="btn-apply-filters" onClick={applyFilters}>Apply Filters</button>
-            </div>
-          </div>
-          <form style={{marginTop:'12px',display:'flex',gap:'12px',alignItems:'flex-end',flexWrap:'wrap'}}>
-            <div className="filter-group" style={{flex:1,minWidth:'150px'}}>
-              <label>Brand</label>
-              <select value={filters.brand} onChange={e => setFilters({...filters, brand:e.target.value})}>
-                <option value="">Any Brand</option>
-                {uniqueBrands.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-            <div className="filter-group" style={{flex:1,minWidth:'120px'}}>
-              <label>Color</label>
-              <select value={filters.color} onChange={e => setFilters({...filters, color:e.target.value})}>
-                <option value="">Any Color</option>
-                {uniqueColors.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="filter-group" style={{width:'100px'}}>
-              <label>Seats</label>
-              <select value={filters.seats} onChange={e => setFilters({...filters, seats:e.target.value})}>
-                <option value="">Any</option>
-                <option value="2">2</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="7">7</option>
-              </select>
-            </div>
-            <div className="filter-group" style={{width:'120px'}}>
-              <label>Year (min)</label>
-              <input type="number" min="1900" max="2100" placeholder="2020" value={filters.year} onChange={e => setFilters({...filters, year:e.target.value})} />
-            </div>
-            <div className="filter-group" style={{width:'130px'}}>
-              <label>Price min</label>
-              <input type="number" min="0" placeholder="0" value={filters.priceMin} onChange={e => setFilters({...filters, priceMin:e.target.value})} />
-            </div>
-            <div className="filter-group" style={{width:'130px'}}>
-              <label>Price max</label>
-              <input type="number" min="0" placeholder="999" value={filters.priceMax} onChange={e => setFilters({...filters, priceMax:e.target.value})} />
-            </div>
-          </form>
-        </div>
-
-        {/* Car List */}
-        <div className="car-list">
-          {loading && <div style={{textAlign:'center',padding:'2rem'}}>Loading cars...</div>}
-          {!loading && filteredCars.length === 0 && <div style={{textAlign:'center',padding:'2rem'}}>No cars found</div>}
-          {!loading && filteredCars.map((car, idx)=>{
-            const id = car.id || car.Id
-            const name = `${car.brand || ''} ${car.model || 'Car'}`.trim()
-            const img = car.imageUrl || car.image || '/Picture/E car 1.jpg'
-            const price = parseFloat(car.rentalPricePerHour || car.RentalPricePerHour || 0)
-            const seats = car.seats || car.Seats || 5
-            const year = car.year || ''
-            const color = car.color || 'N/A'
-            
-            return (
-              <div className="car-card" key={idx} onClick={()=> window.location.href = `/cars/${id}`}>
-                <div className="car-image">
-                  <img src={img} alt={name} onError={e=> e.currentTarget.src='/Picture/E car 1.jpg'} />
-                </div>
-                <div className="car-info">
-                  <div className="car-name">{name} {year}</div>
-                  <div className="car-location">{searchData.locationName || 'Location'}</div>
-                  <div className="car-pricing">
-                    <div className="car-price">{formatVND(price)}/hour</div>
-                  </div>
-                  <div className="car-details">
-                    <span>Color: {color}</span>
-                    <span>Year: {year}</span>
-                    <span>Seats: {seats}</span>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
     </main>
   )
 }

@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import API from '../../services/api'
 import { formatVND } from '../../utils/currency'
+import { useToast } from '../../components/ToastProvider'
 import '../../styles/payment_page.css'
 
 export default function PaymentPage(){
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [car, setCar] = useState(null)
   const [rentalContext, setRentalContext] = useState(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
@@ -107,11 +109,18 @@ export default function PaymentPage(){
       }
       
       // Step 3: Create payment via PayOS API
-      console.log('💳 Creating payment with deposit amount:', depositAmount)
+      console.log('� Total Amount:', calculateTotalPrice())
+      console.log('💳 Deposit Amount (30%):', depositAmount)
+      console.log('💳 Deposit Amount (rounded):', Math.round(depositAmount))
+      console.log('🔗 Return URL:', `${window.location.origin}/payment-success`)
+      console.log('🔗 Cancel URL:', `${window.location.origin}/payment-cancel`)
+      
       try {
         const paymentResponse = await API.post('/Payment/create', {
           bookingId: newBookingId,
-          amount: Math.round(depositAmount)
+          amount: Math.round(depositAmount),
+          returnUrl: `${window.location.origin}/payment-success`,
+          cancelUrl: `${window.location.origin}/payment-cancel`
         })
         
         const checkoutUrl = paymentResponse.checkoutUrl
@@ -130,7 +139,26 @@ export default function PaymentPage(){
 
     } catch (error) {
       console.error('Error creating booking:', error)
-      alert('Failed to create booking. Please try again.')
+      
+      // Check if error is "Car not available"
+      const errorResponse = error.response?.data
+      const errors = errorResponse?.errors || []
+      const isCarNotAvailable = errors.some(err => 
+        typeof err === 'string' && err.toLowerCase().includes('car not available')
+      )
+      
+      if (isCarNotAvailable) {
+        // Show toast notification for car not available
+        showToast('This car is not available, please choose another one!', 'error', 4000)
+        
+        // Redirect to car list page after 2 seconds
+        setTimeout(() => {
+          navigate('/cars')
+        }, 2000)
+      } else {
+        // Show generic error message
+        alert('Failed to create booking. Please try again.')
+      }
     } finally {
       setLoading(false)
     }

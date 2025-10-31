@@ -169,11 +169,11 @@
     transform: rotate(360deg);
 }
 
-/* ========== Booking Cards ========== */
+/* ========== Booking Cards - Shopee Style ========== */
 .bookings-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .bookings-list.loading,
@@ -196,6 +196,194 @@
     to { transform: rotate(360deg); }
 }
 
+/* Shopee-style Booking Card */
+.booking-card-shopee {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0;
+}
+
+.booking-card-shopee:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* Card Header */
+.booking-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #f8f8f8 0%, #fafafa 100%);
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.booking-id {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.booking-id i {
+    color: #ff6a00;
+}
+
+/* Card Body with Car Image */
+.booking-card-body {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    align-items: start;
+}
+
+.car-image-container {
+    width: 200px;
+    height: 150px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+}
+
+.car-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.booking-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.car-name {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.booking-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.info-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-label i {
+    color: #ff6a00;
+    width: 16px;
+}
+
+.info-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333;
+    padding-left: 22px;
+}
+
+/* Card Footer */
+.booking-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: #fafafa;
+    border-top: 2px solid #f0f0f0;
+}
+
+.total-price {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.price-label {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 600;
+}
+
+.price-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ff6a00;
+}
+
+.booking-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-feedback,
+.btn-cancel {
+    padding: 0.7rem 1.3rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-feedback {
+    background: linear-gradient(135deg, #ff6a00, #ff8c42);
+    color: white;
+    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.3);
+}
+
+.btn-feedback:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 106, 0, 0.4);
+}
+
+.btn-cancel {
+    background: white;
+    color: #e53935;
+    border: 2px solid #e53935;
+}
+
+.btn-cancel:hover:not(:disabled) {
+    background: #e53935;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #ccc;
+    color: #999;
+}
+
+/* Old booking card styles - keep for backwards compatibility */
 .booking-card {
     background: white;
     border-radius: 16px;
@@ -304,7 +492,7 @@
     display: flex;
     justify-content: space-between;
     align-items: start;
-    gap: 1.2rem;
+    gap: 1.5rem;
     font-size: 0.95rem;
     padding: 0.5rem 0;
     border-bottom: 1px dashed rgba(0, 0, 0, 0.06);
@@ -317,10 +505,11 @@
 .info-row .label {
     color: #666;
     font-weight: 600;
-    min-width: 130px;
+    min-width: 100px;
     display: flex;
     align-items: center;
     gap: 0.6rem;
+    flex-shrink: 0;
 }
 
 .info-row .label i {
@@ -334,6 +523,7 @@
     font-weight: 600;
     text-align: right;
     flex: 1;
+    word-break: break-word;
 }
 
 .info-row.price {
@@ -953,6 +1143,44 @@
         grid-template-columns: 1fr;
     }
 
+    /* Shopee card responsive */
+    .booking-card-body {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .car-image-container {
+        width: 100%;
+        height: 200px;
+    }
+
+    .booking-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-card-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .total-price {
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .booking-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-feedback,
+    .btn-cancel {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Old card style */
     .booking-card {
         padding: 1rem;
     }
