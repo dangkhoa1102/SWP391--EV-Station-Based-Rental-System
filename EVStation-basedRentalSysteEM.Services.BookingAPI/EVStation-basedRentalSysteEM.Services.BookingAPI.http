@@ -1,6 +1,0 @@
-@EVStation_basedRentalSysteEM.Services.BookingAPI_HostAddress = http://localhost:5201
-
-GET {{EVStation_basedRentalSysteEM.Services.BookingAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
