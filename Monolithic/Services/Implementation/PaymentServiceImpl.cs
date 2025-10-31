@@ -14,28 +14,27 @@ namespace Monolithic.Services
             _dbContext = dbContext;
         }
 
-        // 1️⃣ Create a payment for a booking
+        // 1️⃣ Create payment (Deposit, Rental, Extra, Refund)
         public async Task<Payment> CreatePaymentAsync(Guid bookingId, PaymentType type = PaymentType.Deposit)
         {
-            // Check if payment already exists for this booking & type
-            var existingPayment = await _dbContext.Payments
-                .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.PaymentType == type);
-
-            if (existingPayment != null)
-                return existingPayment; // or throw if preferred
-
-            // Get booking info
             var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
             if (booking == null)
                 throw new Exception("Booking not found");
 
-            // Determine payment amount
+            // Avoid duplicates
+            var existingPayment = await _dbContext.Payments
+                .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.PaymentType == type);
+
+            if (existingPayment != null)
+                return existingPayment;
+
             decimal amount = type switch
             {
-                PaymentType.Deposit => booking.DepositAmount,
-                PaymentType.Rental => booking.TotalAmount, // full rental price
-                PaymentType.Refund => booking.DepositAmount,
-                _ => booking.DepositAmount
+                PaymentType.Deposit => booking.DepositAmount, // 30%
+                PaymentType.Rental => booking.TotalAmount,    // 100% rental at check-in
+                PaymentType.Extra => (booking.LateFee + booking.DamageFee), // Late/damage fee at check-out
+                PaymentType.Refund => booking.DepositAmount,  // refund deposit
+                _ => 0
             };
 
             var payment = new Payment
@@ -51,17 +50,10 @@ namespace Monolithic.Services
 
             _dbContext.Payments.Add(payment);
             await _dbContext.SaveChangesAsync();
-
-            // Optional: trigger PayOS QR/link generation here
-            // var (checkoutUrl, qrCode, orderCode) = await _payOSService.GeneratePaymentQR(payment);
-            // payment.OrderCode = orderCode;
-            // await _dbContext.SaveChangesAsync();
-
             return payment;
         }
 
-        // 2️⃣ Update payment status & update booking status automatically
-        // Update payment status & update booking status automatically
+        // 2️⃣ Update payment status and automatically update booking
         public async Task<Payment?> UpdatePaymentStatusAsync(Guid paymentId, PaymentStatus status, string? transactionId = null, string? reason = null)
         {
             var payment = await _dbContext.Payments.FirstOrDefaultAsync(p => p.PaymentId == paymentId);
@@ -72,44 +64,42 @@ namespace Monolithic.Services
                 payment.TransactionId = transactionId;
             if (!string.IsNullOrEmpty(reason))
                 payment.RefundReason = reason;
-
             payment.UpdatedAt = DateTime.UtcNow;
 
-            // Update booking status if payment succeeded
-            if (status == PaymentStatus.Success)
+            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == payment.BookingId);
+            if (booking != null && status == PaymentStatus.Success)
             {
-                var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == payment.BookingId);
-                if (booking != null)
+                switch (payment.PaymentType)
                 {
-                    switch (payment.PaymentType)
-                    {
-                        case PaymentType.Deposit:
-                            // If deposit succeeds AND check-in was already done, mark as CheckedIn
-                            if (booking.BookingStatus == BookingStatus.Pending)
-                                booking.BookingStatus = BookingStatus.DepositPaid;
+                    case PaymentType.Deposit:
+                        booking.BookingStatus = BookingStatus.DepositPaid;
+                        break;
 
-                            else if (booking.BookingStatus == BookingStatus.CheckedInPendingPayment)
-                                booking.BookingStatus = BookingStatus.CheckedIn; // ✅ move to active check-in
-                            break;
+                    case PaymentType.Rental:
+                        // Paid full rental → officially checked in
+                        booking.BookingStatus = BookingStatus.CheckedIn;
+                        break;
 
-                        case PaymentType.Rental:
-                            if (booking.BookingStatus == BookingStatus.CheckedInPendingPayment || booking.BookingStatus == BookingStatus.CheckedIn)
-                                booking.BookingStatus = BookingStatus.Completed; // full payment done
-                            break;
+                    case PaymentType.Extra:
+                        // Paid extra → finalize check-out
+                        booking.BookingStatus = BookingStatus.CheckedOut;
+                        break;
 
-                        case PaymentType.Refund:
-                            booking.BookingStatus = BookingStatus.Cancelled;
-                            break;
-                    }
-
-                    booking.UpdatedAt = DateTime.UtcNow;
+                    case PaymentType.Refund:
+                        // Refund complete → booking finished
+                        booking.BookingStatus = BookingStatus.Completed;
+                        break;
                 }
+
+                booking.UpdatedAt = DateTime.UtcNow;
+                await _dbContext.SaveChangesAsync();
             }
 
             await _dbContext.SaveChangesAsync();
             return payment;
         }
 
+        // 3️⃣ Retrieve payment
         public async Task<Payment?> GetPaymentByIdAsync(Guid paymentId)
         {
             return await _dbContext.Payments
@@ -117,7 +107,7 @@ namespace Monolithic.Services
                 .FirstOrDefaultAsync(p => p.PaymentId == paymentId);
         }
 
-        // 4️⃣ Get all payments for a booking
+        // 4️⃣ All payments by booking
         public async Task<IEnumerable<Payment>> GetPaymentsByBookingIdAsync(Guid bookingId)
         {
             return await _dbContext.Payments
@@ -125,7 +115,7 @@ namespace Monolithic.Services
                 .ToListAsync();
         }
 
-        // 5️⃣ Get total amount paid for a booking
+        // 5️⃣ Total amount paid
         public async Task<decimal> GetTotalAmountPaidByBookingAsync(Guid bookingId)
         {
             return await _dbContext.Payments

@@ -9,7 +9,7 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<BookingDto>> CreateBookingAsync(string userId, CreateBookingDto request);
         
         Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request);
-        Task<ResponseDto<BookingDto>> CheckOutWithPaymentAsync(CheckOutWithPaymentDto request);
+        Task<ResponseDto<BookingDto>> CheckOutBookingAsync(CheckOutWithPaymentDto request);
         
         
         // Booking management methods

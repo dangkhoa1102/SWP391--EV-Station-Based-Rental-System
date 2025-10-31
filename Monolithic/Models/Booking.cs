@@ -17,10 +17,6 @@ namespace Monolithic.Models
         [Required]
         public Guid StationId { get; set; }
 
-        //[Required]
-        //public Guid? PickupStationId { get; set; }
-
-        //public Guid? ReturnStationId { get; set; }
 
         [Required]
         public DateTime StartTime { get; set; }
@@ -45,7 +41,7 @@ namespace Monolithic.Models
 
         [Required]
         [Column(TypeName = "decimal(10,2)")]
-        public decimal RentalAmount { get; set; } // Số tiền thuê xe (sau khi trừ đặt cọc)
+        public decimal RentalAmount { get; set; } 
 
         [StringLength(50)]
         public BookingStatus BookingStatus { get; set; } = BookingStatus.Pending;
@@ -64,8 +60,7 @@ namespace Monolithic.Models
 
         public DateTime? CheckInAt { get; set; } // Thời gian check-in
 
-        public DateTime? CheckOutAt { get; set; } // Thời gian check-out
-
+       
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -80,6 +75,8 @@ namespace Monolithic.Models
 
         [Column(TypeName = "decimal(10,2)")]
         public decimal DamageFee { get; set; } = 0;
+        public decimal RefundAmount { get; set; }
+        public decimal ExtraAmount { get; set; }
         public bool DepositRefunded { get; set; } = false;
         [ForeignKey("UserId")]
         public virtual User User { get; set; } = null!;
