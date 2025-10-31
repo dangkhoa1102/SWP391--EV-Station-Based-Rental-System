@@ -24,10 +24,10 @@ public class PaymentController : ControllerBase
         [HttpPost("create")]
         public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
         {
-            var payment = await _paymentService.CreatePaymentAsync(request.BookingId, request.PaymentType);
+        var payment = await _paymentService.CreatePaymentAsync(request);
 
-            // Generate PayOS QR/checkout
-            var (checkoutUrl, qrCode, orderCode) = await _payOSService.GeneratePaymentQR(payment);
+        // Generate PayOS QR/checkout
+        var (checkoutUrl, qrCode, orderCode) = await _payOSService.GeneratePaymentQR(payment);
 
             payment.OrderCode = orderCode;
             await _paymentService.UpdatePaymentStatusAsync(payment.PaymentId, PaymentStatus.Pending);

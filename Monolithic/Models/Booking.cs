@@ -77,6 +77,9 @@ namespace Monolithic.Models
         public decimal DamageFee { get; set; } = 0;
         public decimal RefundAmount { get; set; }
         public decimal ExtraAmount { get; set; }
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal FinalPaymentAmount { get; set; } = 0;
+
         public bool DepositRefunded { get; set; } = false;
         [ForeignKey("UserId")]
         public virtual User User { get; set; } = null!;

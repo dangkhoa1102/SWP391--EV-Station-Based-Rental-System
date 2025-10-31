@@ -31,7 +31,7 @@ namespace Monolithic.DTOs.Booking
         public string PaymentStatus { get; set; } = string.Empty;
         public string? PaymentMethod { get; set; }
         public string? DepositTransactionId { get; set; }
-
+        public decimal FinalPaymentAmount { get; set; }
         public string? RentalTransactionId { get; set; }
         public bool IsContractApproved { get; set; }
         [JsonConverter(typeof(NullableDateTimeConverter))]

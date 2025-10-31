@@ -1,3 +1,4 @@
+using Monolithic.DTOs.Payment;
 using Monolithic.Models;
 
 namespace Monolithic.Services.Interfaces
@@ -5,7 +6,7 @@ namespace Monolithic.Services.Interfaces
     public interface IPaymentService
     {
         // Create a payment for a booking
-        Task<Payment> CreatePaymentAsync(Guid bookingId,  PaymentType type = PaymentType.Deposit);
+        Task<Payment> CreatePaymentAsync(CreatePaymentDto dto);
 
         // Sync or update payment status (e.g., after PayOS callback)
         Task<Payment?> UpdatePaymentStatusAsync(Guid paymentId, PaymentStatus status, string? transactionId = null, string? reason = null);

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Monolithic.Data;
+using Monolithic.DTOs.Payment;
 using Monolithic.Models;
 using Monolithic.Services.Interfaces;
 
@@ -14,46 +15,51 @@ namespace Monolithic.Services
             _dbContext = dbContext;
         }
 
-        // 1️⃣ Create payment (Deposit, Rental, Extra, Refund)
-        public async Task<Payment> CreatePaymentAsync(Guid bookingId, PaymentType type = PaymentType.Deposit)
+        // 1️⃣ Create payment (Deposit, Extra, Refund)
+        public async Task<Payment> CreatePaymentAsync(CreatePaymentDto dto)
         {
-            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
+            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == dto.BookingId);
             if (booking == null)
                 throw new Exception("Booking not found");
 
-            // Avoid duplicates
-            var existingPayment = await _dbContext.Payments
-                .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.PaymentType == type);
+            // prevent duplicate same-type payment
+            var existing = await _dbContext.Payments
+                .FirstOrDefaultAsync(p => p.BookingId == dto.BookingId && p.PaymentType == dto.PaymentType);
 
-            if (existingPayment != null)
-                return existingPayment;
+            if (existing != null)
+                return existing;
 
-            decimal amount = type switch
+            // calculate amount based on logic
+            decimal amount = dto.PaymentType switch
             {
-                PaymentType.Deposit => booking.DepositAmount, // 30%
-                PaymentType.Rental => booking.TotalAmount,    // 100% rental at check-in
-                PaymentType.Extra => (booking.LateFee + booking.DamageFee), // Late/damage fee at check-out
-                PaymentType.Refund => booking.DepositAmount,  // refund deposit
-                _ => 0
+                PaymentType.Deposit => booking.DepositAmount,
+                PaymentType.Rental => booking.TotalAmount,  // 100% rental amount
+                PaymentType.Extra => booking.ExtraAmount,
+                PaymentType.Refund => booking.RefundAmount,
+                _ => throw new Exception("Invalid payment type")
             };
+
+            if (amount <= 0)
+                throw new Exception($"No payment required for type {dto.PaymentType}");
 
             var payment = new Payment
             {
                 PaymentId = Guid.NewGuid(),
-                BookingId = bookingId,
+                BookingId = booking.BookingId,
                 Amount = amount,
-                PaymentType = type,
+                PaymentType = dto.PaymentType,
+                Description = dto.Description ?? $"{dto.PaymentType} for booking {booking.BookingId}",
                 PaymentStatus = PaymentStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _dbContext.Payments.Add(payment);
+            await _dbContext.Payments.AddAsync(payment);
             await _dbContext.SaveChangesAsync();
             return payment;
         }
 
-        // 2️⃣ Update payment status and automatically update booking
+        // 2️⃣ Update payment status
         public async Task<Payment?> UpdatePaymentStatusAsync(Guid paymentId, PaymentStatus status, string? transactionId = null, string? reason = null)
         {
             var payment = await _dbContext.Payments.FirstOrDefaultAsync(p => p.PaymentId == paymentId);
@@ -66,40 +72,46 @@ namespace Monolithic.Services
                 payment.RefundReason = reason;
             payment.UpdatedAt = DateTime.UtcNow;
 
-            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == payment.BookingId);
-            if (booking != null && status == PaymentStatus.Success)
+            if (status == PaymentStatus.Success)
             {
-                switch (payment.PaymentType)
+                var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == payment.BookingId);
+                if (booking != null)
                 {
-                    case PaymentType.Deposit:
-                        booking.BookingStatus = BookingStatus.DepositPaid;
-                        break;
+                    switch (payment.PaymentType)
+                    {
+                        case PaymentType.Deposit:
+                            booking.BookingStatus = BookingStatus.DepositPaid;
+                            break;
 
-                    case PaymentType.Rental:
-                        // Paid full rental → officially checked in
-                        booking.BookingStatus = BookingStatus.CheckedIn;
-                        break;
+                        case PaymentType.Rental:
+                            // ✅ Rental success = 100% check-in payment
+                            booking.BookingStatus = BookingStatus.CheckedIn;
+                            break;
 
-                    case PaymentType.Extra:
-                        // Paid extra → finalize check-out
-                        booking.BookingStatus = BookingStatus.CheckedOut;
-                        break;
+                        case PaymentType.Extra:
+                            // ✅ Handle extra charge at checkout
+                            booking.BookingStatus = BookingStatus.CheckedOut;
+                            booking.IsActive = false;
+                            break;
 
-                    case PaymentType.Refund:
-                        // Refund complete → booking finished
-                        booking.BookingStatus = BookingStatus.Completed;
-                        break;
+                        case PaymentType.Refund:
+                            // ✅ Refund done => booking completed
+                            booking.BookingStatus = BookingStatus.Completed;
+                            booking.IsActive = false;
+                            booking.DepositRefunded = true;
+                            break;
+                    }
+
+                    booking.UpdatedAt = DateTime.UtcNow;
                 }
-
-                booking.UpdatedAt = DateTime.UtcNow;
-                await _dbContext.SaveChangesAsync();
             }
 
             await _dbContext.SaveChangesAsync();
             return payment;
         }
 
-        // 3️⃣ Retrieve payment
+
+        // 3️⃣ Get single payment
         public async Task<Payment?> GetPaymentByIdAsync(Guid paymentId)
         {
             return await _dbContext.Payments
@@ -115,7 +127,7 @@ namespace Monolithic.Services
                 .ToListAsync();
         }
 
-        // 5️⃣ Total amount paid
+        // 5️⃣ Total amount paid (successful only)
         public async Task<decimal> GetTotalAmountPaidByBookingAsync(Guid bookingId)
         {
             return await _dbContext.Payments
@@ -123,7 +135,7 @@ namespace Monolithic.Services
                 .SumAsync(p => p.Amount);
         }
 
-        // 6️⃣ Get payments by user
+        // 6️⃣ All payments by user
         public async Task<IEnumerable<Payment>> GetPaymentsByUserIdAsync(Guid userId)
         {
             return await _dbContext.Payments
