@@ -54,7 +54,14 @@ export default function VehicleDetailsModal({ open, vehicle, onClose }) {
             </div>
 
             <div style={{ background: 'rgba(255,255,255,0.85)', padding: 12, borderRadius: 10, marginBottom: 10 }}>
+              <strong>Station:</strong> {vehicle.stationName || (vehicle.stationId ? `ID ${String(vehicle.stationId).slice(0, 8)}…` : 'Unknown')}
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.85)', padding: 12, borderRadius: 10, marginBottom: 10 }}>
               <strong>Battery:</strong> {vehicle.battery ?? 'N/A'}%
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.85)', padding: 12, borderRadius: 10, marginBottom: 10 }}>
+              <strong>Capacity:</strong> {vehicle.capacity != null ? `${vehicle.capacity} kWh` : 'N/A'}
             </div>
             <div style={{ background: 'rgba(255,255,255,0.85)', padding: 12, borderRadius: 10, marginBottom: 10 }}>
               <strong>Condition:</strong> {vehicle.tech ?? 'N/A'}

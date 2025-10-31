@@ -11,8 +11,8 @@ export default function BookingCard({ booking, onClick }) {
     <div className="booking-card" onClick={onClick}>
       <img src={booking.img} alt={booking.title} />
       <div className="booking-info">
-        <div className="booking-title">{booking.title}</div>
-        <div className="booking-customer">{booking.customer}</div>
+    <div className="booking-title">{booking.title}</div>
+    <div className="booking-customer">Customer: {booking.fullName || [booking.firstName, booking.lastName].filter(Boolean).join(' ') || booking.customer || '—'}</div>
       </div>
       <div className={cls}>{booking.status.toUpperCase()}</div>
     </div>
