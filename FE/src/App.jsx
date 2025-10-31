@@ -13,7 +13,7 @@ import StaffPage from './staff/page/StaffPage'
 
 import Header from './components/Header'
 import Footer from './components/Footer'
-import StaffPage from './staff/page/StaffPage'
+
 
 function AppShell(){
   const location = useLocation()
