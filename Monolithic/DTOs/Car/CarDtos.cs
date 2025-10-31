@@ -16,7 +16,7 @@ namespace Monolithic.DTOs.Car
         public decimal CurrentBatteryLevel { get; set; }
         public decimal RentalPricePerHour { get; set; }
 
-        public decimal RentalPricePerDate { get; set; }
+        public decimal RentalPricePerDay { get; set; }
         public bool IsAvailable { get; set; }
         public Guid CurrentStationId { get; set; }
         public string CurrentStationName { get; set; } = string.Empty;
@@ -58,7 +58,7 @@ namespace Monolithic.DTOs.Car
         public decimal RentalPricePerHour { get; set; }
         [Required]
         [Range(0.01, 1000000000000000000)]
-        public decimal RentalPricePerDate { get; set; }
+        public decimal RentalPricePerDay { get; set; }
 
 
         [Required]
@@ -75,7 +75,7 @@ namespace Monolithic.DTOs.Car
         public decimal? BatteryCapacity { get; set; }
         public decimal? CurrentBatteryLevel { get; set; }
         public decimal? RentalPricePerHour { get; set; }
-        public decimal? RentalPricePerDate { get; set; }
+        public decimal? RentalPricePerDay { get; set; }
         public bool? IsAvailable { get; set; }
         public Guid? CurrentStationId { get; set; }
     }

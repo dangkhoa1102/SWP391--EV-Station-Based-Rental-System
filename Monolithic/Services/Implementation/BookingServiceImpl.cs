@@ -60,18 +60,13 @@ namespace Monolithic.Services.Implementation
             return ResponseDto<BookingDto>.Failure("Car not available");
 
         // 4. Check pickup station
-        var pickupStation = await _stationRepository.GetByIdAsync(request.PickupStationId);
+        var pickupStation = await _stationRepository.GetByIdAsync(request.StationId);
         if (pickupStation == null || !pickupStation.IsActive)
             return ResponseDto<BookingDto>.Failure("Pickup station invalid");
 
         // 5. Check return station if specified
-        if (request.ReturnStationId.HasValue)
-        {
-            var returnStation = await _stationRepository.GetByIdAsync(request.ReturnStationId.Value);
-            if (returnStation == null || !returnStation.IsActive)
-                return ResponseDto<BookingDto>.Failure("Return station invalid");
-        }
-
+       
+        
         // 6. Check for existing active booking for the car
         var hasActiveBooking = await _bookingRepository.HasActiveBookingForCarAsync(request.CarId);
         if (hasActiveBooking)
@@ -83,7 +78,7 @@ namespace Monolithic.Services.Implementation
         var totalDays = (decimal)duration.TotalDays;
 
         decimal hourlyRate = car.RentalPricePerHour;
-        decimal dailyRate = hourlyRate * 20;
+                decimal dailyRate = car.RentalPricePerDay;
         decimal totalAmount = totalDays >= 1 ? Math.Ceiling(totalDays) * dailyRate : Math.Ceiling(totalHours) * hourlyRate;
         totalAmount = Math.Round(totalAmount, 2);
         decimal depositAmount = Math.Round(totalAmount * 0.3m, 2);
@@ -94,7 +89,7 @@ namespace Monolithic.Services.Implementation
             BookingId = Guid.NewGuid(),
             UserId = userGuid,
             CarId = request.CarId,
-            StationId = request.PickupStationId,
+            StationId = request.StationId,
             StartTime = request.PickupDateTime,
             EndTime = request.ExpectedReturnDateTime,
             HourlyRate = hourlyRate,

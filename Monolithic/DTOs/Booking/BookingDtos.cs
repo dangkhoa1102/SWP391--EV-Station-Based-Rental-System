@@ -60,9 +60,8 @@ namespace Monolithic.DTOs.Booking
         public Guid CarId { get; set; }
 
         [Required(ErrorMessage = "Pickup station is required")]
-        public Guid PickupStationId { get; set; }
+        public Guid StationId { get; set; }
 
-        public Guid? ReturnStationId { get; set; }
 
         [Required(ErrorMessage = "Pickup date and time is required")]
         [JsonConverter(typeof(DateTimeConverter))]
@@ -72,11 +71,6 @@ namespace Monolithic.DTOs.Booking
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime ExpectedReturnDateTime { get; set; }
 
-        [Required(ErrorMessage = "Payment method is required")]
-        public string PaymentMethod { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string? TransactionId { get; set; } // Transaction ID cho thanh toán đặt cọc
     }
 
     public class UpdateBookingDto
