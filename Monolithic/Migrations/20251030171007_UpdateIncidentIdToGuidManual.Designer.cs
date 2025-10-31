@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030171007_UpdateIncidentIdToGuidManual")]
+    partial class UpdateIncidentIdToGuidManual
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -42,6 +45,9 @@ namespace Monolithic.Migrations
                     b.Property<DateTime?>("CheckInAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("CheckOutAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("CheckOutNotes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -65,7 +71,6 @@ namespace Monolithic.Migrations
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<decimal>("DepositAmount")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<bool>("DepositRefunded")
@@ -77,10 +82,6 @@ namespace Monolithic.Migrations
 
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
-
-                    b.Property<decimal>("ExtraAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("HourlyRate")
                         .HasColumnType("decimal(10,2)");
@@ -96,10 +97,6 @@ namespace Monolithic.Migrations
                     b.Property<decimal>("LateFee")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<decimal>("RefundAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<decimal>("RentalAmount")
                         .HasColumnType("decimal(10,2)");
 
@@ -114,7 +111,7 @@ namespace Monolithic.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasPrecision(18, 2)
+                        .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -374,7 +371,8 @@ namespace Monolithic.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("CostIncurred")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -637,7 +635,7 @@ namespace Monolithic.Migrations
                         new
                         {
                             UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 28, 8, 30, 27, 190, DateTimeKind.Utc).AddTicks(4118),
+                            CreatedAt = new DateTime(2025, 10, 30, 17, 10, 6, 921, DateTimeKind.Utc).AddTicks(999),
                             DateOfBirth = new DateOnly(1, 1, 1),
                             Email = "admin@ev.com",
                             FirstName = "Admin",

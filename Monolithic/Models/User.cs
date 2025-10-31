@@ -58,14 +58,18 @@ namespace Monolithic.Models
         public string? CccdImagePublicId_Back { get; set; }
 
         // --- ?nh GPLX ---
-        // (GPLX ? VN th??ng ch? c?n m?t tr??c, nh?ng ta c? làm 2 m?t cho ??y ??)
+        // (GPLX ? VN th??ng ch? c?n m?t tr??c, nh?ng ta c? lï¿½m 2 m?t cho ??y ??)
         public string? GplxImageUrl_Front { get; set; }
         public string? GplxImagePublicId_Front { get; set; }
         public string? GplxImageUrl_Back { get; set; }
         public string? GplxImagePublicId_Back { get; set; }
 
-        // Có th? thêm tr?ng thái xác th?c
+        // Cï¿½ th? thï¿½m tr?ng thï¿½i xï¿½c th?c
         public bool IsVerified { get; set; } = false;
+
+        // Station assignment (for station staff)
+        public Guid? StationId { get; set; }
+        public virtual Station? Station { get; set; }
 
         // Navigation properties
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();

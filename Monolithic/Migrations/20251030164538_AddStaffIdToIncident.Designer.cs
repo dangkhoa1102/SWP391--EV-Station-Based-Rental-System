@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030164538_AddStaffIdToIncident")]
+    partial class AddStaffIdToIncident
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -42,6 +45,9 @@ namespace Monolithic.Migrations
                     b.Property<DateTime?>("CheckInAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("CheckOutAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("CheckOutNotes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -65,7 +71,6 @@ namespace Monolithic.Migrations
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<decimal>("DepositAmount")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<bool>("DepositRefunded")
@@ -77,10 +82,6 @@ namespace Monolithic.Migrations
 
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
-
-                    b.Property<decimal>("ExtraAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("HourlyRate")
                         .HasColumnType("decimal(10,2)");
@@ -96,10 +97,6 @@ namespace Monolithic.Migrations
                     b.Property<decimal>("LateFee")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<decimal>("RefundAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<decimal>("RentalAmount")
                         .HasColumnType("decimal(10,2)");
 
@@ -114,7 +111,7 @@ namespace Monolithic.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasPrecision(18, 2)
+                        .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -366,9 +363,11 @@ namespace Monolithic.Migrations
 
             modelBuilder.Entity("Monolithic.Models.Incident", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<Guid>("BookingId")
                         .HasColumnType("uniqueidentifier");
@@ -387,6 +386,9 @@ namespace Monolithic.Migrations
                     b.Property<DateTime>("ReportedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ReportedBy")
+                        .HasColumnType("int");
+
                     b.Property<string>("ResolutionNotes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -394,8 +396,8 @@ namespace Monolithic.Migrations
                     b.Property<DateTime?>("ResolvedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ResolvedBy")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("ResolvedBy")
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("StaffId")
                         .HasColumnType("uniqueidentifier");
@@ -637,7 +639,7 @@ namespace Monolithic.Migrations
                         new
                         {
                             UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 28, 8, 30, 27, 190, DateTimeKind.Utc).AddTicks(4118),
+                            CreatedAt = new DateTime(2025, 10, 30, 16, 45, 38, 52, DateTimeKind.Utc).AddTicks(4279),
                             DateOfBirth = new DateOnly(1, 1, 1),
                             Email = "admin@ev.com",
                             FirstName = "Admin",

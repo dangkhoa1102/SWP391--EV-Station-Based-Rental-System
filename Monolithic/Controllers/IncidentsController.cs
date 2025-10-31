@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Monolithic.Common;
 using Monolithic.DTOs.Incident.Request;
 using Monolithic.DTOs.Incident.Response;
 using Monolithic.Services.Interfaces;
@@ -70,12 +72,16 @@ public class IncidentsController : ControllerBase
     /// Xem chi tiết sự cố
     /// </summary>
     [HttpGet("Get-By-{id}")]
-    public async Task<ActionResult<IncidentResponse>> GetIncident(int id)
+    public async Task<ActionResult<IncidentResponse>> GetIncident(Guid id)
     {
         try
         {
             // In real implementation, get user info from JWT token
-            var userId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user ID" });
+            }
             var userRole = User.FindFirst("role")?.Value ?? "Renter";
 
             var incident = await _incidentService.GetIncidentByIdAsync(id, userId, userRole);
@@ -102,13 +108,17 @@ public class IncidentsController : ControllerBase
     /// </summary>
     [HttpPut("Update-By-{id}")]
     public async Task<ActionResult<IncidentResponse>> UpdateIncident(
-        int id,
+        Guid id,
         [FromForm] UpdateIncidentFormRequest request)
     {
         try
         {
             // In real implementation, get user info from JWT token
-            var userId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user ID" });
+            }
             var userRole = User.FindFirst("role")?.Value ?? "Staff";
 
             var incident = await _incidentService.UpdateIncidentAsync(id, request, userId, userRole);
@@ -138,12 +148,16 @@ public class IncidentsController : ControllerBase
     /// Đánh dấu sự cố đã được giải quyết
     /// </summary>
     [HttpPatch("Resolve-By-{id}")]
-    public async Task<ActionResult> ResolveIncident(int id, [FromBody] UpdateIncidentRequest request)
+    public async Task<ActionResult> ResolveIncident(Guid id, [FromBody] UpdateIncidentRequest request)
     {
         try
         {
             // In real implementation, get user info from JWT token
-            var userId = int.Parse(User.FindFirst("sub")?.Value ?? "0");
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user ID" });
+            }
 
             var success = await _incidentService.ResolveIncidentAsync(id, request, userId);
 
@@ -164,7 +178,7 @@ public class IncidentsController : ControllerBase
     /// Xóa báo cáo sự cố
     /// </summary>
     [HttpDelete("Delete-By-{id}")]
-    public async Task<ActionResult> DeleteIncident(int id)
+    public async Task<ActionResult> DeleteIncident(Guid id)
     {
         try
         {
@@ -211,6 +225,33 @@ public class IncidentsController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = "An error occurred while downloading the image", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Lấy danh sách sự cố liên quan đến booking của renter
+    /// </summary>
+    [HttpGet("My-Incidents")]
+    [Authorize(Roles = AppRoles.EVRenter)]
+    public async Task<ActionResult<IncidentListResponse>> GetMyIncidents(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        try
+        {
+            // Lấy userId từ JWT token
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized(new { message = "Không thể xác định người dùng" });
+            }
+
+            var incidents = await _incidentService.GetRenterIncidentsAsync(userIdClaim, page, pageSize);
+            return Ok(incidents);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving incidents", error = ex.Message });
         }
     }
 

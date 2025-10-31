@@ -21,5 +21,8 @@ namespace Monolithic.Services.Interfaces
         Task<bool> UpdateUserRoleAsync(string userId, string newRole);
         Task<int> GetTotalUsersCountAsync();
         Task<Dictionary<string, int>> GetUserStatisticsByRoleAsync();
+
+        // Station assignment for staff
+        Task<ResponseDto<string>> AssignStaffToStationAsync(string staffId, Guid? stationId);
     }
 }
