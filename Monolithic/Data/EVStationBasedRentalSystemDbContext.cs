@@ -346,6 +346,18 @@ namespace Monolithic.Data
 
             builder.Entity<User>()
                 .HasIndex(u => u.Email);
+            builder.Entity<Booking>(entity =>
+            {
+                entity.Property(b => b.ExtraAmount).HasPrecision(18, 2);
+                entity.Property(b => b.RefundAmount).HasPrecision(18, 2);
+                entity.Property(b => b.TotalAmount).HasPrecision(18, 2);
+                entity.Property(b => b.DepositAmount).HasPrecision(18, 2);
+            });
+
+            builder.Entity<Incident>(entity =>
+            {
+                entity.Property(i => i.CostIncurred).HasPrecision(18, 2);
+            });
         }
     }
 }

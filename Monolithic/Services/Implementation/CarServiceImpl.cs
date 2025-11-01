@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Monolithic.DTOs.Car;
 using Monolithic.DTOs.Common;
 using Monolithic.Models;
@@ -105,7 +106,7 @@ namespace Monolithic.Services.Implementation
             if (request.BatteryCapacity.HasValue) car.BatteryCapacity = request.BatteryCapacity.Value;
             if (request.CurrentBatteryLevel.HasValue) car.CurrentBatteryLevel = request.CurrentBatteryLevel.Value;
             if (request.RentalPricePerHour.HasValue) car.RentalPricePerHour = request.RentalPricePerHour.Value;
-            if (request.RentalPricePerDate.HasValue) car.RentalPricePerDay = request.RentalPricePerDate.Value;
+            if (request.RentalPricePerDay.HasValue) car.RentalPricePerDay = request.RentalPricePerDay.Value;
             car.UpdatedAt = DateTime.UtcNow;
 
             var updated = await _carRepository.UpdateAsync(car);
@@ -184,6 +185,7 @@ namespace Monolithic.Services.Implementation
             var dto = _mapper.Map<List<CarDto>>(items);
             return ResponseDto<List<CarDto>>.Success(dto, $"Found {total} available cars");
         }
+       
 
         public async Task<ResponseDto<string>> UpdateCarStatusAsync(Guid id, bool isAvailable)
         {

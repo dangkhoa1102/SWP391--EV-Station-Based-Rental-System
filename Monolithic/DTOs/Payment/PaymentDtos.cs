@@ -29,14 +29,11 @@ namespace Monolithic.DTOs.Payment
         [Required]
         public Guid BookingId { get; set; }
 
-        
-
         [Required]
         public PaymentType PaymentType { get; set; } = PaymentType.Deposit;
-       
 
-
+        public string? Description { get; set; }
     }
 
-   
+
 }
