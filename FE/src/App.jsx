@@ -9,7 +9,6 @@ import PaymentSuccess from './user/page/components/Payment/PaymentSuccess'
 import PaymentCancel from './user/page/components/Payment/PaymentCancel'
 import TransactionPage from './user/page/components/Transaction/TransactionPage'
 import BookingHistory from './user/page/components/Booking/BookingHistory'
-import TestApi from './user/page/styles/TestApi'
 import StaffPage from './staff/page/StaffPage'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -32,7 +31,7 @@ function AppShell(){
         <Route path="/booking-history" element={<BookingHistory />} />
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/staff" element={<StaffPage />} />
-        <Route path="/test-api" element={<TestApi />} />
+      
       </Routes>
       {!hideChrome && <Footer />}
     </>
