@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import API from '../../services/api'
-import { formatVND } from '../../utils/currency'
-import { useToast } from '../../components/ToastProvider'
-import '../../styles/payment_page.css'
+import API from '../../../services/userApi'
+import { formatVND } from '../../../../utils/currency'
+import { useToast } from '../../../../components/ToastProvider'
+import './payment_page.css'
 
 export default function PaymentPage(){
   const navigate = useNavigate()

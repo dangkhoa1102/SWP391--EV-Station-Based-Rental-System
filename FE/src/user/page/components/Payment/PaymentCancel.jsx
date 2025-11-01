@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import API from '../../services/api'
-import { useToast } from '../../components/ToastProvider'
+import API from '../../../services/userApi'
+import { useToast } from '../../../../components/ToastProvider'
 
 export default function PaymentCancel() {
   const navigate = useNavigate()

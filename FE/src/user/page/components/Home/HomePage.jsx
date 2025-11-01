@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react'
-import API from '../../services/api'
-import { formatVND } from '../../utils/currency'
-import { useToast } from '../../components/ToastProvider'
+import API from '../../../services/userApi.js'
+import { formatVND } from '../../../../utils/currency.js'
+import { useToast } from '../../../../components/ToastProvider.jsx'
+import './home_page.css'
 
 export default function HomePage(){
   const [stations, setStations] = useState([])
