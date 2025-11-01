@@ -339,21 +339,23 @@ namespace Monolithic.Controllers
                 // Get all staff members (Station Staff role)
                 var staffResult = await _userService.GetUsersAsync(1, 1000, null, AppRoles.StationStaff, true);
                 
-                // TODO: Add station assignment to User model to filter by station
-                // For now, return all staff
-                var staffList = staffResult.Item1.Select(s => new
-                {
-                    UserId = s.UserId,
-                    FullName = $"{s.FirstName} {s.LastName}",
-                    Email = s.Email,
-                    PhoneNumber = s.PhoneNumber,
-                    Role = s.UserRole,
-                    IsActive = s.IsActive,
-                    CreatedAt = s.CreatedAt
-                }).ToList();
+                // Filter by assigned station
+                var staffList = staffResult.Item1
+                    .Where(s => s.StationId == stationId)
+                    .Select(s => new
+                    {
+                        UserId = s.UserId,
+                        FullName = $"{s.FirstName} {s.LastName}",
+                        Email = s.Email,
+                        PhoneNumber = s.PhoneNumber,
+                        Role = s.UserRole,
+                        StationId = s.StationId,
+                        IsActive = s.IsActive,
+                        CreatedAt = s.CreatedAt
+                    }).ToList();
 
                 return Ok(ResponseDto<object>.Success(staffList, 
-                    $"Tìm thấy {staffList.Count} nhân viên"));
+                    $"Tìm thấy {staffList.Count} nhân viên tại trạm"));
             }
             catch (Exception ex)
             {

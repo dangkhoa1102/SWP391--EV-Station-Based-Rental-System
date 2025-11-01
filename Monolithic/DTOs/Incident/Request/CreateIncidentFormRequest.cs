@@ -11,9 +11,6 @@ namespace Monolithic.DTOs.Incident.Request
         [MaxLength(1000)]
         public string Description { get; set; }
 
-        [Required]
-        public int ReportedBy { get; set; } // UserId
-
         public List<IFormFile>? Images { get; set; }
     }
 }

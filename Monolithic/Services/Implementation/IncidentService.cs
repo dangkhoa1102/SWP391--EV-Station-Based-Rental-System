@@ -11,14 +11,30 @@ namespace Monolithic.Services.Implementation
     public class IncidentService : IIncidentService
     {
         private readonly EVStationBasedRentalSystemDbContext _context;
-        private readonly IPhotoService _photoService;
+        private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
+        private readonly string _imageUploadPath;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public IncidentService(
-            EVStationBasedRentalSystemDbContext context, 
-            IPhotoService photoService)
+        public IncidentService(EVStationBasedRentalSystemDbContext context, IWebHostEnvironment environment, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
-            _photoService = photoService;
+            _environment = environment;
+            _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
+            // WebRootPath can be null in some hosting scenarios (e.g., when web root is not configured).
+            // Fall back to ContentRootPath + "wwwroot" or current directory if necessary.
+            var webRoot = !string.IsNullOrEmpty(_environment?.WebRootPath)
+                ? _environment.WebRootPath
+                : Path.Combine(_environment?.ContentRootPath ?? Directory.GetCurrentDirectory(), "wwwroot");
+
+            _imageUploadPath = Path.Combine(webRoot, "uploads", "incidents");
+
+            // Tạo thư mục nếu chưa tồn tại
+            if (!Directory.Exists(_imageUploadPath))
+            {
+                Directory.CreateDirectory(_imageUploadPath);
+            }
         }
 
         public async Task<IncidentResponse> CreateIncidentAsync(CreateIncidentFormRequest request)
@@ -32,6 +48,16 @@ namespace Monolithic.Services.Implementation
                 throw new ArgumentException("Booking not found");
             }
 
+            // Upload images nếu có
+            List<string> imageUrls = new List<string>();
+
+            // Get staff who creates this incident (must be authenticated)
+            var staffIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(staffIdClaim) || !Guid.TryParse(staffIdClaim, out var staffGuid))
+            {
+                throw new UnauthorizedAccessException("Chỉ nhân viên được phép tạo sự cố");
+            }
+
             // Tạo incident
             var incident = new Incident
             {
@@ -39,8 +65,8 @@ namespace Monolithic.Services.Implementation
                 Description = request.Description,
                 ReportedAt = DateTime.UtcNow,
                 Status = "Pending",
-                ReportedBy = request.ReportedBy,
-                StationId = booking.StationId
+                StationId = booking.StationId,
+                StaffId = staffGuid
             };
 
             _context.Incidents.Add(incident);
@@ -57,7 +83,7 @@ namespace Monolithic.Services.Implementation
             return MapToResponse(incident);
         }
 
-        public async Task<IncidentResponse?> UpdateIncidentAsync(int id, UpdateIncidentFormRequest request, int userId, string userRole)
+        public async Task<IncidentResponse?> UpdateIncidentAsync(Guid id, UpdateIncidentFormRequest request, Guid userId, string userRole)
         {
             var incident = await _context.Incidents.FindAsync(id);
             if (incident == null) return null;
@@ -125,8 +151,8 @@ namespace Monolithic.Services.Implementation
             return MapToResponse(incident);
         }
 
-        // Upload images lên Cloudinary
-        private async Task<List<ImageInfo>> UploadImagesToCloudinaryAsync(List<IFormFile> images, int incidentId)
+        // Các phương thức khác giữ nguyên...
+        private async Task<List<string>> UploadImagesAsync(List<IFormFile> images, Guid incidentId)
         {
             var uploadedImages = new List<ImageInfo>();
 
@@ -218,8 +244,8 @@ namespace Monolithic.Services.Implementation
                 ResolutionNotes = incident.ResolutionNotes,
                 CostIncurred = incident.CostIncurred,
                 ResolvedBy = incident.ResolvedBy,
-                ReportedBy = incident.ReportedBy,
-                StationId = incident.StationId
+                StationId = incident.StationId,
+                StaffId = incident.StaffId
             };
         }
 
@@ -268,23 +294,23 @@ namespace Monolithic.Services.Implementation
             return response;
         }
 
-        public async Task<IncidentResponse?> GetIncidentByIdAsync(int id, int userId, string userRole)
+        public async Task<IncidentResponse?> GetIncidentByIdAsync(Guid id, Guid userId, string userRole)
         {
             var incident = await _context.Incidents
                 .FirstOrDefaultAsync(i => i.Id == id);
 
             if (incident == null) return null;
 
-            // Authorization check
-            if (userRole == "Renter" && incident.ReportedBy != userId)
+            // Authorization check - only staff and admin can view incidents
+            if (userRole != "Admin" && userRole != "Station Staff")
             {
-                throw new UnauthorizedAccessException("You can only view your own incidents");
+                throw new UnauthorizedAccessException("Chỉ nhân viên và admin mới có thể xem sự cố");
             }
 
             return MapToResponse(incident);
         }
 
-        public async Task<bool> ResolveIncidentAsync(int id, UpdateIncidentRequest request, int userId)
+        public async Task<bool> ResolveIncidentAsync(Guid id, UpdateIncidentRequest request, Guid userId)
         {
             var incident = await _context.Incidents.FindAsync(id);
             if (incident == null) return false;
@@ -307,7 +333,7 @@ namespace Monolithic.Services.Implementation
             return true;
         }
 
-        public async Task<bool> DeleteIncidentAsync(int id)
+        public async Task<bool> DeleteIncidentAsync(Guid id)
         {
             var incident = await _context.Incidents.FindAsync(id);
             if (incident == null) return false;
@@ -340,12 +366,41 @@ namespace Monolithic.Services.Implementation
             await _context.SaveChangesAsync();
             return true;
         }
-    }
 
-    // Helper class để lưu thông tin ảnh
-    public class ImageInfo
-    {
-        public string Url { get; set; } = string.Empty;
-        public string PublicId { get; set; } = string.Empty;
+        public async Task<IncidentListResponse> GetRenterIncidentsAsync(string renterId, int page = 1, int pageSize = 20)
+        {
+            if (!Guid.TryParse(renterId, out var renterGuid))
+            {
+                return new IncidentListResponse
+                {
+                    Incidents = new List<IncidentResponse>(),
+                    TotalCount = 0,
+                    Page = page,
+                    PageSize = pageSize
+                };
+            }
+
+            // Lấy incidents từ bookings của renter này
+            var query = _context.Incidents
+                .Include(i => i.Booking)
+                .Where(i => i.Booking.UserId == renterGuid);
+
+            var totalCount = await query.CountAsync();
+            var incidents = await query
+                .OrderByDescending(i => i.ReportedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var response = new IncidentListResponse
+            {
+                Incidents = incidents.Select(MapToResponse).ToList(),
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+
+            return response;
+        }
     }
 }

@@ -32,5 +32,8 @@ namespace Monolithic.Models
         //public virtual ICollection<Booking> DropoffBookings { get; set; } = new List<Booking>();
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
+        // Staff working at this station
+        public virtual ICollection<User> StaffMembers { get; set; } = new List<User>();
+
     }
 }

@@ -79,6 +79,16 @@ namespace Monolithic.Data
                 entity.Property(u => u.UserRole).IsRequired().HasDefaultValue("EV Renter");
                 entity.Property(u => u.IsActive).HasDefaultValue(true);
                 entity.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                // User-Station (staff assignment) relationship
+                entity
+                    .HasOne(u => u.Station)
+                    .WithMany(s => s.StaffMembers)
+                    .HasForeignKey(u => u.StationId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                // Index for fast lookups by station
+                entity.HasIndex(u => u.StationId);
             });
 
             // Contract configuration
@@ -217,6 +227,11 @@ namespace Monolithic.Data
                 entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.ResolutionNotes).HasMaxLength(500);
                 entity.Property(e => e.CostIncurred).HasPrecision(10, 2);
+                
+                entity.HasOne<User>(e => e.Staff)
+                      .WithMany()
+                      .HasForeignKey(e => e.StaffId)
+                      .OnDelete(DeleteBehavior.SetNull);
 
                 // Relationship with Booking
                 entity.HasOne(e => e.Booking)
@@ -228,6 +243,7 @@ namespace Monolithic.Data
                 entity.HasIndex(e => e.BookingId);
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => e.StationId);
+                entity.HasIndex(e => e.StaffId);
                 entity.HasIndex(e => e.ReportedAt);
             });
             builder.Entity<Payment>(entity =>

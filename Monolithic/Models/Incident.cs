@@ -6,7 +6,7 @@ namespace Monolithic.Models
     public class Incident
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Required]
         public Guid BookingId { get; set; }
@@ -34,11 +34,16 @@ namespace Monolithic.Models
 
         public decimal? CostIncurred { get; set; }
 
-        public int? ResolvedBy { get; set; } // UserId of admin/staff who resolved
+        public Guid? ResolvedBy { get; set; } // UserId of admin/staff who resolved
 
         // Additional fields for better tracking
-        public int ReportedBy { get; set; } // UserId who reported the incident
+        //public int ReportedBy { get; set; } // UserId who reported the incident
 
         public Guid? StationId { get; set; } // For filtering by station
+
+        // Staff who created the incident (station staff)
+        public Guid? StaffId { get; set; }
+        [ForeignKey("StaffId")]
+        public virtual User? Staff { get; set; }
     }
 }
