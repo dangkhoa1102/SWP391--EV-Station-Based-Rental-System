@@ -31,6 +31,7 @@ namespace Monolithic.DTOs.Booking
         public string PaymentStatus { get; set; } = string.Empty;
         public string? PaymentMethod { get; set; }
         public string? DepositTransactionId { get; set; }
+        public decimal FinalPaymentAmount { get; set; }
         public string? RentalTransactionId { get; set; }
         public bool IsContractApproved { get; set; }
         [JsonConverter(typeof(NullableDateTimeConverter))]
@@ -46,6 +47,8 @@ namespace Monolithic.DTOs.Booking
         public DateTime UpdatedAt { get; set; }
 
         public decimal LateFee { get; set; } = 0;
+        public decimal RefundAmount { get; set; }
+        public decimal ExtraAmount { get; set; }
 
         public decimal DamageFee { get; set; } = 0;
         public bool DepositRefunded { get; set; }= false;
@@ -57,9 +60,8 @@ namespace Monolithic.DTOs.Booking
         public Guid CarId { get; set; }
 
         [Required(ErrorMessage = "Pickup station is required")]
-        public Guid PickupStationId { get; set; }
+        public Guid StationId { get; set; }
 
-        public Guid? ReturnStationId { get; set; }
 
         [Required(ErrorMessage = "Pickup date and time is required")]
         [JsonConverter(typeof(DateTimeConverter))]
@@ -69,11 +71,6 @@ namespace Monolithic.DTOs.Booking
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime ExpectedReturnDateTime { get; set; }
 
-        [Required(ErrorMessage = "Payment method is required")]
-        public string PaymentMethod { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string? TransactionId { get; set; } // Transaction ID cho thanh toán đặt cọc
     }
 
     public class UpdateBookingDto
@@ -82,6 +79,7 @@ namespace Monolithic.DTOs.Booking
         [JsonConverter(typeof(NullableDateTimeConverter))]
         public DateTime? ExpectedReturnDateTime { get; set; }
         public BookingStatus? BookingStatus { get; set; }
+      
     }
 
     public class BookingStatusDto
@@ -211,21 +209,19 @@ namespace Monolithic.DTOs.Booking
         
         [Required]
         public Guid StaffId { get; set; }
-        
+        [JsonConverter(typeof(NullableDateTimeConverter))]
+        public DateTime? ActualReturnDateTime { get; set; }
+
         [StringLength(500)]
         public string? CheckOutNotes { get; set; }
         
         [StringLength(1000)]
         public string? CheckOutPhotoUrl { get; set; }
         
-        public decimal LateFee { get; set; } = 0;
+
         
         public decimal DamageFee { get; set; } = 0;
         
-        [Required]
-        public string PaymentMethod { get; set; } = string.Empty;
-        
-        [StringLength(100)]
-        public string? TransactionId { get; set; } // Transaction ID cho thanh toán tiền thuê
+   
     }
 }

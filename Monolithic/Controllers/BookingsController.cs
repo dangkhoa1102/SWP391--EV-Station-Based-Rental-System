@@ -58,7 +58,7 @@ namespace Monolithic.Controllers
         [HttpPost("Check-Out-With-Payment")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CheckOutWithPayment([FromBody] CheckOutWithPaymentDto request)
         {
-            var result = await _bookingService.CheckOutWithPaymentAsync(request);
+            var result = await _bookingService.CheckOutBookingAsync(request);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             

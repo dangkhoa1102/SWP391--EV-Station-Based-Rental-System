@@ -19,6 +19,7 @@ namespace Monolithic.Models
         [Required]
         [Column(TypeName = "decimal(10,2)")]
         public decimal Amount { get; set; }
+        public string? Description { get; set; }
 
         [Required]
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;

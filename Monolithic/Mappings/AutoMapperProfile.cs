@@ -76,7 +76,7 @@ namespace Monolithic.Mappings
 
 
             CreateMap<CreateBookingDto, Booking>()
-                .ForMember(dest => dest.StationId, opt => opt.MapFrom(src => src.PickupStationId))
+                .ForMember(dest => dest.StationId, opt => opt.MapFrom(src => src.StationId))
                 .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.PickupDateTime))
                 .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.ExpectedReturnDateTime))
                 .ForMember(dest => dest.BookingStatus, opt => opt.MapFrom(src => BookingStatus.Pending))

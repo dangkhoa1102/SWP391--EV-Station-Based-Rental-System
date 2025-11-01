@@ -22,7 +22,7 @@ public class PaymentController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
     {
-        var payment = await _paymentService.CreatePaymentAsync(request.BookingId, request.PaymentType);
+        var payment = await _paymentService.CreatePaymentAsync(request);
 
         // Generate PayOS QR/checkout
         var (checkoutUrl, qrCode, orderCode) = await _payOSService.GeneratePaymentQR(payment);
@@ -47,26 +47,6 @@ public class PaymentController : ControllerBase
         return Ok(dto);
     }
 
-    [HttpPost("sync/{bookingId}")]
-    public async Task<IActionResult> SyncPaymentStatus(Guid bookingId)
-    {
-        var payments = await _paymentService.GetPaymentsByBookingIdAsync(bookingId);
-        foreach (var payment in payments)
-        {
-            var info = await _payOSService.GetPaymentLinkInformation(payment.OrderCode);
-            if (info.status == "PAID" && payment.PaymentStatus != PaymentStatus.Success)
-            {
-                await _paymentService.UpdatePaymentStatusAsync(payment.PaymentId, PaymentStatus.Success,
-                    info.transactions.FirstOrDefault()?.reference);
-
-                // Optionally update booking status
-                // await _bookingService.UpdateBookingStatusAsync(payment.BookingId, "Confirmed");
-            }
-        }
-
-        return Ok(payments.Select(p => new { p.PaymentId, p.PaymentStatus, p.TransactionId }));
-    }
-
     [HttpGet("{bookingId}/status")]
     public async Task<IActionResult> GetStatus(Guid bookingId)
     {
@@ -75,7 +55,7 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
-    /// Ghi nh?n thanh toán t?i ?i?m b?i Station Staff (Deposit)
+    /// Ghi nh?n thanh toï¿½n t?i ?i?m b?i Station Staff (Deposit)
     /// </summary>
     [HttpPost("Station/Record-Deposit")]
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
@@ -99,7 +79,7 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
-    /// Ghi nh?n hoàn c?c t?i ?i?m b?i Station Staff
+    /// Ghi nh?n hoï¿½n c?c t?i ?i?m b?i Station Staff
     /// </summary>
     [HttpPost("Station/Record-Refund")]
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
@@ -123,7 +103,7 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
-    /// Ghi nh?n thanh toán ti?n thuê xe t?i ?i?m
+    /// Ghi nh?n thanh toï¿½n ti?n thuï¿½ xe t?i ?i?m
     /// </summary>
     [HttpPost("Station/Record-Rental-Payment")]
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
