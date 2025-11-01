@@ -20,9 +20,9 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("create")]
-    public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
+public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
     {
-        var payment = await _paymentService.CreatePaymentAsync(request.BookingId, request.PaymentType);
+        var payment = await _paymentService.CreatePaymentAsync(request);
 
         // Generate PayOS QR/checkout
         var (checkoutUrl, qrCode, orderCode) = await _payOSService.GeneratePaymentQR(payment);
@@ -32,17 +32,19 @@ public class PaymentController : ControllerBase
 
         var dto = new PaymentDto
         {
-        var payment = await _paymentService.CreatePaymentAsync(request);
+            PaymentId = payment.PaymentId,
+            BookingId = payment.BookingId,
+            Amount = payment.Amount,
+            PaymentStatus = payment.PaymentStatus,
+            PaymentType = payment.PaymentType,
+            OrderCode = orderCode,
+            CheckoutUrl = checkoutUrl,
+            QrCode = qrCode,
+            CreatedAt = payment.CreatedAt,
+            UpdatedAt = payment.UpdatedAt
+        };
 
-        // Generate PayOS QR/checkout
-        var (checkoutUrl, qrCode, orderCode) = await _payOSService.GeneratePaymentQR(payment);
-
-                // Optionally update booking status
-                // await _bookingService.UpdateBookingStatusAsync(payment.BookingId, "Confirmed");
-            }
-        }
-
-        return Ok(payments.Select(p => new { p.PaymentId, p.PaymentStatus, p.TransactionId }));
+        return Ok(dto);
     }
 
     [HttpGet("{bookingId}/status")]
