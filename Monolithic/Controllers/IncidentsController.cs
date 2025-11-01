@@ -54,10 +54,11 @@ public class IncidentsController : ControllerBase
     {
         try
         {
-            // In real implementation, get user role from JWT token
-            var userRole = User.FindFirst("role")?.Value ?? "Staff"; // Temporary for demo
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = Guid.TryParse(userIdClaim, out var uid) ? uid : Guid.Empty;
+            var userRole = User.FindFirst("role")?.Value ?? "Staff";
 
-            var incidents = await _incidentService.GetIncidentsAsync(stationId, status, dateFrom, dateTo, page, pageSize);
+            var incidents = await _incidentService.GetIncidentsAsync(stationId, status, dateFrom, dateTo, page, pageSize, userId, userRole);
             return Ok(incidents);
         }
         catch (Exception ex)
@@ -196,37 +197,6 @@ public class IncidentsController : ControllerBase
     }
 
     /// <summary>
-    /// Tải xuống hình ảnh sự cố
-    /// </summary>
-    [HttpGet("Download-Image/{imageName}")]
-    public async Task<IActionResult> DownloadImage(string imageName)
-    {
-        try
-        {
-            var imagePath = Path.Combine(_environment.WebRootPath, "uploads", "incidents", imageName);
-
-            if (!System.IO.File.Exists(imagePath))
-            {
-                return NotFound(new { message = "Image not found" });
-            }
-
-            var memory = new MemoryStream();
-            using (var stream = new FileStream(imagePath, FileMode.Open))
-            {
-                await stream.CopyToAsync(memory);
-            }
-            memory.Position = 0;
-
-            var contentType = GetContentType(imagePath);
-            return File(memory, contentType, Path.GetFileName(imagePath));
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while downloading the image", error = ex.Message });
-        }
-    }
-
-    /// <summary>
     /// Lấy danh sách sự cố liên quan đến booking của renter
     /// </summary>
     [HttpGet("My-Incidents")]
@@ -245,6 +215,26 @@ public class IncidentsController : ControllerBase
             }
 
             var incidents = await _incidentService.GetRenterIncidentsAsync(userIdClaim, page, pageSize);
+            return Ok(incidents);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving incidents", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Lấy danh sách sự cố theo BookingId
+    /// </summary>
+    [HttpGet("GetByBooking/{bookingId}")]
+    public async Task<ActionResult<IncidentListResponse>> GetIncidentsByBooking(
+        Guid bookingId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        try
+        {
+            var incidents = await _incidentService.GetIncidentsByBookingAsync(bookingId, page, pageSize);
             return Ok(incidents);
         }
         catch (Exception ex)

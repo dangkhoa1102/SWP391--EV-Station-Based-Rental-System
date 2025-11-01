@@ -12,5 +12,6 @@ namespace Monolithic.Services.Interfaces
         Task<bool> ResolveIncidentAsync(Guid id, UpdateIncidentRequest request, Guid userId);
         Task<bool> DeleteIncidentAsync(Guid id);
         Task<IncidentListResponse> GetRenterIncidentsAsync(string renterId, int page = 1, int pageSize = 20);
+        Task<IncidentListResponse> GetIncidentsByBookingAsync(Guid bookingId, int page, int pageSize);
     }
 }

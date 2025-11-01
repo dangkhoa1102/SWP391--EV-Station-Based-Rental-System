@@ -74,6 +74,12 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
+// Configure form size limit for file uploads (25MB)
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 26214400; // 25MB
+});
+
 // HttpContext accessor for services needing user claims
 builder.Services.AddHttpContextAccessor();
 
