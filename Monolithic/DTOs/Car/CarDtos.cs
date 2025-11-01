@@ -25,6 +25,7 @@ namespace Monolithic.DTOs.Car
         public DateTime CreatedAt { get; set; }
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime UpdatedAt { get; set; }
+        public string? ImageUrl { get; set; }
     }
 
     public class CreateCarDto
@@ -63,6 +64,9 @@ namespace Monolithic.DTOs.Car
 
         [Required]
         public Guid CurrentStationId { get; set; }
+
+        // Optional: Car image file
+        public IFormFile? CarImage { get; set; }
     }
 
     public class UpdateCarDto

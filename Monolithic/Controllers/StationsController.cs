@@ -45,7 +45,8 @@ namespace Monolithic.Controllers
         /// Tạo trạm sạc mới (Admin, Station Staff)
         /// </summary>
         [HttpPost("Create")]
-        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        //[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ResponseDto<StationDto>>> CreateStation([FromBody] CreateStationDto request)
         {
             if (!ModelState.IsValid)

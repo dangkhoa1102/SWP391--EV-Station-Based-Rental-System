@@ -3,6 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Monolithic.Models
 {
+    // Contract Status Enum
+    public enum ContractStatus
+    {
+        Pending = 0,      // Chờ ký
+        Signed = 1,       // Đã ký
+        Expired = 2       // Hết hạn
+    }
+
     public class Contract
     {
         [Key]
@@ -15,6 +23,7 @@ namespace Monolithic.Models
         public Guid RenterId { get; set; }
 
         public Guid? StaffId { get; set; }
+        
         // Contract content (plain text) and its hash for tamper-proof audit
         [Required]
         [StringLength(4000)]
@@ -63,6 +72,39 @@ namespace Monolithic.Models
 
         [StringLength(1000)]
         public string? ContractNotes { get; set; } // Ghi chú về hợp đồng
+
+        // --- HopDong Specific Fields ---
+        [StringLength(100)]
+        public string? SoHopDong { get; set; } // Số hợp đồng
+
+        [StringLength(255)]
+        public string? HoTenBenA { get; set; } // Họ tên bên A (người thuê)
+
+        [StringLength(50)]
+        public string? BienSoXe { get; set; } // Biển số xe
+
+        // Status của hợp đồng (Pending, Signed, Expired)
+        public ContractStatus Status { get; set; } = ContractStatus.Pending;
+
+        // Token xác nhận duy nhất gửi qua email
+        [StringLength(256)]
+        public string? ConfirmationToken { get; set; }
+
+        // Thời gian token hết hạn
+        public DateTime? TokenExpiry { get; set; }
+
+        // Thời điểm hợp đồng được tạo
+        public DateTime? NgayTao { get; set; }
+
+        // Thời điểm hợp đồng được ký
+        public DateTime? NgayKy { get; set; }
+
+        // Thời điểm hợp đồng hết hạn
+        public DateTime? NgayHetHan { get; set; }
+
+        // Xóa mềm
+        public bool IsDeleted { get; set; } = false;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

@@ -20,6 +20,7 @@ namespace Monolithic.Data
         public DbSet<Incident> Incidents { get; set; }
         public DbSet<Contract> Contracts { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<CarHandover> CarHandovers { get; set; }
 
         // Helper method to hash password
         private static string HashPassword(string password)
@@ -279,42 +280,44 @@ namespace Monolithic.Data
        .HasForeignKey(b => b.StationId)
        .OnDelete(DeleteBehavior.Restrict);
 
+            // CarHandover configuration
+            builder.Entity<CarHandover>(entity =>
+            {
+                entity.HasKey(ch => ch.HandoverId);
+                entity.Property(ch => ch.HandoverId).HasDefaultValueSql("NEWID()");
+                entity.Property(ch => ch.BookingId).IsRequired();
+                entity.Property(ch => ch.CarId).IsRequired();
+                entity.Property(ch => ch.StaffId).IsRequired();
+                entity.Property(ch => ch.HandoverType).IsRequired().HasMaxLength(20);
+                entity.Property(ch => ch.PhotoUrls).HasMaxLength(2000);
+                entity.Property(ch => ch.PhotoPublicIds).HasMaxLength(1000);
+                entity.Property(ch => ch.Notes).HasMaxLength(1000);
+                entity.Property(ch => ch.BatteryLevelAtHandover).HasPrecision(5, 2);
+                entity.Property(ch => ch.MileageReading).HasPrecision(10, 2);
+                entity.Property(ch => ch.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 
-            // Payment configuration
-            //builder.Entity<Payment>(entity =>
-            //{
-            //    entity.HasKey(p => p.PaymentId);
-            //    entity.Property(p => p.PaymentId).HasDefaultValueSql("NEWID()");
-            //    entity.Property(p => p.BookingId).IsRequired();
-            //    entity.Property(p => p.TransactionId).IsRequired().HasMaxLength(100);
-            //    entity.Property(p => p.Amount).HasPrecision(10, 2);
-            //    entity.Property(p => p.PaymentMethod).IsRequired().HasConversion<string>();
-            //    entity.Property(p => p.PaymentStatus).IsRequired().HasConversion<string>();
-            //    entity.Property(p => p.GatewayName).HasMaxLength(50);
-            //    entity.Property(p => p.GatewayTransactionId).HasMaxLength(500);
-            //    entity.Property(p => p.GatewayResponse).HasMaxLength(1000);
-            //    entity.Property(p => p.Description).HasMaxLength(500);
-            //    entity.Property(p => p.FailureReason).HasMaxLength(1000);
-            //    entity.Property(p => p.RefundTransactionId).HasMaxLength(100);
-            //    entity.Property(p => p.RefundReason).HasMaxLength(500);
-            //    entity.Property(p => p.IsActive).HasDefaultValue(true);
-            //    entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            //    entity.Property(p => p.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+                // Relationships
+                entity.HasOne(ch => ch.Booking)
+                      .WithMany()
+                      .HasForeignKey(ch => ch.BookingId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
-            //    // Payment-Booking relationship
-            //    entity.HasOne(p => p.Booking)
-            //          .WithMany()
-            //          .HasForeignKey(p => p.BookingId)
-            //          .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(ch => ch.Car)
+                      .WithMany()
+                      .HasForeignKey(ch => ch.CarId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
-            //    // Indexes for better performance
-            //    entity.HasIndex(p => p.BookingId);
-            //    entity.HasIndex(p => p.TransactionId).IsUnique();
-            //    entity.HasIndex(p => p.PaymentMethod);
-            //    entity.HasIndex(p => p.PaymentStatus);
-            //    entity.HasIndex(p => p.CreatedAt);
-            //    entity.HasIndex(p => p.ExpiredAt);
-            //});
+                entity.HasOne(ch => ch.Staff)
+                      .WithMany()
+                      .HasForeignKey(ch => ch.StaffId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Indexes
+                entity.HasIndex(ch => ch.BookingId);
+                entity.HasIndex(ch => ch.CarId);
+                entity.HasIndex(ch => ch.StaffId);
+                entity.HasIndex(ch => ch.HandoverDateTime);
+            });
 
             // Configure indexes for better performance
             builder.Entity<Car>()

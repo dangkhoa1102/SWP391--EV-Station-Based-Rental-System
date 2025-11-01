@@ -50,7 +50,33 @@ namespace Monolithic.Models
         public Guid CurrentStationId { get; set; }
 
         public bool IsActive { get; set; } = true;
-        public string ImageUrl { get; set; } = string.Empty;    
+        public string ImageUrl { get; set; } = string.Empty;
+        public string? CarImagePublicId { get; set; } = string.Empty;
+        
+        // Technical Status Fields
+        [StringLength(50)]
+        public string? EngineStatus { get; set; } = "Good";
+        
+        [StringLength(50)]
+        public string? TireStatus { get; set; } = "Good";
+        
+        [StringLength(50)]
+        public string? BrakeStatus { get; set; } = "Good";
+        
+        [StringLength(50)]
+        public string? LightStatus { get; set; } = "Good";
+        
+        [StringLength(50)]
+        public string? InteriorStatus { get; set; } = "Good";
+        
+        [StringLength(50)]
+        public string? ExteriorStatus { get; set; } = "Good";
+        
+        [StringLength(1000)]
+        public string? TechnicalNotes { get; set; }
+        
+        public DateTime? LastInspectionDate { get; set; }
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

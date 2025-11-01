@@ -91,5 +91,233 @@ namespace Monolithic.Controllers
             var result = await _contractService.GetContractsByRenterAsync(renterId);
             return Ok(result);
         }
+
+        // --- HopDong Specific Endpoints ---
+
+        /// <summary>
+        /// Lưu hợp đồng thuê xe và tạo file Word từ template
+        /// </summary>
+        [HttpPost("hopdong/tao")]
+        public async Task<ActionResult<ResponseDto<Guid>>> TaoHopDong([FromBody] TaoHopDongDto request, [FromQuery] Guid bookingId, [FromQuery] Guid renterId)
+        {
+            try
+            {
+                var contractId = await _contractService.LuuHopDongVaTaoFileAsync(request, bookingId, renterId);
+                return Ok(ResponseDto<Guid>.Success(contractId, "Hợp đồng đã được tạo thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseDto<Guid>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Gửi email xác nhận hợp đồng
+        /// </summary>
+        [HttpPost("hopdong/{contractId}/gui-email")]
+        public async Task<ActionResult<ResponseDto<string>>> GuiEmailXacNhan(Guid contractId, [FromBody] GuiEmailRequestDto body)
+        {
+            try
+            {
+                await _contractService.GuiEmailXacNhanAsync(contractId, body.Email);
+                return Ok(ResponseDto<string>.Success("", "Email xác nhận đã được gửi"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<string>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Lấy hợp đồng để xác nhận (chuyển sang HTML)
+        /// </summary>
+        [HttpGet("hopdong/xac-nhan/{token}")]
+        public async Task<ActionResult<ResponseDto<HopDongXacNhanDto>>> LayHopDongDeXacNhan(string token)
+        {
+            try
+            {
+                var result = await _contractService.LayHopDongDeXacNhanAsync(token);
+                return Ok(ResponseDto<HopDongXacNhanDto>.Success(result, "Hợp đồng lấy thành công"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ResponseDto<HopDongXacNhanDto>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<HopDongXacNhanDto>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Xác nhận và ký hợp đồng
+        /// </summary>
+        [HttpPost("hopdong/ky")]
+        public async Task<ActionResult<ResponseDto<string>>> XacNhanKyHopDong([FromBody] KyHopDongRequestDto body)
+        {
+            try
+            {
+                await _contractService.XacNhanKyHopDongAsync(body.Token);
+                return Ok(ResponseDto<string>.Success("", "Hợp đồng đã được ký thành công"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<string>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Xóa mềm hợp đồng
+        /// </summary>
+        [HttpDelete("hopdong/{contractId}")]
+        public async Task<ActionResult<ResponseDto<string>>> XoaMemHopDong(Guid contractId)
+        {
+            try
+            {
+                await _contractService.XoaMemHopDongAsync(contractId);
+                return Ok(ResponseDto<string>.Success("", "Hợp đồng đã được xóa"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<string>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Download file hợp đồng DOCX bằng token (dùng cho link trong email)
+        /// </summary>
+        [HttpGet("hopdong/download/{token}")]
+        public async Task<IActionResult> DownloadHopDongByToken(string token)
+        {
+            try
+            {
+                var (fileBytes, fileName) = await _contractService.DownloadHopDongFileByTokenAsync(token);
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", fileName);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (FileNotFoundException ex)
+            {
+                return NotFound(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<string>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Download file hợp đồng DOCX theo ContractId (yêu cầu authentication)
+        /// </summary>
+        [HttpGet("{contractId}/download")]
+        public async Task<IActionResult> DownloadHopDongByContractId(Guid contractId)
+        {
+            try
+            {
+                // Lấy userId từ claims nếu user đã đăng nhập
+                Guid? currentUserId = null;
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
+                {
+                    currentUserId = userId;
+                }
+
+                // Lấy role
+                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+                var (fileBytes, fileName) = await _contractService.DownloadHopDongFileByContractIdAsync(contractId, currentUserId, role);
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", fileName);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (FileNotFoundException ex)
+            {
+                return NotFound(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<string>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Download hợp đồng mới nhất của user (yêu cầu authentication)
+        /// </summary>
+        [HttpGet("user/{userId}/download-latest")]
+        public async Task<IActionResult> DownloadLatestContractByUserId(Guid userId)
+        {
+            try
+            {
+                // Lấy userId từ claims
+                Guid? currentUserId = null;
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var currentUser))
+                {
+                    currentUserId = currentUser;
+                }
+
+                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+                var (fileBytes, fileName) = await _contractService.DownloadLatestContractByUserIdAsync(userId, currentUserId, role);
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", fileName);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (FileNotFoundException ex)
+            {
+                return NotFound(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<string>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Lấy hợp đồng theo token xác nhận
+        /// </summary>
+        [HttpGet("hopdong/token/{token}")]
+        public async Task<ActionResult<ResponseDto<ContractDto>>> GetByToken(string token)
+        {
+            try
+            {
+                var result = await _contractService.GetContractByTokenAsync(token);
+                return Ok(ResponseDto<ContractDto>.Success(result, "Hợp đồng lấy thành công"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ResponseDto<ContractDto>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<ContractDto>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
     }
 }

@@ -76,11 +76,13 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Tạo xe mới (Admin, Station Staff)
+        /// Tạo xe mới (Admin, Station Staff) - hỗ trợ upload ảnh
         /// </summary>
         [HttpPost("Create")]
-        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
-        public async Task<ActionResult<ResponseDto<CarDto>>> CreateCar([FromBody] CreateCarDto request)
+        //[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        [Authorize]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ResponseDto<CarDto>>> CreateCar([FromForm] CreateCarDto request)
         {
             if (!ModelState.IsValid)
             {
@@ -181,6 +183,46 @@ namespace Monolithic.Controllers
             if (!result.IsSuccess)
             {
                 return NotFound(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Cập nhật tình trạng kỹ thuật của xe (Station Staff, Admin)
+        /// </summary>
+        [HttpPut("Update-Technical-Status-By-{id}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<string>>> UpdateCarTechnicalStatus(Guid id, [FromBody] UpdateCarTechnicalStatusDto request)
+        {
+            var result = await _carService.UpdateCarTechnicalStatusAsync(id, request);
+            if (!result.IsSuccess)
+            {
+                return NotFound(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Bàn giao xe với chụp ảnh (Station Staff)
+        /// </summary>
+        [HttpPost("Handover")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ResponseDto<CarHandoverResponseDto>>> RecordCarHandover([FromForm] CarHandoverDto request)
+        {
+            // Lấy StaffId từ JWT token
+            var staffIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(staffIdClaim) || !Guid.TryParse(staffIdClaim, out var staffId))
+            {
+                return Unauthorized(ResponseDto<CarHandoverResponseDto>.Failure("Unauthorized"));
+            }
+
+            var result = await _carService.RecordCarHandoverAsync(request, staffId);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
             }
 
             return Ok(result);

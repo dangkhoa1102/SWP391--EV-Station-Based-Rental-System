@@ -18,7 +18,11 @@ namespace Monolithic.Models
         [MaxLength(1000)]
         public string Description { get; set; }
 
-        public string? Images { get; set; } // JSON string to store image URLs
+        // Store image URLs as semicolon-separated string (like in CarHandover)
+        public string? ImageUrls { get; set; } 
+        
+        // Store image PublicIds as semicolon-separated string (for Cloudinary deletion)
+        public string? ImagePublicIds { get; set; }
 
         [Required]
         public DateTime ReportedAt { get; set; } = DateTime.UtcNow;
@@ -35,6 +39,9 @@ namespace Monolithic.Models
         public decimal? CostIncurred { get; set; }
 
         public Guid? ResolvedBy { get; set; } // UserId of admin/staff who resolved
+
+        // Additional fields for better tracking
+        //public int ReportedBy { get; set; } // UserId who reported the incident
 
         public Guid? StationId { get; set; } // For filtering by station
 
