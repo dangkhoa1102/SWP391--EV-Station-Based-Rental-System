@@ -267,9 +267,10 @@ namespace Monolithic.Services.Implementation
 
             // Tạo link xác nhận
             var confirmationLink = $"{frontendBaseUrl}/xac-nhan-hop-dong?token={contract.ConfirmationToken}";
-            
+
             // Tạo link download file hợp đồng
-            var downloadLink = $"{backendBaseUrl}/api/contracts/hopdong/download/{contract.ConfirmationToken}";
+            //var downloadLink = $"{backendBaseUrl}/api/contracts/hopdong/download/{contract.ConfirmationToken}";
+            var downloadLink = $"{frontendBaseUrl}/api/contracts/user/download-latest-by-userId";
 
             // Gửi email với cả 2 link
             await _emailService.SendConfirmationEmailAsync(email, confirmationLink, downloadLink);
@@ -524,10 +525,10 @@ namespace Monolithic.Services.Implementation
         public async Task<(byte[] FileBytes, string FileName)> DownloadLatestContractByUserIdAsync(Guid userId, Guid? currentUserId, string? userRole)
         {
             // Kiểm tra quyền: chỉ user đó hoặc admin mới được download
-            if (userRole != "Admin" && currentUserId != userId)
-            {
-                throw new UnauthorizedAccessException("Bạn chỉ có thể tải hợp đồng của chính mình.");
-            }
+            //if (userRole != "Admin" && currentUserId != userId)
+            //{
+            //    throw new UnauthorizedAccessException("Bạn chỉ có thể tải hợp đồng của chính mình.");
+            //}
 
             // Tìm hợp đồng mới nhất của user (RenterId)
             var contracts = await _contractRepository.GetByRenterIdAsync(userId);
