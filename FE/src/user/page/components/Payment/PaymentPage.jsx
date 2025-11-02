@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import API from '../../../services/userApi'
 import { formatVND } from '../../../../utils/currency'
@@ -14,6 +14,26 @@ export default function PaymentPage(){
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [showPolicyModal, setShowPolicyModal] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // Prevent body scrolling while either modal is open so we don't show two scrollbars
+  const originalBodyOverflow = useRef('')
+  useEffect(() => {
+    const modalOpen = showTermsModal || showPolicyModal
+    if (modalOpen) {
+      // store original overflow only the first time a modal opens
+      if (originalBodyOverflow.current === '') originalBodyOverflow.current = document.body.style.overflow || ''
+      document.body.style.overflow = 'hidden'
+    } else {
+      // restore original overflow when all modals are closed
+      document.body.style.overflow = originalBodyOverflow.current || ''
+      originalBodyOverflow.current = ''
+    }
+
+    // cleanup on unmount
+    return () => {
+      document.body.style.overflow = originalBodyOverflow.current || ''
+    }
+  }, [showTermsModal, showPolicyModal])
 
   useEffect(() => {
     // Load rental context and car info

@@ -18,23 +18,24 @@ function AppShell(){
   const location = useLocation()
   const hideChrome = location.pathname.startsWith('/staff') || location.pathname.startsWith('/admin')
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', flex: 1 }}>
       {!hideChrome && <Header />}
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/cars" element={<CarListPage />} />
-        <Route path="/cars/:id" element={<CarDetail />} />
-        <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
-        <Route path="/payment-cancel" element={<PaymentCancel />} />
-        <Route path="/transaction" element={<TransactionPage />} />
-        <Route path="/booking-history" element={<BookingHistory />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/staff" element={<StaffPage />} />
-      
-      </Routes>
+      <main style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/cars" element={<CarListPage />} />
+          <Route path="/cars/:id" element={<CarDetail />} />
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-cancel" element={<PaymentCancel />} />
+          <Route path="/transaction" element={<TransactionPage />} />
+          <Route path="/booking-history" element={<BookingHistory />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/staff" element={<StaffPage />} />
+        </Routes>
+      </main>
       {!hideChrome && <Footer />}
-    </>
+    </div>
   )
 }
 
