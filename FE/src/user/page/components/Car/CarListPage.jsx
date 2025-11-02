@@ -17,6 +17,7 @@ export default function CarListPage(){
     priceMin: '',
     priceMax: ''
   })
+  const [sortBy, setSortBy] = useState('default') // default, name-asc, name-desc, price-asc, price-desc
 
   // Search state - simplified to use SearchModal component
   const [searchData, setSearchData] = useState(() => {
@@ -165,17 +166,47 @@ export default function CarListPage(){
       })
   }
 
-  // Auto-apply filters whenever cars or filters change
+  // Auto-apply filters and sorting whenever cars, filters, or sortBy change
   useEffect(() => {
     let result = [...cars]
+    
+    // Apply filters
     if(filters.brand) result = result.filter(c => (c.brand||'').toLowerCase().includes(filters.brand.toLowerCase()))
     if(filters.color) result = result.filter(c => (c.color||'').toLowerCase().includes(filters.color.toLowerCase()))
     if(filters.seats) result = result.filter(c => c.seats === parseInt(filters.seats))
     if(filters.year) result = result.filter(c => c.year >= parseInt(filters.year))
     if(filters.priceMin) result = result.filter(c => parseFloat(c.rentalPricePerHour||0) >= parseFloat(filters.priceMin))
     if(filters.priceMax) result = result.filter(c => parseFloat(c.rentalPricePerHour||0) <= parseFloat(filters.priceMax))
+    
+    // Apply sorting
+    if(sortBy === 'name-asc') {
+      result.sort((a, b) => {
+        const nameA = `${a.brand || ''} ${a.model || ''}`.trim().toLowerCase()
+        const nameB = `${b.brand || ''} ${b.model || ''}`.trim().toLowerCase()
+        return nameA.localeCompare(nameB)
+      })
+    } else if(sortBy === 'name-desc') {
+      result.sort((a, b) => {
+        const nameA = `${a.brand || ''} ${a.model || ''}`.trim().toLowerCase()
+        const nameB = `${b.brand || ''} ${b.model || ''}`.trim().toLowerCase()
+        return nameB.localeCompare(nameA)
+      })
+    } else if(sortBy === 'price-asc') {
+      result.sort((a, b) => {
+        const priceA = parseFloat(a.rentalPricePerHour || a.RentalPricePerHour || 0)
+        const priceB = parseFloat(b.rentalPricePerHour || b.RentalPricePerHour || 0)
+        return priceA - priceB
+      })
+    } else if(sortBy === 'price-desc') {
+      result.sort((a, b) => {
+        const priceA = parseFloat(a.rentalPricePerHour || a.RentalPricePerHour || 0)
+        const priceB = parseFloat(b.rentalPricePerHour || b.RentalPricePerHour || 0)
+        return priceB - priceA
+      })
+    }
+    
     setFilteredCars(result)
-  }, [cars, filters])
+  }, [cars, filters, sortBy])
 
   const resetFilters = ()=>{
     setFilters({brand:'',color:'',seats:'',year:'',priceMin:'',priceMax:''})
@@ -281,8 +312,25 @@ export default function CarListPage(){
         <div className="cars-content">
           {/* Cars Header */}
           <div className="cars-header">
-            <h2>Available Cars</h2>
-            <div className="cars-count">Showing {filteredCars.length} cars</div>
+            <div>
+              <h2>Available Cars</h2>
+              <div className="cars-count">Showing {filteredCars.length} cars</div>
+            </div>
+            <div className="sort-controls">
+              <label htmlFor="sortBy">Sort by:</label>
+              <select 
+                id="sortBy"
+                value={sortBy} 
+                onChange={e => setSortBy(e.target.value)}
+                className="sort-select"
+              >
+                <option value="default">Default</option>
+                <option value="name-asc">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="price-asc">Price (Low to High)</option>
+                <option value="price-desc">Price (High to Low)</option>
+              </select>
+            </div>
           </div>
 
           {/* Car List */}
