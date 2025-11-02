@@ -263,7 +263,8 @@ namespace Monolithic.Controllers
         /// <summary>
         /// Download hợp đồng mới nhất của user (yêu cầu authentication)
         /// </summary>
-        [HttpGet("user/{userId}/download-latest")]
+        //[HttpGet("user/{userId}/download-latest")]
+        [HttpGet("user/download-latest-by-userId")]
         public async Task<IActionResult> DownloadLatestContractByUserId(Guid userId)
         {
             try

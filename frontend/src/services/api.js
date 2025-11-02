@@ -1,9 +1,9 @@
 import axios from 'axios';
 
 // TODO: Move to a .env file
-const API_BASE_URL = 'http://localhost:5151/api'; // Assuming the Monolithic service runs on this port
+const API_BASE_URL = 'http://localhost:5054/api'; // Assuming the Monolithic service runs on this port
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',

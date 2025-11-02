@@ -1,4 +1,4 @@
-using MailKit.Net.Smtp;
+﻿using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -20,7 +20,7 @@ namespace Monolithic.Services.Implementation
         }
 
         /// <summary>
-        /// G?i email x�c nh?n h?p ??ng v?i link k� v� link download
+        /// G?i email xác nh?n h?p ??ng v?i link ký và link download
         /// </summary>
         public async Task SendConfirmationEmailAsync(string toEmail, string confirmationLink, string downloadLink)
         {
@@ -35,13 +35,13 @@ namespace Monolithic.Services.Implementation
 
                 var email = new MimeMessage();
                 email.From.Add(new MailboxAddress(
-                    emailSettings["SenderName"] ?? "C�ng ty cho thu� xe FEC",
+                    emailSettings["SenderName"] ?? "Công ty cho thuê xe FEC",
                     emailSettings["SenderEmail"] ?? "noreply@example.com"
                 ));
                 email.To.Add(MailboxAddress.Parse(toEmail));
-                email.Subject = "X�c nh?n H?p ??ng Thu� xe c?a b?n";
+                email.Subject = "Xác Nhận Hợp Đồng Thuê Xe Của Bạn";
 
-                var senderName = emailSettings["SenderName"] ?? "C�ng ty cho thu� xe FEC";
+                var senderName = emailSettings["SenderName"] ?? "Công ty cho thuê xe FEC";
 
                 //var body = new BodyBuilder
                 //{
@@ -51,14 +51,14 @@ namespace Monolithic.Services.Implementation
                 //            <meta charset=""UTF-8"">
                 //        </head>
                 //        <body>
-                //            <p>Ch�o b?n,</p>
-                //            <p>Vui l�ng nh?p v�o li�n k?t d??i ?�y ?? xem l?i v� k� h?p ??ng thu� xe c?a b?n.</p>
-                //            <p><a href='{confirmationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Xem v� K� H?p ??ng</a></p>
-                //            <p>B?n c?ng c� th? t?i xu?ng file h?p ??ng Word (.docx) ?? xem tr??c:</p>
+                //            <p>Chào b?n,</p>
+                //            <p>Vui lòng nh?p vào liên k?t d??i ?ây ?? xem l?i và ký h?p ??ng thuê xe c?a b?n.</p>
+                //            <p><a href='{confirmationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Xem và Ký H?p ??ng</a></p>
+                //            <p>B?n c?ng có th? t?i xu?ng file h?p ??ng Word (.docx) ?? xem tr??c:</p>
                 //            <p><a href='{downloadLink}' style='background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>T?i xu?ng H?p ??ng (DOCX)</a></p>
-                //            <p>Li�n k?t n�y s? h?t h?n trong v�ng 24 gi?.</p>
+                //            <p>Liên k?t này s? h?t h?n trong vòng 24 gi?.</p>
                 //            <hr />
-                //            <p>Tr�n tr?ng,<br/><strong>{senderName}</strong></p>
+                //            <p>Trân tr?ng,<br/><strong>{senderName}</strong></p>
                 //        </body>
                 //    </html>"
                 //};
@@ -66,14 +66,14 @@ namespace Monolithic.Services.Implementation
                 var body = new BodyBuilder
                 {
                     HtmlBody = $@"
-                    <p>Ch�o b?n,</p>
-                    <p>Vui l�ng nh?p v�o li�n k?t d??i ?�y ?? xem l?i v� k� h?p ??ng thu� xe c?a b?n.</p>
-                    <p><a href='{confirmationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Xem v� K� H?p ??ng</a></p>
-                    <p>B?n c?ng c� th? t?i xu?ng file h?p ??ng Word (.docx) ?? xem tr??c:</p>
-                    <p><a href='{downloadLink}' style='background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>T?i xu?ng H?p ??ng (DOCX)</a></p>
-                    <p>Li�n k?t n�y s? h?t h?n trong v�ng 24 gi?.</p>
+                    <p>Chào bạn,</p>
+                    <p>Vui lòng nhấp vào liên kết dưới đây để xem lại và ký hợp đồng thuê xe của bạn.</p>
+                    <p><a href='{confirmationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Ký Hợp Đồng</a></p>
+                    <p>Bạn cũng có thể tải xuống file hợp đồng Word (.docx) để xem trước:</p>
+                    <p><a href='{downloadLink}' style='background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Tải xuống Hợp Đồng (DOCX)</a></p>
+                    <p>Liên kết này sẽ hết hạn trong vòng 24 giờ.</p>
                     <hr />
-                    <p>Tr�n tr?ng,<br/><strong>{senderName}</strong></p>"
+                    <p>Trân trọng,<br/><strong>{senderName}</strong></p>"
                 };
 
                 email.Body = body.ToMessageBody();
