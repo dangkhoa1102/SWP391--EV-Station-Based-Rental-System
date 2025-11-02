@@ -2,13 +2,13 @@ import React, { useEffect, useState, useRef } from 'react'
 import API from '../../../services/userApi'
 import './car_list_page.css'
 import { formatVND } from '../../../../utils/currency'
+import SearchModal from '../../../../components/SearchModal.jsx'
 
 export default function CarListPage(){
   const [cars, setCars] = useState([])
   const [filteredCars, setFilteredCars] = useState([])
   const [loading, setLoading] = useState(true)
   const [stations, setStations] = useState([])
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false)
   const [filters, setFilters] = useState({
     brand: '',
     color: '',
@@ -18,7 +18,7 @@ export default function CarListPage(){
     priceMax: ''
   })
 
-  // Search form state (copied from HomePage)
+  // Search state - simplified to use SearchModal component
   const [searchData, setSearchData] = useState(() => {
     const today = new Date()
     const tomorrow = new Date(today.getTime() + 24*60*60*1000)
@@ -28,16 +28,37 @@ export default function CarListPage(){
       pickupDate: today.toISOString().split('T')[0],
       pickupTime: '15:00',
       returnDate: tomorrow.toISOString().split('T')[0],
-      returnTime: '19:00',
-      calendarMode: null,
-      currentMonth: today.getMonth(),
-      currentYear: today.getFullYear()
+      returnTime: '19:00'
     }
   })
-  const [rentalDurationText, setRentalDurationText] = useState('')
   const [searchModalOpen, setSearchModalOpen] = useState(false)
+  const [userLocation, setUserLocation] = useState(null)
 
   useEffect(()=>{
+    // Get user's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          })
+        },
+        (error) => {
+          console.error('❌ Could not get user location:', error.message)
+          // Default to Ho Chi Minh City center
+          setUserLocation({ lat: 10.8231, lng: 106.6297 })
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      )
+    } else {
+      setUserLocation({ lat: 10.8231, lng: 106.6297 })
+    }
+
     loadStations()
     loadData()
   },[])
@@ -96,146 +117,52 @@ export default function CarListPage(){
     }
   }
 
-  // Search form functions (copied from HomePage)
-  function toggleLocation(id, name){
-    setSearchData(d => ({ ...d, location: id, locationName: name }))
-    setShowLocationDropdown(false)
-  }
-
-  function selectTime(type, time){
-    // Ensure rental duration recalculates using the updated state immediately
-    setSearchData(d => {
-      const next = { ...d, [type+'Time']: time }
-      updateRentalDuration(next)
-      return next
-    })
-  }
-
-  function toggleCalendar(mode){
-    setSearchData(d => ({ ...d, calendarMode: d.calendarMode === mode ? null : mode }))
-  }
-
-  function toggleTimePicker(type){
-    const mode = `${type}-time`
-    setSearchData(d => ({ ...d, calendarMode: d.calendarMode === mode ? null : mode }))
-  }
-
-  function changeMonth(delta){
-    setSearchData(d => {
-      let m = d.currentMonth + delta
-      let y = d.currentYear
-      if(m > 11){ m = 0; y++ }
-      if(m < 0){ m = 11; y-- }
-      return { ...d, currentMonth: m, currentYear: y }
-    })
-  }
-
-  function selectDate(dateStr){
-    setSearchData(d => {
-      const updated = { ...d }
-      if(d.calendarMode === 'pickup'){
-        updated.pickupDate = dateStr
-        const pickup = new Date(`${dateStr}T${d.pickupTime}`)
-        const returnDt = new Date(`${d.returnDate}T${d.returnTime}`)
-        if(returnDt <= pickup){
-          updated.returnDate = dateStr
-          const pickupHour = parseInt(d.pickupTime.split(':')[0])
-          const newReturnHour = Math.min(pickupHour + 2, 23)
-          updated.returnTime = `${newReturnHour.toString().padStart(2,'0')}:00`
-        }
-      } else {
-        updated.returnDate = dateStr
-      }
-      updated.calendarMode = null
-      updateRentalDuration(updated)
-      return updated
-    })
-  }
-
-  function updateRentalDuration(override){
-    const d = override || searchData
-    try{
-      const pickup = new Date(`${d.pickupDate}T${d.pickupTime}`)
-      const ret = new Date(`${d.returnDate}T${d.returnTime}`)
-      const diffMs = ret - pickup
-      const diffHours = Math.floor(diffMs / (1000*60*60))
-      if(diffHours < 0) return setRentalDurationText('Invalid duration')
-      if(diffHours === 0) return setRentalDurationText('Less than 1 hour')
-      const days = Math.floor(diffHours / 24)
-      const hours = diffHours % 24
-      let txt = ''
-      if(days > 0) txt += `${days} day${days>1? 's':''} `
-      if(hours > 0) txt += `${hours} hour${hours>1? 's':''}`
-      setRentalDurationText(txt.trim() || '0 hours')
-    }catch(e){ setRentalDurationText('') }
-  }
-
+  // Search modal handlers
   function openSearchModal(){ 
     setSearchModalOpen(true)
-    updateRentalDuration() 
   }
   
   function closeSearchModal(){ 
     setSearchModalOpen(false)
-    setShowLocationDropdown(false)
-    setSearchData(d => ({ ...d, calendarMode: null }))
   }
 
-  function submitSearch(){
-    if(!searchData.location){ alert('Please select a pick-up location'); return }
-    const pickup = new Date(`${searchData.pickupDate}T${searchData.pickupTime}`)
-    const ret = new Date(`${searchData.returnDate}T${searchData.returnTime}`)
-    if(ret <= pickup){ alert('Return date and time must be after pick-up date and time.'); return }
-    const diffHours = (ret - pickup) / (1000*60*60)
-    if(diffHours < 1){ alert('Minimum rental duration is 1 hour.'); return }
-    
+  function handleSearch(newSearchData){
+    // Update search data state
+    setSearchData({
+      location: newSearchData.location,
+      locationName: newSearchData.locationName,
+      pickupDate: newSearchData.pickupDate,
+      pickupTime: newSearchData.pickupTime,
+      returnDate: newSearchData.returnDate,
+      returnTime: newSearchData.returnTime
+    })
+
+    // Save to localStorage
     const rentalContext = {
-      stationId: searchData.location,
-      stationName: searchData.locationName,
-      pickupDate: searchData.pickupDate,
-      pickupTime: searchData.pickupTime,
-      returnDate: searchData.returnDate,
-      returnTime: searchData.returnTime,
+      stationId: newSearchData.location,
+      stationName: newSearchData.locationName,
+      pickupDate: newSearchData.pickupDate,
+      pickupTime: newSearchData.pickupTime,
+      returnDate: newSearchData.returnDate,
+      returnTime: newSearchData.returnTime,
       createdAt: new Date().toISOString()
     }
     try{ localStorage.setItem('rentalContext', JSON.stringify(rentalContext)) }catch(e){}
     
     // Fetch cars available at the selected station
     setLoading(true)
-    API.getAvailableCarsByStation(searchData.location)
+    API.getAvailableCarsByStation(newSearchData.location)
       .then(carsList => {
         setCars(carsList || [])
         setFilteredCars(carsList || [])
         setLoading(false)
+        closeSearchModal()
       })
       .catch(err => {
         console.error('Failed to load station cars:', err)
         alert('Failed to load cars for this station')
         setLoading(false)
       })
-  }
-
-  function renderCalendar(){
-    const firstDay = new Date(searchData.currentYear, searchData.currentMonth, 1)
-    const lastDay = new Date(searchData.currentYear, searchData.currentMonth + 1, 0)
-    const today = new Date(); today.setHours(0,0,0,0)
-    const cells = []
-    for(let i=0;i<firstDay.getDay();i++) cells.push(<div key={`empty-${i}`} className="calendar-day"></div>)
-    for(let day=1; day<= lastDay.getDate(); day++){
-      const dateStr = `${searchData.currentYear}-${(searchData.currentMonth+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`
-      const dateObj = new Date(searchData.currentYear, searchData.currentMonth, day)
-      const isToday = dateObj.toDateString() === today.toDateString()
-      const isPast = dateObj < today
-      const isSelected = dateStr === (searchData.calendarMode === 'pickup' ? searchData.pickupDate : searchData.returnDate)
-      const classes = ['calendar-day']
-      if(isPast) classes.push('disabled')
-      if(isToday) classes.push('today')
-      if(isSelected) classes.push('selected')
-      cells.push(
-        <div key={dateStr} className={classes.join(' ')} onClick={()=>{ if(!isPast) selectDate(dateStr) }}>{day}</div>
-      )
-    }
-    return cells
   }
 
   // Auto-apply filters whenever cars or filters change
@@ -403,121 +330,14 @@ export default function CarListPage(){
         </div> {/* End cars-content */}
       </div> {/* End container */}
 
-      {/* Search Modal */}
-        <div className={`search-modal ${searchModalOpen ? 'active' : ''}`} style={{ display: searchModalOpen ? 'block' : 'none' }} onClick={closeSearchModal}>
-          <div className="search-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="search-modal-header">
-              <h3>Search Cars</h3>
-              <button className="search-modal-close" onClick={closeSearchModal}>&times;</button>
-            </div>
-            <div className="search-modal-body">
-              <div className="search-field">
-                <label><i className="fas fa-map-marker-alt"></i> Pick-up Location</label>
-                <div className="search-input" onClick={()=> setShowLocationDropdown(!showLocationDropdown)}>
-                  <i className="fas fa-map-marker-alt"></i>
-                  <span>{searchData.locationName}</span>
-                </div>
-                <div className={`location-dropdown ${showLocationDropdown ? 'active':''}`}>
-                  {stations.length === 0 && <div style={{ padding: 12, color: '#999' }}>No locations available</div>}
-                  {stations.map((s, i)=>{
-                    const name = s.stationName || s.name || 'Unknown'
-                    const id = s.id || s.Id || s.stationId || i
-                    return <div key={id} className="location-option" onClick={()=>{ toggleLocation(id, name); }}>{name}</div>
-                  })}
-                </div>
-              </div>
-              <div className="search-field-row">
-                <div className="search-field">
-                  <label><i className="fas fa-calendar"></i> Pick-up Date</label>
-                  <div className="search-input" onClick={()=> toggleCalendar('pickup')}>
-                    <i className="fas fa-calendar"></i>
-                    <span>{new Date(searchData.pickupDate).toLocaleDateString()}</span>
-                  </div>
-                  {searchData.calendarMode === 'pickup' && (
-                    <div className="calendar-dropdown active">
-                      <div className="calendar-header">
-                        <button onClick={()=> changeMonth(-1)}>&lt;</button>
-                        <span>{new Date(searchData.currentYear, searchData.currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                        <button onClick={()=> changeMonth(1)}>&gt;</button>
-                      </div>
-                      <div className="calendar-weekdays">
-                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                      </div>
-                      <div className="calendar-days">
-                        {renderCalendar()}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="search-field">
-                  <label><i className="fas fa-clock"></i> Pick-up Time</label>
-                  <div className="search-input" onClick={()=> toggleTimePicker('pickup')}>
-                    <i className="fas fa-clock"></i>
-                    <span>{searchData.pickupTime}</span>
-                  </div>
-                  <div className={`time-picker-dropdown ${searchData.calendarMode === 'pickup-time' ? 'active' : ''}`}>
-                    <div className="time-picker-label">Choose pick-up time</div>
-                    <div className="time-picker-options">
-                      {timeOptions.map(t=> <div key={t} className={`time-option ${t===searchData.pickupTime? 'selected':''}`} onClick={()=> selectTime('pickup', t)}>{t}</div>)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="search-field-row">
-                <div className="search-field">
-                  <label><i className="fas fa-calendar-check"></i> Return Date</label>
-                  <div className="search-input" onClick={()=> toggleCalendar('return')}>
-                    <i className="fas fa-calendar-check"></i>
-                    <span>{new Date(searchData.returnDate).toLocaleDateString()}</span>
-                  </div>
-                  {searchData.calendarMode === 'return' && (
-                    <div className="calendar-dropdown active">
-                      <div className="calendar-header">
-                        <button onClick={()=> changeMonth(-1)}>&lt;</button>
-                        <span>{new Date(searchData.currentYear, searchData.currentMonth).toLocaleString('default', { month: 'numeric' })}</span>
-                        <button onClick={()=> changeMonth(1)}>&gt;</button>
-                      </div>
-                      <div className="calendar-weekdays">
-                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                      </div>
-                      <div className="calendar-days">
-                        {renderCalendar()}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="search-field">
-                  <label><i className="fas fa-clock"></i> Return Time</label>
-                  <div className="search-input" onClick={()=> toggleTimePicker('return')}>
-                    <i className="fas fa-clock"></i>
-                    <span>{searchData.returnTime}</span>
-                  </div>
-                  <div className={`time-picker-dropdown ${searchData.calendarMode === 'return-time' ? 'active' : ''}`}>
-                    <div className="time-picker-label">Choose return time</div>
-                    <div className="time-picker-options">
-                      {timeOptions.map(t=> <div key={t} className={`time-option ${t===searchData.returnTime? 'selected':''}`} onClick={()=> selectTime('return', t)}>{t}</div>)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="rental-duration">
-                <i className="fas fa-info-circle"></i>
-                <div>
-                  <strong>Rental Duration</strong>
-                  <p>{rentalDurationText}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="search-modal-footer">
-              <button className="btn-search-submit" onClick={()=>{ submitSearch(); closeSearchModal(); }}>
-                <i className="fas fa-search"></i> Search Cars
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Search Modal Component */}
+      <SearchModal 
+        isOpen={searchModalOpen}
+        onClose={closeSearchModal}
+        stations={stations}
+        userLocation={userLocation}
+        onSearch={handleSearch}
+      />
     </main>
   )
 }
