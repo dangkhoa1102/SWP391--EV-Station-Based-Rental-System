@@ -91,7 +91,8 @@ export default function BookingHistory(){
     const statuses = {
       0: { text: 'Pending', class: 'status-pending' },
       1: { text: 'Active', class: 'status-active' },
-      2: { text: 'Completed', class: 'status-completed' },
+      // Rename status 2 to "Check-in Pending"
+      2: { text: 'Check-in Pending', class: 'status-active' },
       3: { text: 'Cancelled', class: 'status-cancelled' },
       7: { text: 'Cancelled', class: 'status-cancelled' } // BookingStatus 7 = Cancelled
     }
@@ -280,7 +281,7 @@ export default function BookingHistory(){
               <option value="">All</option>
               <option value="0">Pending</option>
               <option value="1">Active</option>
-              <option value="2">Completed</option>
+              <option value="2">Check-in Pending</option>
               <option value="7">Cancelled</option>
             </select>
           </div>

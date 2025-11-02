@@ -43,7 +43,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel }) 
 
   if (!booking) return null;
 
-  const canProceed = verifiedFront && verifiedBack
+  const canProceed = booking?.status === 'booked' ? (verifiedFront && verifiedBack) : false
   const onCancelClick = () => {
     if (!booking) return;
     const reason = window.prompt('Enter a reason for cancellation (optional):', '') || ''
@@ -58,7 +58,8 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel }) 
           <div style={{flex:'0 0 220px', textAlign:'center', margin:'0 auto', display:'flex', flexDirection:'column', alignItems:'center'}}>
             <img id="modalImage" src={booking.facePhoto || booking.img} alt="" style={{width:'100%', borderRadius:8, objectFit:'cover', display:'block'}} />
             <h3 id="modalTitle" style={{marginTop:12}}>{booking.title}</h3>
-            <div id="modalStatus" style={{marginTop:6}}>Status: {booking.status}</div>
+            <div id="modalStatus" style={{marginTop:6}}>Status: {booking.statusLabel || booking.status}</div>
+            <div id="modalVehicle" style={{marginTop:4, color:'#555'}}>Vehicle: {booking.title || booking.carName || booking.vehicleName || booking.car?.name || booking.car?.Name || '—'}</div>
             <div id="modalCustomer" style={{marginTop:6}}>
               Customer: {resolvedFullName || booking.fullName || [booking.firstName, booking.lastName].filter(Boolean).join(' ') || booking.customer || (loadingName ? 'Loading…' : '—')}
             </div>
@@ -82,71 +83,75 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel }) 
               </div>
             </div>
 
-            {/* CCCD Front/Back Images with verification checkboxes */}
-            <div className="bg-gray-100" style={{padding:14, borderRadius:10}}>
-              <div style={{fontWeight:600, marginBottom:8}}>CCCD Images:</div>
-              <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
-                <div style={{flex:'1 1 180px', minWidth:160}}>
-                  <div style={{marginBottom:6}}>Front</div>
-                  {booking.cccdFrontUrl ? (
-                    <a href={booking.cccdFrontUrl} target="_blank" rel="noreferrer">
-                      <img src={booking.cccdFrontUrl} alt="CCCD Front" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
-                    </a>
-                  ) : (
-                    <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
-                  )}
-                  <label style={{display:'block', marginTop:6}}>
-                    <input type="checkbox" checked={verifiedFront} onChange={e=>setVerifiedFront(e.target.checked)} /> Verified
-                  </label>
-                </div>
-                <div style={{flex:'1 1 180px', minWidth:160}}>
-                  <div style={{marginBottom:6}}>Back</div>
-                  {booking.cccdBackUrl ? (
-                    <a href={booking.cccdBackUrl} target="_blank" rel="noreferrer">
-                      <img src={booking.cccdBackUrl} alt="CCCD Back" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
-                    </a>
-                  ) : (
-                    <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
-                  )}
-                  <label style={{display:'block', marginTop:6}}>
-                    <input type="checkbox" checked={verifiedBack} onChange={e=>setVerifiedBack(e.target.checked)} /> Verified
-                  </label>
+            {/* CCCD Front/Back Images with verification checkboxes - only when status is Booked (1) */}
+            {booking.status === 'booked' && (
+              <div className="bg-gray-100" style={{padding:14, borderRadius:10}}>
+                <div style={{fontWeight:600, marginBottom:8}}>CCCD Images:</div>
+                <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
+                  <div style={{flex:'1 1 180px', minWidth:160}}>
+                    <div style={{marginBottom:6}}>Front</div>
+                    {booking.cccdFrontUrl ? (
+                      <a href={booking.cccdFrontUrl} target="_blank" rel="noreferrer">
+                        <img src={booking.cccdFrontUrl} alt="CCCD Front" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
+                      </a>
+                    ) : (
+                      <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
+                    )}
+                    <label style={{display:'block', marginTop:6}}>
+                      <input type="checkbox" checked={verifiedFront} onChange={e=>setVerifiedFront(e.target.checked)} /> Verified
+                    </label>
+                  </div>
+                  <div style={{flex:'1 1 180px', minWidth:160}}>
+                    <div style={{marginBottom:6}}>Back</div>
+                    {booking.cccdBackUrl ? (
+                      <a href={booking.cccdBackUrl} target="_blank" rel="noreferrer">
+                        <img src={booking.cccdBackUrl} alt="CCCD Back" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
+                      </a>
+                    ) : (
+                      <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
+                    )}
+                    <label style={{display:'block', marginTop:6}}>
+                      <input type="checkbox" checked={verifiedBack} onChange={e=>setVerifiedBack(e.target.checked)} /> Verified
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Driver License (GPLX) Images with verification checkboxes */}
-            <div className="bg-gray-100" style={{padding:14, borderRadius:10}}>
-              <div style={{fontWeight:600, marginBottom:8}}>Driver License (GPLX) Images:</div>
-              <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
-                <div style={{flex:'1 1 180px', minWidth:160}}>
-                  <div style={{marginBottom:6}}>Front</div>
-                  {booking.gplxFrontUrl ? (
-                    <a href={booking.gplxFrontUrl} target="_blank" rel="noreferrer">
-                      <img src={booking.gplxFrontUrl} alt="GPLX Front" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
-                    </a>
-                  ) : (
-                    <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
-                  )}
-                  <label style={{display:'block', marginTop:6}}>
-                    <input type="checkbox" checked={verifiedLicenseFront} onChange={e=>setVerifiedLicenseFront(e.target.checked)} /> Verified
-                  </label>
-                </div>
-                <div style={{flex:'1 1 180px', minWidth:160}}>
-                  <div style={{marginBottom:6}}>Back</div>
-                  {booking.gplxBackUrl ? (
-                    <a href={booking.gplxBackUrl} target="_blank" rel="noreferrer">
-                      <img src={booking.gplxBackUrl} alt="GPLX Back" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
-                    </a>
-                  ) : (
-                    <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
-                  )}
-                  <label style={{display:'block', marginTop:6}}>
-                    <input type="checkbox" checked={verifiedLicenseBack} onChange={e=>setVerifiedLicenseBack(e.target.checked)} /> Verified
-                  </label>
+            {/* Driver License (GPLX) Images with verification checkboxes - only when status is Booked (1) */}
+            {booking.status === 'booked' && (
+              <div className="bg-gray-100" style={{padding:14, borderRadius:10}}>
+                <div style={{fontWeight:600, marginBottom:8}}>Driver License (GPLX) Images:</div>
+                <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
+                  <div style={{flex:'1 1 180px', minWidth:160}}>
+                    <div style={{marginBottom:6}}>Front</div>
+                    {booking.gplxFrontUrl ? (
+                      <a href={booking.gplxFrontUrl} target="_blank" rel="noreferrer">
+                        <img src={booking.gplxFrontUrl} alt="GPLX Front" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
+                      </a>
+                    ) : (
+                      <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
+                    )}
+                    <label style={{display:'block', marginTop:6}}>
+                      <input type="checkbox" checked={verifiedLicenseFront} onChange={e=>setVerifiedLicenseFront(e.target.checked)} /> Verified
+                    </label>
+                  </div>
+                  <div style={{flex:'1 1 180px', minWidth:160}}>
+                    <div style={{marginBottom:6}}>Back</div>
+                    {booking.gplxBackUrl ? (
+                      <a href={booking.gplxBackUrl} target="_blank" rel="noreferrer">
+                        <img src={booking.gplxBackUrl} alt="GPLX Back" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
+                      </a>
+                    ) : (
+                      <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
+                    )}
+                    <label style={{display:'block', marginTop:6}}>
+                      <input type="checkbox" checked={verifiedLicenseBack} onChange={e=>setVerifiedLicenseBack(e.target.checked)} /> Verified
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Phone - no checkbox, with call link */}
             <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
@@ -161,8 +166,8 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel }) 
 
             {/* Actions */}
             <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap'}}>
-              <button id="proceedPaymentBtn" onClick={() => onProceed?.(booking)} disabled={!canProceed} style={{background: canProceed ? '#43a047' : '#9e9e9e', color:'white', padding:'8px 16px', borderRadius:14}}>
-                Continue to Payment
+              <button id="checkInBtn" onClick={() => onProceed?.(booking)} disabled={!canProceed} style={{background: canProceed ? '#43a047' : '#9e9e9e', color:'white', padding:'8px 16px', borderRadius:14}}>
+                Check In
               </button>
               <button onClick={onCancelClick} style={{background:'#fb8c00', color:'#fff', padding:'8px 16px', borderRadius:14}}>
                 Cancel Booking

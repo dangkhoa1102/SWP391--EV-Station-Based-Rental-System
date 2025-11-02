@@ -90,7 +90,28 @@ export default function StaffPage() {
         setError('Please select a station before creating a vehicle.')
         return
       }
-      const created = await StaffAPI.createCar(payload)
+      // Normalize payload keys to match varied backends
+      const normalized = { ...payload }
+      // Station assignment: include multiple key variants
+      normalized.currentStationId = stationId
+      normalized.stationId = stationId
+      normalized.StationId = stationId
+      // Rental price naming variants
+      if (normalized.rentalPricePerDate != null && normalized.rentalPricePerDay == null) {
+        normalized.rentalPricePerDay = normalized.rentalPricePerDate
+      }
+      if (normalized.rentalPricePerDay != null && normalized.rentalPricePerDate == null) {
+        normalized.rentalPricePerDate = normalized.rentalPricePerDay
+      }
+      // Battery capacity naming variants
+      if (normalized.batteryCapacity != null && normalized.BatteryCapacity == null) {
+        normalized.BatteryCapacity = normalized.batteryCapacity
+      }
+      // Current battery naming variants
+      if (normalized.currentBatteryLevel != null && normalized.CurrentBatteryLevel == null) {
+        normalized.CurrentBatteryLevel = normalized.currentBatteryLevel
+      }
+      const created = await StaffAPI.createCar(normalized)
       // Map created car to view model
       const c = created || {}
       const map = (c) => ({
@@ -218,19 +239,64 @@ export default function StaffPage() {
         setLoadingVehicles(true)
         let cars = []
         if (stationId) {
-          try { cars = await StaffAPI.getAvailableCarsByStation(stationId) }
-          catch { try { cars = await StaffAPI.getCarsByStation(stationId) } catch { cars = [] } }
+          // Show ALL vehicles for the station, regardless of availability
+          let byStation = []
+          let available = []
+          try { byStation = await StaffAPI.getCarsByStation(stationId) } catch {}
+          try { available = await StaffAPI.getAvailableCarsByStation(stationId) } catch {}
+          const toArray = (x) => Array.isArray(x) ? x : (x ? [x] : [])
+          const A = toArray(byStation), B = toArray(available)
+          // Merge unique by id (fallback to licensePlate)
+          const map = new Map()
+          for (const c of [...A, ...B]) {
+            const key = String(c?.id || c?.Id || c?.carId || c?.CarId || c?.licensePlate || c?.LicensePlate || Math.random())
+            if (!map.has(key)) map.set(key, c)
+          }
+          cars = Array.from(map.values())
+
+          // Always supplement with client-side filtered All Cars to catch backends that only return "available" by station
+          try {
+            const all = await StaffAPI.getAllCars(1, 300)
+            const norm = (v) => (v == null ? '' : String(v).replace(/[{}]/g, '').toLowerCase())
+            const sidNorm = norm(stationId)
+            const clientFiltered = (all || []).filter(c => {
+              const candidates = [
+                c.currentStationId, c.CurrentStationId, c.currentStationID,
+                c.stationId, c.StationId, c.stationID,
+                c.station?.id, c.station?.Id, c.station?.stationId, c.station?.StationId
+              ]
+              return candidates.some(st => st != null && norm(st) === sidNorm)
+            })
+            // Merge clientFiltered into cars (dedupe by id/licensePlate)
+            for (const c of clientFiltered) {
+              const key = String(c?.id || c?.Id || c?.carId || c?.CarId || c?.licensePlate || c?.LicensePlate)
+              if (key && !map.has(key)) {
+                map.set(key, c)
+              }
+            }
+            cars = Array.from(map.values())
+          } catch {}
         } else {
           try { cars = await StaffAPI.getAllCars(1, 100) }
           catch { try { cars = await StaffAPI.listCars({ page: 1, pageSize: 100 }) } catch { cars = [] } }
         }
+        // Ensure we always have an array
+        if (!Array.isArray(cars)) cars = cars ? [cars] : []
         if (!mounted) return
         const normalizePercent = (v) => {
           const n = Number(v); if (Number.isFinite(n) && n >= 0 && n <= 100) return Math.round(n); return null
         }
         const mapped = (cars || []).map(c => {
-          const stId = c.currentStationId || c.stationId || c.StationId || c.station?.id || c.station?.Id || ''
-          const stName = stations.find(s => (s.id || s.Id) === stId)?.name || stations.find(s => (s.id || s.Id) === stId)?.Name
+          const pick = (...vals) => vals.find(v => v != null && v !== '')
+          const stIdRaw = pick(c.currentStationId, c.CurrentStationId, c.currentStationID, c.stationId, c.StationId, c.stationID, c.station?.id, c.station?.Id, c.station?.stationId, c.station?.StationId)
+          const norm = (v) => (v == null ? '' : String(v).replace(/[{}]/g, '').toLowerCase())
+          const stId = stIdRaw || ''
+          const stName = (() => {
+            if (!stId) return null
+            const match = stations.find(s => norm(s.id || s.Id) === norm(stId)) || null
+            if (!match) return null
+            return match.name || match.Name || null
+          })()
           return {
           id: c.id || c.Id || c.carId || c.CarId,
           name: c.name || c.Name || c.model || c.CarName || 'Car',
@@ -297,14 +363,57 @@ export default function StaffPage() {
         setLoadingBookings(true)
         let items = []
         if (stationId) {
-          items = await StaffAPI.getBookingsByStation(stationId)
+          try {
+            items = await StaffAPI.getBookingsByStation(stationId)
+          } catch {
+            items = []
+          }
+          // Fallback: if nothing returned, fetch all and client-filter by station
+          if (!items || items.length === 0) {
+            try {
+              const all = await StaffAPI.listBookings({ page: 1, pageSize: 200 })
+              const sid = String(stationId)
+              items = (all || []).filter(b => {
+                const st = b.stationId || b.StationId || b.station?.id || b.station?.Id || b.pickupStationId || b.PickupStationId
+                return st != null && String(st) === sid
+              })
+            } catch {}
+          }
+          // Always enforce station scoping even if backend returned all bookings
+          if (items && items.length > 0) {
+            const sid = String(stationId)
+            items = items.filter(b => {
+              const candidates = [
+                b.stationId, b.StationId, b.station?.id, b.station?.Id,
+                b.pickupStationId, b.PickupStationId, b.pickUpStationId, b.PickUpStationId,
+                b.startStationId, b.StartStationId, b.originStationId, b.OriginStationId,
+                b.fromStationId, b.FromStationId,
+                b.car?.stationId, b.car?.StationId, b.car?.currentStationId,
+                b.vehicle?.stationId, b.vehicle?.StationId
+              ]
+              return candidates.some(v => v != null && String(v) === sid)
+            })
+          }
         } else {
           items = await StaffAPI.listBookings({ page: 1, pageSize: 100 })
         }
         if (!mounted) return
         const mapped = (items || []).map(b => {
           const id = b.id || b.Id || b.bookingId || b.BookingId
-          const carName = b.carName || b.vehicleName || b.car?.name || b.car?.Name || 'Booking'
+          // Infer vehicle name from multiple sources
+          const carBrand = b.car?.brand || b.car?.Brand || b.vehicle?.brand || b.vehicle?.Brand || b.carBrand || b.CarBrand || null
+          const carModel = b.car?.model || b.car?.Model || b.vehicle?.model || b.vehicle?.Model || b.carModel || b.CarModel || null
+          let carName = b.carName || b.vehicleName || b.car?.name || b.car?.Name || null
+          if (!carName && (carBrand || carModel)) {
+            carName = [carBrand, carModel].filter(Boolean).join(' ').trim() || null
+          }
+          if (!carName && typeof b.carInfo === 'string' && b.carInfo.trim()) {
+            carName = b.carInfo.trim()
+          }
+          if (!carName && typeof b.CarInfo === 'string' && b.CarInfo.trim()) {
+            carName = b.CarInfo.trim()
+          }
+          carName = carName || 'Booking'
           // Derive full name from First/Last name if available
           const firstName = b.user?.firstName || b.customer?.firstName || b.firstName || b.FirstName || b.user?.FirstName || b.customer?.FirstName
           const lastName  = b.user?.lastName  || b.customer?.lastName  || b.lastName  || b.LastName  || b.user?.LastName  || b.customer?.LastName
@@ -318,10 +427,34 @@ export default function StaffPage() {
           const userName = b.user?.userName || b.user?.UserName || b.user?.username || b.userName || b.UserName || b.username || null
           const email = b.user?.email || b.customerEmail || b.email || b.userEmail || ''
           const address = b.user?.address || b.customerAddress || b.address || ''
-          const rawStatus = b.status || b.Status || b.bookingStatus || ''
-          const status = (rawStatus || '').toString().toLowerCase().includes('complete') ? 'completed'
-                        : (rawStatus || '').toString().toLowerCase().includes('deny') ? 'denied'
-                        : 'booked'
+          // Status mapping: prefer numeric codes, fall back to string patterns
+          const rawStatus = b.statusCode ?? b.StatusCode ?? b.bookingStatus ?? b.BookingStatus ?? b.status ?? b.Status
+          let status = 'booked'
+          if (rawStatus != null && (typeof rawStatus === 'number' || /^\d+$/.test(String(rawStatus)))) {
+            const code = Number(rawStatus)
+            if (code === 0) status = 'pending'
+            else if (code === 1) status = 'booked'
+            else if (code === 2) status = 'checked-in'
+            else if (code === 3) status = 'completed'
+            else if (code === 4) status = 'denied'
+          } else {
+            const s = String(rawStatus || '').toLowerCase()
+            if (s.includes('pending') || s.includes('wait')) status = 'pending'
+            else if (s.includes('check') && s.includes('in')) status = 'checked-in'
+            else if (s.includes('complete') || s.includes('finish')) status = 'completed'
+            else if (s.includes('deny') || s.includes('reject') || s.includes('cancel')) status = 'denied'
+            else status = 'booked'
+          }
+          const statusLabel = status === 'pending' ? 'Pending'
+                             : status === 'booked' ? 'Booked'
+                             : status === 'checked-in' ? 'Check-in Pending'
+                             : status === 'completed' ? 'Completed'
+                             : status === 'denied' ? 'Denied' : (String(rawStatus || '') || 'Booked')
+          // Derive a UI stage hint without changing the canonical status
+          const s = String(rawStatus || '').toLowerCase()
+          const uiStage = (Number(rawStatus) === 0 || s.includes('pending') || s.includes('wait'))
+            ? 'waiting-payment'
+            : ((s.includes('check') && s.includes('in') && (s.includes('pay') || s.includes('payment'))) ? 'checkin-payment' : null)
           const date = b.date || b.createdAt || b.bookingDate || ''
           const img = b.carImageUrl || b.car?.imageUrl || b.vehicle?.imageUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(carName)}`
           return {
@@ -338,6 +471,8 @@ export default function StaffPage() {
             email,
             address,
             status,
+            statusLabel,
+            uiStage,
             date,
             img,
             // identity images (CCCD/CMND front/back)
@@ -387,6 +522,59 @@ export default function StaffPage() {
               }
               return b
             }))
+          } catch {}
+        }
+
+  // Enrich vehicle details (resolve vehicle name/image by carId/vehicleId)
+        const getCarId = (b) => b.carId || b.CarId || b.vehicleId || b.VehicleId || b.car?.id || b.car?.Id || b.vehicle?.id || b.vehicle?.Id
+        const needCar = mapped.filter(x => (!x.title || x.title === 'Booking') && getCarId(x))
+        if (needCar.length > 0) {
+          try {
+            const uniqueCarIds = Array.from(new Set(needCar.map(getCarId).filter(Boolean)))
+            const cars = await Promise.all(uniqueCarIds.map(async cid => {
+              try {
+                let car = await StaffAPI.getCarById(cid)
+                if (!car || (!car.id && !car.Id)) {
+                  try { car = await StaffAPI.getCarByIdRest(cid) } catch {}
+                }
+                const name = car?.name || car?.Name || [car?.brand, car?.model].filter(Boolean).join(' ') || null
+                const img = car?.imageUrl || car?.thumbnailUrl || null
+                return { cid, name, img }
+              } catch {
+                return { cid, name: null, img: null }
+              }
+            }))
+            const mapC = new Map(cars.map(c => [String(c.cid), c]))
+            setBookings(prev => prev.map(b => {
+              const cid = getCarId(b)
+              const key = cid != null ? String(cid) : null
+              if (key && mapC.has(key)) {
+                const c = mapC.get(key)
+                return {
+                  ...b,
+                  title: b.title && b.title !== 'Booking' ? b.title : (c.name || b.title),
+                  img: b.img || c.img || b.img
+                }
+              }
+              return b
+            }))
+          } catch {}
+        }
+
+        // Final fallback: for any booking still lacking a proper title, resolve via staffApi.getVehicleModelFromBooking
+        const stillMissing = (prevList) => prevList.filter(x => !x.title || x.title === 'Booking')
+        const missingNow = stillMissing(mapped)
+        if (missingNow.length > 0) {
+          try {
+            const results = await Promise.all(missingNow.map(async b => {
+              try {
+                const m = await StaffAPI.getVehicleModelFromBooking(b.id)
+                const label = m?.name || [m?.brand, m?.model].filter(Boolean).join(' ') || null
+                return { id: b.id, title: label }
+              } catch { return { id: b.id, title: null } }
+            }))
+            const mapM = new Map(results.map(r => [r.id, r.title]))
+            setBookings(prev => prev.map(b => mapM.has(b.id) && mapM.get(b.id) ? { ...b, title: mapM.get(b.id) } : b))
           } catch {}
         }
       } catch (e) {

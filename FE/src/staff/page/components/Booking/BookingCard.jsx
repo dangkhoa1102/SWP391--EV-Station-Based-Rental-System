@@ -6,6 +6,8 @@ export default function BookingCard({ booking, onClick }) {
   if (booking.status === 'booked') cls += 'booking-status-booked';
   else if (booking.status === 'denied') cls += 'booking-status-denied';
   else if (booking.status === 'completed') cls += 'booking-status-completed';
+  else if (booking.status === 'pending') cls += 'booking-status-pending';
+  else if (booking.status === 'checked-in') cls += 'booking-status-checkedin';
 
   return (
     <div className="booking-card" onClick={onClick}>
@@ -14,7 +16,7 @@ export default function BookingCard({ booking, onClick }) {
     <div className="booking-title">{booking.title}</div>
     <div className="booking-customer">Customer: {booking.fullName || [booking.firstName, booking.lastName].filter(Boolean).join(' ') || booking.customer || '—'}</div>
       </div>
-      <div className={cls}>{booking.status.toUpperCase()}</div>
+      <div className={cls}>{booking.statusLabel || (booking.status ? booking.status.toUpperCase() : '')}</div>
     </div>
   );
 }

@@ -1,6 +1,24 @@
 import axios from 'axios'
 
-const SWAGGER_ROOT = 'http://localhost:5054/api'
+// Resolve API base from env (Vite or CRA) with sensible fallback
+let API_BASE = 'http://localhost:5054'
+try {
+  // Access Vite env if available (in ESM builds)
+  // eslint-disable-next-line no-undef
+  // @ts-ignore
+  if (import.meta && import.meta.env && import.meta.env.VITE_API_URL) {
+    // eslint-disable-next-line no-undef
+    // @ts-ignore
+    API_BASE = import.meta.env.VITE_API_URL
+  }
+} catch {}
+try {
+  if (typeof process !== 'undefined' && process?.env?.REACT_APP_API_URL) {
+    API_BASE = process.env.REACT_APP_API_URL
+  }
+} catch {}
+// Normalize and append /api
+const SWAGGER_ROOT = `${String(API_BASE).replace(/\/+$/, '')}/api`
 
 const apiClient = axios.create({
   baseURL: SWAGGER_ROOT,
@@ -15,16 +33,41 @@ apiClient.interceptors.request.use(cfg => {
       cfg.headers.Authorization = `Bearer ${t}`
     }
   } catch (e) {}
+  try {
+    cfg.metadata = cfg.metadata || {}
+    cfg.metadata.start = Date.now()
+  } catch {}
   return cfg
 })
 
 apiClient.interceptors.response.use(
-  r => r,
+  r => {
+    try {
+      const cfg = r?.config || {}
+      const method = (cfg.method || 'GET').toUpperCase()
+      const url = (cfg.baseURL || '') + (cfg.url || '')
+      const start = cfg?.metadata?.start
+      if (start) {
+        const ms = Date.now() - start
+        if (ms > 1500) {
+          console.warn(`⏱️ API slow ${method} ${url} took ${ms} ms`)
+        } else {
+          console.log(`⏱️ API ${method} ${url} took ${ms} ms`)
+        }
+      }
+    } catch {}
+    return r
+  },
   e => {
     try {
       const cfg = e?.config || {}
       const method = (cfg.method || 'GET').toUpperCase()
       const url = (cfg.baseURL || '') + (cfg.url || '')
+      const start = cfg?.metadata?.start
+      if (start) {
+        const ms = Date.now() - start
+        console.warn(`⏱️ API error ${method} ${url} after ${ms} ms`)
+      }
       console.error(`🛑 API ${method} ${url} failed`, {
         status: e?.response?.status,
         data: e?.response?.data,
@@ -97,6 +140,16 @@ const API = {
     const res = await apiClient.get('/Auth/Me');
     const data = res?.data?.data ?? res?.data ?? {};
     return data;
+  },
+  // Lightweight method to fetch server time via response headers
+  getServerTime: async () => {
+    try {
+      const res = await apiClient.get('/Auth/Me')
+      const h = res && res.headers ? res.headers : {}
+      const dateHeader = h['date'] || h['Date'] || null
+      if (dateHeader) return new Date(dateHeader)
+    } catch {}
+    return new Date()
   },
 
   getMyProfile: async () => {
@@ -233,6 +286,68 @@ const API = {
       console.error('❌ Error fetching stations:', e.response?.data || e.message)
       return []
     }
+  },
+
+  /**
+   * Update a station's slot/capacity count.
+   * Tries multiple common endpoints and payload shapes.
+   * @param {string} stationId GUID/Id of the station
+   * @param {number} slots new slot count (or capacity)
+   */
+  updateStationSlots: async (stationId, slots) => {
+    if (!stationId && stationId !== 0) throw new Error('stationId is required')
+    if (slots == null || Number.isNaN(Number(slots))) throw new Error('slots is required and must be a number')
+    const id = encodeURIComponent(stationId)
+    const bodies = [
+      { stationId, slots },
+      { StationId: stationId, Slots: slots },
+      { id: stationId, slots },
+      { Id: stationId, Slots: slots },
+      { stationId, slotCount: slots },
+      { stationId, capacity: slots },
+      { id: stationId, capacity: slots },
+      { stationId, totalSlots: slots },
+    ]
+    const attempts = [
+      // Action-style
+      { method: 'post', url: '/Stations/Update-Slots' },
+      { method: 'post', url: '/Station/Update-Slots' },
+      { method: 'post', url: '/Stations/Update-Capacity' },
+      { method: 'post', url: '/Stations/Update' },
+      // REST-style with path
+      { method: 'put', url: `/stations/${id}/slots` },
+      { method: 'put', url: `/Stations/${id}/Slots` },
+      { method: 'put', url: `/stations/${id}/capacity` },
+      { method: 'put', url: `/Stations/${id}` },
+      // Query variants
+      { method: 'post', url: '/Stations/Update-Slots', query: { stationId, slots } },
+    ]
+    let lastErr
+    for (const a of attempts) {
+      // build config
+      const cfg = {}
+      if (a.query) cfg.params = a.query
+      for (const body of bodies) {
+        try {
+          const res = await apiClient[a.method](a.url, a.query ? undefined : body, cfg)
+          const data = res?.data
+          // unwrap common wrapper
+          if (data && typeof data === 'object' && 'data' in data) {
+            if (data.isSuccess === false) {
+              const msg = data.message || (Array.isArray(data.errors) ? data.errors.join('; ') : 'Update failed')
+              const err = new Error(msg); err.body = data; throw err
+            }
+            return data.data
+          }
+          return data
+        } catch (e) {
+          lastErr = e
+          const code = e?.response?.status
+          if (code && code !== 404 && code !== 405) throw e
+        }
+      }
+    }
+    throw lastErr || new Error('Update station slots endpoint not found')
   },
 
   // Cars
@@ -554,78 +669,80 @@ const API = {
   },
 
   getAvailableCarsByStation: async (stationId) => {
-    try {
-      console.log('🚗 Fetching available cars for station:', stationId)
-      const res = await apiClient.get(`/Cars/Get-Available-By-Station/${encodeURIComponent(stationId)}`)
-      console.log('✅ Available cars response:', res.data)
-      const responseData = res.data
-      
-      // Handle different response formats (same logic as getAllCars)
-      if (Array.isArray(responseData)) {
-        console.log('✅ Returning available cars array:', responseData.length, 'items')
-        return responseData
+    if (!stationId) return []
+    const id = encodeURIComponent(stationId)
+    const attempts = [
+      // Provided variant
+      { url: `/Cars/Get-Available-By-Station/${id}` },
+      { url: '/Cars/Get-Available-By-Station', opts: { params: { stationId } } },
+      // Common get-by-station variants
+      { url: `/Cars/Get-By-Station/${id}` },
+      { url: '/Cars/Get-By-Station', opts: { params: { stationId } } },
+      { url: '/Cars/Get-By-Station', opts: { params: { StationId: stationId } } },
+      { url: '/Cars/Get-By-Station', opts: { params: { stationID: stationId } } },
+      // Resource aliases
+      { url: `/Vehicles/Get-By-Station/${id}` },
+      { url: '/Vehicles/Get-By-Station', opts: { params: { stationId } } },
+      // REST style
+      { url: `/car/station/${id}` },
+      { url: `/cars/station/${id}` },
+      { url: `/vehicle/station/${id}` },
+      { url: `/vehicles/station/${id}` },
+      // Station nested
+      { url: `/Stations/${id}/Cars` },
+      { url: `/Stations/${id}/vehicles` },
+    ]
+    for (const a of attempts) {
+      try {
+        const res = await apiClient.get(a.url, a.opts)
+        const responseData = res.data
+        if (Array.isArray(responseData)) return responseData
+        if (Array.isArray(responseData?.data?.data)) return responseData.data.data
+        if (Array.isArray(responseData?.data?.items)) return responseData.data.items
+        if (Array.isArray(responseData?.data)) return responseData.data
+        if (Array.isArray(responseData?.items)) return responseData.items
+      } catch (e) {
+        const code = e?.response?.status
+        // Treat 400 as a variant mismatch (e.g., GUID vs int), keep trying
+        if (code && code !== 404 && code !== 405 && code !== 400) throw e
       }
-      
-      if (responseData.data && responseData.data.data && Array.isArray(responseData.data.data)) {
-        console.log('✅ Returning available cars from data.data.data:', responseData.data.data.length, 'items')
-        return responseData.data.data
-      }
-      
-      if (responseData.data && responseData.data.items && Array.isArray(responseData.data.items)) {
-        console.log('✅ Returning available cars from data.data.items:', responseData.data.items.length, 'items')
-        return responseData.data.items
-      }
-      
-      if (responseData.data && Array.isArray(responseData.data)) {
-        console.log('✅ Returning available cars from data.data:', responseData.data.length, 'items')
-        return responseData.data
-      }
-      
-      if (responseData.items && Array.isArray(responseData.items)) {
-        console.log('✅ Returning available cars from data.items:', responseData.items.length, 'items')
-        return responseData.items
-      }
-      
-      console.warn('⚠️ No available cars found in response')
-      return []
-    } catch (e) {
-      console.error('❌ Error fetching available cars:', e.response?.data || e.message)
-      throw e
     }
+    return []
   },
 
   getCarById: async (carId) => {
-    try {
-      console.log('🚗 Fetching car details for ID:', carId)
-      const res = await apiClient.get(`/Cars/Get-By-${encodeURIComponent(carId)}`)
-      console.log('✅ Car detail response:', res.data)
-      const responseData = res.data
-      
-      // Handle different response formats
-      // Format 1: Direct object with id
-      if (responseData.id || responseData.Id) {
-        console.log('✅ Returning car object directly')
-        return responseData
+    const id = encodeURIComponent(carId)
+    const attempts = [
+      // Action style
+      { url: `/Cars/Get-By-Id/${id}` },
+      { url: `/Car/Get-By-Id/${id}` },
+      { url: '/Cars/Get-By-Id', opts: { params: { id: carId, carId } } },
+      { url: '/Cars/Get-By', opts: { params: { id: carId, carId } } },
+      // Provided odd variant
+      { url: `/Cars/Get-By-${id}` },
+      // REST style resources
+      { url: `/car/${id}` }, { url: `/cars/${id}` }, { url: `/Car/${id}` }, { url: `/Cars/${id}` },
+      { url: `/vehicle/${id}` }, { url: `/vehicles/${id}` }, { url: `/Vehicle/${id}` }, { url: `/Vehicles/${id}` }
+    ]
+    for (const a of attempts) {
+      try {
+        const res = await apiClient.get(a.url, a.opts)
+        const responseData = res.data
+        // Unwrap common shapes
+        const unwrapped = responseData && typeof responseData === 'object' && 'data' in responseData ? responseData.data : responseData
+        if (!unwrapped) continue
+        if (Array.isArray(unwrapped)) {
+          const found = unwrapped.find(c => (c.id || c.Id || c.carId || c.CarId) === carId)
+          if (found) return found
+          continue
+        }
+        return unwrapped
+      } catch (e) {
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405 && code !== 400) throw e
       }
-      
-      // Format 2: Nested in data.data
-      if (responseData.data && responseData.data.data && (responseData.data.data.id || responseData.data.data.Id)) {
-        console.log('✅ Returning car from data.data.data')
-        return responseData.data.data
-      }
-      
-      // Format 3: Nested in data
-      if (responseData.data && (responseData.data.id || responseData.data.Id)) {
-        console.log('✅ Returning car from data.data')
-        return responseData.data
-      }
-      
-      console.warn('⚠️ No car found in response')
-      return null
-    } catch (e) {
-      console.error('❌ Error fetching car details:', e.response?.data || e.message)
-      throw e
     }
+    throw new Error('Car not found')
   },
 
   // Bookings
@@ -637,6 +754,10 @@ const API = {
       // Legacy
       { url: `/Bookings/Get-By-Station/${id}` },
       { url: '/Bookings/Get-By-Station', opts: { params: { stationId } } },
+      { url: '/Bookings/Get-By-Station', opts: { params: { StationId: stationId } } },
+      { url: '/Bookings/Get-By-Station', opts: { params: { stationID: stationId } } },
+      { url: '/Bookings/Get-All-By-Station', opts: { params: { stationId } } },
+      { url: `/Bookings/Get-All-By-Station/${id}` },
       { url: '/Bookings/Get-All', opts: { params: { stationId } } },
       { url: `/Stations/${id}/Bookings` },
       // REST style
@@ -657,7 +778,9 @@ const API = {
         if (Array.isArray(body?.results)) return body.results
         if (body && (body.id || body.bookingId || body.BookingId)) return [body]
       } catch (e) {
-        // try next
+        const code = e?.response?.status
+        // Continue on 400 as well (often validation on route shape)
+        if (code && code !== 404 && code !== 405 && code !== 400) throw e
       }
     }
     return []
@@ -731,6 +854,39 @@ const API = {
       console.error('❌ Error completing booking:', e.response?.data || e.message)
       throw e
     }
+  },
+
+  // Save check-in details for a booking
+  checkInBooking: async (bookingId, payload) => {
+    const id = encodeURIComponent(bookingId)
+    const bodyVariants = [
+      payload,
+      { bookingId, ...payload },
+      { Id: bookingId, ...payload }
+    ]
+    const attempts = [
+      { method: 'post', url: `/bookings/${id}/checkin` },
+      { method: 'post', url: `/Bookings/${id}/Check-In` },
+      { method: 'post', url: `/booking/${id}/checkin` },
+      { method: 'post', url: `/Bookings/Check-In` },
+      { method: 'post', url: `/Bookings/CheckIn` },
+      { method: 'post', url: `/bookings/checkin` },
+    ]
+    let lastErr
+    for (const a of attempts) {
+      for (const body of bodyVariants) {
+        try {
+          const res = await apiClient[a.method](a.url, body)
+          const data = res.data
+          return data && typeof data === 'object' && 'data' in data ? data.data : data
+        } catch (e) {
+          lastErr = e
+          const code = e?.response?.status
+          if (code && code !== 404 && code !== 405) throw e
+        }
+      }
+    }
+    throw lastErr || new Error('Check-in endpoint not found')
   },
 
   getUserBookings: async (userId) => {
@@ -889,6 +1045,48 @@ const API = {
       }
     }
     throw new Error('Booking not found')
+  },
+
+  // Resolve vehicle model (brand + model) starting from a booking id
+  // 1) Load booking (prefers API.getBookingById fallbacks)
+  // 2) If CarId/VehicleId exists, load the car via getCarById
+  // 3) Fallback: parse carInfo string or nested car fields
+  getVehicleModelFromBooking: async (bookingId) => {
+    if (!bookingId) throw new Error('bookingId required')
+    // Step 1: booking detail
+    const booking = await API.getBookingById(bookingId)
+    // Step 2: try car id-based fetch
+    const carId = booking?.carId || booking?.CarId || booking?.vehicleId || booking?.VehicleId || booking?.car?.id || booking?.car?.Id
+    if (carId) {
+      try {
+        let car = await API.getCarById(carId)
+        if (!car || (!car.id && !car.Id)) {
+          try { car = await API.getCarByIdRest?.(carId) } catch {}
+        }
+  const brand = car?.brand ?? car?.Brand ?? null
+  const model = car?.model ?? car?.Model ?? null
+  const nameCandidate = car?.name ?? car?.Name ?? [brand, model].filter(Boolean).join(' ')
+  const name  = nameCandidate != null ? nameCandidate : null
+        return { brand, model, name, raw: car }
+      } catch (e) {
+        // continue to fallback parsing
+      }
+    }
+    // Step 3: fallback sources
+    const carInfo = booking?.carInfo ?? booking?.CarInfo
+    if (typeof carInfo === 'string' && carInfo.trim()) {
+      const parts = carInfo.trim().split(/\s+/)
+      const brand = parts.shift() || ''
+      const model = parts.join(' ')
+      const name = [brand, model].filter(Boolean).join(' ')
+      return { brand: brand || null, model: model || null, name: name || null, raw: carInfo }
+    }
+  const brand = booking?.car?.brand ?? booking?.car?.Brand ?? booking?.vehicle?.brand ?? booking?.vehicle?.Brand ?? booking?.carBrand ?? booking?.CarBrand ?? null
+  const model = booking?.car?.model ?? booking?.car?.Model ?? booking?.vehicle?.model ?? booking?.vehicle?.Model ?? booking?.carModel ?? booking?.CarModel ?? null
+  const nameCandidate2  = booking?.car?.name  ?? booking?.car?.Name  ?? booking?.vehicle?.name  ?? booking?.vehicle?.Name  ?? [brand, model].filter(Boolean).join(' ')
+  const name = nameCandidate2 != null ? nameCandidate2 : null
+    if (brand || model || name) return { brand, model, name, raw: booking?.car || booking?.vehicle || null }
+    throw new Error('No car information available on booking')
   },
 
   // Resolve user firstName/lastName for a given bookingId using multiple fallbacks
@@ -1052,6 +1250,108 @@ API.decodeJwt = (token) => {
   const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
   const json = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''))
   return JSON.parse(json)
+}
+
+// Resolve Staff entity Id for the current user (or a provided userId)
+// Tries, in order:
+// 1) /Users/Get-My-Profile -> staffId | StaffId
+// 2) JWT claims or localStorage for userId, then lookup staff by user via common endpoints
+//    - /Staff/Get-By-User-Id/{userId}
+//    - /Staff/Get-By-User/{userId}
+//    - /Staffs/Get-By-User-Id/{userId}
+//    - /Staff/By-UserId/{userId}
+//    - /Staff/User/{userId}
+//    - /Users/{userId}/Staff
+//    - query variants: ?userId=
+API.resolveStaffId = async (userId = null) => {
+  // 1) Try profile
+  try {
+    const me = await API.getMyProfile()
+    const sid = me?.staffId || me?.StaffId || me?.staffID || me?.StaffID
+    if (sid) return sid
+    // capture userId if not provided
+    if (!userId) userId = me?.id || me?.Id || me?.userId || me?.UserId || null
+  } catch {}
+  // 2) Try local userId sources
+  if (!userId) {
+    try { userId = localStorage.getItem('userId') || null } catch {}
+  }
+  if (!userId) {
+    try {
+      const t = localStorage.getItem('token')
+      if (t) {
+        const d = API.decodeJwt(t)
+        userId = d['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || d.sub || d.userId || d.UserId || d.id || d.Id || null
+      }
+    } catch {}
+  }
+  if (!userId) throw new Error('Unable to determine userId to resolve staffId')
+
+  const id = encodeURIComponent(userId)
+  const attempts = [
+    { url: `/Staff/Get-By-User-Id/${id}` },
+    { url: `/Staff/Get-By-User/${id}` },
+    { url: `/Staffs/Get-By-User-Id/${id}` },
+    { url: `/Staff/By-UserId/${id}` },
+    { url: `/Staff/User/${id}` },
+    { url: `/Users/${id}/Staff` },
+    // querystring variants
+    { url: `/Staff/Get-By-User-Id`, opts: { params: { userId } } },
+    { url: `/Staff/Get-By-User`, opts: { params: { userId } } },
+  ]
+  for (const a of attempts) {
+    try {
+      const res = await apiClient.get(a.url, a.opts)
+      const body = res?.data
+      const unwrapped = body && typeof body === 'object' && 'data' in body ? body.data : body
+      if (!unwrapped) continue
+      const staffObj = Array.isArray(unwrapped)
+        ? (unwrapped.find(s => (s.userId || s.UserId) === userId) || unwrapped[0])
+        : unwrapped
+      const sid = staffObj?.staffId || staffObj?.StaffId || staffObj?.id || staffObj?.Id
+      if (sid) return sid
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Staff id not found for current user')
+}
+
+// Check-In with Contract (specific canonical endpoint)
+// Expected payload shape:
+// { bookingId: GUID, staffId: GUID, staffSignature: string, customerSignature: string, checkInNotes?: string, checkInPhotoUrl?: string }
+API.checkInWithContract = async (payload) => {
+  if (!payload || !payload.bookingId || !payload.staffId || !payload.staffSignature || !payload.customerSignature) {
+    throw new Error('Missing required fields: bookingId, staffId, staffSignature, customerSignature')
+  }
+  const attempts = [
+    '/bookings/Check-In-With-Contract',
+    '/Bookings/Check-In-With-Contract',
+    '/Bookings/CheckInWithContract',
+  ]
+  let lastErr
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.post(url, payload)
+      const body = res?.data
+      if (body && typeof body === 'object' && 'data' in body) {
+        if (body.isSuccess === false) {
+          const msg = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : 'Request failed')
+          const err = new Error(msg)
+          err.body = body
+          throw err
+        }
+        return body.data
+      }
+      return body
+    } catch (e) {
+      lastErr = e
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw lastErr || new Error('Check-In-With-Contract endpoint not found')
 }
 
 export default API

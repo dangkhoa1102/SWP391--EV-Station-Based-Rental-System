@@ -28,8 +28,8 @@ export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate, st
         {(!vehicles || vehicles.length === 0) && (
           <div style={{padding:'12px 8px', color:'#555'}}>No vehicles available to display.</div>
         )}
-        {vehicles.map(v => (
-          <div key={v.id}>
+        {vehicles.map((v, i) => (
+          <div key={v.id || v.licensePlate || `${v.name}-${v.stationId || ''}-${i}`}>
             <VehicleCard vehicle={v} onOpen={() => openDetails(v)} onRemove={onRemove} onOpenUpdate={() => openForUpdate(v)} canDelete={canDelete} />
           </div>
         ))}
