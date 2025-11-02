@@ -215,35 +215,70 @@
     transform: translateY(0);
 }
 
-/* Search Modal */
-.search-modal {
+/* Search Modal Backdrop Overlay */
+.search-modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(3px);
-    z-index: 9999;
-    display: none;
+    z-index: 9998;
+}
+
+/* Search Modal - Default centered position */
+.search-modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90% !important;
+    max-width: 900px !important;
+    height: auto !important;
+    max-height: 90vh !important;
+    background: white !important;
+    z-index: 10000 !important;
+    display: none !important;
+    border-radius: 15px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: visible !important;
+    right: auto !important;
 }
 
 .search-modal.active {
-    display: block;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* When map is open, search modal becomes full height side panel */
+.search-modal.with-map {
+    top: 0 !important;
+    left: auto !important;
+    right: 0 !important;
+    width: 50% !important;
+    max-width: none !important;
+    height: 100vh !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
 }
 
 .search-modal-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 900px;
-    max-height: 85vh;
+    position: relative;
+    background: transparent;
+    width: 100%;
+    height: auto;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+/* When map is open, search-modal-content fills the full height */
+.search-modal.with-map .search-modal-content {
+    height: 100%;
+    background: white;
 }
 
 .search-modal-header {
@@ -337,6 +372,34 @@
 
 .location-dropdown.active {
     display: block;
+}
+
+.view-map-btn {
+    width: 100%;
+    padding: 12px 15px;
+    background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    margin: 8px;
+    width: calc(100% - 16px);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.view-map-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.view-map-btn i {
+    font-size: 16px;
 }
 
 .location-option {

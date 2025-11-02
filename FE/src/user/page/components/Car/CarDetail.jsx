@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import API from '../../services/api'
-import '../../styles/car_detail.css'
-import { formatVND } from '../../utils/currency'
+import API from '../../../services/userApi'
+import './car_detail.css'
+import { formatVND } from '../../../../utils/currency'
 
 export default function CarDetail(){
   const { id } = useParams()

@@ -1,15 +1,14 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import UserProfile from './user/page/UserProfile'
-import HomePage from './user/page/HomePage'
-import CarListPage from './user/page/CarListPage'
-import CarDetail from './user/page/CarDetail'
-import PaymentPage from './user/page/PaymentPage'
-import PaymentSuccess from './user/page/PaymentSuccess'
-import PaymentCancel from './user/page/PaymentCancel'
-import TransactionPage from './user/page/TransactionPage'
-import BookingHistory from './user/page/BookingHistory'
-import TestApi from './user/page/TestApi'
+import UserProfile from './user/page/components/Profile/UserProfile'
+import HomePage from './user/page/components/Home/HomePage'
+import CarListPage from './user/page/components/Car/CarListPage'
+import CarDetail from './user/page/components/Car/CarDetail'
+import PaymentPage from './user/page/components/Payment/PaymentPage'
+import PaymentSuccess from './user/page/components/Payment/PaymentSuccess'
+import PaymentCancel from './user/page/components/Payment/PaymentCancel'
+import TransactionPage from './user/page/components/Transaction/TransactionPage'
+import BookingHistory from './user/page/components/Booking/BookingHistory'
 import StaffPage from './staff/page/StaffPage'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -32,7 +31,7 @@ function AppShell(){
         <Route path="/booking-history" element={<BookingHistory />} />
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/staff" element={<StaffPage />} />
-        <Route path="/test-api" element={<TestApi />} />
+      
       </Routes>
       {!hideChrome && <Footer />}
     </>

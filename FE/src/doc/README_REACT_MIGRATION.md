@@ -15,6 +15,6 @@ npm run dev
 3. Open http://localhost:5173
 
 Notes:
-- Update `src/utils/cloudinary.js` with your Cloudinary `CLOUD_NAME` and `UPLOAD_PRESET`.
+- Image uploads are handled by the Backend API (no Cloudinary config needed in Frontend)
 - Existing static HTML files were left intact in `HTML/` folder; React app is now served from root `index.html` and `src/`.
-- CSS files are imported from `/CSS/*.css` so existing styles are reused.
+- CSS files are organized by feature in component folders and `/src/styles` for shared styles.
