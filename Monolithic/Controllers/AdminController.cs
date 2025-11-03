@@ -2,7 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Monolithic.Common;
 using Monolithic.DTOs.Common;
+using Monolithic.DTOs.Admin;
 using Monolithic.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Monolithic.Data;
 
 namespace Monolithic.Controllers
 {
@@ -15,17 +18,20 @@ namespace Monolithic.Controllers
         private readonly IStationService _stationService;
         private readonly IBookingService _bookingService;
         private readonly IUserService _userService;
+        private readonly EVStationBasedRentalSystemDbContext _context;
 
         public AdminController(
             ICarService carService,
             IStationService stationService,
             IBookingService bookingService,
-            IUserService userService)
+            IUserService userService,
+            EVStationBasedRentalSystemDbContext context)
         {
             _carService = carService;
             _stationService = stationService;
             _bookingService = bookingService;
             _userService = userService;
+            _context = context;
         }
 
         #region Fleet & Station Management (Quản lý đội xe & điểm thuê)
@@ -1245,6 +1251,52 @@ namespace Monolithic.Controllers
         }
 
         #endregion
+
+ #region Document Management
+
+   /// <summary>
+/// Lấy thông tin giấy tờ của user (CCCD và GPLX)
+        /// </summary>
+     [HttpGet("Users/{userId}/Documents")]
+        public async Task<ActionResult<ResponseDto<UserDocumentDetailsDto>>> GetUserDocuments(Guid userId)
+        {
+            try
+    {
+     var user = await _context.Users.FindAsync(userId);
+     if (user == null)
+              {
+        return NotFound(ResponseDto<UserDocumentDetailsDto>.Failure("Không tìm thấy người dùng"));
+              }
+
+     var documentDetails = new UserDocumentDetailsDto
+         {
+               UserId = user.UserId,
+            FullName = $"{user.FirstName} {user.LastName}",
+     Email = user.Email ?? "",
+          PhoneNumber = user.PhoneNumber,
+         UserRole = user.UserRole,
+           CccdImageUrl_Front = user.CccdImageUrl_Front,
+     CccdImageUrl_Back = user.CccdImageUrl_Back,
+       GplxImageUrl_Front = user.GplxImageUrl_Front,
+        GplxImageUrl_Back = user.GplxImageUrl_Back,
+        DriverLicenseNumber = user.DriverLicenseNumber,
+ DriverLicenseExpiry = user.DriverLicenseExpiry,
+       IsVerified = user.IsVerified,
+    CreatedAt = user.CreatedAt,
+       UpdatedAt = user.UpdatedAt
+        };
+
+         return Ok(ResponseDto<UserDocumentDetailsDto>.Success(documentDetails, "Lấy thông tin giấy tờ thành công"));
+ }
+         catch (Exception ex)
+  {
+                return BadRequest(ResponseDto<UserDocumentDetailsDto>.Failure($"Lỗi: {ex.Message}"));
+}
+        }
+
+        #endregion
+
+        // ...existing code for other sections...
     }
 }
 

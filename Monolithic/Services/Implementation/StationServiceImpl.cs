@@ -120,27 +120,7 @@ namespace Monolithic.Services.Implementation
             return ResponseDto<List<StationCarDto>>.Success(dto);
         }
 
-        public async Task<ResponseDto<string>> UpdateStationSlotsAsync(Guid id, int totalSlots)
-        {
-            if (totalSlots <= 0)
-            {
-                return ResponseDto<string>.Failure("Total slots must be positive");
-            }
-
-            var station = await _stationRepository.GetByIdAsync(id);
-            if (station == null || !station.IsActive)
-            {
-                return ResponseDto<string>.Failure("Station not found");
-            }
-
-            var diff = totalSlots - station.TotalSlots;
-            station.TotalSlots = totalSlots;
-            station.AvailableSlots = Math.Max(0, Math.Min(station.TotalSlots, station.AvailableSlots + diff));
-            station.UpdatedAt = DateTime.UtcNow;
-            await _stationRepository.UpdateAsync(station);
-
-            return ResponseDto<string>.Success(string.Empty, "Slots updated");
-        }
+        // Removed UpdateStationSlotsAsync per requirements
 
         /// <summary>
         /// Tính toán lại AvailableSlots dựa trên số xe thực tế tại station
