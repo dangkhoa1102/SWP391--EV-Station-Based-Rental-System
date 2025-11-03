@@ -181,13 +181,19 @@ namespace Monolithic.Services.Implementation
                 booking.UpdatedAt = DateTime.UtcNow;
 
                 var actualReturn = booking.ActualReturnDateTime.Value;
+                if (actualReturn < booking.StartTime)
+                    return ResponseDto<BookingDto>.Failure("Actual return date cannot be earlier than pickup date.");
                 var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
                 var graceMinutes = 30;
 
-                // 3️⃣ Tính số giờ thuê thực tế
+                // --- IMPORTANT: lưu giá thuê đã dự kiến / đã thanh toán (nếu có) trước khi ghi đè
+                var originalRental = booking.RentalAmount; // <-- giữ lại giá rental ban đầu (dự kiến hoặc đã set lúc create/check-in)
+
+                // 3️⃣ Tính số giờ thuê thực tế và cập nhật booking.RentalAmount (thực tế)
                 var totalHours = Math.Ceiling((actualReturn - booking.StartTime).TotalHours);
                 if (totalHours < 1) totalHours = 1;
-                booking.RentalAmount = Math.Round((decimal)totalHours * booking.HourlyRate, 2);
+                var actualRentalAmount = Math.Round((decimal)totalHours * booking.HourlyRate, 2);
+                booking.RentalAmount = actualRentalAmount;
 
                 // 4️⃣ Tính phí trễ (nếu có)
                 booking.LateFee = 0;
@@ -198,12 +204,24 @@ namespace Monolithic.Services.Implementation
                     booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
                 }
 
-                // 5️⃣ Tổng tiền thực tế cuối cùng
+                // 5️⃣ Tổng tiền thực tế cuối cùng (phải trả tổng = thuê thực tế + fees)
                 var finalAmount = booking.RentalAmount + booking.LateFee + booking.DamageFee;
                 booking.TotalAmount = Math.Round(finalAmount, 2);
 
-                // 6️⃣ So sánh với tổng 100% rental (đã thanh toán lúc check-in)
-                var rentalPaid = booking.TotalAmount - booking.DepositAmount; // rental đã trả lúc check-in
+                // 6️⃣ Tính rentalPaid đúng: 
+                // OPTION A (recommended if you track payments): lấy tổng đã thanh toán từ PaymentService (successful payments)
+                // OPTION B (fallback): dùng originalRental (giá thuê dự kiến / hoặc đã thanh toán ở check-in)
+                decimal rentalPaid;
+
+                // If you have payment service available, prefer summing actual succeeded payments:
+                // (uncomment & use if _paymentService injected and implemented)
+                // var paidSum = await _paymentService.GetTotalAmountPaidByBookingAsync(booking.BookingId);
+                // // paidSum usually includes deposit + any rental/payment — compute how much of that was rental:
+                // rentalPaid = Math.Max(0, paidSum - booking.DepositAmount);
+
+                // Fallback: assume originalRental was the amount the user paid (or expected to pay) for rental at check-in
+                rentalPaid = originalRental;
+
                 var difference = finalAmount - rentalPaid;
 
                 // 7️⃣ Nếu difference > 0 → Extra; < 0 → Refund
@@ -336,7 +354,7 @@ namespace Monolithic.Services.Implementation
                 }
             }
 
-            return true; // không trùng — xe có thể đặt
+            return true; 
         }
 
         #endregion

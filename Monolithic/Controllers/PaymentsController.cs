@@ -22,7 +22,7 @@ public class PaymentController : ControllerBase
 
 
     [HttpPost("create")]
-    public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
+public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
     {
         var payment = await _paymentService.CreatePaymentAsync(request);
 
