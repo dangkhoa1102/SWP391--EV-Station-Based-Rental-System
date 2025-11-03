@@ -14,12 +14,14 @@ namespace Monolithic.Services.Implementation
         private readonly ICarRepository _carRepository;
         private readonly IPhotoService _photoService;
         private readonly IMapper _mapper;
+        private readonly IStationService _stationService;
 
-        public CarServiceImpl(ICarRepository carRepository, IPhotoService photoService, IMapper mapper)
+        public CarServiceImpl(ICarRepository carRepository, IPhotoService photoService, IMapper mapper, IStationService stationService)
         {
             _carRepository = carRepository;
             _photoService = photoService;
             _mapper = mapper;
+            _stationService = stationService;
         }
 
         public async Task<ResponseDto<PaginationDto<CarDto>>> GetCarsAsync(PaginationRequestDto request)
@@ -50,6 +52,13 @@ namespace Monolithic.Services.Implementation
 
         public async Task<ResponseDto<CarDto>> CreateCarAsync(CreateCarDto request)
         {
+            // Ki?m tra station có ?? ch? không
+            var canAddCar = await _stationService.CanAddCarToStationAsync(request.CurrentStationId);
+            if (!canAddCar)
+            {
+                return ResponseDto<CarDto>.Failure("Station ?ã ??y, không th? thêm xe m?i vào station này.");
+            }
+
             var car = _mapper.Map<Car>(request);
 
             // X? lý upload ?nh n?u có
@@ -67,11 +76,15 @@ namespace Monolithic.Services.Implementation
             try
             {
                 var created = await _carRepository.AddAsync(car);
+
+                // C?p nh?t AvailableSlots c?a station (gi?m 1)
+                await _stationService.UpdateStationAvailableSlotsAsync(request.CurrentStationId, -1);
+
                 return ResponseDto<CarDto>.Success(_mapper.Map<CarDto>(created), "Car created");
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
             {
-                // X? lý l?i DbUpdateException/Khóa Trùng L?p 
+                // X? lý l?i DbUpdateException/Khóa Trùng L?p
 
                 // Th??ng là mã l?i 2627 ho?c 2601 trong SQL Server
                 if (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx &&
@@ -90,7 +103,6 @@ namespace Monolithic.Services.Implementation
                     // Logger.LogError(ex, "L?i khi t?o xe.");
                     return ResponseDto<CarDto>.Failure("An error occurred while saving the data.");
                 }
-
             }
         }
 
@@ -117,10 +129,17 @@ namespace Monolithic.Services.Implementation
         {
             var car = await _carRepository.GetByIdAsync(id);
             if (car == null || !car.IsActive) return ResponseDto<string>.Failure("Car not found");
-            car.IsActive = false;
-            car.UpdatedAt = DateTime.UtcNow;
+       
+  var stationId = car.CurrentStationId;
+    
+    car.IsActive = false;
+       car.UpdatedAt = DateTime.UtcNow;
             await _carRepository.UpdateAsync(car);
-            return ResponseDto<string>.Success(string.Empty, "Car deleted");
+     
+      // C?p nh?t AvailableSlots c?a station (t?ng 1 slot)
+            await _stationService.UpdateStationAvailableSlotsAsync(stationId, 1);
+          
+    return ResponseDto<string>.Success(string.Empty, "Car deleted");
         }
 
         public async Task<ResponseDto<List<CarDto>>> GetAvailableCarsAsync(Guid stationId)
@@ -203,8 +222,37 @@ namespace Monolithic.Services.Implementation
 
         public async Task<ResponseDto<string>> UpdateCarLocationAsync(Guid id, Guid stationId)
         {
+            // L?y thông tin xe hi?n t?i
+            var car = await _carRepository.GetByIdAsync(id);
+            if (car == null || !car.IsActive)
+            {
+                return ResponseDto<string>.Failure("Car not found");
+            }
+
+            // N?u không ph?i chuy?n station thì không c?n validation
+            if (car.CurrentStationId == stationId)
+            {
+                return ResponseDto<string>.Success(string.Empty, "Car is already at this station");
+            }
+
+            // Ki?m tra station ?ích có ?? ch? không
+            var canAddCar = await _stationService.CanAddCarToStationAsync(stationId);
+            if (!canAddCar)
+            {
+                return ResponseDto<string>.Failure("Station ?ích ?ã ??y, không th? chuy?n xe vào station này.");
+            }
+
+            var oldStationId = car.CurrentStationId;
+            
             var ok = await _carRepository.UpdateCarLocationAsync(id, stationId);
             if (!ok) return ResponseDto<string>.Failure("Car not found");
+
+            // C?p nh?t AvailableSlots cho c? 2 station
+            // Station c?: t?ng 1 slot
+            await _stationService.UpdateStationAvailableSlotsAsync(oldStationId, 1);
+            // Station m?i: gi?m 1 slot
+            await _stationService.UpdateStationAvailableSlotsAsync(stationId, -1);
+
             return ResponseDto<string>.Success(string.Empty, "Location updated");
         }
 
