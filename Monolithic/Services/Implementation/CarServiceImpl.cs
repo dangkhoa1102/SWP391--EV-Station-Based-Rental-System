@@ -214,29 +214,7 @@ namespace Monolithic.Services.Implementation
             if (car == null || !car.IsActive)
                 return ResponseDto<string>.Failure("Car not found");
 
-            // C?p nh?t các tr??ng technical status
-            if (!string.IsNullOrWhiteSpace(request.EngineStatus))
-                car.EngineStatus = request.EngineStatus;
             
-            if (!string.IsNullOrWhiteSpace(request.TireStatus))
-                car.TireStatus = request.TireStatus;
-            
-            if (!string.IsNullOrWhiteSpace(request.BrakeStatus))
-                car.BrakeStatus = request.BrakeStatus;
-            
-            if (!string.IsNullOrWhiteSpace(request.LightStatus))
-                car.LightStatus = request.LightStatus;
-            
-            if (!string.IsNullOrWhiteSpace(request.InteriorStatus))
-                car.InteriorStatus = request.InteriorStatus;
-            
-            if (!string.IsNullOrWhiteSpace(request.ExteriorStatus))
-                car.ExteriorStatus = request.ExteriorStatus;
-            
-            if (!string.IsNullOrWhiteSpace(request.TechnicalNotes))
-                car.TechnicalNotes = request.TechnicalNotes;
-            
-            car.LastInspectionDate = request.LastInspectionDate;
             car.UpdatedAt = DateTime.UtcNow;
 
             await _carRepository.UpdateAsync(car);
