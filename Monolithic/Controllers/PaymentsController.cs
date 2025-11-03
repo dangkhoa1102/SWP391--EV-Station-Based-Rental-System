@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Monolithic.DTOs.Payment;
 using Monolithic.Models;
@@ -23,7 +22,7 @@ public class PaymentController : ControllerBase
 
 
     [HttpPost("create")]
-public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
+    public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
     {
         var payment = await _paymentService.CreatePaymentAsync(request);
 
@@ -67,7 +66,7 @@ public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto reque
             }
         }
 
-        return Ok(dto);
+        return Ok(payments.Select(p => new { p.PaymentId, p.PaymentStatus, p.TransactionId }));
     }
 
     [HttpGet("{bookingId}/status")]

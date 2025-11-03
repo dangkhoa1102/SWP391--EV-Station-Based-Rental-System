@@ -130,9 +130,9 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<BookingDto>.Failure($"Cannot check-in booking with status: {booking.BookingStatus}");
 
             // 2️⃣ Kiểm tra thời gian hợp lệ (±60 phút)
-            var timeDifference = Math.Abs((DateTime.UtcNow - booking.StartTime).TotalMinutes);
-            if (timeDifference > 60)
-                return ResponseDto<BookingDto>.Failure("Check-in time is outside the allowed window");
+            //var timeDifference = Math.Abs((DateTime.UtcNow - booking.StartTime).TotalMinutes);
+            //if (timeDifference > 60)
+            //    return ResponseDto<BookingDto>.Failure("Check-in time is outside the allowed window");
 
             // 3️⃣ Cập nhật thông tin check-in
             booking.CheckInAt = DateTime.UtcNow;
