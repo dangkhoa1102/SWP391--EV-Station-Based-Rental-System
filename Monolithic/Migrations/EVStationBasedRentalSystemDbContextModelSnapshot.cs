@@ -157,6 +157,9 @@ namespace Monolithic.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("CarImagePublicId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Color")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -224,6 +227,68 @@ namespace Monolithic.Migrations
                     b.ToTable("Cars");
                 });
 
+            modelBuilder.Entity("Monolithic.Models.CarHandover", b =>
+                {
+                    b.Property<Guid>("HandoverId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<decimal>("BatteryLevelAtHandover")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CarId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime>("HandoverDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HandoverType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("MileageReading")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("PhotoPublicIds")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("PhotoUrls")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("HandoverId");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("CarId");
+
+                    b.HasIndex("HandoverDateTime");
+
+                    b.HasIndex("StaffId");
+
+                    b.ToTable("CarHandovers");
+                });
+
             modelBuilder.Entity("Monolithic.Models.Contract", b =>
                 {
                     b.Property<Guid>("ContractId")
@@ -231,8 +296,16 @@ namespace Monolithic.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWID()");
 
+                    b.Property<string>("BienSoXe")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<Guid>("BookingId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConfirmationToken")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("ConfirmationTokenHash")
                         .HasMaxLength(128)
@@ -272,10 +345,26 @@ namespace Monolithic.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("HoTenBenA")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<bool>("IsConfirmed")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("NgayHetHan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayKy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayTao")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("RenterId")
                         .HasColumnType("uniqueidentifier");
@@ -296,6 +385,10 @@ namespace Monolithic.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("SoHopDong")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<Guid?>("StaffId")
                         .HasColumnType("uniqueidentifier");
 
@@ -303,7 +396,13 @@ namespace Monolithic.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("TokenExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("TokenExpiry")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -385,7 +484,10 @@ namespace Monolithic.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<string>("Images")
+                    b.Property<string>("ImagePublicIds")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrls")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("ReportedAt")
@@ -644,7 +746,7 @@ namespace Monolithic.Migrations
                         new
                         {
                             UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 31, 18, 23, 37, 894, DateTimeKind.Utc).AddTicks(439),
+                            CreatedAt = new DateTime(2025, 11, 3, 8, 38, 12, 567, DateTimeKind.Utc).AddTicks(3133),
                             DateOfBirth = new DateOnly(1, 1, 1),
                             Email = "admin@ev.com",
                             FirstName = "Admin",
@@ -693,6 +795,33 @@ namespace Monolithic.Migrations
                         .IsRequired();
 
                     b.Navigation("CurrentStation");
+                });
+
+            modelBuilder.Entity("Monolithic.Models.CarHandover", b =>
+                {
+                    b.HasOne("Monolithic.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Monolithic.Models.Car", "Car")
+                        .WithMany()
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Monolithic.Models.User", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Car");
+
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Monolithic.Models.Contract", b =>

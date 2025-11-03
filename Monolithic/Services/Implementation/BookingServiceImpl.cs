@@ -147,12 +147,17 @@ namespace Monolithic.Services.Implementation
             // 5️⃣ Cập nhật DB
             var updated = await _bookingRepository.UpdateAsync(booking);
 
-            // 6️⃣ Không tạo payment ở đây, FE hoặc Payment API sẽ gọi:
+            // 6️⃣ Đọc lại slots hiện tại của station để xác nhận
+            var stationAfterUpdate = await _stationRepository.GetByIdAsync(booking.StationId);
+
+            // 7️⃣ Không tạo payment ở đây, FE hoặc Payment API sẽ gọi:
             // PaymentType = Rental (100% rental cost)
             // Tổng tiền thực tế lúc này = Deposit (30%) + Rental (100%) = 130%
             return ResponseDto<BookingDto>.Success(
                 _mapper.Map<BookingDto>(updated),
-                $"Check-in successful. Please proceed to full rental payment ({booking.TotalAmount:C})."
+                stationAfterUpdate != null
+                    ? $"Check-in successful. Station slots: {stationAfterUpdate.AvailableSlots}/{stationAfterUpdate.TotalSlots}. Please proceed to full rental payment ({booking.TotalAmount:C})."
+                    : $"Check-in successful. Please proceed to full rental payment ({booking.TotalAmount:C})."
             );
         }
 
@@ -183,6 +188,7 @@ namespace Monolithic.Services.Implementation
                 var actualReturn = booking.ActualReturnDateTime.Value;
                 if (actualReturn < booking.StartTime)
                     return ResponseDto<BookingDto>.Failure("Actual return date cannot be earlier than pickup date.");
+<<<<<<< HEAD
 
                 var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
                 var graceMinutes = 30;
@@ -194,6 +200,19 @@ namespace Monolithic.Services.Implementation
                 var totalHours = Math.Ceiling((actualReturn - booking.StartTime).TotalHours);
                 if (totalHours < 1) totalHours = 1;
                 var actualRentalAmount = Math.Round((decimal)totalHours * booking.HourlyRate, 2);
+=======
+                var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
+                var graceMinutes = 30;
+
+                // --- IMPORTANT: lưu giá thuê đã dự kiến / đã thanh toán (nếu có) trước khi ghi đè
+                var originalRental = booking.RentalAmount; // <-- giữ lại giá rental ban đầu (dự kiến hoặc đã set lúc create/check-in)
+
+                // 3️⃣ Tính số giờ thuê thực tế và cập nhật booking.RentalAmount (thực tế)
+                var totalHours = Math.Ceiling((actualReturn - booking.StartTime).TotalHours);
+                if (totalHours < 1) totalHours = 1;
+                var actualRentalAmount = Math.Round((decimal)totalHours * booking.HourlyRate, 2);
+                booking.RentalAmount = actualRentalAmount;
+>>>>>>> f7035fbcab8029a877285409b27a92c073ba4b6f
 
                 // 4️⃣ Kiểm tra trễ
                 bool isLate = actualReturn > expectedReturn.AddMinutes(graceMinutes);
@@ -233,6 +252,7 @@ namespace Monolithic.Services.Implementation
                     }
                 }
 
+<<<<<<< HEAD
                 // 7️⃣ Ghi nhận kết quả tính toán
                 booking.ExtraAmount = Math.Round(extraAmount, 2);
                 booking.RefundAmount = Math.Round(refundAmount, 2);
@@ -247,6 +267,48 @@ namespace Monolithic.Services.Implementation
                 var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
 
                 // 9️⃣ Message phản hồi
+=======
+                // 5️⃣ Tổng tiền thực tế cuối cùng (phải trả tổng = thuê thực tế + fees)
+                var finalAmount = booking.RentalAmount + booking.LateFee + booking.DamageFee;
+                booking.TotalAmount = Math.Round(finalAmount, 2);
+
+                // 6️⃣ Tính rentalPaid đúng: 
+                // OPTION A (recommended if you track payments): lấy tổng đã thanh toán từ PaymentService (successful payments)
+                // OPTION B (fallback): dùng originalRental (giá thuê dự kiến / hoặc đã thanh toán ở check-in)
+                decimal rentalPaid;
+
+                // If you have payment service available, prefer summing actual succeeded payments:
+                // (uncomment & use if _paymentService injected and implemented)
+                // var paidSum = await _paymentService.GetTotalAmountPaidByBookingAsync(booking.BookingId);
+                // // paidSum usually includes deposit + any rental/payment — compute how much of that was rental:
+                // rentalPaid = Math.Max(0, paidSum - booking.DepositAmount);
+
+                // Fallback: assume originalRental was the amount the user paid (or expected to pay) for rental at check-in
+                rentalPaid = originalRental;
+
+                var difference = finalAmount - rentalPaid;
+
+                // 7️⃣ Nếu difference > 0 → Extra; < 0 → Refund
+                booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0;
+                booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0;
+                booking.DepositRefunded = booking.RefundAmount > 0;
+
+                // 8️⃣ Ghi nhận toán cuối
+                booking.FinalPaymentAmount = Math.Round(difference, 2);
+                booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
+                booking.UpdatedAt = DateTime.UtcNow;
+
+                // 9️⃣ Cập nhật slot trống của station (xe đã quay về chiếm chỗ)
+                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, -1);
+                if (!stationUpdateResult)
+                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout");
+
+                // 🔟 Lưu thay đổi booking
+                var updatedBooking = await _bookingRepository.UpdateAsync(booking);
+                var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
+
+                // 11️⃣ Tạo message phản hồi
+>>>>>>> f7035fbcab8029a877285409b27a92c073ba4b6f
                 string message = bookingDto.FinalPaymentAmount switch
                 {
                     > 0 => $"Checkout complete. Extra payment required: {bookingDto.ExtraAmount:C}. Please call Payment API with PaymentType = Extra.",

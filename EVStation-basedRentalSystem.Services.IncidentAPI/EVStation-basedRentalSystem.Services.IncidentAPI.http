@@ -1,6 +1,0 @@
-@EVStation_basedRentalSystem.Services.IncidentAPI_HostAddress = http://localhost:5157
-
-GET {{EVStation_basedRentalSystem.Services.IncidentAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

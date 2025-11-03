@@ -17,68 +17,68 @@ public class PaymentController : ControllerBase
         _payOSService = payOSService;
     }
 
- 
 
 
 
-        [HttpPost("create")]
-        public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
-        {
+
+    [HttpPost("create")]
+public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
+    {
         var payment = await _paymentService.CreatePaymentAsync(request);
 
         // Generate PayOS QR/checkout
         var (checkoutUrl, qrCode, orderCode) = await _payOSService.GeneratePaymentQR(payment);
 
-            payment.OrderCode = orderCode;
-            await _paymentService.UpdatePaymentStatusAsync(payment.PaymentId, PaymentStatus.Pending);
+        payment.OrderCode = orderCode;
+        await _paymentService.UpdatePaymentStatusAsync(payment.PaymentId, PaymentStatus.Pending);
 
-            var dto = new PaymentDto
-            {
-                PaymentId = payment.PaymentId,
-                BookingId = payment.BookingId,
-                Amount = payment.Amount,
-                PaymentStatus = payment.PaymentStatus,
-                PaymentType = payment.PaymentType,
-                OrderCode = orderCode,
-                CheckoutUrl = checkoutUrl,
-                QrCode = qrCode,
-                CreatedAt = payment.CreatedAt,
-                UpdatedAt = payment.UpdatedAt
-            };
-
-            return Ok(dto);
-        }
-
-        [HttpPost("sync/{bookingId}")]
-        public async Task<IActionResult> SyncPaymentStatus(Guid bookingId)
+        var dto = new PaymentDto
         {
-            var payments = await _paymentService.GetPaymentsByBookingIdAsync(bookingId);
-            foreach (var payment in payments)
-            {
-                var info = await _payOSService.GetPaymentLinkInformation(payment.OrderCode);
-                if (info.status == "PAID" && payment.PaymentStatus != PaymentStatus.Success)
-                {
-                    await _paymentService.UpdatePaymentStatusAsync(payment.PaymentId, PaymentStatus.Success,
-                        info.transactions.FirstOrDefault()?.reference);
+            PaymentId = payment.PaymentId,
+            BookingId = payment.BookingId,
+            Amount = payment.Amount,
+            PaymentStatus = payment.PaymentStatus,
+            PaymentType = payment.PaymentType,
+            OrderCode = orderCode,
+            CheckoutUrl = checkoutUrl,
+            QrCode = qrCode,
+            CreatedAt = payment.CreatedAt,
+            UpdatedAt = payment.UpdatedAt
+        };
 
-                    // Optionally update booking status
-                    // await _bookingService.UpdateBookingStatusAsync(payment.BookingId, "Confirmed");
-                }
-            }
-
-            return Ok(payments.Select(p => new { p.PaymentId, p.PaymentStatus, p.TransactionId }));
-        }
-
-        [HttpGet("{bookingId}/status")]
-        public async Task<IActionResult> GetStatus(Guid bookingId)
-        {
-            var payments = await _paymentService.GetPaymentsByBookingIdAsync(bookingId);
-            return Ok(payments.Select(p => new { p.PaymentId, p.PaymentStatus, p.TransactionId }));
-        }
+        return Ok(dto);
     }
 
+    [HttpPost("sync/{bookingId}")]
+    public async Task<IActionResult> SyncPaymentStatus(Guid bookingId)
+    {
+        var payments = await _paymentService.GetPaymentsByBookingIdAsync(bookingId);
+        foreach (var payment in payments)
+        {
+            var info = await _payOSService.GetPaymentLinkInformation(payment.OrderCode);
+            if (info.status == "PAID" && payment.PaymentStatus != PaymentStatus.Success)
+            {
+                await _paymentService.UpdatePaymentStatusAsync(payment.PaymentId, PaymentStatus.Success,
+                    info.transactions.FirstOrDefault()?.reference);
 
-    public class PaymentRequest
+                // Optionally update booking status
+                // await _bookingService.UpdateBookingStatusAsync(payment.BookingId, "Confirmed");
+            }
+        }
+
+        return Ok(payments.Select(p => new { p.PaymentId, p.PaymentStatus, p.TransactionId }));
+    }
+
+    [HttpGet("{bookingId}/status")]
+    public async Task<IActionResult> GetStatus(Guid bookingId)
+    {
+        var payments = await _paymentService.GetPaymentsByBookingIdAsync(bookingId);
+        return Ok(payments.Select(p => new { p.PaymentId, p.PaymentStatus, p.TransactionId }));
+    }
+}
+
+
+public class PaymentRequest
 {
     public Guid BookingId { get; set; }
 }

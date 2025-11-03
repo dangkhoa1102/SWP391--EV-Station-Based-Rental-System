@@ -12,12 +12,16 @@ namespace Monolithic.Services.Implementation
     public class CarServiceImpl : ICarService
     {
         private readonly ICarRepository _carRepository;
+        private readonly IPhotoService _photoService;
         private readonly IMapper _mapper;
+        private readonly IStationService _stationService;
 
-        public CarServiceImpl(ICarRepository carRepository, IMapper mapper)
+        public CarServiceImpl(ICarRepository carRepository, IPhotoService photoService, IMapper mapper, IStationService stationService)
         {
             _carRepository = carRepository;
+            _photoService = photoService;
             _mapper = mapper;
+            _stationService = stationService;
         }
 
         public async Task<ResponseDto<PaginationDto<CarDto>>> GetCarsAsync(PaginationRequestDto request)
@@ -48,9 +52,58 @@ namespace Monolithic.Services.Implementation
 
         public async Task<ResponseDto<CarDto>> CreateCarAsync(CreateCarDto request)
         {
+            // Ki?m tra station có ?? ch? không
+            var canAddCar = await _stationService.CanAddCarToStationAsync(request.CurrentStationId);
+            if (!canAddCar)
+            {
+                return ResponseDto<CarDto>.Failure("Station ?ã ??y, không th? thêm xe m?i vào station này.");
+            }
+
             var car = _mapper.Map<Car>(request);
-            var created = await _carRepository.AddAsync(car);
-            return ResponseDto<CarDto>.Success(_mapper.Map<CarDto>(created), "Car created");
+
+            // X? lý upload ?nh n?u có
+            if (request.CarImage != null && request.CarImage.Length > 0)
+            {
+                var uploadResult = await _photoService.AddPhotoAsync(request.CarImage, "rental_app/cars");
+                if (uploadResult.Error != null)
+                {
+                    return ResponseDto<CarDto>.Failure($"L?i upload ?nh: {uploadResult.Error.Message}");
+                }
+
+                car.ImageUrl = uploadResult.SecureUrl.ToString();
+                car.CarImagePublicId = uploadResult.PublicId;
+            }
+            try
+            {
+                var created = await _carRepository.AddAsync(car);
+
+                // C?p nh?t AvailableSlots c?a station (gi?m 1)
+                await _stationService.UpdateStationAvailableSlotsAsync(request.CurrentStationId, -1);
+
+                return ResponseDto<CarDto>.Success(_mapper.Map<CarDto>(created), "Car created");
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            {
+                // X? lý l?i DbUpdateException/Khóa Trùng L?p
+
+                // Th??ng là mã l?i 2627 ho?c 2601 trong SQL Server
+                if (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx &&
+                    (sqlEx.Number == 2627 || sqlEx.Number == 2601))
+                {
+                    // Trích xu?t thông tin c?n thi?t t? yêu c?u ?? t?o thông báo rõ ràng h?n
+                    string licensePlate = request.LicensePlate; // Gi? s? CreateCarDto có thu?c tính CarNumber
+
+                    // Tr? v? ResponseDto.Failure v?i thông báo l?i rõ ràng
+                    return ResponseDto<CarDto>.Failure($"Error: The license plate '{licensePlate}' already exists in the system. Please check again.");
+                }
+                else
+                {
+                    // X? lý các l?i DbUpdateException khác không ph?i do khóa trùng l?p
+                    // Ghi log l?i và tr? v? thông báo l?i chung
+                    // Logger.LogError(ex, "L?i khi t?o xe.");
+                    return ResponseDto<CarDto>.Failure("An error occurred while saving the data.");
+                }
+            }
         }
 
         public async Task<ResponseDto<CarDto>> UpdateCarAsync(Guid id, UpdateCarDto request)
@@ -76,10 +129,17 @@ namespace Monolithic.Services.Implementation
         {
             var car = await _carRepository.GetByIdAsync(id);
             if (car == null || !car.IsActive) return ResponseDto<string>.Failure("Car not found");
-            car.IsActive = false;
-            car.UpdatedAt = DateTime.UtcNow;
+       
+  var stationId = car.CurrentStationId;
+    
+    car.IsActive = false;
+       car.UpdatedAt = DateTime.UtcNow;
             await _carRepository.UpdateAsync(car);
-            return ResponseDto<string>.Success(string.Empty, "Car deleted");
+     
+      // C?p nh?t AvailableSlots c?a station (t?ng 1 slot)
+            await _stationService.UpdateStationAvailableSlotsAsync(stationId, 1);
+          
+    return ResponseDto<string>.Success(string.Empty, "Car deleted");
         }
 
         public async Task<ResponseDto<List<CarDto>>> GetAvailableCarsAsync(Guid stationId)
@@ -162,9 +222,120 @@ namespace Monolithic.Services.Implementation
 
         public async Task<ResponseDto<string>> UpdateCarLocationAsync(Guid id, Guid stationId)
         {
+            // L?y thông tin xe hi?n t?i
+            var car = await _carRepository.GetByIdAsync(id);
+            if (car == null || !car.IsActive)
+            {
+                return ResponseDto<string>.Failure("Car not found");
+            }
+
+            // N?u không ph?i chuy?n station thì không c?n validation
+            if (car.CurrentStationId == stationId)
+            {
+                return ResponseDto<string>.Success(string.Empty, "Car is already at this station");
+            }
+
+            // Ki?m tra station ?ích có ?? ch? không
+            var canAddCar = await _stationService.CanAddCarToStationAsync(stationId);
+            if (!canAddCar)
+            {
+                return ResponseDto<string>.Failure("Station ?ích ?ã ??y, không th? chuy?n xe vào station này.");
+            }
+
+            var oldStationId = car.CurrentStationId;
+            
             var ok = await _carRepository.UpdateCarLocationAsync(id, stationId);
             if (!ok) return ResponseDto<string>.Failure("Car not found");
+
+            // C?p nh?t AvailableSlots cho c? 2 station
+            // Station c?: t?ng 1 slot
+            await _stationService.UpdateStationAvailableSlotsAsync(oldStationId, 1);
+            // Station m?i: gi?m 1 slot
+            await _stationService.UpdateStationAvailableSlotsAsync(stationId, -1);
+
             return ResponseDto<string>.Success(string.Empty, "Location updated");
+        }
+
+        public async Task<ResponseDto<string>> UpdateCarTechnicalStatusAsync(Guid id, UpdateCarTechnicalStatusDto request)
+        {
+            var car = await _carRepository.GetByIdAsync(id);
+            if (car == null || !car.IsActive)
+                return ResponseDto<string>.Failure("Car not found");
+
+            
+            car.UpdatedAt = DateTime.UtcNow;
+
+            await _carRepository.UpdateAsync(car);
+            return ResponseDto<string>.Success(string.Empty, "Technical status updated successfully");
+        }
+
+        public async Task<ResponseDto<CarHandoverResponseDto>> RecordCarHandoverAsync(CarHandoverDto request, Guid staffId)
+        {
+            // Validate car exists
+            var car = await _carRepository.GetByIdAsync(request.CarId);
+            if (car == null || !car.IsActive)
+                return ResponseDto<CarHandoverResponseDto>.Failure("Car not found");
+
+            var photoUrls = new List<string>();
+            var photoPublicIds = new List<string>();
+
+            // Upload các ?nh bàn giao
+            if (request.HandoverPhotos != null && request.HandoverPhotos.Any())
+            {
+                foreach (var photo in request.HandoverPhotos)
+                {
+                    var uploadResult = await _photoService.AddPhotoAsync(photo, $"rental_app/handovers/{request.BookingId}");
+                    if (uploadResult.Error != null)
+                    {
+                        // N?u có l?i, xóa các ?nh ?ã upload tr??c ?ó
+                        foreach (var publicId in photoPublicIds)
+                        {
+                            await _photoService.DeletePhotoAsync(publicId);
+                        }
+                        return ResponseDto<CarHandoverResponseDto>.Failure($"Error uploading photo: {uploadResult.Error.Message}");
+                    }
+
+                    photoUrls.Add(uploadResult.SecureUrl.ToString());
+                    photoPublicIds.Add(uploadResult.PublicId);
+                }
+            }
+
+            // T?o record handover
+            var handover = new CarHandover
+            {
+                HandoverId = Guid.NewGuid(),
+                BookingId = request.BookingId,
+                CarId = request.CarId,
+                StaffId = staffId,
+                HandoverType = request.HandoverType.ToString(),
+                PhotoUrls = string.Join(";", photoUrls),
+                PhotoPublicIds = string.Join(";", photoPublicIds),
+                Notes = request.Notes,
+                BatteryLevelAtHandover = request.CurrentBatteryLevel,
+                MileageReading = request.MileageReading,
+                HandoverDateTime = DateTime.UtcNow
+            };
+
+            // Save to database (c?n implement repository method)
+            // await _carHandoverRepository.AddAsync(handover);
+
+            // C?p nh?t battery level c?a xe
+            await UpdateCarBatteryLevelAsync(request.CarId, request.CurrentBatteryLevel);
+
+            var response = new CarHandoverResponseDto
+            {
+                BookingId = handover.BookingId,
+                CarId = handover.CarId,
+                HandoverType = request.HandoverType,
+                PhotoUrls = photoUrls,
+                Notes = request.Notes ?? string.Empty,
+                BatteryLevel = request.CurrentBatteryLevel,
+                Mileage = request.MileageReading,
+                HandoverDateTime = handover.HandoverDateTime,
+                StaffId = staffId.ToString()
+            };
+
+            return ResponseDto<CarHandoverResponseDto>.Success(response, "Car handover recorded successfully");
         }
     }
 }

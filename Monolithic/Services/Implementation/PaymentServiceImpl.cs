@@ -157,5 +157,147 @@ namespace Monolithic.Services
         {
             throw new NotImplementedException();
         }
+
+        // Station Payment Methods
+        public async Task<StationPaymentResponseDto> RecordStationDepositAsync(RecordDepositDto request, Guid staffId)
+        {
+            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+            if (booking == null)
+                throw new ArgumentException("Booking not found");
+
+            var payment = new Payment
+            {
+                PaymentId = Guid.NewGuid(),
+                BookingId = request.BookingId,
+                Amount = request.Amount,
+                PaymentType = PaymentType.Deposit,
+                PaymentStatus = PaymentStatus.Success,
+                TransactionId = request.ReferenceCode ?? $"STATION-DEP-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                PaidAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _dbContext.Payments.Add(payment);
+
+            // Cập nhật booking status
+            if (booking.BookingStatus == BookingStatus.Pending)
+            {
+                booking.BookingStatus = BookingStatus.DepositPaid;
+                booking.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            return new StationPaymentResponseDto
+            {
+                PaymentId = payment.PaymentId,
+                BookingId = payment.BookingId,
+                PaymentType = payment.PaymentType,
+                Amount = payment.Amount,
+                PaymentMethod = request.PaymentMethod,
+                Status = payment.PaymentStatus,
+                ReferenceCode = payment.TransactionId,
+                RecordedAt = payment.PaidAt ?? DateTime.UtcNow,
+                RecordedByStaffId = staffId,
+                Notes = request.Notes
+            };
+        }
+
+        public async Task<StationPaymentResponseDto> RecordStationRefundAsync(RecordRefundDto request, Guid staffId)
+        {
+            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+            if (booking == null)
+                throw new ArgumentException("Booking not found");
+
+            // Cập nhật các phí
+            booking.LateFee = request.LateFee;
+            booking.DamageFee = request.DamageFee;
+
+            var payment = new Payment
+            {
+                PaymentId = Guid.NewGuid(),
+                BookingId = request.BookingId,
+                Amount = request.RefundAmount,
+                PaymentType = PaymentType.Refund,
+                PaymentStatus = PaymentStatus.Success,
+                TransactionId = $"STATION-REF-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                RefundReason = request.RefundReason,
+                RefundedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _dbContext.Payments.Add(payment);
+
+            // Đánh dấu đã hoàn cọc
+            booking.DepositRefunded = true;
+            booking.UpdatedAt = DateTime.UtcNow;
+
+            await _dbContext.SaveChangesAsync();
+
+            return new StationPaymentResponseDto
+            {
+                PaymentId = payment.PaymentId,
+                BookingId = payment.BookingId,
+                PaymentType = payment.PaymentType,
+                Amount = payment.Amount,
+                PaymentMethod = request.PaymentMethod,
+                Status = payment.PaymentStatus,
+                ReferenceCode = payment.TransactionId,
+                RecordedAt = payment.RefundedAt ?? DateTime.UtcNow,
+                RecordedByStaffId = staffId,
+                Notes = request.Notes
+            };
+        }
+
+        public async Task<StationPaymentResponseDto> RecordStationPaymentAsync(RecordStationPaymentDto request, Guid staffId)
+        {
+            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+            if (booking == null)
+                throw new ArgumentException("Booking not found");
+
+            var payment = new Payment
+            {
+                PaymentId = Guid.NewGuid(),
+                BookingId = request.BookingId,
+                Amount = request.Amount,
+                PaymentType = request.PaymentType,
+                PaymentStatus = PaymentStatus.Success,
+                TransactionId = request.ReferenceCode ?? $"STATION-PAY-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                PaidAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _dbContext.Payments.Add(payment);
+
+            // Cập nhật booking status dựa trên loại payment
+            if (request.PaymentType == PaymentType.Rental)
+            {
+                if (booking.BookingStatus == BookingStatus.CheckedOut || 
+                    booking.BookingStatus == BookingStatus.CheckedOutPendingPayment)
+                {
+                    booking.BookingStatus = BookingStatus.Completed;
+                }
+            }
+
+            booking.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync();
+
+            return new StationPaymentResponseDto
+            {
+                PaymentId = payment.PaymentId,
+                BookingId = payment.BookingId,
+                PaymentType = payment.PaymentType,
+                Amount = payment.Amount,
+                PaymentMethod = request.PaymentMethod,
+                Status = payment.PaymentStatus,
+                ReferenceCode = payment.TransactionId,
+                RecordedAt = payment.PaidAt ?? DateTime.UtcNow,
+                RecordedByStaffId = staffId,
+                Notes = request.Notes
+            };
+        }
     }
 }

@@ -45,7 +45,8 @@ namespace Monolithic.Controllers
         /// Tạo trạm sạc mới (Admin, Station Staff)
         /// </summary>
         [HttpPost("Create")]
-        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        //[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ResponseDto<StationDto>>> CreateStation([FromBody] CreateStationDto request)
         {
             if (!ModelState.IsValid)
@@ -88,18 +89,6 @@ namespace Monolithic.Controllers
         {
             var result = await _stationService.GetAvailableCarsAtStationAsync(id);
             if (!result.IsSuccess) return NotFound(result);
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Cập nhật số lượng chỗ đỗ xe
-        /// </summary>
-        [HttpPatch("Update-Slots-By-{id}")]
-        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
-        public async Task<ActionResult<ResponseDto<string>>> UpdateSlots(Guid id, [FromQuery] int totalSlots)
-        {
-            var result = await _stationService.UpdateStationSlotsAsync(id, totalSlots);
-            if (!result.IsSuccess) return BadRequest(result);
             return Ok(result);
         }
 

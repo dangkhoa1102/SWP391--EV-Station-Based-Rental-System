@@ -25,6 +25,7 @@ namespace Monolithic.DTOs.Car
         public DateTime CreatedAt { get; set; }
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime UpdatedAt { get; set; }
+        public string? ImageUrl { get; set; }
     }
 
     public class CreateCarDto
@@ -43,6 +44,7 @@ namespace Monolithic.DTOs.Car
         public string Color { get; set; } = string.Empty;
 
         [Required]
+        [RegularExpression("^[0-9]{2}[A-Z]-[0-9]{5}$", ErrorMessage = "License plate must match format NNX-YYYYY (e.g., 51B-23456)")]
         public string LicensePlate { get; set; } = string.Empty;
 
         [Required]
@@ -63,6 +65,9 @@ namespace Monolithic.DTOs.Car
 
         [Required]
         public Guid CurrentStationId { get; set; }
+
+        // Optional: Car image file
+        public IFormFile? CarImage { get; set; }
     }
 
     public class UpdateCarDto
@@ -71,6 +76,7 @@ namespace Monolithic.DTOs.Car
         public string? Model { get; set; }
         public int? Year { get; set; }
         public string? Color { get; set; }
+        [RegularExpression("^[0-9]{2}[A-Z]-[0-9]{5}$", ErrorMessage = "License plate must match format NNX-YYYYY (e.g., 51B-23456)")]
         public string? LicensePlate { get; set; }
         public decimal? BatteryCapacity { get; set; }
         public decimal? CurrentBatteryLevel { get; set; }
