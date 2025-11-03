@@ -147,12 +147,17 @@ namespace Monolithic.Services.Implementation
             // 5️⃣ Cập nhật DB
             var updated = await _bookingRepository.UpdateAsync(booking);
 
-            // 6️⃣ Không tạo payment ở đây, FE hoặc Payment API sẽ gọi:
+            // 6️⃣ Đọc lại slots hiện tại của station để xác nhận
+            var stationAfterUpdate = await _stationRepository.GetByIdAsync(booking.StationId);
+
+            // 7️⃣ Không tạo payment ở đây, FE hoặc Payment API sẽ gọi:
             // PaymentType = Rental (100% rental cost)
             // Tổng tiền thực tế lúc này = Deposit (30%) + Rental (100%) = 130%
             return ResponseDto<BookingDto>.Success(
                 _mapper.Map<BookingDto>(updated),
-                $"Check-in successful. Please proceed to full rental payment ({booking.TotalAmount:C})."
+                stationAfterUpdate != null
+                    ? $"Check-in successful. Station slots: {stationAfterUpdate.AvailableSlots}/{stationAfterUpdate.TotalSlots}. Please proceed to full rental payment ({booking.TotalAmount:C})."
+                    : $"Check-in successful. Please proceed to full rental payment ({booking.TotalAmount:C})."
             );
         }
 
@@ -234,11 +239,16 @@ namespace Monolithic.Services.Implementation
                 booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
                 booking.UpdatedAt = DateTime.UtcNow;
 
-                // 9️⃣ Lưu thay đổi
+                // 9️⃣ Cập nhật slot trống của station (xe đã quay về chiếm chỗ)
+                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, -1);
+                if (!stationUpdateResult)
+                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout");
+
+                // 🔟 Lưu thay đổi booking
                 var updatedBooking = await _bookingRepository.UpdateAsync(booking);
                 var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
 
-                // 🔟 Tạo message phản hồi
+                // 11️⃣ Tạo message phản hồi
                 string message = bookingDto.FinalPaymentAmount switch
                 {
                     > 0 => $"Checkout complete. Extra payment required: {bookingDto.ExtraAmount:C}. Please call Payment API with PaymentType = Extra.",
