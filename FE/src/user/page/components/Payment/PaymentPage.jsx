@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import API from '../../../services/userApi'
 import { formatVND } from '../../../../utils/currency'
@@ -14,26 +14,6 @@ export default function PaymentPage(){
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [showPolicyModal, setShowPolicyModal] = useState(false)
   const [loading, setLoading] = useState(false)
-
-  // Prevent body scrolling while either modal is open so we don't show two scrollbars
-  const originalBodyOverflow = useRef('')
-  useEffect(() => {
-    const modalOpen = showTermsModal || showPolicyModal
-    if (modalOpen) {
-      // store original overflow only the first time a modal opens
-      if (originalBodyOverflow.current === '') originalBodyOverflow.current = document.body.style.overflow || ''
-      document.body.style.overflow = 'hidden'
-    } else {
-      // restore original overflow when all modals are closed
-      document.body.style.overflow = originalBodyOverflow.current || ''
-      originalBodyOverflow.current = ''
-    }
-
-    // cleanup on unmount
-    return () => {
-      document.body.style.overflow = originalBodyOverflow.current || ''
-    }
-  }, [showTermsModal, showPolicyModal])
 
   useEffect(() => {
     // Load rental context and car info
@@ -129,21 +109,20 @@ export default function PaymentPage(){
       }
       
       // Step 3: Create payment via PayOS API
-      console.log('� Total Amount:', calculateTotalPrice())
+      console.log('💰 Total Amount:', calculateTotalPrice())
       console.log('💳 Deposit Amount (30%):', depositAmount)
       console.log('💳 Deposit Amount (rounded):', Math.round(depositAmount))
-      console.log('🔗 Return URL:', `${window.location.origin}/payment-success`)
-      console.log('🔗 Cancel URL:', `${window.location.origin}/payment-cancel`)
       
       try {
         const paymentResponse = await API.post('/Payment/create', {
           bookingId: newBookingId,
-          amount: Math.round(depositAmount),
-          returnUrl: `${window.location.origin}/payment-success`,
-          cancelUrl: `${window.location.origin}/payment-cancel`
+          paymentType: 0,
+          description: `Deposit payment for booking ${newBookingId}`
         })
         
-        const checkoutUrl = paymentResponse.checkoutUrl
+        console.log('✅ Payment response:', paymentResponse)
+        
+        const checkoutUrl = paymentResponse.checkoutUrl || paymentResponse.data?.checkoutUrl
         if (!checkoutUrl) {
           throw new Error('No checkout URL received from payment service')
         }
@@ -153,17 +132,41 @@ export default function PaymentPage(){
         window.location.href = checkoutUrl
       } catch (paymentError) {
         console.error('Payment creation failed:', paymentError)
+        console.error('Payment error details:', paymentError.response?.data)
         alert('Failed to create payment. Please try again.')
         setLoading(false)
       }
 
     } catch (error) {
       console.error('Error creating booking:', error)
+      console.error('Error response:', error.response?.data)
       
       // Check if error is "Car not available"
       const errorResponse = error.response?.data
-      const errors = errorResponse?.errors || []
-      const isCarNotAvailable = errors.some(err => 
+      
+      // Handle different error response formats
+      let errorMessages = []
+      
+      if (errorResponse?.errors) {
+        // If errors is an object (validation errors format)
+        if (typeof errorResponse.errors === 'object' && !Array.isArray(errorResponse.errors)) {
+          // Extract all error messages from the object
+          errorMessages = Object.values(errorResponse.errors).flat()
+        } 
+        // If errors is an array
+        else if (Array.isArray(errorResponse.errors)) {
+          errorMessages = errorResponse.errors
+        }
+      }
+      
+      // Also check for single error message
+      if (errorResponse?.message) {
+        errorMessages.push(errorResponse.message)
+      }
+      
+      console.log('📋 Extracted error messages:', errorMessages)
+      
+      const isCarNotAvailable = errorMessages.some(err => 
         typeof err === 'string' && err.toLowerCase().includes('car not available')
       )
       
@@ -176,8 +179,11 @@ export default function PaymentPage(){
           navigate('/cars')
         }, 2000)
       } else {
-        // Show generic error message
-        alert('Failed to create booking. Please try again.')
+        // Show detailed error message if available
+        const errorMsg = errorMessages.length > 0 
+          ? errorMessages.join(', ')
+          : 'Failed to create booking. Please try again.'
+        alert(errorMsg)
       }
     } finally {
       setLoading(false)
@@ -278,7 +284,9 @@ export default function PaymentPage(){
       {/* Bottom action bar */}
       <div className="page-actions" style={{ maxWidth: '980px', margin: '20px auto 60px', padding: '0 1rem' }}>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-          <button className="btn-create-booking" onClick={handleCreateBooking} disabled={!agreedToTerms || loading}>{loading ? 'Creating...' : 'Confirm & Pay'}</button>
+          <button className="btn-create-booking" onClick={handleCreateBooking} disabled={!agreedToTerms || loading}>
+            {loading ? 'Creating...' : 'Confirm & Pay'}
+          </button>
         </div>
       </div>
 

@@ -18,7 +18,74 @@ apiClient.interceptors.request.use(cfg => {
   return cfg
 })
 
-apiClient.interceptors.response.use(r => r, e => Promise.reject(e))
+// Response interceptor to handle 401 and refresh token
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+  
+  isRefreshing = false
+  failedQueue = []
+}
+
+apiClient.interceptors.response.use(
+  r => r,
+  async e => {
+    const originalRequest = e.config
+    
+    // If 401 Unauthorized
+    if (e.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then(token => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`
+            return apiClient(originalRequest)
+          })
+          .catch(err => Promise.reject(err))
+      }
+      
+      originalRequest._retry = true
+      isRefreshing = true
+      
+      try {
+        console.log('🔄 Token expired, attempting to refresh...')
+        const res = await apiClient.post('/Auth/Refresh-Token')
+        const newToken = res.data?.data?.token || res.data?.token
+        
+        if (newToken) {
+          localStorage.setItem('token', newToken)
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+          originalRequest.headers['Authorization'] = `Bearer ${newToken}`
+          processQueue(null, newToken)
+          console.log('✅ Token refreshed successfully')
+          return apiClient(originalRequest)
+        } else {
+          throw new Error('No token in refresh response')
+        }
+      } catch (refreshError) {
+        console.error('❌ Token refresh failed:', refreshError)
+        // Clear auth data and redirect to login
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        localStorage.removeItem('userId')
+        processQueue(refreshError, null)
+        // Could redirect to login here if needed
+        return Promise.reject(refreshError)
+      }
+    }
+    
+    return Promise.reject(e)
+  }
+)
 
 const API = {
   baseURL: SWAGGER_ROOT,
@@ -285,17 +352,46 @@ const API = {
       console.log('📝 Creating booking for user:', userId)
       console.log('📝 Booking data:', bookingData)
       
-      // Use the Create-With-Deposit endpoint which accepts deposit amount in request body
-      const res = await apiClient.post(`/Bookings/Create-With-Deposit?userId=${encodeURIComponent(userId)}`, {
-        ...bookingData,
-        userId: userId, // Also include userId in body
-        paymentMethod: 'PayOS', // Payment method is required
-        transactionId: '' // Transaction ID (empty until payment is processed)
+      // Backend expects these fields according to Swagger
+      const payload = {
+        carId: bookingData.carId,
+        pickupStationId: bookingData.pickupStationId,
+        returnStationId: bookingData.returnStationId,
+        pickupDateTime: bookingData.pickupDateTime,
+        expectedReturnDateTime: bookingData.expectedReturnDateTime,
+        paymentMethod: "string",
+        transactionId: "string"
+      }
+      
+      console.log('📤 Sending payload:', payload)
+      console.log('📤 Payload field types:', {
+        carId: typeof payload.carId,
+        pickupStationId: typeof payload.pickupStationId,
+        returnStationId: typeof payload.returnStationId,
+        pickupDateTime: typeof payload.pickupDateTime,
+        expectedReturnDateTime: typeof payload.expectedReturnDateTime
       })
+      
+      const res = await apiClient.post(`/Bookings/Create-With-Deposit?userId=${encodeURIComponent(userId)}`, payload)
       console.log('✅ Booking created:', res.data)
       return res.data?.data || res.data || {}
     } catch (e) {
       console.error('❌ Error creating booking:', e.response?.data || e.message)
+      console.error('❌ Full error details:', {
+        status: e.response?.status,
+        statusText: e.response?.statusText,
+        data: e.response?.data,
+        errors: e.response?.data?.errors
+      })
+      
+      // Log detailed validation errors if available
+      if (e.response?.data?.errors) {
+        console.error('❌ Validation errors:', e.response.data.errors)
+        Object.entries(e.response.data.errors).forEach(([field, messages]) => {
+          console.error(`   - ${field}:`, messages)
+        })
+      }
+      
       throw e
     }
   },
@@ -411,7 +507,17 @@ const API = {
     try {
       console.log('📝 Creating feedback for user:', userId)
       console.log('📝 Feedback data:', feedbackData)
-      const res = await apiClient.post(`/Feedback/Create-By-User/${encodeURIComponent(userId)}`, feedbackData)
+      
+      // Ensure bookingId and carId are included
+      const payload = {
+        bookingId: feedbackData.bookingId,
+        carId: feedbackData.carId,
+        rating: feedbackData.rating,
+        comment: feedbackData.comment
+      }
+      
+      console.log('📤 Sending feedback payload:', payload)
+      const res = await apiClient.post(`/Feedback/Create-By-User/${encodeURIComponent(userId)}`, payload)
       console.log('✅ Feedback created:', res.data)
       return res.data?.data || res.data || {}
     } catch (e) {
@@ -557,6 +663,37 @@ const API = {
       console.error(`❌ Error uploading ${type}:`, e)
       console.error(`❌ Response data:`, e.response?.data)
       console.error(`❌ Response status:`, e.response?.status)
+      throw e
+    }
+  },
+
+  // Contract APIs
+  createContract: async (bookingId, contractData) => {
+    try {
+      console.log('📋 Creating contract for booking:', bookingId)
+      console.log('📋 Contract data:', contractData)
+      const res = await apiClient.post(`/Contracts/Create/${encodeURIComponent(bookingId)}`, contractData)
+      console.log('✅ Contract created:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error creating contract:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Email APIs
+  sendContractEmail: async (contractId, email) => {
+    try {
+      console.log('📧 Sending contract email to:', email)
+      console.log('📧 Contract ID:', contractId)
+      const res = await apiClient.post(`/Contracts/gui-email`, {
+        contractId: contractId,
+        email: email
+      })
+      console.log('✅ Email sent successfully:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error sending email:', e.response?.data || e.message)
       throw e
     }
   }

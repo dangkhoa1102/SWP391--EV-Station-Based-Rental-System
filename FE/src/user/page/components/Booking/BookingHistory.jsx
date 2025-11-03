@@ -15,11 +15,11 @@ export default function BookingHistory(){
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
-  const [feedbackData, setFeedbackData] = useState({ carId: '', rating: 5, comment: '' })
+  const [feedbackData, setFeedbackData] = useState({ bookingId: '', carId: '', rating: 5, comment: '' })
   const [isEditingFeedback, setIsEditingFeedback] = useState(false)
   const [currentFeedbackId, setCurrentFeedbackId] = useState(null)
 
-  console.log('🔍 BookingHistory render - showFeedbackModal:', showFeedbackModal, 'selectedBooking:', selectedBooking)
+  // console.log('🔍 BookingHistory render - showFeedbackModal:', showFeedbackModal, 'selectedBooking:', selectedBooking)
 
   useEffect(()=>{
     loadBookings()
@@ -32,7 +32,7 @@ export default function BookingHistory(){
   const loadBookings = async ()=>{
     try{
       setLoading(true)
-      console.log('Fetching bookings for current user')
+      // console.log('Fetching bookings for current user')
       setFetchError('')
       // ensure user has a token locally before calling
       const token = localStorage.getItem('token')
@@ -44,9 +44,9 @@ export default function BookingHistory(){
       }
 
       const res = await API.getUserBookings()
-      console.log('📦 Bookings loaded - count:', res?.length)
-      console.log('📦 First booking sample:', res?.[0])
-      console.log('📦 All bookings:', res)
+      // console.log('📦 Bookings loaded - count:', res?.length)
+      // console.log('📦 First booking sample:', res?.[0])
+      // console.log('📦 All bookings:', res)
       setAllBookings(res || [])
     }catch(e){ 
       console.error('Error loading bookings:', e)
@@ -91,8 +91,7 @@ export default function BookingHistory(){
     const statuses = {
       0: { text: 'Pending', class: 'status-pending' },
       1: { text: 'Active', class: 'status-active' },
-      // Rename status 2 to "Check-in Pending"
-      2: { text: 'Check-in Pending', class: 'status-active' },
+      2: { text: 'Completed', class: 'status-completed' },
       3: { text: 'Cancelled', class: 'status-cancelled' },
       7: { text: 'Cancelled', class: 'status-cancelled' } // BookingStatus 7 = Cancelled
     }
@@ -179,8 +178,8 @@ export default function BookingHistory(){
     console.log('📝 Opening feedback modal for booking:', booking)
     const bookingId = booking.id || booking.bookingId || booking.bookingIdString || ''
     const carId = booking.carId || booking.car?.id || booking.car?.carId || ''
-    console.log('📋 Extracted bookingId:', bookingId)
-    console.log('� Extracted carId:', carId)
+    // console.log('📋 Extracted bookingId:', bookingId)
+    // console.log('🚗 Extracted carId:', carId)
     
     if (!bookingId) {
       alert('Cannot create feedback: Booking ID not found.')
@@ -198,6 +197,7 @@ export default function BookingHistory(){
       setIsEditingFeedback(true)
       setCurrentFeedbackId(booking.feedbackId)
       setFeedbackData({
+        bookingId: bookingId,
         carId: carId,
         rating: booking.feedbackRating || 5,
         comment: booking.feedbackComment || ''
@@ -207,6 +207,7 @@ export default function BookingHistory(){
       setIsEditingFeedback(false)
       setCurrentFeedbackId(null)
       setFeedbackData({
+        bookingId: bookingId,
         carId: carId,
         rating: 5,
         comment: ''
@@ -215,7 +216,7 @@ export default function BookingHistory(){
     
     setSelectedBooking(booking)
     setShowFeedbackModal(true)
-    console.log('✅ Modal state set to true, selectedBooking:', booking)
+    // console.log('✅ Modal state set to true, selectedBooking:', booking)
   }
 
   const handleSubmitFeedback = async () => {
@@ -249,7 +250,7 @@ export default function BookingHistory(){
       }
 
       setShowFeedbackModal(false)
-      setFeedbackData({ carId: '', rating: 5, comment: '' })
+      setFeedbackData({ bookingId: '', carId: '', rating: 5, comment: '' })
       setIsEditingFeedback(false)
       setCurrentFeedbackId(null)
       
@@ -281,7 +282,7 @@ export default function BookingHistory(){
               <option value="">All</option>
               <option value="0">Pending</option>
               <option value="1">Active</option>
-              <option value="2">Check-in Pending</option>
+              <option value="2">Completed</option>
               <option value="7">Cancelled</option>
             </select>
           </div>
@@ -407,13 +408,15 @@ export default function BookingHistory(){
                       <span className="price-value">{formatVND(booking.totalAmount || booking.TotalAmount || 0)}</span>
                     </div>
                     <div className="booking-actions">
-                      <button 
-                        className="btn btn-feedback" 
-                        onClick={(e) => handleOpenFeedbackModal(booking, e)}
-                        type="button"
-                      >
-                        <i className="fas fa-comment"></i> {booking.feedbackId ? 'Edit Feedback' : 'Feedback'}
-                      </button>
+                      {Number(booking.bookingStatus) === 2 && (
+                        <button 
+                          className="btn btn-feedback" 
+                          onClick={(e) => handleOpenFeedbackModal(booking, e)}
+                          type="button"
+                        >
+                          <i className="fas fa-comment"></i> {booking.feedbackId ? 'Edit Feedback' : 'Feedback'}
+                        </button>
+                      )}
                       <button
                         className="btn btn-cancel"
                         onClick={(e) => handleCancelBooking(booking, e)}

@@ -7,10 +7,26 @@ export default function SearchModal({
   onClose, 
   stations = [],
   userLocation = null,
-  onSearch 
+  onSearch,
+  currentSearchData = null
 }) {
   const [showMapModal, setShowMapModal] = useState(false)
   const [searchData, setSearchData] = useState(() => {
+    // If currentSearchData is provided, use it; otherwise use defaults
+    if (currentSearchData) {
+      return {
+        location: currentSearchData.location || '',
+        locationName: currentSearchData.locationName || 'Select location',
+        pickupDate: currentSearchData.pickupDate || new Date().toISOString().split('T')[0],
+        pickupTime: currentSearchData.pickupTime || '15:00',
+        returnDate: currentSearchData.returnDate || new Date(new Date().getTime() + 24*60*60*1000).toISOString().split('T')[0],
+        returnTime: currentSearchData.returnTime || '19:00',
+        calendarMode: null,
+        currentMonth: new Date().getMonth(),
+        currentYear: new Date().getFullYear()
+      }
+    }
+    
     const today = new Date()
     const tomorrow = new Date(today.getTime() + 24*60*60*1000)
     return {
@@ -44,6 +60,21 @@ export default function SearchModal({
       }
     }
   }, [isOpen])
+
+  // Update searchData when currentSearchData prop changes and modal is open
+  useEffect(() => {
+    if (isOpen && currentSearchData) {
+      setSearchData(d => ({
+        ...d,
+        location: currentSearchData.location || '',
+        locationName: currentSearchData.locationName || 'Select location',
+        pickupDate: currentSearchData.pickupDate || d.pickupDate,
+        pickupTime: currentSearchData.pickupTime || '15:00',
+        returnDate: currentSearchData.returnDate || d.returnDate,
+        returnTime: currentSearchData.returnTime || '19:00'
+      }))
+    }
+  }, [isOpen, currentSearchData])
 
   function handleClose() {
     setShowMapModal(false)

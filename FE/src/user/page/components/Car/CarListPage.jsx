@@ -385,6 +385,7 @@ export default function CarListPage(){
         stations={stations}
         userLocation={userLocation}
         onSearch={handleSearch}
+        currentSearchData={searchData}
       />
     </main>
   )
