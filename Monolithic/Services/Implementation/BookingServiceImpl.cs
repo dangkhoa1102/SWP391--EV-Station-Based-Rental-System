@@ -178,7 +178,7 @@ namespace Monolithic.Services.Implementation
                 if (booking.BookingStatus != BookingStatus.CheckedIn)
                     return ResponseDto<BookingDto>.Failure($"Cannot checkout booking with status: {booking.BookingStatus}");
 
-                // 2️⃣ Ghi nhận dữ liệu thực tế khi trả xe
+                // 2️⃣ Record actual return info
                 booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.UtcNow;
                 booking.CheckOutNotes = request.CheckOutNotes;
                 booking.CheckOutPhotoUrl = request.CheckOutPhotoUrl;
@@ -188,131 +188,60 @@ namespace Monolithic.Services.Implementation
                 var actualReturn = booking.ActualReturnDateTime.Value;
                 if (actualReturn < booking.StartTime)
                     return ResponseDto<BookingDto>.Failure("Actual return date cannot be earlier than pickup date.");
-<<<<<<< HEAD
 
+                // 3️⃣ Setup rental parameters
                 var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
                 var graceMinutes = 30;
+                var originalRental = booking.RentalAmount; // store old rental amount
 
-                // --- Lưu giá thuê ban đầu (theo dự kiến lúc check-in)
-                var originalRental = booking.RentalAmount;
-
-                // 3️⃣ Tính số giờ thuê thực tế (để phòng cần tính trễ)
-                var totalHours = Math.Ceiling((actualReturn - booking.StartTime).TotalHours);
-                if (totalHours < 1) totalHours = 1;
-                var actualRentalAmount = Math.Round((decimal)totalHours * booking.HourlyRate, 2);
-=======
-                var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
-                var graceMinutes = 30;
-
-                // --- IMPORTANT: lưu giá thuê đã dự kiến / đã thanh toán (nếu có) trước khi ghi đè
-                var originalRental = booking.RentalAmount; // <-- giữ lại giá rental ban đầu (dự kiến hoặc đã set lúc create/check-in)
-
-                // 3️⃣ Tính số giờ thuê thực tế và cập nhật booking.RentalAmount (thực tế)
-                var totalHours = Math.Ceiling((actualReturn - booking.StartTime).TotalHours);
-                if (totalHours < 1) totalHours = 1;
-                var actualRentalAmount = Math.Round((decimal)totalHours * booking.HourlyRate, 2);
+                // 4️⃣ Calculate actual rental hours
+                var totalHoursDouble = Math.Ceiling((actualReturn - booking.StartTime).TotalHours);
+                if (totalHoursDouble < 1) totalHoursDouble = 1;
+                decimal totalHours = Convert.ToDecimal(totalHoursDouble);
+                var actualRentalAmount = Math.Round(totalHours * booking.HourlyRate, 2);
                 booking.RentalAmount = actualRentalAmount;
->>>>>>> f7035fbcab8029a877285409b27a92c073ba4b6f
 
-                // 4️⃣ Kiểm tra trễ
-                bool isLate = actualReturn > expectedReturn.AddMinutes(graceMinutes);
-                booking.LateFee = 0;
-
-                decimal finalAmount = booking.TotalAmount; // mặc định giữ nguyên giá ban đầu
-                decimal refundAmount = 0;
-                decimal extraAmount = 0;
-
-                if (isLate)
+                // 5️⃣ Calculate late fee (if applicable)
+                booking.LateFee = 0m;
+                if (actualReturn > expectedReturn.AddMinutes(graceMinutes))
                 {
-                    // 5️⃣ Nếu trả trễ → tính late fee + damage fee
                     var delayMinutes = (actualReturn - expectedReturn).TotalMinutes;
-                    var hoursLate = (decimal)delayMinutes / 60m;
+                    var hoursLate = Convert.ToDecimal(delayMinutes / 60.0);
                     booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
-
-                    // Tổng tiền mới = expected total + lateFee + damageFee
-                    finalAmount = originalRental +  booking.LateFee +booking.DepositAmount + booking.DamageFee;
-
-                    // Không hoàn deposit
-                    refundAmount = 0;
-                    extraAmount = booking.LateFee + booking.DamageFee; // thêm tiền nếu thiếu
-                }
-                else
-                {
-                    // 6️⃣ Nếu đúng giờ hoặc sớm → không tính lại tiền thuê
-                    booking.LateFee = 0;
-                    finalAmount = booking.TotalAmount;
-
-                    // Hoàn deposit - damageFee
-                    refundAmount = booking.DepositAmount - booking.DamageFee;
-
-                    if (refundAmount < 0)
-                    {
-                        extraAmount = -refundAmount;
-                        refundAmount = 0;
-                    }
                 }
 
-<<<<<<< HEAD
-                // 7️⃣ Ghi nhận kết quả tính toán
-                booking.ExtraAmount = Math.Round(extraAmount, 2);
-                booking.RefundAmount = Math.Round(refundAmount, 2);
-                booking.FinalPaymentAmount = extraAmount > 0 ? extraAmount : -refundAmount;
-                booking.DepositRefunded = refundAmount > 0;
-                booking.TotalAmount = Math.Round(finalAmount, 2);
-                booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
-                booking.UpdatedAt = DateTime.UtcNow;
+                // 6️⃣ Compute total amount (rental + deposit + fees)
+                var totalAmount = booking.RentalAmount + booking.LateFee + booking.DamageFee + booking.DepositAmount;
+                booking.TotalAmount = Math.Round(totalAmount, 2);
 
-                // 8️⃣ Lưu thay đổi
-                var updatedBooking = await _bookingRepository.UpdateAsync(booking);
-                var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
+                // 7️⃣ Determine extra or refund
+                decimal rentalPaid = originalRental; // fallback if no payment tracking
+                decimal alreadyPaid = booking.DepositAmount + rentalPaid;
+                var difference = totalAmount - alreadyPaid;
 
-                // 9️⃣ Message phản hồi
-=======
-                // 5️⃣ Tổng tiền thực tế cuối cùng (phải trả tổng = thuê thực tế + fees)
-                var finalAmount = booking.RentalAmount + booking.LateFee + booking.DamageFee;
-                booking.TotalAmount = Math.Round(finalAmount, 2);
-
-                // 6️⃣ Tính rentalPaid đúng: 
-                // OPTION A (recommended if you track payments): lấy tổng đã thanh toán từ PaymentService (successful payments)
-                // OPTION B (fallback): dùng originalRental (giá thuê dự kiến / hoặc đã thanh toán ở check-in)
-                decimal rentalPaid;
-
-                // If you have payment service available, prefer summing actual succeeded payments:
-                // (uncomment & use if _paymentService injected and implemented)
-                // var paidSum = await _paymentService.GetTotalAmountPaidByBookingAsync(booking.BookingId);
-                // // paidSum usually includes deposit + any rental/payment — compute how much of that was rental:
-                // rentalPaid = Math.Max(0, paidSum - booking.DepositAmount);
-
-                // Fallback: assume originalRental was the amount the user paid (or expected to pay) for rental at check-in
-                rentalPaid = originalRental;
-
-                var difference = finalAmount - rentalPaid;
-
-                // 7️⃣ Nếu difference > 0 → Extra; < 0 → Refund
-                booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0;
-                booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0;
-                booking.DepositRefunded = booking.RefundAmount > 0;
-
-                // 8️⃣ Ghi nhận toán cuối
+                booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0m;
+                booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0m;
+                booking.DepositRefunded = booking.RefundAmount > 0m;
                 booking.FinalPaymentAmount = Math.Round(difference, 2);
+
+                // 8️⃣ Update status and timestamps
                 booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
                 booking.UpdatedAt = DateTime.UtcNow;
 
-                // 9️⃣ Cập nhật slot trống của station (xe đã quay về chiếm chỗ)
-                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, -1);
+                // 9️⃣ Update station slot (+1 available)
+                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
                 if (!stationUpdateResult)
-                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout");
+                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout.");
 
-                // 🔟 Lưu thay đổi booking
+                // 🔟 Save & map to DTO
                 var updatedBooking = await _bookingRepository.UpdateAsync(booking);
                 var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
 
-                // 11️⃣ Tạo message phản hồi
->>>>>>> f7035fbcab8029a877285409b27a92c073ba4b6f
+                // 🪄 Response message
                 string message = bookingDto.FinalPaymentAmount switch
                 {
-                    > 0 => $"Checkout complete. Extra payment required: {bookingDto.ExtraAmount:C}. Please call Payment API with PaymentType = Extra.",
-                    < 0 => $"Checkout complete. Refund to process: {bookingDto.RefundAmount:C}. Please call Payment API with PaymentType = Refund.",
+                    > 0 => $"Checkout complete. Extra payment required: XDR{bookingDto.ExtraAmount:N2}. Please call Payment API with PaymentType = Extra.",
+                    < 0 => $"Checkout complete. Refund to process: XDR{bookingDto.RefundAmount:N2}. Please call Payment API with PaymentType = Refund.",
                     _ => "Checkout complete. No extra payment or refund required."
                 };
 
@@ -323,6 +252,7 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<BookingDto>.Failure($"Error during checkout: {ex.Message}");
             }
         }
+
 
 
         public async Task<ResponseDto<string>> CancelBookingAsync(Guid id, string userId, string? reason = null)
