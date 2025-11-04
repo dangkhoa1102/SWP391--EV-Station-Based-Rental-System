@@ -11,6 +11,7 @@ const ConfirmContract = () => {
     const [error, setError] = useState(null);
     const [signing, setSigning] = useState(false);
     const [signed, setSigned] = useState(false);
+    const [agreed, setAgreed] = useState(false);
 
     useEffect(() => {
         if (!token) {
@@ -24,7 +25,8 @@ const ConfirmContract = () => {
                 const response = await getContractForConfirmation(token);
                 if (response.data.isSuccess) {
                     setContractInfo(response.data.data);
-                    setContractHtml(response.data.data.htmlContent);
+                    // Backend trả về property tên là 'noiDungHtml' (C# NoiDungHtml -> JSON noiDungHtml)
+                    setContractHtml(response.data.data.noiDungHtml || response.data.data.htmlContent || '');
                 } else {
                     setError(response.data.message || 'Failed to fetch contract for confirmation.');
                 }
@@ -68,21 +70,48 @@ const ConfirmContract = () => {
     return (
         <div className="card">
             <div className="card-header">
-                <h2 className="card-title">Confirm and Sign Contract</h2>
+                <h2 className="card-title mb-3">Confirm and Sign Contract</h2>
                 {contractInfo && (
-                    <p className="card-subtitle mb-2 text-muted">
-                        Contract Number: {contractInfo.soHopDong} | Renter: {contractInfo.hoTenBenA}
-                    </p>
+                    <div className="contract-info">
+                        <div className="row">
+                            {/* <div className="col-md-4">
+                                <strong>Contract Number:</strong> {contractInfo.soHopDong || 'string'}
+                            </div> */}
+                            <div className="col-md-4">
+                                <strong>Renter:</strong> {contractInfo.nguoiKy || 'N/A'}
+                            </div>
+                            <div className="col-md-4">
+                                <strong>Date:</strong> {contractInfo.ngayTao ? new Date(contractInfo.ngayTao).toLocaleDateString() : 'N/A'}
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
-            <div className="card-body">
+            <div className="card-body d-flex flex-column align-items-center">
                 <div 
-                    className="border p-3 mb-4" 
+                    className="border p-4 mb-4" 
+                    style={{ 
+                        maxWidth: '800px',
+                        width: '100%',
+                        maxHeight: '600px', 
+                        overflowY: 'auto',
+                        backgroundColor: '#fff',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        fontFamily: "'Times New Roman', serif",
+                        fontSize: '14px',
+                        lineHeight: '1.6'
+                    }}
                     dangerouslySetInnerHTML={{ __html: contractHtml }}
                 />
-
-                <div className="form-check mb-3">
-                    <input className="form-check-input" type="checkbox" id="agreeCheck" />
+                <hr style={{ width: '100%', maxWidth: '800px' }} />                
+                <div className="form-check mb-3" style={{ maxWidth: '800px', width: '100%' }}>
+                    <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        id="agreeCheck"
+                        checked={agreed}
+                        onChange={(e) => setAgreed(e.target.checked)}
+                    />
                     <label className="form-check-label" htmlFor="agreeCheck">
                         I have read and agree to the terms of the contract.
                     </label>
@@ -90,12 +119,13 @@ const ConfirmContract = () => {
 
                 <button 
                     className="btn btn-primary btn-lg"
+                    style={{ maxWidth: '800px', width: '100%' }}
                     onClick={handleSign}
-                    disabled={signing}
+                    disabled={signing || !agreed}
                 >
                     {signing ? 'Signing...' : 'Click to Sign'}
                 </button>
-            </div>
+            </div>            
         </div>
     );
 };
