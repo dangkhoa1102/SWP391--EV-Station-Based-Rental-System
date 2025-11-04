@@ -37,8 +37,8 @@ namespace Monolithic.Services
                 (int)payment.Amount,
                 "Booking payment",
                 items,
-                "https://localhost:3000/payment-cancel",
-                "https://localhost:3000/payment-success"
+               "http://localhost:5173/payment-cancel",
+                "http://localhost:5173/payment-success"
             );
 
             CreatePaymentResult result = await _payOS.createPaymentLink(paymentData);

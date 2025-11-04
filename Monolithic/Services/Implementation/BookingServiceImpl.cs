@@ -1,8 +1,9 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Monolithic.DTOs.Booking;
 using Monolithic.DTOs.Common;
 using Monolithic.DTOs.Payment;
+using Monolithic.Migrations;
 using Monolithic.Models;
 using Monolithic.Repositories.Interfaces;
 using Monolithic.Services.Interfaces;
@@ -204,8 +205,12 @@ namespace Monolithic.Services.Implementation
                 var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
                 var graceMinutes = 30;
 
-                // --- IMPORTANT: lưu giá thuê đã dự kiến / đã thanh toán (nếu có) trước khi ghi đè
-                var originalRental = booking.RentalAmount; // <-- giữ lại giá rental ban đầu (dự kiến hoặc đã set lúc create/check-in)
+        // 2️⃣ Record actual return info
+        booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.UtcNow;
+        booking.CheckOutNotes = request.CheckOutNotes;
+        booking.CheckOutPhotoUrl = request.CheckOutPhotoUrl;
+        booking.DamageFee = Math.Round(request.DamageFee, 2);
+        booking.UpdatedAt = DateTime.UtcNow;
 
                 // 3️⃣ Tính số giờ thuê thực tế và cập nhật booking.RentalAmount (thực tế)
                 var totalHours = Math.Ceiling((actualReturn - booking.StartTime).TotalHours);
@@ -214,27 +219,21 @@ namespace Monolithic.Services.Implementation
                 booking.RentalAmount = actualRentalAmount;
 //>>>>>>> f7035fbcab8029a877285409b27a92c073ba4b6f
 
-                // 4️⃣ Kiểm tra trễ
-                bool isLate = actualReturn > expectedReturn.AddMinutes(graceMinutes);
-                booking.LateFee = 0;
+        // 3️⃣ Setup rental parameters
+        var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
+        var graceMinutes = 30;
 
-                decimal finalAmount = booking.TotalAmount; // mặc định giữ nguyên giá ban đầu
-                decimal refundAmount = 0;
-                decimal extraAmount = 0;
 
-                if (isLate)
+                if (booking.RentalAmount <= 0)
                 {
-                    // 5️⃣ Nếu trả trễ → tính late fee + damage fee
-                    var delayMinutes = (actualReturn - expectedReturn).TotalMinutes;
-                    var hoursLate = (decimal)delayMinutes / 60m;
-                    booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
-
-                    // Tổng tiền mới = expected total + lateFee + damageFee
-                    finalAmount = originalRental +  booking.LateFee +booking.DepositAmount + booking.DamageFee;
-
-                    // Không hoàn deposit
-                    refundAmount = 0;
-                    extraAmount = booking.LateFee + booking.DamageFee; // thêm tiền nếu thiếu
+                    // fallback: if missing, calculate based on duration and rates
+                    var duration = (booking.EndTime ?? booking.StartTime.AddHours(1)) - booking.StartTime;
+                    var totalHours = (decimal)duration.TotalHours;
+                    var totalDays = (decimal)duration.TotalDays;
+                    booking.RentalAmount = totalDays >= 1
+                        ? Math.Ceiling(totalDays) * booking.DailyRate
+                        : Math.Ceiling(totalHours) * booking.HourlyRate;
+                    booking.RentalAmount = Math.Round(booking.RentalAmount, 2);
                 }
                 else
                 {
@@ -272,40 +271,43 @@ namespace Monolithic.Services.Implementation
                 var finalAmountT = booking.RentalAmount + booking.LateFee + booking.DamageFee;
                 booking.TotalAmount = Math.Round(finalAmountT, 2);
 
-                // 6️⃣ Tính rentalPaid đúng: 
-                // OPTION A (recommended if you track payments): lấy tổng đã thanh toán từ PaymentService (successful payments)
-                // OPTION B (fallback): dùng originalRental (giá thuê dự kiến / hoặc đã thanh toán ở check-in)
-                decimal rentalPaid;
+        // 6️⃣ Compute total = rental + deposit + late + damage
+        var totalAmount = booking.RentalAmount + booking.DepositAmount + booking.LateFee + booking.DamageFee;
+        booking.TotalAmount = Math.Round(totalAmount, 2);
 
-                // If you have payment service available, prefer summing actual succeeded payments:
-                // (uncomment & use if _paymentService injected and implemented)
-                // var paidSum = await _paymentService.GetTotalAmountPaidByBookingAsync(booking.BookingId);
-                // // paidSum usually includes deposit + any rental/payment — compute how much of that was rental:
-                // rentalPaid = Math.Max(0, paidSum - booking.DepositAmount);
+        // 7️⃣ Determine extra or refund
+        decimal alreadyPaid = booking.DepositAmount + booking.RentalAmount; // deposit + rental already paid
+        var difference = totalAmount - alreadyPaid;
 
-                // Fallback: assume originalRental was the amount the user paid (or expected to pay) for rental at check-in
-                rentalPaid = originalRental;
+        booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0m;
+        booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0m;
+        booking.DepositRefunded = booking.RefundAmount > 0m;
+        booking.FinalPaymentAmount = Math.Round(difference, 2);
 
-                var difference = finalAmount - rentalPaid;
+        // 8️⃣ Update status
+        booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
+        booking.UpdatedAt = DateTime.UtcNow;
 
-                // 7️⃣ Nếu difference > 0 → Extra; < 0 → Refund
-                booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0;
-                booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0;
-                booking.DepositRefunded = booking.RefundAmount > 0;
+        // 🔟 Save changes
+        var updatedBooking = await _bookingRepository.UpdateAsync(booking);
+        var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
 
-                // 8️⃣ Ghi nhận toán cuối
-                booking.FinalPaymentAmount = Math.Round(difference, 2);
-                booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
-                booking.UpdatedAt = DateTime.UtcNow;
+        // 🪄 Response message
+        string message = bookingDto.FinalPaymentAmount switch
+        {
+            > 0 => $"Checkout complete. Extra payment required: XDR{bookingDto.ExtraAmount:N2}. Please call Payment API with PaymentType = Extra.",
+            < 0 => $"Checkout complete. Refund to process: XDR{bookingDto.RefundAmount:N2}. Please call Payment API with PaymentType = Refund.",
+            _ => "Checkout complete. No extra payment or refund required."
+        };
 
-                // 9️⃣ Cập nhật slot trống của station (xe đã quay về chiếm chỗ)
-                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, -1);
-                if (!stationUpdateResult)
-                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout");
+        return ResponseDto<BookingDto>.Success(bookingDto, message);
+    }
+    catch (Exception ex)
+    {
+        return ResponseDto<BookingDto>.Failure($"Error during checkout: {ex.Message}");
+    }
+}
 
-                // 🔟 Lưu thay đổi booking
-                var updatedBooking = await _bookingRepository.UpdateAsync(booking);
-                var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
 
                 // 11️⃣ Tạo message phản hồi
 //>>>>>>> f7035fbcab8029a877285409b27a92c073ba4b6f
@@ -316,13 +318,6 @@ namespace Monolithic.Services.Implementation
                     _ => "Checkout complete. No extra payment or refund required."
                 };
 
-                return ResponseDto<BookingDto>.Success(bookingDto, message);
-            }
-            catch (Exception ex)
-            {
-                return ResponseDto<BookingDto>.Failure($"Error during checkout: {ex.Message}");
-            }
-        }
 
 
         public async Task<ResponseDto<string>> CancelBookingAsync(Guid id, string userId, string? reason = null)
