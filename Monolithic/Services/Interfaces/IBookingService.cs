@@ -8,7 +8,8 @@ namespace Monolithic.Services.Interfaces
         // Main booking flow methods (New Flow)
         Task<ResponseDto<BookingDto>> CreateBookingAsync(string userId, CreateBookingDto request);
 
-        Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request);
+        // Pass caller user id (from JWT) to allow server-side verification of renter before check-in
+        Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request, string? callerUserId);
         Task<ResponseDto<BookingDto>> CheckOutBookingAsync(CheckOutWithPaymentDto request);
 
 
