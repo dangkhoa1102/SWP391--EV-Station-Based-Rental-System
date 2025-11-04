@@ -15,11 +15,11 @@ namespace Monolithic.DTOs.Car
         public decimal BatteryCapacity { get; set; }
         public decimal CurrentBatteryLevel { get; set; }
         public decimal RentalPricePerHour { get; set; }
-
         public decimal RentalPricePerDay { get; set; }
         public bool IsAvailable { get; set; }
         public Guid CurrentStationId { get; set; }
         public string CurrentStationName { get; set; } = string.Empty;
+        public int Seats { get; set; }
         public bool IsActive { get; set; }
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime CreatedAt { get; set; }
@@ -58,13 +58,17 @@ namespace Monolithic.DTOs.Car
         [Required]
         [Range(0.01, 1000000000000000000)]
         public decimal RentalPricePerHour { get; set; }
+        
         [Required]
         [Range(0.01, 1000000000000000000)]
         public decimal RentalPricePerDay { get; set; }
 
-
         [Required]
         public Guid CurrentStationId { get; set; }
+
+        [Required]
+        [Range(2, 50, ErrorMessage = "S? ch? ng?i ph?i t? 2 ??n 50")]
+        public int Seats { get; set; } = 4;
 
         // Optional: Car image file
         public IFormFile? CarImage { get; set; }
@@ -84,5 +88,8 @@ namespace Monolithic.DTOs.Car
         public decimal? RentalPricePerDay { get; set; }
         public bool? IsAvailable { get; set; }
         public Guid? CurrentStationId { get; set; }
+        
+        [Range(2, 50, ErrorMessage = "S? ch? ng?i ph?i t? 2 ??n 50")]
+        public int? Seats { get; set; }
     }
 }

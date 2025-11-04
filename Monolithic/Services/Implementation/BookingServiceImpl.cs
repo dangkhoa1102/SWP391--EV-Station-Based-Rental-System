@@ -1,9 +1,8 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Monolithic.DTOs.Booking;
 using Monolithic.DTOs.Common;
 using Monolithic.DTOs.Payment;
-using Monolithic.Migrations;
 using Monolithic.Models;
 using Monolithic.Repositories.Interfaces;
 using Monolithic.Services.Interfaces;
@@ -20,17 +19,17 @@ namespace Monolithic.Services.Implementation
         private readonly IMapper _mapper;
 
         public BookingServiceImpl(
-            IBookingRepository bookingRepository, 
-            ICarRepository carRepository, 
+            IBookingRepository bookingRepository,
+            ICarRepository carRepository,
             IStationRepository stationRepository,
-           
+
             //IPaymentService paymentService,
             IMapper mapper)
         {
             _bookingRepository = bookingRepository;
             _carRepository = carRepository;
             _stationRepository = stationRepository;
-            
+
             //_paymentService = paymentService;
             _mapper = mapper;
         }
@@ -40,20 +39,20 @@ namespace Monolithic.Services.Implementation
         /// <summary>
         /// Step 1: Create booking with deposit payment (Đặt xe + thanh toán đặt cọc)
         /// </summary>
-    public async Task<ResponseDto<BookingDto>> CreateBookingAsync(string userId, CreateBookingDto request)
-{
-    try
-    {
-        // 1. Validate user ID
-        if (!Guid.TryParse(userId, out var userGuid))
-            return ResponseDto<BookingDto>.Failure("Invalid user ID");
+        public async Task<ResponseDto<BookingDto>> CreateBookingAsync(string userId, CreateBookingDto request)
+        {
+            try
+            {
+                // 1. Validate user ID
+                if (!Guid.TryParse(userId, out var userGuid))
+                    return ResponseDto<BookingDto>.Failure("Invalid user ID");
 
-        // 2. Validate dates
-        if (request.PickupDateTime <= DateTime.UtcNow)
-            return ResponseDto<BookingDto>.Failure("Pickup date must be in the future");
+                // 2. Validate dates
+                if (request.PickupDateTime <= DateTime.UtcNow)
+                    return ResponseDto<BookingDto>.Failure("Pickup date must be in the future");
 
-        if (request.ExpectedReturnDateTime <= request.PickupDateTime)
-            return ResponseDto<BookingDto>.Failure("Return date must be after pickup date");
+                if (request.ExpectedReturnDateTime <= request.PickupDateTime)
+                    return ResponseDto<BookingDto>.Failure("Return date must be after pickup date");
 
                 // 3. Check car availability
                 var car = await _carRepository.GetByIdAsync(request.CarId);
@@ -62,8 +61,8 @@ namespace Monolithic.Services.Implementation
 
                 // 4. Check pickup station
                 var pickupStation = await _stationRepository.GetByIdAsync(request.StationId);
-        if (pickupStation == null || !pickupStation.IsActive)
-            return ResponseDto<BookingDto>.Failure("Pickup station invalid");
+                if (pickupStation == null || !pickupStation.IsActive)
+                    return ResponseDto<BookingDto>.Failure("Pickup station invalid");
 
                 // 5. Check return station if specified
 
@@ -74,51 +73,51 @@ namespace Monolithic.Services.Implementation
 
                 // 7. Calculate rental amounts
                 var duration = request.ExpectedReturnDateTime - request.PickupDateTime;
-        var totalHours = (decimal)duration.TotalHours;
-        var totalDays = (decimal)duration.TotalDays;
+                var totalHours = (decimal)duration.TotalHours;
+                var totalDays = (decimal)duration.TotalDays;
 
-        decimal hourlyRate = car.RentalPricePerHour;
+                decimal hourlyRate = car.RentalPricePerHour;
                 decimal dailyRate = car.RentalPricePerDay;
-        decimal totalAmount = totalDays >= 1 ? Math.Ceiling(totalDays) * dailyRate : Math.Ceiling(totalHours) * hourlyRate;
-        totalAmount = Math.Round(totalAmount, 2);
-        decimal depositAmount = Math.Round(totalAmount * 0.3m, 2);
+                decimal totalAmount = totalDays >= 1 ? Math.Ceiling(totalDays) * dailyRate : Math.Ceiling(totalHours) * hourlyRate;
+                totalAmount = Math.Round(totalAmount, 2);
+                decimal depositAmount = Math.Round(totalAmount * 0.3m, 2);
 
-        // 8. Create booking entity (Payment is not handled here)
-        var booking = new Booking
-        {
-            BookingId = Guid.NewGuid(),
-            UserId = userGuid,
-            CarId = request.CarId,
-            StationId = request.StationId,
-            StartTime = request.PickupDateTime,
-            EndTime = request.ExpectedReturnDateTime,
-            HourlyRate = hourlyRate,
-            DailyRate = dailyRate,
-            TotalAmount = totalAmount,
-            DepositAmount = depositAmount,
-            BookingStatus = BookingStatus.Pending, // waiting for payment
-            IsContractApproved = false,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+                // 8. Create booking entity (Payment is not handled here)
+                var booking = new Booking
+                {
+                    BookingId = Guid.NewGuid(),
+                    UserId = userGuid,
+                    CarId = request.CarId,
+                    StationId = request.StationId,
+                    StartTime = request.PickupDateTime,
+                    EndTime = request.ExpectedReturnDateTime,
+                    HourlyRate = hourlyRate,
+                    DailyRate = dailyRate,
+                    TotalAmount = totalAmount,
+                    DepositAmount = depositAmount,
+                    BookingStatus = BookingStatus.Pending, // waiting for payment
+                    IsContractApproved = false,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
 
-        // 9. Save booking
-        var createdBooking = await _bookingRepository.AddAsync(booking);
+                // 9. Save booking
+                var createdBooking = await _bookingRepository.AddAsync(booking);
 
-        // 10. Update car status to reserved (optional: only after payment?)
-        //await _carRepository.UpdateCarStatusAsync(request.CarId, false);
+                // 10. Update car status to reserved (optional: only after payment?)
+                //await _carRepository.UpdateCarStatusAsync(request.CarId, false);
 
-        return ResponseDto<BookingDto>.Success(
-            _mapper.Map<BookingDto>(createdBooking),
-            "Booking created successfully. Please proceed to deposit payment to confirm your booking."
-        );
-    }
-    catch (Exception ex)
-    {
-        return ResponseDto<BookingDto>.Failure($"Error creating booking: {ex.Message}");
-    }
-}
+                return ResponseDto<BookingDto>.Success(
+                    _mapper.Map<BookingDto>(createdBooking),
+                    "Booking created successfully. Please proceed to deposit payment to confirm your booking."
+                );
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<BookingDto>.Failure($"Error creating booking: {ex.Message}");
+            }
+        }
 
         public async Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request)
         {
@@ -167,92 +166,133 @@ namespace Monolithic.Services.Implementation
         /// <summary>
         /// Step 5: Check-out with rental payment (Check-out + thanh toán tiền thuê)
         /// </summary>
-       public async Task<ResponseDto<BookingDto>> CheckOutBookingAsync(CheckOutWithPaymentDto request)
-{
-    try
-    {
-        // 1️⃣ Validate booking
-        var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
-        if (booking == null || !booking.IsActive)
-            return ResponseDto<BookingDto>.Failure("Booking not found.");
+        public async Task<ResponseDto<BookingDto>> CheckOutBookingAsync(CheckOutWithPaymentDto request)
+        {
+            try
+            {
+                // 1️⃣ Validate booking
+                var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
+                if (booking == null || !booking.IsActive)
+                    return ResponseDto<BookingDto>.Failure("Booking not found.");
 
-        if (booking.BookingStatus != BookingStatus.CheckedIn)
-            return ResponseDto<BookingDto>.Failure($"Cannot checkout booking with status: {booking.BookingStatus}");
+                if (booking.BookingStatus != BookingStatus.CheckedIn)
+                    return ResponseDto<BookingDto>.Failure($"Cannot checkout booking with status: {booking.BookingStatus}");
 
-        // 2️⃣ Record actual return info
-        booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.UtcNow;
-        booking.CheckOutNotes = request.CheckOutNotes;
-        booking.CheckOutPhotoUrl = request.CheckOutPhotoUrl;
-        booking.DamageFee = Math.Round(request.DamageFee, 2);
-        booking.UpdatedAt = DateTime.UtcNow;
+                // 2️⃣ Ghi nhận dữ liệu thực tế khi trả xe
+                booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.UtcNow;
+                booking.CheckOutNotes = request.CheckOutNotes;
+                booking.CheckOutPhotoUrl = request.CheckOutPhotoUrl;
+                booking.DamageFee = Math.Round(request.DamageFee, 2);
+                booking.UpdatedAt = DateTime.UtcNow;
 
-        var actualReturn = booking.ActualReturnDateTime.Value;
-        if (actualReturn < booking.StartTime)
-            return ResponseDto<BookingDto>.Failure("Actual return date cannot be earlier than pickup date.");
+                var actualReturn = booking.ActualReturnDateTime.Value;
+                if (actualReturn < booking.StartTime)
+                    return ResponseDto<BookingDto>.Failure("Actual return date cannot be earlier than pickup date.");
+                var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
+                var graceMinutes = 30;
 
-        // 3️⃣ Setup rental parameters
-        var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
-        var graceMinutes = 30;
+                // --- IMPORTANT: lưu giá thuê đã dự kiến / đã thanh toán (nếu có) trước khi ghi đè
+                var originalRental = booking.RentalAmount; // <-- giữ lại giá rental ban đầu (dự kiến hoặc đã set lúc create/check-in)
 
+                // 3️⃣ Tính số giờ thuê thực tế và cập nhật booking.RentalAmount (thực tế)
+                var totalHours = Math.Ceiling((actualReturn - booking.StartTime).TotalHours);
+                if (totalHours < 1) totalHours = 1;
+                var actualRentalAmount = Math.Round((decimal)totalHours * booking.HourlyRate, 2);
+                booking.RentalAmount = actualRentalAmount;
 
-                if (booking.RentalAmount <= 0)
+                // 4️⃣ Kiểm tra trễ
+                bool isLate = actualReturn > expectedReturn.AddMinutes(graceMinutes);
+                booking.LateFee = 0;
+
+                decimal finalAmount = booking.TotalAmount; // mặc định giữ nguyên giá ban đầu
+                decimal refundAmount = 0;
+                decimal extraAmount = 0;
+
+                if (isLate)
                 {
-                    // fallback: if missing, calculate based on duration and rates
-                    var duration = (booking.EndTime ?? booking.StartTime.AddHours(1)) - booking.StartTime;
-                    var totalHours = (decimal)duration.TotalHours;
-                    var totalDays = (decimal)duration.TotalDays;
-                    booking.RentalAmount = totalDays >= 1
-                        ? Math.Ceiling(totalDays) * booking.DailyRate
-                        : Math.Ceiling(totalHours) * booking.HourlyRate;
-                    booking.RentalAmount = Math.Round(booking.RentalAmount, 2);
+                    // 5️⃣ Nếu trả trễ → tính late fee + damage fee
+                    var delayMinutes = (actualReturn - expectedReturn).TotalMinutes;
+                    var hoursLate = (decimal)delayMinutes / 60m;
+                    booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
+
+                    // Tổng tiền mới = expected total + lateFee + damageFee
+                    finalAmount = originalRental + booking.LateFee + booking.DepositAmount + booking.DamageFee;
+
+                    // Không hoàn deposit
+                    refundAmount = 0;
+                    extraAmount = booking.LateFee + booking.DamageFee; // thêm tiền nếu thiếu
                 }
-                booking.LateFee = 0m;
-        if (actualReturn > expectedReturn.AddMinutes(graceMinutes))
-        {
-            var delayMinutes = (actualReturn - expectedReturn).TotalMinutes;
-            var hoursLate = Convert.ToDecimal(delayMinutes / 60.0);
-            booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
+                else
+                {
+                    // 6️⃣ Nếu đúng giờ hoặc sớm → không tính lại tiền thuê
+                    booking.LateFee = 0;
+                    finalAmount = booking.TotalAmount;
+
+                    // Hoàn deposit - damageFee
+                    refundAmount = booking.DepositAmount - booking.DamageFee;
+
+                    if (refundAmount < 0)
+                    {
+                        extraAmount = -refundAmount;
+                        refundAmount = 0;
+                    }
+                }
+
+
+                // 5️⃣ Tổng tiền thực tế cuối cùng (phải trả tổng = thuê thực tế + fees)
+                var finalAmountT = booking.RentalAmount + booking.LateFee + booking.DamageFee;
+                booking.TotalAmount = Math.Round(finalAmountT, 2);
+
+                // 6️⃣ Tính rentalPaid đúng: 
+                // OPTION A (recommended if you track payments): lấy tổng đã thanh toán từ PaymentService (successful payments)
+                // OPTION B (fallback): dùng originalRental (giá thuê dự kiến / hoặc đã thanh toán ở check-in)
+                decimal rentalPaid;
+
+                // If you have payment service available, prefer summing actual succeeded payments:
+                // (uncomment & use if _paymentService injected and implemented)
+                // var paidSum = await _paymentService.GetTotalAmountPaidByBookingAsync(booking.BookingId);
+                // // paidSum usually includes deposit + any rental/payment — compute how much of that was rental:
+                // rentalPaid = Math.Max(0, paidSum - booking.DepositAmount);
+
+                // Fallback: assume originalRental was the amount the user paid (or expected to pay) for rental at check-in
+                rentalPaid = originalRental;
+
+                var difference = finalAmount - rentalPaid;
+
+                // 7️⃣ Nếu difference > 0 → Extra; < 0 → Refund
+                booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0;
+                booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0;
+                booking.DepositRefunded = booking.RefundAmount > 0;
+
+                // 8️⃣ Ghi nhận toán cuối
+                booking.FinalPaymentAmount = Math.Round(difference, 2);
+                booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
+                booking.UpdatedAt = DateTime.UtcNow;
+
+                // 9️⃣ Cập nhật slot trống của station (xe đã quay về chiếm chỗ)
+                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, -1);
+                if (!stationUpdateResult)
+                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout");
+
+                // 🔟 Lưu thay đổi booking
+                var updatedBooking = await _bookingRepository.UpdateAsync(booking);
+                var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
+
+                // 11️⃣ Tạo message phản hồi
+                string message = bookingDto.FinalPaymentAmount switch
+                {
+                    > 0 => $"Checkout complete. Extra payment required: {bookingDto.ExtraAmount:C}. Please call Payment API with PaymentType = Extra.",
+                    < 0 => $"Checkout complete. Refund to process: {bookingDto.RefundAmount:C}. Please call Payment API with PaymentType = Refund.",
+                    _ => "Checkout complete. No extra payment or refund required."
+                };
+
+                return ResponseDto<BookingDto>.Success(bookingDto, message);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<BookingDto>.Failure($"Error during checkout: {ex.Message}");
+            }
         }
-
-        // 6️⃣ Compute total = rental + deposit + late + damage
-        var totalAmount = booking.RentalAmount + booking.DepositAmount + booking.LateFee + booking.DamageFee;
-        booking.TotalAmount = Math.Round(totalAmount, 2);
-
-        // 7️⃣ Determine extra or refund
-        decimal alreadyPaid = booking.DepositAmount + booking.RentalAmount; // deposit + rental already paid
-        var difference = totalAmount - alreadyPaid;
-
-        booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0m;
-        booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0m;
-        booking.DepositRefunded = booking.RefundAmount > 0m;
-        booking.FinalPaymentAmount = Math.Round(difference, 2);
-
-        // 8️⃣ Update status
-        booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
-        booking.UpdatedAt = DateTime.UtcNow;
-
-        // 🔟 Save changes
-        var updatedBooking = await _bookingRepository.UpdateAsync(booking);
-        var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
-
-        // 🪄 Response message
-        string message = bookingDto.FinalPaymentAmount switch
-        {
-            > 0 => $"Checkout complete. Extra payment required: XDR{bookingDto.ExtraAmount:N2}. Please call Payment API with PaymentType = Extra.",
-            < 0 => $"Checkout complete. Refund to process: XDR{bookingDto.RefundAmount:N2}. Please call Payment API with PaymentType = Refund.",
-            _ => "Checkout complete. No extra payment or refund required."
-        };
-
-        return ResponseDto<BookingDto>.Success(bookingDto, message);
-    }
-    catch (Exception ex)
-    {
-        return ResponseDto<BookingDto>.Failure($"Error during checkout: {ex.Message}");
-    }
-}
-
-
-
 
 
         public async Task<ResponseDto<string>> CancelBookingAsync(Guid id, string userId, string? reason = null)
@@ -353,7 +393,7 @@ namespace Monolithic.Services.Implementation
                 }
             }
 
-            return true; 
+            return true;
         }
 
         #endregion
@@ -425,10 +465,10 @@ namespace Monolithic.Services.Implementation
                 // Update fields
                 //if (request.ReturnStationId.HasValue)
                 //    booking.ReturnStationId = request.ReturnStationId.Value;
-                
+
                 if (request.ExpectedReturnDateTime.HasValue)
                     booking.EndTime = request.ExpectedReturnDateTime.Value;
-                
+
                 if (request.BookingStatus.HasValue)
                     booking.BookingStatus = request.BookingStatus.Value;
 
@@ -443,7 +483,7 @@ namespace Monolithic.Services.Implementation
             }
         }
 
-     
+
         #endregion
 
         #region Utility Methods
@@ -549,11 +589,11 @@ namespace Monolithic.Services.Implementation
             try
             {
                 // Get bookings that are confirmed or checked-in and pickup time is in the future
-                var upcomingBookings = await _bookingRepository.FindAsync(b => 
-                    b.IsActive && 
+                var upcomingBookings = await _bookingRepository.FindAsync(b =>
+                    b.IsActive &&
                     (b.BookingStatus == BookingStatus.DepositPaid || b.BookingStatus == BookingStatus.CheckedIn) &&
                     b.StartTime >= DateTime.UtcNow);
-                
+
                 var orderedBookings = upcomingBookings.OrderBy(b => b.StartTime).Take(100).ToList();
                 return ResponseDto<List<BookingDto>>.Success(_mapper.Map<List<BookingDto>>(orderedBookings));
             }
@@ -563,8 +603,8 @@ namespace Monolithic.Services.Implementation
             }
         }
 
-       
-   
+
+
 
 
 
