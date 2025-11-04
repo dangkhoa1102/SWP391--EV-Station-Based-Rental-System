@@ -145,6 +145,7 @@ namespace Monolithic.Data
                 entity.Property(c => c.CurrentBatteryLevel).HasPrecision(5, 2).HasDefaultValue(100);
                 builder.Entity<Car>().Property(c => c.RentalPricePerHour).HasColumnType("decimal(10,2)");
                 builder.Entity<Car>().Property(c => c.RentalPricePerDay).HasColumnType("decimal(10,2)");
+                entity.Property(c => c.Seats).IsRequired().HasDefaultValue(4);
                 entity.Property(c => c.IsAvailable).HasDefaultValue(true);
                 entity.Property(c => c.IsActive).HasDefaultValue(true);
                 entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
