@@ -53,6 +53,25 @@ namespace Monolithic.Services.Implementation
         /// </summary>
         public async Task<Guid> LuuHopDongVaTaoFileAsync(TaoHopDongDto request, Guid bookingId, Guid renterId)
         {
+            // Verify booking exists and status
+            var booking = await _bookingRepository.GetByIdAsync(bookingId);
+            if (booking == null)
+            {
+                throw new InvalidOperationException("Booking not found");
+            }
+
+            // Only allow contract creation when booking has deposit paid
+            if (booking.BookingStatus != BookingStatus.DepositPaid)
+            {
+                throw new InvalidOperationException("Booking must have deposit paid before creating contract");
+            }
+
+            // Ensure renter matches booking owner
+            if (booking.UserId != renterId)
+            {
+                throw new InvalidOperationException("Renter ID does not match booking owner");
+            }
+
             var ngayTao = DateTime.UtcNow;
             DateTime? ngayHetHan = null;
 
