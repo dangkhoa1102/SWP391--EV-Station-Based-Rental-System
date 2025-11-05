@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import UserProfile from './user/page/components/Profile/UserProfile'
+import UpdateProfilePage from './user/page/components/Profile/UpdateProfilePage'
 import HomePage from './user/page/components/Home/HomePage'
 import CarListPage from './user/page/components/Car/CarListPage'
 import CarDetail from './user/page/components/Car/CarDetail'
@@ -31,6 +32,7 @@ function AppShell(){
           <Route path="/transaction" element={<TransactionPage />} />
           <Route path="/booking-history" element={<BookingHistory />} />
           <Route path="/profile" element={<UserProfile />} />
+          <Route path="/update-profile" element={<UpdateProfilePage />} />
           <Route path="/staff" element={<StaffPage />} />
         </Routes>
       </main>

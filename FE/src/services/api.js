@@ -207,6 +207,7 @@ const API = {
   // simplified: expose generic wrappers
   get: async (endpoint, opts) => (await apiClient.get(endpoint, opts)).data,
   post: async (endpoint, body, opts) => (await apiClient.post(endpoint, body, opts)).data,
+  put: async (endpoint, body, opts) => (await apiClient.put(endpoint, body, opts)).data,
 
   updateUserAvatar: async (userId, avatarUrl) => {
     const res = await apiClient.post(`/Users/${encodeURIComponent(userId)}/avatar`, { avatarUrl })

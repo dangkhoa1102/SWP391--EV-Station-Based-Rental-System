@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import API from '../../../services/userApi'
 import { formatVND } from '../../../../utils/currency'
+import NotificationModal from '../../../../components/NotificationModal'
 import './booking_history.css'
 
 export default function BookingHistory(){
@@ -18,6 +19,8 @@ export default function BookingHistory(){
   const [feedbackData, setFeedbackData] = useState({ bookingId: '', carId: '', rating: 5, comment: '' })
   const [isEditingFeedback, setIsEditingFeedback] = useState(false)
   const [currentFeedbackId, setCurrentFeedbackId] = useState(null)
+  const [notification, setNotification] = useState({ isOpen: false, type: 'info', title: '', message: '' })
+  const [depositLoading, setDepositLoading] = useState(false)
 
   // console.log('🔍 BookingHistory render - showFeedbackModal:', showFeedbackModal, 'selectedBooking:', selectedBooking)
 
@@ -159,6 +162,62 @@ export default function BookingHistory(){
     } catch (e) {
       console.error('❌ Error cancelling booking:', e)
       alert('Failed to cancel booking. Please try again.')
+    }
+  }
+
+  const handleDepositClick = async (booking, event) => {
+    // Prevent event bubbling
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+
+    const bookingId = booking.id || booking.bookingId || booking.bookingIdString
+    if (!bookingId) {
+      alert('Booking ID not found')
+      return
+    }
+
+    setDepositLoading(true)
+    try {
+      // Directly create payment - no need to check contract
+      console.log('💳 Creating deposit payment for booking:', bookingId)
+      const paymentResponse = await API.createPayment(bookingId)
+      
+      const checkoutUrl = paymentResponse.checkoutUrl || paymentResponse.data?.checkoutUrl
+      if (!checkoutUrl) {
+        throw new Error('No checkout URL received')
+      }
+
+      // Save booking info before redirect
+      localStorage.setItem('currentBookingId', bookingId)
+      console.log('🔗 Redirecting to PayOS:', checkoutUrl)
+      window.location.href = checkoutUrl
+    } catch (err) {
+      console.error('❌ Error initiating payment:', err)
+      
+      // Check for contract-related errors
+      let errorMsg = err.response?.data?.message || err.message || 'Failed to initiate payment'
+      const errors = err.response?.data?.errors || []
+      
+      if (errors.some(e => typeof e === 'string' && e.toLowerCase().includes('contract'))) {
+        errorMsg = 'Contract not found or not confirmed for this booking'
+        setNotification({
+          isOpen: true,
+          type: 'error',
+          title: '📋 Contract Required',
+          message: 'Please wait for the contract to be confirmed. Check your email for the contract document and ensure it has been processed.'
+        })
+      } else {
+        setNotification({
+          isOpen: true,
+          type: 'error',
+          title: 'Payment Error',
+          message: errorMsg
+        })
+      }
+    } finally {
+      setDepositLoading(false)
     }
   }
 
@@ -408,6 +467,16 @@ export default function BookingHistory(){
                       <span className="price-value">{formatVND(booking.totalAmount || booking.TotalAmount || 0)}</span>
                     </div>
                     <div className="booking-actions">
+                      {Number(booking.bookingStatus) === 0 && (
+                        <button 
+                          className="btn btn-deposit" 
+                          onClick={(e) => handleDepositClick(booking, e)}
+                          disabled={depositLoading}
+                          type="button"
+                        >
+                          <i className="fas fa-wallet"></i> {depositLoading ? 'Processing...' : 'Pay Deposit'}
+                        </button>
+                      )}
                       {Number(booking.bookingStatus) === 2 && (
                         <button 
                           className="btn btn-feedback" 
@@ -572,6 +641,15 @@ export default function BookingHistory(){
           </div>
         </div>
       )}
+
+      {/* Notification Modal */}
+      <NotificationModal
+        isOpen={notification.isOpen}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={() => setNotification({ ...notification, isOpen: false })}
+      />
     </main>
   )
 }

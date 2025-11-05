@@ -340,6 +340,7 @@
 }
 
 .btn-feedback,
+.btn-deposit,
 .btn-cancel {
     padding: 0.7rem 1.3rem;
     border-radius: 6px;
@@ -362,6 +363,22 @@
 .btn-feedback:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(255, 106, 0, 0.4);
+}
+
+.btn-deposit {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-deposit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btn-deposit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .btn-cancel {
