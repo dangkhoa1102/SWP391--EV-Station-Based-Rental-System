@@ -3,6 +3,7 @@ using Monolithic.DTOs.Payment;
 using Monolithic.Models;
 using Monolithic.Services;
 using Monolithic.Services.Interfaces;
+using Monolithic.DTOs.Common;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -17,36 +18,43 @@ public class PaymentController : ControllerBase
         _payOSService = payOSService;
     }
 
-
-
-
-
     [HttpPost("create")]
-public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
+    public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto request)
     {
-        var payment = await _paymentService.CreatePaymentAsync(request);
-
-        // Generate PayOS QR/checkout
-        var (checkoutUrl, qrCode, orderCode) = await _payOSService.GeneratePaymentQR(payment);
-
-        payment.OrderCode = orderCode;
-        await _paymentService.UpdatePaymentStatusAsync(payment.PaymentId, PaymentStatus.Pending);
-
-        var dto = new PaymentDto
+        try
         {
-            PaymentId = payment.PaymentId,
-            BookingId = payment.BookingId,
-            Amount = payment.Amount,
-            PaymentStatus = payment.PaymentStatus,
-            PaymentType = payment.PaymentType,
-            OrderCode = orderCode,
-            CheckoutUrl = checkoutUrl,
-            QrCode = qrCode,
-            CreatedAt = payment.CreatedAt,
-            UpdatedAt = payment.UpdatedAt
-        };
+            var payment = await _paymentService.CreatePaymentAsync(request);
 
-        return Ok(dto);
+            // Generate PayOS QR/checkout
+            var (checkoutUrl, qrCode, orderCode) = await _payOSService.GeneratePaymentQR(payment);
+
+            payment.OrderCode = orderCode;
+            await _paymentService.UpdatePaymentStatusAsync(payment.PaymentId, PaymentStatus.Pending);
+
+            var dto = new PaymentDto
+            {
+                PaymentId = payment.PaymentId,
+                BookingId = payment.BookingId,
+                Amount = payment.Amount,
+                PaymentStatus = payment.PaymentStatus,
+                PaymentType = payment.PaymentType,
+                OrderCode = orderCode,
+                CheckoutUrl = checkoutUrl,
+                QrCode = qrCode,
+                CreatedAt = payment.CreatedAt,
+                UpdatedAt = payment.UpdatedAt
+            };
+
+            return Ok(ResponseDto<PaymentDto>.Success(dto));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ResponseDto<PaymentDto>.Failure(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ResponseDto<PaymentDto>.Failure($"Error creating payment: {ex.Message}"));
+        }
     }
 
     [HttpPost("sync/{bookingId}")]

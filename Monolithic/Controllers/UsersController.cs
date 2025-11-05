@@ -302,6 +302,27 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
+        /// Cập nhật thông tin hồ sơ người dùng (Admin/StationStaff có thể update cho user khác)
+        /// </summary>
+        [HttpPut("Update-Profile-By-{userId}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<UserDto>>> UpdateUserProfile(string userId, [FromBody] UpdateUserDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ResponseDto<UserDto>.Failure("Dữ liệu không hợp lệ"));
+            }
+
+            var result = await _userService.UpdateUserProfileAsync(userId, request);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Lấy tổng số người dùng - Admin only
         /// </summary>
         [HttpGet("Get-Total-Count")]
