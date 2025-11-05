@@ -232,14 +232,6 @@ export default function UserProfile(){
                 {uploading.cccdFront && <div className="upload-overlay">Uploading...</div>}
               </div>
               <input ref={fileRefs.cccdFront} type="file" accept="image/*" style={{ display: 'none' }} onChange={e=> handleFileUpload('cccdFront', e.target.files?.[0])} />
-              <div className="doc-actions">
-                {selectedFiles.cccdFront && (
-                  <span className="doc-badge">{selectedFiles.cccdFront.name}</span>
-                )}
-                {selectedFiles.cccdFront && (
-                  <button type="button" className="remove-file-btn" onClick={()=> removeSelectedFile('cccdFront')}>Remove</button>
-                )}
-              </div>
             </div>
 
             {/* CCCD Back */}
@@ -264,14 +256,6 @@ export default function UserProfile(){
                 {uploading.cccdBack && <div className="upload-overlay">Uploading...</div>}
               </div>
               <input ref={fileRefs.cccdBack} type="file" accept="image/*" style={{ display: 'none' }} onChange={e=> handleFileUpload('cccdBack', e.target.files?.[0])} />
-              <div className="doc-actions">
-                {selectedFiles.cccdBack && (
-                  <span className="doc-badge">{selectedFiles.cccdBack.name}</span>
-                )}
-                {selectedFiles.cccdBack && (
-                  <button type="button" className="remove-file-btn" onClick={()=> removeSelectedFile('cccdBack')}>Remove</button>
-                )}
-              </div>
             </div>
           </div>
           
@@ -312,14 +296,6 @@ export default function UserProfile(){
                 {uploading.licenseFront && <div className="upload-overlay">Uploading...</div>}
               </div>
               <input ref={fileRefs.licenseFront} type="file" accept="image/*" style={{ display: 'none' }} onChange={e=> handleFileUpload('licenseFront', e.target.files?.[0])} />
-              <div className="doc-actions">
-                {selectedFiles.licenseFront && (
-                  <span className="doc-badge">{selectedFiles.licenseFront.name}</span>
-                )}
-                {selectedFiles.licenseFront && (
-                  <button type="button" className="remove-file-btn" onClick={()=> removeSelectedFile('licenseFront')}>Remove</button>
-                )}
-              </div>
             </div>
 
             {/* License Back */}
@@ -344,14 +320,6 @@ export default function UserProfile(){
                 {uploading.licenseBack && <div className="upload-overlay">Uploading...</div>}
               </div>
               <input ref={fileRefs.licenseBack} type="file" accept="image/*" style={{ display: 'none' }} onChange={e=> handleFileUpload('licenseBack', e.target.files?.[0])} />
-              <div className="doc-actions">
-                {selectedFiles.licenseBack && (
-                  <span className="doc-badge">{selectedFiles.licenseBack.name}</span>
-                )}
-                {selectedFiles.licenseBack && (
-                  <button type="button" className="remove-file-btn" onClick={()=> removeSelectedFile('licenseBack')}>Remove</button>
-                )}
-              </div>
             </div>
           </div>
           

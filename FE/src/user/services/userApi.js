@@ -58,7 +58,14 @@ apiClient.interceptors.response.use(
       
       try {
         console.log('🔄 Token expired, attempting to refresh...')
-        const res = await apiClient.post('/Auth/Refresh-Token')
+        const refreshToken = localStorage.getItem('refreshToken')
+        const currentToken = localStorage.getItem('token')
+        
+        // Try with refresh token first, then fallback to current token
+        const res = await apiClient.post('/Auth/Refresh-Token', {
+          refreshToken: refreshToken || currentToken
+        })
+        
         const newToken = res.data?.data?.token || res.data?.token
         
         if (newToken) {
@@ -77,6 +84,7 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         localStorage.removeItem('userId')
+        localStorage.removeItem('refreshToken')
         processQueue(refreshError, null)
         // Could redirect to login here if needed
         return Promise.reject(refreshError)
@@ -141,7 +149,14 @@ const API = {
     return res.data
   },
 
-  refreshToken: async () => { const res = await apiClient.post('/Auth/Refresh-Token'); return res.data },
+  refreshToken: async () => { 
+    const refreshToken = localStorage.getItem('refreshToken')
+    const currentToken = localStorage.getItem('token')
+    const res = await apiClient.post('/Auth/Refresh-Token', {
+      refreshToken: refreshToken || currentToken
+    })
+    return res.data
+  },
   logout: async () => { const res = await apiClient.post('/Auth/Logout'); localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); localStorage.removeItem('user'); localStorage.removeItem('userEmail'); return res.data },
   forgotPassword: async (email) => { const res = await apiClient.post('/Auth/forgot-password', { email }); return res.data },
   getMe: async () => { 
@@ -352,22 +367,18 @@ const API = {
       console.log('📝 Creating booking for user:', userId)
       console.log('📝 Booking data:', bookingData)
       
-      // Backend expects these fields according to Swagger
+      // Backend expects only these fields according to Swagger
       const payload = {
         carId: bookingData.carId,
-        pickupStationId: bookingData.pickupStationId,
-        returnStationId: bookingData.returnStationId,
+        stationId: bookingData.pickupStationId || bookingData.stationId,
         pickupDateTime: bookingData.pickupDateTime,
-        expectedReturnDateTime: bookingData.expectedReturnDateTime,
-        paymentMethod: "string",
-        transactionId: "string"
+        expectedReturnDateTime: bookingData.expectedReturnDateTime
       }
       
       console.log('📤 Sending payload:', payload)
       console.log('📤 Payload field types:', {
         carId: typeof payload.carId,
-        pickupStationId: typeof payload.pickupStationId,
-        returnStationId: typeof payload.returnStationId,
+        stationId: typeof payload.stationId,
         pickupDateTime: typeof payload.pickupDateTime,
         expectedReturnDateTime: typeof payload.expectedReturnDateTime
       })
