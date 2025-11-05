@@ -18,11 +18,13 @@ namespace Monolithic.Services.Implementation
         private readonly IStationRepository _stationRepository;
         private readonly PaymentServiceImpl _paymentService;
         private readonly IMapper _mapper;
+        private readonly IContractRepository _contractRepository;
 
         public BookingServiceImpl(
             IBookingRepository bookingRepository,
             ICarRepository carRepository,
             IStationRepository stationRepository,
+            IContractRepository contractRepository,
 
             //IPaymentService paymentService,
             IMapper mapper)
@@ -30,6 +32,7 @@ namespace Monolithic.Services.Implementation
             _bookingRepository = bookingRepository;
             _carRepository = carRepository;
             _stationRepository = stationRepository;
+            _contractRepository = contractRepository;
 
             //_paymentService = paymentService;
             _mapper = mapper;
@@ -120,7 +123,7 @@ namespace Monolithic.Services.Implementation
             }
         }
 
-        public async Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request)
+        public async Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request, string? callerUserId)
         {
             // 1️⃣ Lấy thông tin booking
             var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
@@ -130,28 +133,54 @@ namespace Monolithic.Services.Implementation
             if (booking.BookingStatus != BookingStatus.DepositPaid)
                 return ResponseDto<BookingDto>.Failure($"Cannot check-in booking with status: {booking.BookingStatus}");
 
-            // 2️⃣ Kiểm tra thời gian hợp lệ (±60 phút)
-            //var timeDifference = Math.Abs((DateTime.UtcNow - booking.StartTime).TotalMinutes);
-            //if (timeDifference > 60)
-            //    return ResponseDto<BookingDto>.Failure("Check-in time is outside the allowed window");
+            // Verify caller identity from JWT
+            if (string.IsNullOrEmpty(callerUserId) || !Guid.TryParse(callerUserId, out var callerGuid))
+            {
+                return ResponseDto<BookingDto>.Failure("Unauthorized");
+            }
 
-            // 3️⃣ Cập nhật thông tin check-in
+            // 2️⃣ Kiểm tra hợp đồng liên quan
+            var contract = await _contractRepository.GetByBookingIdAsync(request.BookingId);
+            if (contract == null)
+            {
+                return ResponseDto<BookingDto>.Failure("Contract not found for this booking");
+            }
+
+            if (!contract.IsConfirmed)
+            {
+                return ResponseDto<BookingDto>.Failure("Contract not confirmed");
+            }
+
+            if (contract.RenterId != callerGuid)
+            {
+                return ResponseDto<BookingDto>.Failure("Forbidden: caller is not the renter who signed the contract");
+            }
+
+            // 3️⃣ Lưu chữ ký vào contract (staff + customer) nếu có
+            //contract.StaffSignature = request.StaffSignature;
+            //contract.CustomerSignature = request.CustomerSignature;
+            //contract.SignedAt = DateTime.UtcNow;
+            //await _contractRepository.UpdateAsync(contract);
+
+            // 4️⃣ Cập nhật thông tin check-in trên booking
             booking.CheckInAt = DateTime.UtcNow;
             booking.UpdatedAt = DateTime.UtcNow;
             booking.BookingStatus = BookingStatus.CheckedInPendingPayment;
+            booking.IsContractApproved = true;
+            booking.ContractApprovedAt = DateTime.UtcNow;
 
-            // 4️⃣ Cập nhật slot trống của station (xe đã rời đi)
+            // 5️⃣ Cập nhật slot trống của station (xe đã rời đi)
             //var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
             //if (!stationUpdateResult)
             //    return ResponseDto<BookingDto>.Failure("Failed to update station slots");
 
-            // 5️⃣ Cập nhật DB
+            // 6️⃣ Cập nhật DB
             var updated = await _bookingRepository.UpdateAsync(booking);
 
-            // 6️⃣ Đọc lại slots hiện tại của station để xác nhận
+            // 7️⃣ Đọc lại slots hiện tại của station để xác nhận
             var stationAfterUpdate = await _stationRepository.GetByIdAsync(booking.StationId);
 
-            // 7️⃣ Không tạo payment ở đây, FE hoặc Payment API sẽ gọi:
+            // 8️⃣ Không tạo payment ở đây, FE hoặc Payment API sẽ gọi:
             // PaymentType = Rental (100% rental cost)
             // Tổng tiền thực tế lúc này = Deposit (30%) + Rental (100%) = 130%
             return ResponseDto<BookingDto>.Success(

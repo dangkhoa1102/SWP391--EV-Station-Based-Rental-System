@@ -49,8 +49,11 @@ namespace Monolithic.DTOs.Auth
         public string? PhoneNumber { get; set; }
         public string? Address { get; set; }
         public DateOnly? DateOfBirth { get; set; }
+        public string? YearOfBirth { get; set; }
+        public string? IdentityNumber { get; set; }
         public string? DriverLicenseNumber { get; set; }
         public DateOnly? DriverLicenseExpiry { get; set; }
+        public string? DriverLicenseClass { get; set; }
         public string UserRole { get; set; } = string.Empty;
         public bool IsVerified { get; set; }
         [JsonConverter(typeof(DateTimeConverter))]
@@ -82,10 +85,20 @@ namespace Monolithic.DTOs.Auth
 
         public DateOnly? DateOfBirth { get; set; }
 
+        [StringLength(4, MinimumLength = 4, ErrorMessage = "Year of birth must be 4 digits")]
+        [RegularExpression(@"^\d{4}$", ErrorMessage = "Year of birth must be a valid year (e.g., 1990)")]
+        public string? YearOfBirth { get; set; }
+
+        [StringLength(50, ErrorMessage = "Identity number cannot exceed 50 characters")]
+        public string? IdentityNumber { get; set; }
+
         [StringLength(50, ErrorMessage = "Driver license number cannot exceed 50 characters")]
         public string? DriverLicenseNumber { get; set; }
 
         public DateOnly? DriverLicenseExpiry { get; set; }
+
+        [StringLength(10, ErrorMessage = "Driver license class cannot exceed 10 characters")]
+        public string? DriverLicenseClass { get; set; }
     }
 
     public class ChangePasswordDto

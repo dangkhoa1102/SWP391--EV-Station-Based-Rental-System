@@ -1,4 +1,5 @@
 using Monolithic.DTOs.Common;
+using Monolithic.DTOs.Auth;
 using Monolithic.Models;
 
 namespace Monolithic.Services.Interfaces
@@ -12,6 +13,7 @@ namespace Monolithic.Services.Interfaces
         Task<bool> CheckPasswordAsync(User user, string password);
         Task<bool> ChangePasswordAsync(User user, string currentPassword, string newPassword);
         Task<bool> UpdateUserAsync(User user);
+        Task<ResponseDto<UserDto>> UpdateUserProfileAsync(string userId, UpdateUserDto dto);
         
         // Extended user operations
         Task<(List<User> users, int total)> GetUsersAsync(int page, int pageSize, string? search = null, string? role = null, bool? isActive = null);

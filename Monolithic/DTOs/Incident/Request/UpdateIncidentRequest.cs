@@ -15,6 +15,9 @@ namespace Monolithic.DTOs.Incident.Request
 
         public Guid? ResolvedBy { get; set; } // UserId of admin/staff
 
+        // Optional: associated car for this incident (not required)
+        public Guid? CarId { get; set; }
+
         // Thêm phần upload ảnh mới
         public List<IFormFile>? NewImages { get; set; }
 

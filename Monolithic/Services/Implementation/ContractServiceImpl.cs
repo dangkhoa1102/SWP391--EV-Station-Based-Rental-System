@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using OpenXmlPowerTools;
 using DocumentFormat.OpenXml.Packaging;
 using Microsoft.Extensions.Configuration;
+using Monolithic.Common;
 
 namespace Monolithic.Services.Implementation
 {
@@ -19,6 +20,7 @@ namespace Monolithic.Services.Implementation
         private readonly IContractRepository _contractRepository;
         private readonly IBookingRepository _bookingRepository;
         private readonly ICarRepository _carRepository;
+        private readonly IUserService _userService;
         private readonly IContractEmailService _emailService;
         private readonly IHostEnvironment _env;
         private readonly IMapper _mapper;
@@ -32,6 +34,7 @@ namespace Monolithic.Services.Implementation
             IContractRepository contractRepository,
             IBookingRepository bookingRepository,
             ICarRepository carRepository,
+            IUserService userService,
             IContractEmailService emailService,
             IHostEnvironment env,
             IMapper mapper,
@@ -41,6 +44,7 @@ namespace Monolithic.Services.Implementation
             _contractRepository = contractRepository;
             _bookingRepository = bookingRepository;
             _carRepository = carRepository;
+            _userService = userService;
             _emailService = emailService;
             _env = env;
             _mapper = mapper;
@@ -49,21 +53,113 @@ namespace Monolithic.Services.Implementation
         }
 
         /// <summary>
-        /// Lưu hợp đồng thuê xe và tạo file Word từ template
+        /// Lưu hợp đồng thuê xe và tạo file Word từ template - TỰ ĐỘNG LẤY DỮ LIỆU TỪ USER/BOOKING/CAR
         /// </summary>
-        public async Task<Guid> LuuHopDongVaTaoFileAsync(TaoHopDongDto request, Guid bookingId, Guid renterId)
+        public async Task<Guid> LuuHopDongVaTaoFileAsync(TaoHopDongDto? request, Guid bookingId, Guid renterId)
         {
+            // Verify booking exists and status
+            var booking = await _bookingRepository.GetBookingWithDetailsAsync(bookingId);
+            if (booking == null)
+            {
+                throw new InvalidOperationException("Booking not found");
+            }
+
+            // Only allow contract creation when booking has deposit paid
+            //if (booking.BookingStatus != BookingStatus.DepositPaid)
+            //{
+            //    throw new InvalidOperationException("Booking must have deposit paid before creating contract");
+            //}
+
+            // Ensure renter matches booking owner
+            if (booking.UserId != renterId)
+            {
+                throw new InvalidOperationException("Renter ID does not match booking owner");
+            }
+
+            // === TỰ ĐỘNG LẤY DỮ LIỆU ===
+            // 1. Lấy thông tin User
+            var user = await _userService.FindByIdAsync(renterId.ToString());
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found");
+            }
+
+            // 2. Lấy thông tin Car (đã có trong booking.Car nếu dùng GetBookingWithDetailsAsync)
+            var car = booking.Car ?? await _carRepository.GetByIdAsync(booking.CarId);
+            if (car == null)
+            {
+                throw new InvalidOperationException("Car not found");
+            }
+
+            // 3. Tạo số hợp đồng tự động tăng (format: HD-YYYYMMDD-XXXX)
+            var soHopDong = await GenerateContractNumberAsync();
+
+            // 4. Lấy ngày hiện tại (ngày tạo hợp đồng)
             var ngayTao = DateTime.UtcNow;
+            var ngayKy = ngayTao.ToString("dd");
+            var thangKy = ngayTao.ToString("MM");
+            var namKy = ngayTao.ToString("yyyy");
+
+            // 5. Tính thời hạn thuê
+            var (thoiHanThue, donViThoiHan, thoiHanThueSo, thoiHanThueChu) = CalculateRentalDuration(booking.StartTime, booking.EndTime ?? booking.StartTime.AddDays(1));
+
+            // 6. Tính giá thuê
+            var giaThueSo = booking.TotalAmount.ToString("N0");
+            var giaThueChu = NumberToVietnameseWords.ConvertToWords(booking.TotalAmount, addCurrency: true);
+            var phuongThucThanhToan = "Chuyển khoản"; // hoặc lấy từ booking nếu có
+            var ngayThanhToan = booking.StartTime.ToString("dd/MM/yyyy");
+
+            // 7. Build TaoHopDongDto tự động (nếu không có request truyền vào)
+            var autoDto = new TaoHopDongDto(
+                SoHopDong: soHopDong,
+                NgayKy: ngayKy,
+                ThangKy: thangKy,
+                NamKy: namKy,
+                BenA: new ThongTinBenA(
+                    HoTen: user.FullName,
+                    NamSinh: user.YearOfBirth ?? user.DateOfBirth.Year.ToString(),
+                    CccdHoacHoChieu: user.IdentityNumber ?? "Chưa cập nhật",
+                    HoKhauThuongTru: user.Address ?? "Chưa cập nhật"
+                ),
+                Xe: new ThongTinXe(
+                    NhanHieu: car.Brand,
+                    BienSo: car.LicensePlate,
+                    LoaiXe: car.Model,
+                    MauSon: car.Color,
+                    ChoNgoi: car.Seats.ToString(),
+                    XeDangKiHan: car.Year.ToString()
+                ),
+                GiaThue: new ThongTinGiaThue(
+                    GiaThueSo: giaThueSo,
+                    GiaThueChu: giaThueChu,
+                    PhuongThucThanhToan: phuongThucThanhToan,
+                    NgayThanhToan: ngayThanhToan
+                ),
+                ThoiHanThueSo: thoiHanThueSo,
+                ThoiHanThueChu: thoiHanThueChu,
+                ThoiHanThue: thoiHanThue,
+                DonViThoiHan: donViThoiHan,
+                GPLX: new ThongTinGPLX(
+                    Hang: user.DriverLicenseClass ?? "B1",
+                    So: user.DriverLicenseNumber ?? "Chưa cập nhật",
+                    HanSuDung: user.DriverLicenseExpiry?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật"
+                )
+            );
+
+            // Sử dụng DTO được truyền vào hoặc DTO tự động
+            var finalDto = request ?? autoDto;
+
+            // === TIẾP TỤC LOGIC CŨ ===
             DateTime? ngayHetHan = null;
 
             // Tính ngày hết hạn dựa trên đơn vị thời hạn
-            if (request.DonViThoiHan.ToLower() == "thang")
+            if (finalDto.DonViThoiHan.ToLower() == "thang")
             {
-                ngayHetHan = ngayTao.AddMonths(request.ThoiHanThue);
+                ngayHetHan = ngayTao.AddMonths(finalDto.ThoiHanThue);
             }
-            else if (request.DonViThoiHan.ToLower() == "ngay")
+            else if (finalDto.DonViThoiHan.ToLower() == "ngay")
             {
-                ngayHetHan = ngayTao.AddDays(request.ThoiHanThue);
+                ngayHetHan = ngayTao.AddDays(finalDto.ThoiHanThue);
             }
 
             // Tạo entity hợp đồng
@@ -72,9 +168,9 @@ namespace Monolithic.Services.Implementation
                 ContractId = Guid.NewGuid(),
                 BookingId = bookingId,
                 RenterId = renterId,
-                SoHopDong = request.SoHopDong,
-                HoTenBenA = request.BenA.HoTen,
-                BienSoXe = request.Xe.BienSo,
+                SoHopDong = finalDto.SoHopDong,
+                HoTenBenA = finalDto.BenA.HoTen,
+                BienSoXe = finalDto.Xe.BienSo,
                 NgayTao = ngayTao,
                 NgayHetHan = ngayHetHan,
                 Status = ContractStatus.Pending,
@@ -98,45 +194,44 @@ namespace Monolithic.Services.Implementation
                 File.Copy(templatePath, tempFilePath, true);
 
                 // Replace placeholders in the document
-                // Đảm bảo placeholders khớp chính xác với template DOCX
                 await ReplaceTextInDocumentAsync(tempFilePath, new Dictionary<string, string>
                 {
                     // Số hợp đồng
-                    { "{{so_hop_dong}}", request.SoHopDong },
+                    { "{{so_hop_dong}}", finalDto.SoHopDong },
                     
                     // Ngày ký hợp đồng
-                    { "{{ngay_ky}}", request.NgayKy },
-                    { "{{thang_ky}}", request.ThangKy },
-                    { "{{nam_ky}}", request.NamKy },
+                    { "{{ngay_ky}}", finalDto.NgayKy },
+                    { "{{thang_ky}}", finalDto.ThangKy },
+                    { "{{nam_ky}}", finalDto.NamKy },
                     
                     // Thông tin Bên A (người cho thuê)
-                    { "{{HO_TEN_BEN_A}}", request.BenA.HoTen },
-                    { "{{nam_sinh_ben_a}}", request.BenA.NamSinh },
-                    { "{{cccd_hoac_ho_chieu_ben_a}}", request.BenA.CccdHoacHoChieu },
-                    { "{{ho_khau_thuong_tru}}", request.BenA.HoKhauThuongTru },
+                    { "{{HO_TEN_BEN_A}}", finalDto.BenA.HoTen },
+                    { "{{nam_sinh_ben_a}}", finalDto.BenA.NamSinh },
+                    { "{{cccd_hoac_ho_chieu_ben_a}}", finalDto.BenA.CccdHoacHoChieu },
+                    { "{{ho_khau_thuong_tru}}", finalDto.BenA.HoKhauThuongTru },
                     
                     // Thông tin xe
-                    { "{{nhan_hieu}}", request.Xe.NhanHieu },
-                    { "{{bien_so}}", request.Xe.BienSo },
-                    { "{{loai_xe}}", request.Xe.LoaiXe },
-                    { "{{mau_son}}", request.Xe.MauSon },
-                    { "{{cho_ngoi}}", request.Xe.ChoNgoi },
-                    { "{{xe_dang_ki_han}}", request.Xe.XeDangKiHan },
+                    { "{{nhan_hieu}}", finalDto.Xe.NhanHieu },
+                    { "{{bien_so}}", finalDto.Xe.BienSo },
+                    { "{{loai_xe}}", finalDto.Xe.LoaiXe },
+                    { "{{mau_son}}", finalDto.Xe.MauSon },
+                    { "{{cho_ngoi}}", finalDto.Xe.ChoNgoi },
+                    { "{{xe_dang_ki_han}}", finalDto.Xe.XeDangKiHan },
                     
                     // Thông tin GPLX
-                    { "{{gplx_hang}}", request.GPLX.Hang },
-                    { "{{gplx_so}}", request.GPLX.So },
-                    { "{{gplx_han_su_dung}}", request.GPLX.HanSuDung },
+                    { "{{gplx_hang}}", finalDto.GPLX.Hang },
+                    { "{{gplx_so}}", finalDto.GPLX.So },
+                    { "{{gplx_han_su_dung}}", finalDto.GPLX.HanSuDung },
                     
                     // Thời hạn thuê
-                    { "{{thoi_han_thue_so}}", request.ThoiHanThueSo },
-                    { "{{thoi_han_thue_chu}}", request.ThoiHanThueChu },
+                    { "{{thoi_han_thue_so}}", finalDto.ThoiHanThueSo },
+                    { "{{thoi_han_thue_chu}}", finalDto.ThoiHanThueChu },
                     
                     // Giá thuê và thanh toán
-                    { "{{gia_thue_so}}", request.GiaThue.GiaThueSo },
-                    { "{{gia_thue_chu}}", request.GiaThue.GiaThueChu },
-                    { "{{phuong_thuc_thanh_toan}}", request.GiaThue.PhuongThucThanhToan },
-                    { "{{ngay_thanh_toan}}", request.GiaThue.NgayThanhToan }
+                    { "{{gia_thue_so}}", finalDto.GiaThue.GiaThueSo },
+                    { "{{gia_thue_chu}}", finalDto.GiaThue.GiaThueChu },
+                    { "{{phuong_thuc_thanh_toan}}", finalDto.GiaThue.PhuongThucThanhToan },
+                    { "{{ngay_thanh_toan}}", finalDto.GiaThue.NgayThanhToan }
                 });
 
                 // Move to final location
@@ -145,7 +240,7 @@ namespace Monolithic.Services.Implementation
 
                 // Lưu contract vào database
                 await _contractRepository.AddAsync(contractEntity);
-                _logger.LogInformation("Created contract {ContractId} for booking {BookingId}", contractEntity.ContractId, bookingId);
+                _logger.LogInformation("Created contract {ContractId} for booking {BookingId} with auto-filled data", contractEntity.ContractId, bookingId);
 
                 return contractEntity.ContractId;
             }
@@ -154,6 +249,77 @@ namespace Monolithic.Services.Implementation
                 _logger.LogError(ex, "Error creating contract document");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Tạo số hợp đồng tự động tăng (format: HD-YYYYMMDD-XXXX)
+        /// </summary>
+        private async Task<string> GenerateContractNumberAsync()
+        {
+            var today = DateTime.UtcNow;
+            var prefix = $"HD-{today:yyyyMMdd}";
+
+            // Lấy tất cả hợp đồng được tạo trong ngày hôm nay
+            var todayContracts = await _contractRepository.FindAsync(c => 
+                c.SoHopDong != null && c.SoHopDong.StartsWith(prefix));
+
+            // Tìm số thứ tự lớn nhất
+            var maxNumber = 0;
+            foreach (var contract in todayContracts)
+            {
+                if (contract.SoHopDong != null && contract.SoHopDong.Length >= prefix.Length + 5)
+                {
+                    var numberPart = contract.SoHopDong.Substring(prefix.Length + 1); // Skip the "-"
+                    if (int.TryParse(numberPart, out var num))
+                    {
+                        maxNumber = Math.Max(maxNumber, num);
+                    }
+                }
+            }
+
+            // Tăng số thứ tự
+            var nextNumber = maxNumber + 1;
+            return $"{prefix}-{nextNumber:D4}";
+        }
+
+        /// <summary>
+        /// Tính thời hạn thuê từ startTime và endTime
+        /// </summary>
+        private (int thoiHanThue, string donViThoiHan, string thoiHanThueSo, string thoiHanThueChu) CalculateRentalDuration(DateTime start, DateTime end)
+        {
+            var span = end - start;
+            
+            int thoiHanThue;
+            string donViThoiHan;
+            string thoiHanThueSo;
+            string thoiHanThueChu;
+
+            if (span.TotalHours < 24)
+            {
+                // Thuê theo giờ
+                thoiHanThue = (int)Math.Ceiling(span.TotalHours);
+                donViThoiHan = "giờ";
+                thoiHanThueSo = thoiHanThue.ToString();
+                thoiHanThueChu = NumberToVietnameseWords.ConvertToWords(thoiHanThue, addCurrency: false) + " giờ";
+            }
+            else if (span.TotalDays < 30)
+            {
+                // Thuê theo ngày
+                thoiHanThue = (int)Math.Ceiling(span.TotalDays);
+                donViThoiHan = "ngày";
+                thoiHanThueSo = thoiHanThue.ToString();
+                thoiHanThueChu = NumberToVietnameseWords.ConvertToWords(thoiHanThue, addCurrency: false) + " ngày";
+            }
+            else
+            {
+                // Thuê theo tháng
+                thoiHanThue = (int)Math.Ceiling(span.TotalDays / 30.0);
+                donViThoiHan = "tháng";
+                thoiHanThueSo = thoiHanThue.ToString();
+                thoiHanThueChu = NumberToVietnameseWords.ConvertToWords(thoiHanThue, addCurrency: false) + " tháng";
+            }
+
+            return (thoiHanThue, donViThoiHan, thoiHanThueSo, thoiHanThueChu);
         }
 
         /// <summary>

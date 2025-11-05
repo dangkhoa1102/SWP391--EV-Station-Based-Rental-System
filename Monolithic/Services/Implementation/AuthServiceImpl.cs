@@ -183,8 +183,11 @@ namespace Monolithic.Services.Implementation
                 if (!string.IsNullOrWhiteSpace(request.PhoneNumber)) user.PhoneNumber = request.PhoneNumber;
                 if (!string.IsNullOrWhiteSpace(request.Address)) user.Address = request.Address;
                 if (request.DateOfBirth.HasValue) user.DateOfBirth = request.DateOfBirth.Value;
+                if (!string.IsNullOrWhiteSpace(request.YearOfBirth)) user.YearOfBirth = request.YearOfBirth;
+                if (!string.IsNullOrWhiteSpace(request.IdentityNumber)) user.IdentityNumber = request.IdentityNumber;
                 if (!string.IsNullOrWhiteSpace(request.DriverLicenseNumber)) user.DriverLicenseNumber = request.DriverLicenseNumber;
                 if (request.DriverLicenseExpiry.HasValue) user.DriverLicenseExpiry = request.DriverLicenseExpiry.Value;
+                if (!string.IsNullOrWhiteSpace(request.DriverLicenseClass)) user.DriverLicenseClass = request.DriverLicenseClass;
 
                 user.UpdatedAt = DateTime.UtcNow;
                 await _dbContext.SaveChangesAsync();
@@ -239,8 +242,11 @@ namespace Monolithic.Services.Implementation
                 PhoneNumber = user.PhoneNumber,
                 Address = user.Address,
                 DateOfBirth = user.DateOfBirth,
+                YearOfBirth = user.YearOfBirth,
+                IdentityNumber = user.IdentityNumber,
                 DriverLicenseNumber = user.DriverLicenseNumber,
                 DriverLicenseExpiry = user.DriverLicenseExpiry,
+                DriverLicenseClass = user.DriverLicenseClass,
                 UserRole = user.UserRole,
                 IsVerified = user.IsVerified,
                 CreatedAt = user.CreatedAt,

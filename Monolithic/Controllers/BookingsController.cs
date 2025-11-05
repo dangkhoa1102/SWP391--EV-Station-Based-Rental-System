@@ -30,7 +30,7 @@ namespace Monolithic.Controllers
             var result = await _bookingService.CreateBookingAsync(userId, request);
             if (!result.IsSuccess) 
                 return BadRequest(result);
-            
+
             return CreatedAtAction(nameof(GetBooking), new { id = result.Data!.BookingId }, result);
         }
 
@@ -45,7 +45,14 @@ namespace Monolithic.Controllers
         [HttpPost("Check-In-With-Contract")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> CheckInWithContract([FromBody] CheckInWithContractDto request)
         {
-            var result = await _bookingService.CheckInWithContractAsync(request);
+            // Lấy userId từ JWT token claims
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized(ResponseDto<BookingDto>.Failure("User not authenticated"));
+            }
+
+            var result = await _bookingService.CheckInWithContractAsync(request, userIdClaim);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             
