@@ -1,7 +1,7 @@
 // src/components/Profile/ProfileModal.jsx
 import React, { useEffect, useState } from 'react';
 import './Profile.css';
-import './StaffProfile.css';
+import './AdminProfile.css';
 import AdminAPI from '../../../services/adminApi';
 
 export default function ProfileModal({ open, onClose, inline = false }) {
@@ -17,7 +17,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
       try {
         setLoading(true)
         setError('')
-        // Fetch staff profile and auth info (same endpoints as user, via staff API)
+        // Fetch Admin Profile and auth info (same endpoints as user, via admin API)
         let p = {}
         let a = {}
         try {
@@ -77,7 +77,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
         } catch {}
         if ((!p || Object.keys(p).length === 0) && (!a || Object.keys(a).length === 0)) {
           const hasToken = typeof localStorage !== 'undefined' && !!localStorage.getItem('token')
-          setError(hasToken ? 'You may not have permission to view this profile.' : 'You are not logged in. Please log in with a staff account.')
+          setError(hasToken ? 'You may not have permission to view this profile.' : 'You are not logged in. Please log in with a admin account.')
         }
       } catch (e) {
         if (!mounted) return
@@ -111,36 +111,36 @@ export default function ProfileModal({ open, onClose, inline = false }) {
   const employeeId = profile.employeeId || profile.id || auth.userId || auth.id || '—'
   const station = profile.stationName || profile.station || '—'
   const role = profile.role || auth.role || (Array.isArray(auth.roles) ? auth.roles.join(', ') : (auth.roles || '—'))
-  const avatar = profile.avatarUrl || auth.avatarUrl || 'https://via.placeholder.com/180x180?text=Staff'
+  const avatar = profile.avatarUrl || auth.avatarUrl || 'https://via.placeholder.com/180x180?text=Admin'
 
   if (inline) {
     // Professional Facebook-like profile
     return (
-      <div className="staff-profile-page">
+      <div className="admin-profile-page">
         {/* Cover */}
-        <div className="staff-cover">
-          <div className="staff-cover-gradient" />
+        <div className="admin-cover">
+          <div className="admin-cover-gradient" />
         </div>
         {/* Header: avatar + name/role */}
-        <div className="staff-header">
-          <div className="staff-header-inner">
-            <div className="staff-avatar">
+        <div className="admin-header">
+          <div className="admin-header-inner">
+            <div className="admin-avatar">
               <img src={avatar} alt="Avatar" />
             </div>
-            <div className="staff-title">
+            <div className="admin-title">
               <h1>{fullName}</h1>
-              <div className="staff-meta">
-                <span className="staff-role">{role || '—'}</span>
-                {station && <span className="staff-sep">•</span>}
-                <span className="staff-station">{station}</span>
+              <div className="admin-meta">
+                <span className="admin-role">{role || '—'}</span>
+                {station && <span className="admin-sep">•</span>}
+                <span className="admin-station">{station}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Content grid */}
-        <div className="staff-content">
-          <div className="staff-col">
+        <div className="admin-content">
+          <div className="admin-col">
             <div className="card">
               <div className="card-header">About</div>
               <div className="card-body info-list">
@@ -153,7 +153,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
             </div>
           </div>
 
-          <div className="staff-col">
+          <div className="admin-col">
             <div className="card">
               <div className="card-header">Contact</div>
               <div className="card-body info-list">
@@ -166,7 +166,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
         </div>
 
         {error && (
-          <div className="staff-error">{error}</div>
+          <div className="admin-error">{error}</div>
         )}
       </div>
     )
@@ -177,11 +177,11 @@ export default function ProfileModal({ open, onClose, inline = false }) {
     <div className="profile-modal-overlay" style={{display:'flex'}}>
       <div className="profile-modal-content">
         <span className="profile-modal-close" onClick={onClose}>&times;</span>
-        <h2>Staff Profile</h2>
+        <h2>Admin Profile</h2>
         {error && (
           <div style={{background:'#ffecec', color:'#b00020', padding:'8px 12px', borderRadius:6, marginBottom:12}}>{error}</div>
         )}
-        <img src={avatar} alt="Staff" style={{borderRadius:'50%'}} />
+        <img src={avatar} alt="Admin" style={{borderRadius:'50%'}} />
         {loading ? (
           <div style={{padding:16}}>Loading profile…</div>
         ) : (

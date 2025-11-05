@@ -1,6 +1,6 @@
 /* Professional Facebook-like Staff Profile */
 
-.staff-profile-page {
+\.admin-profile-page {
   --card-bg: #ffffff;
   --card-br: 12px;
   --card-bd: #e8e8e8;
@@ -13,26 +13,26 @@
 }
 
 /* Cover */
-.staff-cover {
+\.admin-cover {
   width: 100%;
   height: 280px;
   background: linear-gradient(135deg, #0ea5e9, #2563eb);
   position: relative;
 }
 
-.staff-cover-gradient {
+\.admin-cover-gradient {
   position: absolute;
   inset: 0;
   background: radial-gradient(1200px 300px at 50% 0%, rgba(255,255,255,0.18), rgba(255,255,255,0));
 }
 
 /* Header with avatar overlapping cover */
-.staff-header {
+\.admin-header {
   background: var(--card-bg);
   border-bottom: 1px solid var(--card-bd);
 }
 
-.staff-header-inner {
+\.admin-header-inner {
   max-width: var(--container);
   margin: 0 auto;
   padding: 0 32px 20px 32px;
@@ -42,7 +42,7 @@
   transform: translateY(-80px);
 }
 
-.staff-avatar {
+\.admin-avatar {
   width: 120px;
   height: 120px;
   border-radius: 50%;
@@ -53,25 +53,25 @@
   flex: 0 0 auto;
 }
 
-.staff-avatar img {
+\.admin-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.staff-title {
+\.admin-title {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.staff-title h1 {
+\.admin-title h1 {
   margin: 0;
   font-size: 1.75rem;
   color: var(--ink);
 }
 
-.staff-meta {
+\.admin-meta {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -79,11 +79,11 @@
   font-size: 0.95rem;
 }
 
-.staff-role { font-weight: 600; }
-.staff-sep { opacity: 0.6; }
+\.admin-role { font-weight: 600; }
+\.admin-sep { opacity: 0.6; }
 
 /* Content grid */
-.staff-content {
+\.admin-content {
   max-width: var(--container);
   margin: -60px auto 32px;
   padding: 0 32px;
@@ -116,7 +116,7 @@
 .info-row .value { color: var(--ink); font-weight: 500; text-align: right; }
 
 /* Error */
-.staff-error {
+\.admin-error {
   max-width: var(--container);
   margin: 0 auto 16px;
   color: #b00020;
@@ -126,12 +126,12 @@
 }
 
 @media (max-width: 1200px) {
-  .staff-content { grid-template-columns: 1fr; }
-  .staff-header-inner { transform: translateY(-60px); }
-  .staff-avatar { width: 108px; height: 108px; }
-  .staff-title h1 { font-size: 1.6rem; }
+  \.admin-content { grid-template-columns: 1fr; }
+  \.admin-header-inner { transform: translateY(-60px); }
+  \.admin-avatar { width: 108px; height: 108px; }
+  \.admin-title h1 { font-size: 1.6rem; }
 }
 
 @media (min-width: 1600px) {
-  .staff-profile-page { --container: 1440px; }
+  \.admin-profile-page { --container: 1440px; }
 }
