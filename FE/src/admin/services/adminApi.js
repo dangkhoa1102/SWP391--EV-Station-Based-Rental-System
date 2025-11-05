@@ -1245,7 +1245,7 @@ const API = {
   }
 }
 
-// Payment-related helpers used during staff check-in payment flow
+// Payment-related helpers used during admin check-in payment flow
 // Create a payment for a booking. Default paymentType='Rental' (enum 1)
 API.createPayment = async (bookingId, paymentType = 'Rental', description = 'Rental payment at check-in') => {
   if (!bookingId) throw new Error('bookingId is required')
@@ -1346,23 +1346,23 @@ API.decodeJwt = (token) => {
   return JSON.parse(json)
 }
 
-// Resolve Staff entity Id for the current user (or a provided userId)
+// Resolve Admin entity Id for the current user (or a provided userId)
 // Tries, in order:
-// 1) /Users/Get-My-Profile -> staffId | StaffId
-// 2) JWT claims or localStorage for userId, then lookup staff by user via common endpoints
-//    - /Staff/Get-By-User-Id/{userId}
-//    - /Staff/Get-By-User/{userId}
-//    - /Staffs/Get-By-User-Id/{userId}
-//    - /Staff/By-UserId/{userId}
-//    - /Staff/User/{userId}
-//    - /Users/{userId}/Staff
+// 1) /Users/Get-My-Profile -> adminId | AdminId
+// 2) JWT claims or localStorage for userId, then lookup admin by user via common endpoints
+//    - /Admin/Get-By-User-Id/{userId}
+//    - /Admin/Get-By-User/{userId}
+//    - /Admins/Get-By-User-Id/{userId}
+//    - /Admin/By-UserId/{userId}
+//    - /Admin/User/{userId}
+//    - /Users/{userId}/Admin
 //    - query variants: ?userId=
-API.resolveStaffId = async (userId = null) => {
+API.resolveAdminId = async (userId = null) => {
   // 1) Try profile
   try {
     const me = await API.getMyProfile()
-    const sid = me?.staffId || me?.StaffId || me?.staffID || me?.StaffID
-    if (sid) return sid
+    const aid = me?.adminId || me?.AdminId || me?.adminID || me?.AdminID
+    if (aid) return aid
     // capture userId if not provided
     if (!userId) userId = me?.id || me?.Id || me?.userId || me?.UserId || null
   } catch {}
@@ -1379,19 +1379,19 @@ API.resolveStaffId = async (userId = null) => {
       }
     } catch {}
   }
-  if (!userId) throw new Error('Unable to determine userId to resolve staffId')
+  if (!userId) throw new Error('Unable to determine userId to resolve adminId')
 
   const id = encodeURIComponent(userId)
   const attempts = [
-    { url: `/Staff/Get-By-User-Id/${id}` },
-    { url: `/Staff/Get-By-User/${id}` },
-    { url: `/Staffs/Get-By-User-Id/${id}` },
-    { url: `/Staff/By-UserId/${id}` },
-    { url: `/Staff/User/${id}` },
-    { url: `/Users/${id}/Staff` },
+    { url: `/Admin/Get-By-User-Id/${id}` },
+    { url: `/Admin/Get-By-User/${id}` },
+    { url: `/Admins/Get-By-User-Id/${id}` },
+    { url: `/Admin/By-UserId/${id}` },
+    { url: `/Admin/User/${id}` },
+    { url: `/Users/${id}/Admin` },
     // querystring variants
-    { url: `/Staff/Get-By-User-Id`, opts: { params: { userId } } },
-    { url: `/Staff/Get-By-User`, opts: { params: { userId } } },
+    { url: `/Admin/Get-By-User-Id`, opts: { params: { userId } } },
+    { url: `/Admin/Get-By-User`, opts: { params: { userId } } },
   ]
   for (const a of attempts) {
     try {
@@ -1399,25 +1399,25 @@ API.resolveStaffId = async (userId = null) => {
       const body = res?.data
       const unwrapped = body && typeof body === 'object' && 'data' in body ? body.data : body
       if (!unwrapped) continue
-      const staffObj = Array.isArray(unwrapped)
+      const adminObj = Array.isArray(unwrapped)
         ? (unwrapped.find(s => (s.userId || s.UserId) === userId) || unwrapped[0])
         : unwrapped
-      const sid = staffObj?.staffId || staffObj?.StaffId || staffObj?.id || staffObj?.Id
-      if (sid) return sid
+      const aid = adminObj?.adminId || adminObj?.AdminId || adminObj?.id || adminObj?.Id
+      if (aid) return aid
     } catch (e) {
       const code = e?.response?.status
       if (code && code !== 404 && code !== 405) throw e
     }
   }
-  throw new Error('Staff id not found for current user')
+  throw new Error('Admin id not found for current user')
 }
 
 // Check-In with Contract (specific canonical endpoint)
 // Expected payload shape:
-// { bookingId: GUID, staffId: GUID, staffSignature: string, customerSignature: string, checkInNotes?: string, checkInPhotoUrl?: string }
+// { bookingId: GUID, adminId: GUID, adminSignature: string, customerSignature: string, checkInNotes?: string, checkInPhotoUrl?: string }
 API.checkInWithContract = async (payload) => {
-  if (!payload || !payload.bookingId || !payload.staffId || !payload.staffSignature || !payload.customerSignature) {
-    throw new Error('Missing required fields: bookingId, staffId, staffSignature, customerSignature')
+  if (!payload || !payload.bookingId || !payload.adminId || !payload.adminSignature || !payload.customerSignature) {
+    throw new Error('Missing required fields: bookingId, adminId, adminSignature, customerSignature')
   }
   const attempts = [
     '/bookings/Check-In-With-Contract',

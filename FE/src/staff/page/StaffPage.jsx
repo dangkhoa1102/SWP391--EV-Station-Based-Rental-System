@@ -82,6 +82,17 @@ export default function StaffPage() {
     }
   }
 
+  // Update a booking's status in local state (used by modal after payment sync)
+  const handleStatusUpdated = (bookingId, nextStatus) => {
+    const label = nextStatus === 'pending' ? 'Pending'
+                : nextStatus === 'booked' ? 'Booked'
+                : nextStatus === 'checked-in' ? 'Check-in Pending'
+                : nextStatus === 'completed' ? 'Completed'
+                : nextStatus === 'denied' ? 'Denied'
+                : nextStatus
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: nextStatus, statusLabel: label } : b))
+  }
+
 
   // Vehicle actions
   const addVehicle = async (payload) => {
@@ -642,6 +653,7 @@ export default function StaffPage() {
               setStatusFilter={setStatusFilter}
               onContinuePayment={continueToPayment}
               onCancelBooking={cancelBooking}
+              onStatusUpdated={handleStatusUpdated}
             />
           </>
         )}
