@@ -695,16 +695,99 @@ const API = {
   // Email APIs
   sendContractEmail: async (contractId, email) => {
     try {
-      console.log('📧 Sending contract email to:', email)
-      console.log('📧 Contract ID:', contractId)
-      const res = await apiClient.post(`/Contracts/gui-email`, {
-        contractId: contractId,
-        email: email
-      })
+      console.log('📧 Sending contract email')
+      console.log('   Contract ID:', contractId)
+      console.log('   Email:', email)
+      
+      const res = await apiClient.post(
+        `/Contracts/hopdong/${encodeURIComponent(contractId)}/gui-email`,
+        { email: email }
+      )
+      
       console.log('✅ Email sent successfully:', res.data)
       return res.data?.data || res.data || {}
     } catch (e) {
       console.error('❌ Error sending email:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Create contract for booking with full DTO
+  // Send complete TaoHopDongDto with all required fields from user profile, booking, and car data
+  createContract: async (bookingId, userId, contractDto) => {
+    try {
+      console.log('📄 Creating contract for booking:', bookingId)
+      console.log('  Sending full contract DTO:', contractDto)
+      
+      const res = await apiClient.post(
+        `/Contracts/hopdong/tao?bookingId=${encodeURIComponent(bookingId)}&renterId=${encodeURIComponent(userId)}`,
+        contractDto
+      )
+      
+      console.log('✅ Contract created:', res.data)
+      // Return full response so contractId can be extracted from .data field
+      return res.data
+    } catch (e) {
+      console.error('❌ Error creating contract:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Check if contract is confirmed/signed
+  isContractConfirmed: async (bookingId) => {
+    try {
+      console.log('🔍 Checking contract confirmation for booking:', bookingId)
+      const res = await apiClient.get(`/Contracts/IsConfirm?bookingId=${encodeURIComponent(bookingId)}`)
+      console.log('✅ Contract status:', res.data)
+      // Assume response has .isConfirm or .confirmed field
+      return res.data?.isConfirm || res.data?.confirmed || false
+    } catch (e) {
+      console.error('❌ Error checking contract:', e.response?.data || e.message)
+      return false
+    }
+  },
+
+  // Create payment for deposit (no contract check needed)
+  createPayment: async (bookingId, paymentType = 0, description = 'Cọc thuê xe') => {
+    try {
+      console.log('💳 Creating payment for booking:', bookingId)
+      
+      const res = await apiClient.post('/Payment/create', {
+        bookingId: bookingId,
+        paymentType: paymentType,
+        description: description
+      })
+      console.log('✅ Payment created:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error creating payment:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Create payment with contract confirmation check
+  createPaymentWithContractCheck: async (bookingId, paymentType = 0, description = 'Thanh toán cọc') => {
+    try {
+      console.log('💳 Creating payment for booking:', bookingId)
+      
+      // First check if contract is confirmed
+      const isConfirmed = await API.isContractConfirmed(bookingId)
+      if (!isConfirmed) {
+        const err = new Error('Contract not confirmed')
+        err.response = { status: 400, data: { message: 'Contract not found or not confirmed for this booking' } }
+        throw err
+      }
+
+      // Contract is confirmed, proceed with payment
+      const res = await apiClient.post('/Payment/create', {
+        bookingId: bookingId,
+        paymentType: paymentType,
+        description: description
+      })
+      console.log('✅ Payment created:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error creating payment:', e.response?.data || e.message)
       throw e
     }
   }

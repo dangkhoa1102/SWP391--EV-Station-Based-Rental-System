@@ -45,28 +45,16 @@ function MapController({ stations, userLocation }) {
   const map = useMap()
 
   useEffect(() => {
-    if (stations.length === 0 && !userLocation) return
+    if (!userLocation) return
 
-    const bounds = L.latLngBounds([])
-    let hasValidBounds = false
-
-    if (userLocation) {
-      bounds.extend([userLocation.lat, userLocation.lng])
-      hasValidBounds = true
-    }
-
-    stations.forEach(station => {
-      const coords = getStationCoordinates(station)
-      if (coords) {
-        bounds.extend([coords.lat, coords.lng])
-        hasValidBounds = true
-      }
+    // Focus on user location first with a reasonable zoom level
+    // This way user can see their current position clearly
+    // User can then zoom out to find stations
+    map.setView([userLocation.lat, userLocation.lng], 14, {
+      animate: true,
+      duration: 1
     })
-
-    if (hasValidBounds) {
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
-    }
-  }, [map, stations, userLocation])
+  }, [map, userLocation])
 
   return null
 }

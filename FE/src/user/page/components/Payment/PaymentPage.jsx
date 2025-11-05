@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import API from '../../../services/userApi'
 import { formatVND } from '../../../../utils/currency'
 import { useToast } from '../../../../components/ToastProvider'
+import NotificationModal from '../../../../components/NotificationModal'
 import './payment_page.css'
 
 export default function PaymentPage(){
@@ -14,6 +15,7 @@ export default function PaymentPage(){
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [showPolicyModal, setShowPolicyModal] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [notification, setNotification] = useState({ isOpen: false, type: 'info', title: '', message: '' })
 
   useEffect(() => {
     // Load rental context and car info
@@ -46,7 +48,69 @@ export default function PaymentPage(){
   }
 
   const calculateDepositAmount = () => {
-    return calculateTotalPrice() * 0.3 // 25% deposit
+    return calculateTotalPrice() * 0.3 // 30% deposit
+  }
+
+  // Build contract DTO from user's updated profile
+  const buildContractDto = () => {
+    const today = new Date()
+    const day = String(today.getDate()).padStart(2, '0')
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const year = today.getFullYear()
+
+    // Get profile data from localStorage
+    const firstName = localStorage.getItem('userFirstName') || ''
+    const lastName = localStorage.getItem('userLastName') || ''
+    const dateOfBirth = localStorage.getItem('userDateOfBirth') || ''
+    const identityNumber = localStorage.getItem('userIdentityNumber') || ''
+    const address = localStorage.getItem('userAddress') || ''
+    const driverLicenseClass = localStorage.getItem('userDriverLicenseClass') || ''
+    const driverLicenseNumber = localStorage.getItem('userDriverLicenseNumber') || ''
+    const driverLicenseExpiry = localStorage.getItem('userDriverLicenseExpiry') || ''
+
+    // Calculate rental duration
+    const pickup = new Date(`${rentalContext.pickupDate}T${rentalContext.pickupTime}`)
+    const returnDate = new Date(`${rentalContext.returnDate}T${rentalContext.returnTime}`)
+    const rentalDays = Math.ceil((returnDate - pickup) / (1000 * 60 * 60 * 24))
+
+    const totalPrice = calculateTotalPrice()
+    const yearOfBirth = dateOfBirth ? new Date(dateOfBirth).getFullYear().toString() : ''
+
+    return {
+      soHopDong: `HĐ-${today.getTime()}`,
+      ngayKy: day,
+      thangKy: month,
+      namKy: year.toString(),
+      benA: {
+        hoTen: `${firstName} ${lastName}`,
+        namSinh: yearOfBirth,
+        cccdHoacHoChieu: identityNumber,
+        hoKhauThuongTru: address
+      },
+      xe: {
+        nhanHieu: car.brand || '',
+        bienSo: car.licensePlate || '',
+        loaiXe: car.model || '',
+        mauSon: car.color || '',
+        choNgoi: (car.seats || 0).toString(),
+        xeDangKiHan: (car.year || '').toString()
+      },
+      giaThue: {
+        giaThueSo: totalPrice.toString(),
+        giaThueChu: totalPrice.toString(),
+        phuongThucThanhToan: 'Chuyển khoản',
+        ngayThanhToan: today.toISOString().split('T')[0]
+      },
+      thoiHanThueSo: rentalDays.toString(),
+      thoiHanThueChu: rentalDays.toString(),
+      thoiHanThue: rentalDays,
+      donViThoiHan: 'ngay',
+      gplx: {
+        hang: driverLicenseClass,
+        so: driverLicenseNumber,
+        hanSuDung: driverLicenseExpiry
+      }
+    }
   }
 
   const handleCreateBooking = async () => {
@@ -63,10 +127,6 @@ export default function PaymentPage(){
     setLoading(true)
     try {
       const userId = localStorage.getItem('userId')
-      const token = localStorage.getItem('token')
-      
-      console.log('📋 Current userId from localStorage:', userId)
-      console.log('📋 Current token exists:', !!token)
       
       if (!userId) {
         alert('User ID not found. Please logout and login again.')
@@ -74,7 +134,7 @@ export default function PaymentPage(){
         return
       }
 
-      // Create booking with ISO DateTime format
+      // Step 1: Create booking
       const pickupDateTime = new Date(`${rentalContext.pickupDate}T${rentalContext.pickupTime}`).toISOString()
       const returnDateTime = new Date(`${rentalContext.returnDate}T${rentalContext.returnTime}`).toISOString()
       
@@ -88,101 +148,74 @@ export default function PaymentPage(){
         totalAmount: calculateTotalPrice()
       }
 
-      console.log('📝 Creating booking with data:', bookingData)
+      console.log('📝 Creating booking...')
       const bookingResponse = await API.createBooking(bookingData, userId)
       
-      // Extract booking ID from response
       const newBookingId = bookingResponse.id || bookingResponse.Id || bookingResponse.bookingId
       if (!newBookingId) {
         throw new Error('Booking ID not received from server')
       }
       
-      console.log('✅ Booking created with ID:', newBookingId)
-      
-      // Step 2: Save booking ID and calculate deposit (30%)
-      const depositAmount = calculateTotalPrice() * 0.30
+      console.log('✅ Booking created:', newBookingId)
+
+      // Step 2: Create contract with profile data
+      console.log('📄 Creating contract...')
+      const contractDto = buildContractDto()
+      const contractResponse = await API.createContract(newBookingId, userId, contractDto)
+      // ContractId is in the data field of response
+      const contractId = contractResponse.data
+      console.log('✅ Contract created with ID:', contractId)
+
+      // Step 3: Send contract email (with delay to ensure contract is ready)
       try {
-        localStorage.setItem('currentBookingId', newBookingId)
-        localStorage.setItem('depositAmount', depositAmount.toString())
-      } catch (e) {
-        console.warn('Failed to save booking ID:', e)
-      }
-      
-      // Step 3: Create payment via PayOS API
-      console.log('💰 Total Amount:', calculateTotalPrice())
-      console.log('💳 Deposit Amount (30%):', depositAmount)
-      console.log('💳 Deposit Amount (rounded):', Math.round(depositAmount))
-      
-      try {
-        const paymentResponse = await API.post('/Payment/create', {
-          bookingId: newBookingId,
-          paymentType: 0,
-          description: `Deposit payment for booking ${newBookingId}`
-        })
-        
-        console.log('✅ Payment response:', paymentResponse)
-        
-        const checkoutUrl = paymentResponse.checkoutUrl || paymentResponse.data?.checkoutUrl
-        if (!checkoutUrl) {
-          throw new Error('No checkout URL received from payment service')
+        const userEmail = localStorage.getItem('userEmail')
+        if (userEmail && contractId) {
+          console.log('📧 Waiting 1s before sending email...')
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          console.log('📧 Sending contract email to:', userEmail)
+          await API.sendContractEmail(contractId, userEmail)
+          console.log('✅ Email sent')
         }
-        
-        console.log('🔗 Redirecting to PayOS:', checkoutUrl)
-        // Redirect to PayOS for payment
-        window.location.href = checkoutUrl
-      } catch (paymentError) {
-        console.error('Payment creation failed:', paymentError)
-        console.error('Payment error details:', paymentError.response?.data)
-        alert('Failed to create payment. Please try again.')
-        setLoading(false)
+      } catch (emailError) {
+        console.warn('⚠️ Email failed (non-critical):', emailError.message)
       }
 
+      // Step 4: Create deposit payment
+      try {
+        console.log('💳 Creating deposit payment...')
+        const depositAmount = calculateDepositAmount()
+        const paymentResponse = await API.createPayment(
+          newBookingId,
+          0, // paymentType
+          'Cọc thuê xe'
+        )
+        console.log('✅ Payment created:', paymentResponse)
+      } catch (paymentError) {
+        console.warn('⚠️ Payment creation failed (non-critical):', paymentError.message)
+      }
+
+      // Step 5: Success
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'Booking Created Successfully! 🎉',
+        message: 'Contract sent to your email. Deposit payment initiated. You can view details in your booking history.'
+      })
+
+      setTimeout(() => {
+        localStorage.removeItem('selectedCarId')
+        localStorage.removeItem('rentalContext')
+        navigate('/booking-history')
+      }, 3000)
+
     } catch (error) {
-      console.error('Error creating booking:', error)
-      console.error('Error response:', error.response?.data)
+      console.error('❌ Error:', error)
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to create booking'
       
-      // Check if error is "Car not available"
-      const errorResponse = error.response?.data
-      
-      // Handle different error response formats
-      let errorMessages = []
-      
-      if (errorResponse?.errors) {
-        // If errors is an object (validation errors format)
-        if (typeof errorResponse.errors === 'object' && !Array.isArray(errorResponse.errors)) {
-          // Extract all error messages from the object
-          errorMessages = Object.values(errorResponse.errors).flat()
-        } 
-        // If errors is an array
-        else if (Array.isArray(errorResponse.errors)) {
-          errorMessages = errorResponse.errors
-        }
-      }
-      
-      // Also check for single error message
-      if (errorResponse?.message) {
-        errorMessages.push(errorResponse.message)
-      }
-      
-      console.log('📋 Extracted error messages:', errorMessages)
-      
-      const isCarNotAvailable = errorMessages.some(err => 
-        typeof err === 'string' && err.toLowerCase().includes('car not available')
-      )
-      
-      if (isCarNotAvailable) {
-        // Show toast notification for car not available
+      if (errorMsg.toLowerCase().includes('car not available')) {
         showToast('This car is not available, please choose another one!', 'error', 4000)
-        
-        // Redirect to car list page after 2 seconds
-        setTimeout(() => {
-          navigate('/cars')
-        }, 2000)
+        setTimeout(() => navigate('/cars'), 2000)
       } else {
-        // Show detailed error message if available
-        const errorMsg = errorMessages.length > 0 
-          ? errorMessages.join(', ')
-          : 'Failed to create booking. Please try again.'
         alert(errorMsg)
       }
     } finally {
@@ -207,7 +240,7 @@ export default function PaymentPage(){
           <div className="payment-info-column">
             {/* Rental Information */}
             <div className="info-section">
-                <h3 className="section-heading">Rental Information</h3>
+              <h3 className="section-heading">Rental Information</h3>
               <div className="info-row">
                 <span className="info-label">Pick-up Location:</span>
                 <span className="info-value">{rentalContext.stationName}</span>
@@ -224,7 +257,7 @@ export default function PaymentPage(){
 
             {/* Car Information */}
             <div className="info-section">
-                <h3 className="section-heading">Car Information</h3>
+              <h3 className="section-heading">Car Information</h3>
               <div className="car-preview">
                 <img src={car.imageUrl || car.image || '/Picture/E car 1.jpg'} alt={car.model} />
                 <div className="car-details">
@@ -239,7 +272,7 @@ export default function PaymentPage(){
 
             {/* Price Summary */}
             <div className="info-section">
-                <h3 className="section-heading">Price Summary</h3>
+              <h3 className="section-heading">Price Summary</h3>
               <div className="info-row">
                 <span className="info-label">Total Rental Cost:</span>
                 <span className="info-value">{formatVND(totalPrice)}</span>
@@ -249,15 +282,12 @@ export default function PaymentPage(){
                 <span className="info-value">{formatVND(depositAmount)}</span>
               </div>
             </div>
-
-            {/* Terms and Conditions moved to page bottom */}
-
           </div>
 
           {/* Right Column - Summary & CTA */}
           <aside className="payment-summary-column" aria-label="Payment summary">
             <div className="summary-card">
-                <div className="summary-pricing">
+              <div className="summary-pricing">
                 <div className="label">Total Rental Cost</div>
                 <div className="price-large">{formatVND(totalPrice)}</div>
                 <div className="label small">Deposit Required (30%)</div>
@@ -267,7 +297,7 @@ export default function PaymentPage(){
           </aside>
         </div>
 
-        {/* Terms and Conditions placed at the bottom of the page */}
+        {/* Terms and Conditions */}
         <div className="terms-section" style={{ marginTop: '18px' }}>
           <label className="checkbox-label">
             <input
@@ -278,7 +308,6 @@ export default function PaymentPage(){
             <span style={{ marginLeft: '10px' }}>I agree to the <button type="button" className="link-button" onClick={() => setShowTermsModal(true)}>Terms and Conditions</button> and <button type="button" className="link-button" onClick={() => setShowPolicyModal(true)}>Privacy Policy</button></span>
           </label>
         </div>
-
       </div>
 
       {/* Bottom action bar */}
@@ -363,6 +392,15 @@ export default function PaymentPage(){
           </div>
         </div>
       )}
+      
+      {/* Notification Modal */}
+      <NotificationModal
+        isOpen={notification.isOpen}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={() => setNotification({ ...notification, isOpen: false })}
+      />
     </main>
   )
 }
