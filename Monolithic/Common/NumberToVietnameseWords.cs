@@ -1,36 +1,36 @@
-namespace Monolithic.Common
+﻿namespace Monolithic.Common
 {
     /// <summary>
-    /// Utility ?? chuy?n ??i s? th�nh ch? ti?ng Vi?t
+    /// Utility để chuyển đổi số thành chữ tiếng Việt
     /// </summary>
     public static class NumberToVietnameseWords
     {
-        private static readonly string[] NumberWords = { "kh�ng", "m?t", "hai", "ba", "b?n", "n?m", "s�u", "b?y", "t�m", "ch�n" };
-        private static readonly string[] UnitWords = { "", "m??i", "tr?m", "ngh�n", "m??i", "tr?m", "tri?u", "m??i", "tr?m", "t?" };
+        private static readonly string[] NumberWords = { "không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín" };
+        private static readonly string[] UnitWords = { "", "mươi", "trăm", "nghìn", "mươi", "trăm", "triệu", "mươi", "trăm", "tỷ" };
 
         /// <summary>
-        /// Chuy?n ??i s? ti?n (decimal) th�nh ch? ti?ng Vi?t
+        /// Chuyển đổi số tiền (decimal) thành chữ tiếng Việt
         /// </summary>
-        /// <param name="number">S? ti?n c?n chuy?n ??i</param>
-        /// <param name="addCurrency">C� th�m ??n v? ti?n t? "??ng" kh�ng</param>
-        /// <returns>Chu?i s? th�nh ch? ti?ng Vi?t</returns>
+        /// <param name="number">Số tiền cần chuyển đổi</param>
+        /// <param name="addCurrency">Có thêm đơn vị tiền tệ "đồng" không</param>
+        /// <returns>Chuỗi số thành chữ tiếng Việt</returns>
         public static string ConvertToWords(decimal number, bool addCurrency = true)
         {
             if (number == 0)
-                return addCurrency ? "Kh�ng ??ng" : "Kh�ng";
+                return addCurrency ? "Không đồng" : "Không";
 
             if (number < 0)
-                return "S? �m kh�ng h?p l?";
+                return "Số âm không hợp lệ";
 
-            // Chuy?n sang s? nguy�n (b? ph?n th?p ph�n n?u c�)
+            // Chuyển sang số nguyên (bỏ phần thập phân nếu có)
             long integerPart = (long)number;
             
             string words = ConvertIntegerToWords(integerPart);
             
             if (addCurrency)
-                words += " ??ng";
+                words += " đồng";
 
-            // Vi?t hoa ch? c�i ??u
+            // Viết hoa chữ cái đầu
             if (!string.IsNullOrEmpty(words))
                 words = char.ToUpper(words[0]) + words.Substring(1);
 
@@ -40,7 +40,7 @@ namespace Monolithic.Common
         private static string ConvertIntegerToWords(long number)
         {
             if (number == 0)
-                return "kh�ng";
+                return "không";
 
             string words = "";
             int unitIndex = 0;
@@ -54,13 +54,13 @@ namespace Monolithic.Common
                     
                     if (unitIndex > 0)
                     {
-                        // Th�m ??n v?: ngh�n, tri?u, t?
+                        // Thêm đơn vị: nghìn, triệu, tỷ
                         if (unitIndex == 3)
-                            threeDigitWords += " ngh�n";
+                            threeDigitWords += " nghìn";
                         else if (unitIndex == 6)
-                            threeDigitWords += " tri?u";
+                            threeDigitWords += " triệu";
                         else if (unitIndex == 9)
-                            threeDigitWords += " t?";
+                            threeDigitWords += " tỷ";
                     }
                     
                     words = threeDigitWords + (string.IsNullOrEmpty(words) ? "" : " " + words);
@@ -80,15 +80,15 @@ namespace Monolithic.Common
 
             string words = "";
 
-            // H�ng tr?m
+            // Hàng trăm
             int hundreds = number / 100;
             if (hundreds > 0)
             {
-                words = NumberWords[hundreds] + " tr?m";
+                words = NumberWords[hundreds] + " trăm";
                 number %= 100;
             }
 
-            // H�ng ch?c
+            // Hàng chục
             if (number >= 10)
             {
                 int tens = number / 10;
@@ -96,32 +96,32 @@ namespace Monolithic.Common
                     words += " ";
                 
                 if (tens == 1)
-                    words += "m??i";
+                    words += "mười";
                 else
-                    words += NumberWords[tens] + " m??i";
+                    words += NumberWords[tens] + " mươi";
                 
                 number %= 10;
             }
             else if (number > 0 && hundreds > 0)
             {
-                // Tr??ng h?p 101, 102... 109
-                words += " l?";
+                // Trường hợp 101, 102... 109
+                words += " lẻ";
             }
 
-            // H�ng ??n v?
+            // Hàng đơn vị
             if (number > 0)
             {
                 if (!string.IsNullOrEmpty(words))
                     words += " ";
 
-                // X? l� tr??ng h?p ??c bi?t "m??i m?t" -> "m??i m?t", kh�ng ph?i "m??i m?t"
-                // V� "hai m??i m?t" -> "hai m??i m?t"
-                if (number == 1 && words.EndsWith("m??i"))
-                    words += "m?t";
-                else if (number == 5 && words.EndsWith("m??i"))
-                    words += "l?m";
-                else if (number == 1 && words.EndsWith("m??i"))
-                    words += "m?t";
+                // Xử lý trường hợp đặc biệt "mười một" -> "mười một", không phải "mười một"
+                // Và "hai mươi một" -> "hai mươi mốt"
+                if (number == 1 && words.EndsWith("mươi"))
+                    words += "mốt";
+                else if (number == 5 && words.EndsWith("mươi"))
+                    words += "lăm";
+                else if (number == 1 && words.EndsWith("lẻ"))
+                    words += "một";
                 else
                     words += NumberWords[number];
             }
@@ -130,7 +130,7 @@ namespace Monolithic.Common
         }
 
         /// <summary>
-        /// Chuy?n ??i s? ti?n c� ph?n th?p ph�n (VD: 1234567.50 ??ng)
+        /// Chuyển đổi số tiền có phần thập phân (VD: 1234567.50 đồng)
         /// </summary>
         public static string ConvertMoneyToWords(decimal amount)
         {
