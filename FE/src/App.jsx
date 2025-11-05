@@ -11,6 +11,7 @@ import PaymentCancel from './user/page/components/Payment/PaymentCancel'
 import TransactionPage from './user/page/components/Transaction/TransactionPage'
 import BookingHistory from './user/page/components/Booking/BookingHistory'
 import StaffPage from './staff/page/StaffPage'
+import AdminPage from './admin/page/AdminPage'
 import Header from './components/Header'
 import Footer from './components/Footer'
 
@@ -34,6 +35,7 @@ function AppShell(){
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/update-profile" element={<UpdateProfilePage />} />
           <Route path="/staff" element={<StaffPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </main>
       {!hideChrome && <Footer />}
