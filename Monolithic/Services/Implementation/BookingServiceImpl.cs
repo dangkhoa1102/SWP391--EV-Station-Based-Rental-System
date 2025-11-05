@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Monolithic.DTOs.Booking;
+using Monolithic.DTOs.Car;
 using Monolithic.DTOs.Common;
 using Monolithic.DTOs.Payment;
 using Monolithic.Models;
@@ -394,6 +395,45 @@ namespace Monolithic.Services.Implementation
             }
 
             return true;
+        }
+        public async Task<ResponseDto<List<CarDto>>> GetAvailableCarsAsync(DateTime startTime, DateTime endTime)
+        {
+            try
+            {
+                // 1️⃣ Validate time
+                if (endTime <= startTime)
+                    return ResponseDto<List<CarDto>>.Failure("End time must be after start time");
+
+                // 2️⃣ Lấy tất cả xe đang hoạt động
+                var allCars = await _carRepository.FindAsync(c => c.IsActive);
+
+                // 3️⃣ Lấy tất cả booking đang active, chưa bị cancel
+                var activeBookings = await _bookingRepository.FindAsync(b =>
+                    b.IsActive && b.BookingStatus != BookingStatus.Cancelled
+                );
+
+                // 4️⃣ Lọc ra các carId bị trùng thời gian
+                var unavailableCarIds = activeBookings
+                    .Where(b =>
+                        startTime < (b.EndTime ?? b.StartTime.AddHours(1)) &&
+                        endTime > b.StartTime)
+                    .Select(b => b.CarId)
+                    .Distinct()
+                    .ToHashSet();
+
+                // 5️⃣ Giữ lại xe không bị overlap
+                var availableCars = allCars
+                    .Where(c => !unavailableCarIds.Contains(c.CarId))
+                    .ToList();
+
+                // 6️⃣ Map sang DTO
+                var dto = _mapper.Map<List<CarDto>>(availableCars);
+                return ResponseDto<List<CarDto>>.Success(dto, $"{dto.Count} cars available in this period");
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<List<CarDto>>.Failure($"Error getting available cars: {ex.Message}");
+            }
         }
 
         #endregion

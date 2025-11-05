@@ -22,6 +22,7 @@ namespace Monolithic.Services.Interfaces
 
         // Optional: get payments by user
         Task<IEnumerable<Payment>> GetPaymentsByUserIdAsync(Guid userId);
+        Task<decimal> GetStationRevenueAsync(Guid stationId, DateTime? from = null, DateTime? to = null);
 
         // Station Staff payment methods
         Task<StationPaymentResponseDto> RecordStationDepositAsync(RecordDepositDto request, Guid staffId);

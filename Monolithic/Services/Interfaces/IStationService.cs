@@ -14,5 +14,6 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<string>> RecalculateStationAvailableSlotsAsync(Guid stationId);
         Task<bool> CanAddCarToStationAsync(Guid stationId);
         Task<ResponseDto<string>> UpdateStationAvailableSlotsAsync(Guid stationId, int change);
+     
     }
 }

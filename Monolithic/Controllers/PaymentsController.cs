@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Monolithic.DTOs.Payment;
 using Monolithic.Models;
 using Monolithic.Services;
@@ -75,6 +75,56 @@ public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto reque
         var payments = await _paymentService.GetPaymentsByBookingIdAsync(bookingId);
         return Ok(payments.Select(p => new { p.PaymentId, p.PaymentStatus, p.TransactionId }));
     }
+    [HttpGet("{paymentId}")]
+    public async Task<IActionResult> GetPaymentById(Guid paymentId)
+    {
+        var payment = await _paymentService.GetPaymentByIdAsync(paymentId);
+        if (payment == null) return NotFound();
+        return Ok(payment);
+    }
+
+    // =========================
+    // 🔹 4. Get Payments by Booking
+    // =========================
+    [HttpGet("booking/{bookingId}")]
+    public async Task<IActionResult> GetPaymentsByBooking(Guid bookingId)
+    {
+        var payments = await _paymentService.GetPaymentsByBookingIdAsync(bookingId);
+        return Ok(payments);
+    }
+
+    // =========================
+    // 🔹 5. Get Payments by User
+    // =========================
+    [HttpGet("user/{userId}")]
+    public async Task<IActionResult> GetPaymentsByUser(Guid userId)
+    {
+        var payments = await _paymentService.GetPaymentsByUserIdAsync(userId);
+        return Ok(payments);
+    }
+
+    // =========================
+    // 🔹 6. Get Total Amount by Booking
+    // =========================
+    [HttpGet("booking/{bookingId}/total")]
+    public async Task<IActionResult> GetTotalAmountByBooking(Guid bookingId)
+    {
+        var total = await _paymentService.GetTotalAmountByBookingAsync(bookingId);
+        return Ok(new { BookingId = bookingId, TotalAmount = total });
+    }
+
+
+
+    // =========================
+    // 🔹 10. Station Revenue (Analytics)
+    // =========================
+    [HttpGet("station/{stationId}/revenue")]
+    public async Task<IActionResult> GetStationRevenue(Guid stationId, [FromQuery] DateTime? from, [FromQuery] DateTime? to)
+    {
+        var revenue = await _paymentService.GetStationRevenueAsync(stationId, from, to);
+        return Ok(new { StationId = stationId, From = from, To = to, Revenue = revenue });
+    }
+
 }
 
 

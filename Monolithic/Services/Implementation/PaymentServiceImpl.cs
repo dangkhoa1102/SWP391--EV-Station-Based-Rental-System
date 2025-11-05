@@ -152,10 +152,28 @@ namespace Monolithic.Services
                 .Where(p => p.Booking.UserId == userId)
                 .ToListAsync();
         }
-
-        public Task<decimal> GetTotalAmountByBookingAsync(Guid bookingId)
+        public async Task<decimal> GetStationRevenueAsync(Guid stationId, DateTime? from = null, DateTime? to = null)
         {
-            throw new NotImplementedException();
+            var query = _dbContext.Payments
+                .Include(p => p.Booking)
+                .Where(p => p.Booking.StationId == stationId && p.PaymentStatus == PaymentStatus.Success);
+
+            if (from.HasValue)
+                query = query.Where(p => p.CreatedAt >= from.Value);
+            if (to.HasValue)
+                query = query.Where(p => p.CreatedAt <= to.Value);
+
+            var totalRevenue = await query.SumAsync(p =>
+                p.PaymentType == PaymentType.Refund ? -p.Amount : p.Amount);
+
+            return Math.Round(totalRevenue, 2);
+        }
+
+        public async Task<decimal> GetTotalAmountByBookingAsync(Guid bookingId)
+        {
+            return await _dbContext.Payments
+                .Where(p => p.BookingId == bookingId && p.PaymentStatus == PaymentStatus.Success)
+                .SumAsync(p => p.PaymentType == PaymentType.Refund ? -p.Amount : p.Amount);
         }
 
         // Station Payment Methods
@@ -299,5 +317,7 @@ namespace Monolithic.Services
                 Notes = request.Notes
             };
         }
+        
+        }
     }
-}
+

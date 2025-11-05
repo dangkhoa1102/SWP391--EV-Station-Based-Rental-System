@@ -1,4 +1,5 @@
 using Monolithic.DTOs.Booking;
+using Monolithic.DTOs.Car;
 using Monolithic.DTOs.Common;
 
 namespace Monolithic.Services.Interfaces
@@ -20,6 +21,7 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<List<BookingDto>>> GetUserBookingsAsync(string userId);
         Task<ResponseDto<BookingDto>> UpdateBookingAsync(Guid id, UpdateBookingDto request);
         Task<ResponseDto<string>> CancelBookingAsync(Guid id, string userId, string? reason = null);
+        Task<ResponseDto<List<CarDto>>> GetAvailableCarsAsync(DateTime startTime, DateTime endTime);
 
         // Utility methods
         Task<ResponseDto<bool>> CheckCarAvailabilityAsync(CheckAvailabilityDto request);

@@ -64,6 +64,12 @@ namespace Monolithic.Controllers
             
             return Ok(result);
         }
+        [HttpGet("available-cars")]
+        public async Task<IActionResult> GetAvailableCars([FromQuery] DateTime startTime, [FromQuery] DateTime endTime)
+        {
+            var result = await _bookingService.GetAvailableCarsAsync(startTime, endTime);
+            return Ok(result);
+        }
 
         #endregion
 
