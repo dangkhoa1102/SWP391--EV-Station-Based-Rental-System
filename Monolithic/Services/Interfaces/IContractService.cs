@@ -16,7 +16,7 @@ namespace Monolithic.Services.Interfaces
         /// <summary>
         /// L?u h?p ??ng thuê xe và t?o file t? template
         /// </summary>
-        Task<Guid> LuuHopDongVaTaoFileAsync(TaoHopDongDto request, Guid bookingId, Guid renterId);
+        Task<Guid> LuuHopDongVaTaoFileAsync(/*TaoHopDongDto request, */Guid bookingId, Guid renterId);
 
         /// <summary>
         /// G?i email xác nh?n h?p ??ng
