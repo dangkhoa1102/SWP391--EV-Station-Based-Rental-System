@@ -156,10 +156,10 @@ namespace Monolithic.Services.Implementation
             }
 
             // 3️⃣ Lưu chữ ký vào contract (staff + customer) nếu có
-            contract.StaffSignature = request.StaffSignature;
-            contract.CustomerSignature = request.CustomerSignature;
-            contract.SignedAt = DateTime.UtcNow;
-            await _contractRepository.UpdateAsync(contract);
+            //contract.StaffSignature = request.StaffSignature;
+            //contract.CustomerSignature = request.CustomerSignature;
+            //contract.SignedAt = DateTime.UtcNow;
+            //await _contractRepository.UpdateAsync(contract);
 
             // 4️⃣ Cập nhật thông tin check-in trên booking
             booking.CheckInAt = DateTime.UtcNow;

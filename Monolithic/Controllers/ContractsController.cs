@@ -95,19 +95,30 @@ namespace Monolithic.Controllers
         // --- HopDong Specific Endpoints ---
 
         /// <summary>
-        /// Lưu hợp đồng thuê xe và tạo file Word từ template
+        /// Lưu hợp đồng thuê xe và tạo file Word từ template (TỰ ĐỘNG lấy dữ liệu từ User/Booking/Car)
         /// </summary>
+        /// <remarks>
+        /// Body (TaoHopDongDto) là OPTIONAL - nếu không gửi body, hệ thống sẽ tự động lấy dữ liệu từ:
+        /// - User (tên, năm sinh, CCCD, địa chỉ, GPLX)
+        /// - Booking (thời gian thuê, giá thuê)
+        /// - Car (thông tin xe)
+        /// 
+        /// Nếu muốn override một số trường, gửi body với các trường cần thay đổi.
+        /// </remarks>
         [HttpPost("hopdong/tao")]
-        public async Task<ActionResult<ResponseDto<Guid>>> TaoHopDong([FromBody] TaoHopDongDto request, [FromQuery] Guid bookingId, [FromQuery] Guid renterId)
+        public async Task<ActionResult<ResponseDto<Guid>>> TaoHopDong(
+            [FromQuery] Guid bookingId, 
+            [FromQuery] Guid renterId,
+            [FromBody] TaoHopDongDto? request = null)
         {
             try
             {
                 var contractId = await _contractService.LuuHopDongVaTaoFileAsync(request, bookingId, renterId);
-                return Ok(ResponseDto<Guid>.Success(contractId, "Hợp đồng đã được tạo thành công"));
+                return Ok(ResponseDto<Guid>.Success(contractId, "The contract has been created successfully"));
             }
             catch (Exception ex)
             {
-                return BadRequest(ResponseDto<Guid>.Failure($"Lỗi: {ex.Message}"));
+                return BadRequest(ResponseDto<Guid>.Failure($"Error: {ex.Message}"));
             }
         }
 

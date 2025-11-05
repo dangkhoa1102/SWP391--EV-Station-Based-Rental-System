@@ -4,6 +4,7 @@ using System.Text;
 using Monolithic.Data;
 using Monolithic.Models;
 using Monolithic.Services.Interfaces;
+using Monolithic.DTOs.Auth;
 
 namespace Monolithic.Services.Implementation
 {
@@ -81,6 +82,86 @@ namespace Monolithic.Services.Implementation
             catch
             {
                 return false;
+            }
+        }
+
+        public async Task<DTOs.Common.ResponseDto<UserDto>> UpdateUserProfileAsync(string userId, UpdateUserDto dto)
+        {
+            if (!Guid.TryParse(userId, out var userGuid))
+                return DTOs.Common.ResponseDto<UserDto>.Failure("Invalid user ID");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userGuid);
+            if (user == null)
+                return DTOs.Common.ResponseDto<UserDto>.Failure("User not found");
+
+            // Update fields if provided
+            if (!string.IsNullOrWhiteSpace(dto.FirstName))
+                user.FirstName = dto.FirstName;
+
+            if (!string.IsNullOrWhiteSpace(dto.LastName))
+                user.LastName = dto.LastName;
+
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                user.PhoneNumber = dto.PhoneNumber;
+
+            if (!string.IsNullOrWhiteSpace(dto.Address))
+                user.Address = dto.Address;
+
+            if (dto.DateOfBirth.HasValue)
+                user.DateOfBirth = dto.DateOfBirth.Value;
+
+            if (!string.IsNullOrWhiteSpace(dto.YearOfBirth))
+                user.YearOfBirth = dto.YearOfBirth;
+
+            if (!string.IsNullOrWhiteSpace(dto.IdentityNumber))
+                user.IdentityNumber = dto.IdentityNumber;
+
+            if (!string.IsNullOrWhiteSpace(dto.DriverLicenseNumber))
+                user.DriverLicenseNumber = dto.DriverLicenseNumber;
+
+            if (dto.DriverLicenseExpiry.HasValue)
+                user.DriverLicenseExpiry = dto.DriverLicenseExpiry.Value;
+
+            if (!string.IsNullOrWhiteSpace(dto.DriverLicenseClass))
+                user.DriverLicenseClass = dto.DriverLicenseClass;
+
+            user.UpdatedAt = DateTime.UtcNow;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                var userDto = new UserDto
+                {
+                    Id = user.UserId.ToString(),
+                    Email = user.Email ?? "",
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    FullName = user.FullName,
+                    PhoneNumber = user.PhoneNumber,
+                    Address = user.Address,
+                    DateOfBirth = user.DateOfBirth,
+                    YearOfBirth = user.YearOfBirth,
+                    IdentityNumber = user.IdentityNumber,
+                    DriverLicenseNumber = user.DriverLicenseNumber,
+                    DriverLicenseExpiry = user.DriverLicenseExpiry,
+                    DriverLicenseClass = user.DriverLicenseClass,
+                    UserRole = user.UserRole,
+                    IsVerified = user.IsVerified,
+                    CreatedAt = user.CreatedAt,
+                    UpdatedAt = user.UpdatedAt,
+                    IsActive = user.IsActive,
+                    CccdImageUrl_Front = user.CccdImageUrl_Front,
+                    CccdImageUrl_Back = user.CccdImageUrl_Back,
+                    GplxImageUrl_Front = user.GplxImageUrl_Front,
+                    GplxImageUrl_Back = user.GplxImageUrl_Back
+                };
+
+                return DTOs.Common.ResponseDto<UserDto>.Success(userDto, "User profile updated successfully");
+            }
+            catch (Exception ex)
+            {
+                return DTOs.Common.ResponseDto<UserDto>.Failure($"Error updating profile: {ex.Message}");
             }
         }
 
