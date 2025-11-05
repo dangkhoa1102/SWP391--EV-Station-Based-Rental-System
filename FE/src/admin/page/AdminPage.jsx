@@ -5,7 +5,8 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import BookingSection from './components/Booking/BookingSection';
 import VehicleSection from './components/Vehicle/VehicleSection';
-import ProfileSection from './components/Profile/ProfileSection';
+import UserSection from './components/User/UserSection';
+import StaffSection from './components/Staff/StaffSection';
 import AdminAPI from '../services/adminApi';
 
 // Start with empty lists; we will load from API
@@ -16,6 +17,7 @@ export default function AdminPage() {
   const [section, setSection] = useState('booking');
   const [bookings, setBookings] = useState(initialBookings);
   const [vehicles, setVehicles] = useState(initialVehicles);
+  const [users, setUsers] = useState([]);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -24,6 +26,7 @@ export default function AdminPage() {
   const [loadingVehicles, setLoadingVehicles] = useState(false);
   const [loadingStations, setLoadingStations] = useState(false);
   const [loadingBookings, setLoadingBookings] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [error, setError] = useState('');
   const [warning, setWarning] = useState('');
   const [role, setRole] = useState('');
@@ -193,6 +196,49 @@ export default function AdminPage() {
     setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...payload } : v));
   };
 
+  // User management actions
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const allUsers = await AdminAPI.getAllUsers(1, 1000);
+      setUsers(allUsers || []);
+    } catch (e) {
+      setError(e?.message || 'Failed to load users');
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const handleAssignStaff = async (user, reason) => {
+    try {
+      await AdminAPI.assignStaffRole(user.id || user.Id || user.userId, reason);
+      await loadUsers(); // Reload to update role
+      alert('User promoted to Station Staff successfully');
+    } catch (e) {
+      alert(e?.message || 'Failed to assign staff role');
+    }
+  };
+
+  const handleRemoveStaff = async (staff, reason) => {
+    try {
+      await AdminAPI.removeStaffRole(staff.id || staff.Id || staff.userId, reason);
+      await loadUsers(); // Reload to update role
+      alert('Staff role removed successfully');
+    } catch (e) {
+      alert(e?.message || 'Failed to remove staff role');
+    }
+  };
+
+  const handleDeleteUser = async (user, reason) => {
+    try {
+      await AdminAPI.softDeleteUser(user.id || user.Id || user.userId, reason);
+      await loadUsers(); // Reload to remove deleted user
+      alert('User deleted successfully');
+    } catch (e) {
+      alert(e?.message || 'Failed to delete user');
+    }
+  };
+
   // Handle global body class to trigger CSS margin transitions
   useEffect(() => {
     if (sidebarVisible) {
@@ -239,6 +285,7 @@ export default function AdminPage() {
     }
     loadRole();
     loadStations();
+    loadUsers();
     return () => { mounted = false }
   }, [])
 
@@ -681,7 +728,26 @@ export default function AdminPage() {
             />
           </>
         )}
-        {section === 'profile' && <ProfileSection />}
+        {section === 'user' && (
+          <>
+            {loadingUsers && <div style={{padding:'10px 12px'}}>Loading users...</div>}
+            <UserSection
+              users={users}
+              onAssignStaff={handleAssignStaff}
+              onDelete={handleDeleteUser}
+            />
+          </>
+        )}
+        {section === 'staff' && (
+          <>
+            {loadingUsers && <div style={{padding:'10px 12px'}}>Loading staff...</div>}
+            <StaffSection
+              users={users}
+              stations={stations}
+              onRemoveStaff={handleRemoveStaff}
+            />
+          </>
+        )}
       </main>
     </div>
   );

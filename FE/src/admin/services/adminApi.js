@@ -1448,4 +1448,252 @@ API.checkInWithContract = async (payload) => {
   throw lastErr || new Error('Check-In-With-Contract endpoint not found')
 }
 
+// =============================================================================
+// ADMIN-SPECIFIC ENDPOINTS
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// USER & STAFF MANAGEMENT
+// ---------------------------------------------------------------------------
+
+/**
+ * Get all users (customers and staff)
+ * @param {number} page - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} role - Filter by role (optional)
+ */
+API.getAllUsers = async (page = 1, pageSize = 100, role = null) => {
+  const params = { pageNumber: page, pageSize }
+  if (role) params.role = role
+  const attempts = [
+    { url: '/Users/Get-All', params },
+    { url: '/Admin/Users', params },
+    { url: '/users', params }
+  ]
+  for (const a of attempts) {
+    try {
+      const res = await apiClient.get(a.url, { params: a.params })
+      const body = res?.data
+      if (Array.isArray(body)) return body
+      if (Array.isArray(body?.data?.data)) return body.data.data
+      if (Array.isArray(body?.data)) return body.data
+      if (Array.isArray(body?.items)) return body.items
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  return []
+}
+
+/**
+ * Assign staff role to user (EV Renter → Station Staff)
+ */
+API.assignStaffRole = async (userId, reason = '') => {
+  if (!userId) throw new Error('userId is required')
+  const id = encodeURIComponent(userId)
+  const query = reason ? `?reason=${encodeURIComponent(reason)}` : ''
+  const attempts = [
+    `/Admin/Users/${id}/Assign-Staff-Role${query}`,
+    `/Users/${id}/Assign-Staff-Role${query}`,
+    `/Admin/Users/Assign-Staff-Role${query}`,
+  ]
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.post(url, reason ? { userId, reason } : { userId })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Assign staff role endpoint not found')
+}
+
+/**
+ * Remove staff role from user (Station Staff → EV Renter)
+ */
+API.removeStaffRole = async (userId, reason = '') => {
+  if (!userId) throw new Error('userId is required')
+  const id = encodeURIComponent(userId)
+  const query = reason ? `?reason=${encodeURIComponent(reason)}` : ''
+  const attempts = [
+    `/Admin/Users/${id}/Remove-Staff-Role${query}`,
+    `/Users/${id}/Remove-Staff-Role${query}`,
+    `/Admin/Users/Remove-Staff-Role${query}`,
+  ]
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.post(url, reason ? { userId, reason } : { userId })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Remove staff role endpoint not found')
+}
+
+/**
+ * Get staff by station
+ */
+API.getStaffByStation = async (stationId) => {
+  if (!stationId) return []
+  const id = encodeURIComponent(stationId)
+  const attempts = [
+    `/Admin/Staff/By-Station/${id}`,
+    `/Staff/By-Station/${id}`,
+    { url: '/Admin/Staff/By-Station', params: { stationId } }
+  ]
+  for (const a of attempts) {
+    try {
+      const res = typeof a === 'string' ? await apiClient.get(a) : await apiClient.get(a.url, { params: a.params })
+      const body = res?.data
+      if (Array.isArray(body)) return body
+      if (Array.isArray(body?.data)) return body.data
+      if (Array.isArray(body?.items)) return body.items
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  return []
+}
+
+/**
+ * Get customer profile with booking statistics
+ */
+API.getCustomerProfile = async (userId) => {
+  if (!userId) throw new Error('userId is required')
+  const id = encodeURIComponent(userId)
+  const attempts = [
+    `/Admin/Customers/${id}/Profile`,
+    `/Admin/Users/${id}/Profile`,
+    `/Users/${id}/Profile`
+  ]
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url)
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Customer profile endpoint not found')
+}
+
+/**
+ * Get user documents (CCCD and GPLX images)
+ */
+API.getUserDocuments = async (userId) => {
+  if (!userId) throw new Error('userId is required')
+  const id = encodeURIComponent(userId)
+  const attempts = [
+    `/Admin/Users/${id}/Documents`,
+    `/Users/${id}/Documents`
+  ]
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url)
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('User documents endpoint not found')
+}
+
+/**
+ * Soft delete user account
+ */
+API.softDeleteUser = async (userId, reason = '') => {
+  if (!userId) throw new Error('userId is required')
+  const id = encodeURIComponent(userId)
+  const query = reason ? `?reason=${encodeURIComponent(reason)}` : ''
+  const attempts = [
+    `/Admin/Users/${id}/Soft-Delete${query}`,
+    `/Users/${id}/Soft-Delete${query}`
+  ]
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.post(url, reason ? { reason } : {})
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Soft delete user endpoint not found')
+}
+
+/**
+ * Restore deleted user account
+ */
+API.restoreUser = async (userId) => {
+  if (!userId) throw new Error('userId is required')
+  const id = encodeURIComponent(userId)
+  const attempts = [
+    `/Admin/Users/${id}/Restore`,
+    `/Users/${id}/Restore`
+  ]
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.post(url)
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Restore user endpoint not found')
+}
+
+// ---------------------------------------------------------------------------
+// DASHBOARD & REPORTS
+// ---------------------------------------------------------------------------
+
+/**
+ * Get admin dashboard overview
+ */
+API.getAdminDashboard = async () => {
+  const attempts = ['/Admin/Dashboard', '/Dashboard']
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url)
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Dashboard endpoint not found')
+}
+
+/**
+ * Get fleet overview (all stations)
+ */
+API.getFleetOverview = async () => {
+  const attempts = ['/Admin/Fleet/Overview', '/Fleet/Overview']
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url)
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  return null
+}
+
 export default API
