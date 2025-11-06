@@ -1563,6 +1563,76 @@ API.getStaffByStation = async (stationId) => {
 }
 
 /**
+ * Get station for a specific staff member (reverse of getStaffByStation)
+ * Returns the station ID and details for a given staff member
+ */
+API.getStationByStaff = async (staffId) => {
+  if (!staffId) throw new Error('staffId is required')
+  const id = encodeURIComponent(staffId)
+  const attempts = [
+    `/Admin/Staff/${id}/Station`,
+    `/Staff/${id}/Station`,
+    `/Admin/Users/${id}/Station`,
+    `/Users/${id}/Station`
+  ]
+  
+  // Try dedicated endpoint first
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url)
+      const body = res?.data
+      const result = body && typeof body === 'object' && 'data' in body ? body.data : body
+      if (result) return result
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  
+  // Fallback: Get user profile which should contain stationId
+  try {
+    const profile = await API.getCustomerProfile(staffId)
+    if (profile && (profile.stationId || profile.StationId)) {
+      return {
+        stationId: profile.stationId || profile.StationId,
+        stationName: profile.stationName || profile.StationName || null,
+        userId: staffId,
+        userRole: profile.userRole || profile.role || profile.Role
+      }
+    }
+  } catch (e) {
+    // Continue to next fallback
+  }
+  
+  // Fallback: Search all stations and find which one has this staff
+  try {
+    const stations = await API.getAllStations()
+    for (const station of stations) {
+      try {
+        const staff = await API.getStaffByStation(station.id || station.Id)
+        const found = staff.find(s => 
+          (s.userId || s.id || s.Id) === staffId
+        )
+        if (found) {
+          return {
+            stationId: station.id || station.Id,
+            stationName: station.name || station.Name,
+            userId: staffId,
+            userRole: found.userRole || found.role || found.Role
+          }
+        }
+      } catch (e) {
+        // Continue to next station
+      }
+    }
+  } catch (e) {
+    // Final fallback failed
+  }
+  
+  return null
+}
+
+/**
  * Get customer profile with booking statistics
  */
 API.getCustomerProfile = async (userId) => {
@@ -1656,6 +1726,41 @@ API.restoreUser = async (userId) => {
   throw new Error('Restore user endpoint not found')
 }
 
+/**
+ * Get deleted accounts with pagination and filters
+ */
+API.getDeletedAccounts = async (page = 1, pageSize = 20, role = null) => {
+  if (!page || page < 1) page = 1
+  if (!pageSize || pageSize < 1) pageSize = 20
+  
+  const params = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString()
+  })
+  
+  if (role) {
+    params.append('role', role)
+  }
+  
+  const attempts = [
+    `/Admin/Users/Deleted-Accounts?${params}`,
+    `/Users/Deleted-Accounts?${params}`
+  ]
+  
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url)
+      const body = res?.data
+      const result = body && typeof body === 'object' && 'data' in body ? body.data : body
+      return result?.deletedAccounts || result || []
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Get deleted accounts endpoint not found')
+}
+
 // ---------------------------------------------------------------------------
 // DASHBOARD & REPORTS
 // ---------------------------------------------------------------------------
@@ -1694,6 +1799,174 @@ API.getFleetOverview = async () => {
     }
   }
   return null
+}
+
+/**
+ * Get detailed car status report
+ * @param {string} stationId - Filter by station (optional)
+ * @param {string} status - Filter by status (optional)
+ */
+API.getCarStatusReport = async (stationId = null, status = null) => {
+  const params = {}
+  if (stationId) params.stationId = stationId
+  if (status) params.status = status
+  const attempts = ['/Admin/Fleet/Car-Status', '/Fleet/Car-Status']
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url, { params })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  return null
+}
+
+/**
+ * Transfer car between stations
+ * @param {string} carId - Car ID to transfer
+ * @param {string} targetStationId - Target station ID
+ * @param {string} reason - Reason for transfer (optional)
+ */
+API.transferCar = async (carId, targetStationId, reason = '') => {
+  if (!carId || !targetStationId) throw new Error('carId and targetStationId are required')
+  const params = { carId, targetStationId }
+  if (reason) params.reason = reason
+  const attempts = ['/Admin/Fleet/Transfer-Car', '/Fleet/Transfer-Car']
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.post(url, null, { params })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Transfer car endpoint not found')
+}
+
+/**
+ * Assign staff to station
+ * @param {string} stationId - Station ID
+ * @param {string} staffId - Staff user ID
+ */
+API.assignStaffToStation = async (stationId, staffId) => {
+  if (!stationId || !staffId) throw new Error('stationId and staffId are required')
+  const attempts = [
+    { url: `/Stations/${encodeURIComponent(stationId)}/Assign-Staff`, params: { staffId } },
+    { url: `/Admin/Stations/${encodeURIComponent(stationId)}/Assign-Staff`, params: { staffId } }
+  ]
+  for (const a of attempts) {
+    try {
+      const res = await apiClient.post(a.url, null, { params: a.params })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Assign staff to station endpoint not found')
+}
+
+/**
+ * Unassign staff from station
+ * POST /api/Stations/Unassign-Staff
+ * @param {string} staffId - Staff user ID
+ */
+API.unassignStaffFromStation = async (staffId) => {
+  if (!staffId) throw new Error('staffId is required')
+  const attempts = [
+    { url: `/Stations/Unassign-Staff`, params: { staffId } },
+    { url: `/Admin/Stations/Unassign-Staff`, params: { staffId } }
+  ]
+  for (const a of attempts) {
+    try {
+      const res = await apiClient.post(a.url, null, { params: a.params })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Unassign staff from station endpoint not found')
+}
+
+/**
+ * Reassign staff from one station to another
+ * POST /api/Stations/Reassign-Staff
+ * @param {string} staffId - Staff user ID
+ * @param {string} toStationId - Target station ID
+ */
+API.reassignStaff = async (staffId, toStationId) => {
+  if (!staffId || !toStationId) throw new Error('staffId and toStationId are required')
+  const attempts = [
+    { url: `/Stations/Reassign-Staff`, params: { staffId, toStationId } },
+    { url: `/Admin/Stations/Reassign-Staff`, params: { staffId, toStationId } }
+  ]
+  for (const a of attempts) {
+    try {
+      const res = await apiClient.post(a.url, null, { params: a.params })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Reassign staff endpoint not found')
+}
+
+/**
+ * Assign "Station Staff" role to a user (EV Renter → Station Staff)
+ * POST /api/Admin/Users/{userId}/Assign-Staff-Role
+ * 
+ * @param {string} userId - User ID (Guid)
+ * @param {string} reason - Reason for assigning role (optional)
+ * @returns {Promise<Object>} Response with user role change details
+ */
+API.assignStaffRole = async (userId, reason = '') => {
+  if (!userId) throw new Error('userId is required')
+  try {
+    const params = reason ? { reason } : {}
+    const res = await apiClient.post(
+      `/Admin/Users/${encodeURIComponent(userId)}/Assign-Staff-Role`,
+      null,
+      { params }
+    )
+    return res?.data
+  } catch (e) {
+    const msg = e?.response?.data?.message || e?.message || 'Failed to assign staff role'
+    throw new Error(msg)
+  }
+}
+
+/**
+ * Remove "Station Staff" role from user (Station Staff → EV Renter)
+ * POST /api/Admin/Users/{userId}/Remove-Staff-Role
+ * 
+ * @param {string} userId - User ID (Guid)
+ * @param {string} reason - Reason for removing role (optional)
+ * @returns {Promise<Object>} Response with user role change details
+ */
+API.removeStaffRole = async (userId, reason = '') => {
+  if (!userId) throw new Error('userId is required')
+  try {
+    const params = reason ? { reason } : {}
+    const res = await apiClient.post(
+      `/Admin/Users/${encodeURIComponent(userId)}/Remove-Staff-Role`,
+      null,
+      { params }
+    )
+    return res?.data
+  } catch (e) {
+    const msg = e?.response?.data?.message || e?.message || 'Failed to remove staff role'
+    throw new Error(msg)
+  }
 }
 
 export default API

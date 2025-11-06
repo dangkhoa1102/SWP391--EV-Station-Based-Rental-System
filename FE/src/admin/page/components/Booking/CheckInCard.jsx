@@ -4,7 +4,7 @@ import AdminAPI from '../../../services/adminApi'
 export default function CheckInCard({ booking, onClose, onCheckedIn }){
   const [checkInNotes, setCheckInNotes] = useState('')
   const [checkInPhotoUrl, setCheckInPhotoUrl] = useState('')
-  const [staffSignature, setStaffSignature] = useState('')
+  const [adminSignature, setAdminSignature] = useState('')
   const [customerSignature, setCustomerSignature] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -38,22 +38,22 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
         throw new Error('You are not signed in. Please sign in as Staff and try again (401).')
       }
 
-      // Resolve Staff entity Id (not just userId)
-      let staffId = ''
+      // Resolve Admin/Staff entity Id (not just userId)
+      let adminId = ''
       try {
-        staffId = await AdminAPI.resolveStaffId()
+        adminId = await AdminAPI.resolveStaffId()
       } catch (ridErr) {
         // Fallback: try userId if staff mapping is not available
-        try { staffId = localStorage.getItem('userId') || '' } catch {}
-        if (!staffId) throw ridErr
+        try { adminId = localStorage.getItem('userId') || '' } catch {}
+        if (!adminId) throw ridErr
       }
 
-      // Build payload; omit optional fields if blank and validate URL shape
+      // Build payload with required fields
       const payload = {
         bookingId: booking.id,
-        staffId,
-        staffSignature,
-        customerSignature,
+        adminId: adminId,
+        adminSignature: adminSignature.trim() || 'Admin',
+        customerSignature: customerSignature.trim() || 'Customer',
       }
       const notes = (checkInNotes || '').trim()
       if (notes) payload.checkInNotes = notes
@@ -109,16 +109,39 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
             <input type="url" value={checkInPhotoUrl} onChange={e=>setCheckInPhotoUrl(e.target.value)} placeholder="https://..." />
           </label>
           <label style={{display:'flex', flexDirection:'column', gap:6}}>
-            <span>Staff Signature</span>
-            <input type="text" value={staffSignature} onChange={e=>setStaffSignature(e.target.value)} placeholder="Type staff name or paste signature URL" />
+            <span>Admin/Staff Signature <span style={{color:'red'}}>*</span></span>
+            <input 
+              type="text" 
+              value={adminSignature} 
+              onChange={e=>setAdminSignature(e.target.value)} 
+              placeholder="Type admin/staff name or paste signature URL"
+              required
+            />
           </label>
           <label style={{display:'flex', flexDirection:'column', gap:6}}>
-            <span>Customer Signature</span>
-            <input type="text" value={customerSignature} onChange={e=>setCustomerSignature(e.target.value)} placeholder="Type customer name or paste signature URL" />
+            <span>Customer Signature <span style={{color:'red'}}>*</span></span>
+            <input 
+              type="text" 
+              value={customerSignature} 
+              onChange={e=>setCustomerSignature(e.target.value)} 
+              placeholder="Type customer name or paste signature URL"
+              required
+            />
           </label>
           <div style={{display:'flex', gap:12, justifyContent:'flex-end'}}>
             <button type="button" onClick={onClose} style={{background:'transparent', color:'#333', border:'1px solid #aaa', borderRadius:8, padding:'8px 14px'}}>Cancel</button>
-            <button type="submit" disabled={submitting} style={{background:'#2e7d32', color:'#fff', border:'none', borderRadius:8, padding:'8px 14px'}}>
+            <button 
+              type="submit" 
+              disabled={submitting || !adminSignature.trim() || !customerSignature.trim()} 
+              style={{
+                background: (submitting || !adminSignature.trim() || !customerSignature.trim()) ? '#ccc' : '#2e7d32', 
+                color:'#fff', 
+                border:'none', 
+                borderRadius:8, 
+                padding:'8px 14px',
+                cursor: (submitting || !adminSignature.trim() || !customerSignature.trim()) ? 'not-allowed' : 'pointer'
+              }}
+            >
               {submitting ? 'Saving…' : 'Confirm Check In'}
             </button>
           </div>

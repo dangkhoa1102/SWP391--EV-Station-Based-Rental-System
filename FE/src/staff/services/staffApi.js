@@ -1448,4 +1448,55 @@ API.checkInWithContract = async (payload) => {
   throw lastErr || new Error('Check-In-With-Contract endpoint not found')
 }
 
+// =============================================================================
+// FLEET MANAGEMENT (Staff can also use these for station management)
+// =============================================================================
+
+/**
+ * Get detailed car status report
+ * @param {string} stationId - Filter by station (optional)
+ * @param {string} status - Filter by status (optional)
+ */
+API.getCarStatusReport = async (stationId = null, status = null) => {
+  const params = {}
+  if (stationId) params.stationId = stationId
+  if (status) params.status = status
+  const attempts = ['/Admin/Fleet/Car-Status', '/Fleet/Car-Status', '/Staff/Fleet/Car-Status']
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url, { params })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  return null
+}
+
+/**
+ * Assign staff to station
+ * @param {string} stationId - Station ID
+ * @param {string} staffId - Staff user ID
+ */
+API.assignStaffToStation = async (stationId, staffId) => {
+  if (!stationId || !staffId) throw new Error('stationId and staffId are required')
+  const attempts = [
+    { url: `/Stations/${encodeURIComponent(stationId)}/Assign-Staff`, params: { staffId } },
+    { url: `/Admin/Stations/${encodeURIComponent(stationId)}/Assign-Staff`, params: { staffId } }
+  ]
+  for (const a of attempts) {
+    try {
+      const res = await apiClient.post(a.url, null, { params: a.params })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw new Error('Assign staff to station endpoint not found')
+}
+
 export default API

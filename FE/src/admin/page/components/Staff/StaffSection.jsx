@@ -1,16 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import StaffCard from './StaffCard';
 import StaffModal from './StaffModal';
+import AddStaffModal from './AddStaffModal';
 import './Staff.css';
 
-export default function StaffSection({ users, stations, onRemoveStaff }) {
+export default function StaffSection({ 
+  users, 
+  staffByStation = [], 
+  stations, 
+  onRemoveStaff, 
+  onAssignStation,
+  onUnassignStation,
+  onStaffCreated 
+}) {
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState('');
   const [stationFilter, setStationFilter] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
 
-  // Filter to show only users with Station Staff role
-  const staffMembers = users.filter(u => {
-    const role = (u.role || u.Role || u.userRole || '').toLowerCase();
+  // Merge users and staffByStation arrays, removing duplicates by userId/id
+  const allStaff = useMemo(() => {
+    const staffMap = new Map();
+    
+    // Add staff from staffByStation (priority - these are from station API)
+    staffByStation.forEach(staff => {
+      const id = staff.userId || staff.id || staff.Id;
+      if (id) {
+        staffMap.set(id, staff);
+      }
+    });
+    
+    // Add staff from users array (filtered by role)
+    users.forEach(user => {
+      const role = (user.role || user.Role || user.userRole || '').toLowerCase();
+      if (role === 'station staff' || role === 'stationstaff') {
+        const id = user.id || user.Id || user.userId;
+        if (id && !staffMap.has(id)) {
+          staffMap.set(id, user);
+        }
+      }
+    });
+    
+    return Array.from(staffMap.values());
+  }, [users, staffByStation]);
+
+  // Filter staff by search and station
+  const staffMembers = allStaff.filter(u => {
     const matchesSearch = search === '' || 
       (u.fullName || u.FullName || '').toLowerCase().includes(search.toLowerCase()) ||
       (u.email || u.Email || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -19,12 +54,19 @@ export default function StaffSection({ users, stations, onRemoveStaff }) {
     const matchesStation = stationFilter === '' || 
       (u.stationId || u.StationId || '') === stationFilter;
     
-    return matchesSearch && matchesStation && (role === 'station staff' || role === 'stationstaff');
+    return matchesSearch && matchesStation;
   });
 
   return (
     <div id="staff" className="section">
       <div className="filter-bar">
+        <button 
+          className="vehicle-add-btn" 
+          onClick={() => setAddOpen(true)}
+          style={{marginRight: '12px'}}
+        >
+          <i className="fas fa-plus"></i> Create Staff
+        </button>
         <input 
           type="text" 
           placeholder="Search staff by name, email, or username..." 
@@ -70,6 +112,15 @@ export default function StaffSection({ users, stations, onRemoveStaff }) {
         stations={stations}
         onClose={() => setSelected(null)}
         onRemoveStaff={onRemoveStaff}
+        onAssignStation={onAssignStation}
+        onUnassignStation={onUnassignStation}
+      />
+      
+      <AddStaffModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        stations={stations}
+        onSuccess={onStaffCreated}
       />
     </div>
   );

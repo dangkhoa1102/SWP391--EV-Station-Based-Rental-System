@@ -18,6 +18,8 @@ export default function AdminPage() {
   const [bookings, setBookings] = useState(initialBookings);
   const [vehicles, setVehicles] = useState(initialVehicles);
   const [users, setUsers] = useState([]);
+  const [deletedUsers, setDeletedUsers] = useState([]);
+  const [staffByStation, setStaffByStation] = useState([]);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -27,9 +29,12 @@ export default function AdminPage() {
   const [loadingStations, setLoadingStations] = useState(false);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingDeletedUsers, setLoadingDeletedUsers] = useState(false);
+  const [loadingStaff, setLoadingStaff] = useState(false);
   const [error, setError] = useState('');
   const [warning, setWarning] = useState('');
   const [role, setRole] = useState('');
+  const [stationSlots, setStationSlots] = useState(null);
 
   // Booking actions (call API then update locally)
   const confirmBooking = async (id) => {
@@ -131,6 +136,9 @@ export default function AdminPage() {
       const map = (c) => ({
         id: c.id || c.Id || c.carId || c.CarId,
         name: c.name || c.Name || [c.brand, c.model].filter(Boolean).join(' ') || 'Car',
+        model: c.model || c.Model || null,
+        brand: c.brand || c.Brand || null,
+        licensePlate: c.licensePlate || c.LicensePlate || null,
         img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || c.model || 'Car')}`,
         battery: Number.isFinite(c.currentBatteryLevel) ? Math.round(c.currentBatteryLevel) : undefined,
         tech: c.condition ?? c.status ?? c.Status ?? null,
@@ -138,6 +146,8 @@ export default function AdminPage() {
         capacity: c.batteryCapacity ?? c.BatteryCapacity ?? c.capacity ?? c.capacityKWh ?? c.batteryCapacityKWh ?? null
       })
       setVehicles(prev => [...prev, map(c)])
+      // Update slot info after adding
+      await updateStationSlots(stationId)
       return created
     } catch (e) {
       setError(e?.message || 'Failed to create vehicle')
@@ -148,6 +158,8 @@ export default function AdminPage() {
     try {
       await AdminAPI.deleteCar(id)
       setVehicles(prev => prev.filter(v => v.id !== id))
+      // Update slot info after removing
+      await updateStationSlots(stationId)
     } catch (e) {
       const code = e?.response?.status
       // If not authorized, show a friendly warning and stop
@@ -201,7 +213,12 @@ export default function AdminPage() {
     setLoadingUsers(true);
     try {
       const allUsers = await AdminAPI.getAllUsers(1, 1000);
-      setUsers(allUsers || []);
+      // Filter out inactive/deleted users (only show active users)
+      const activeUsers = (allUsers || []).filter(u => {
+        const isActive = u.isActive !== false && u.IsActive !== false;
+        return isActive;
+      });
+      setUsers(activeUsers);
     } catch (e) {
       setError(e?.message || 'Failed to load users');
     } finally {
@@ -209,10 +226,42 @@ export default function AdminPage() {
     }
   };
 
+  const loadDeletedUsers = async () => {
+    setLoadingDeletedUsers(true);
+    try {
+      const deleted = await AdminAPI.getDeletedAccounts(1, 1000);
+      setDeletedUsers(deleted || []);
+    } catch (e) {
+      setError(e?.message || 'Failed to load deleted users');
+    } finally {
+      setLoadingDeletedUsers(false);
+    }
+  };
+
+  const loadStaffByStation = async (stationId) => {
+    if (!stationId) {
+      setStaffByStation([]);
+      return;
+    }
+    setLoadingStaff(true);
+    try {
+      const staff = await AdminAPI.getStaffByStation(stationId);
+      setStaffByStation(staff || []);
+    } catch (e) {
+      setError(e?.message || 'Failed to load staff by station');
+      setStaffByStation([]);
+    } finally {
+      setLoadingStaff(false);
+    }
+  };
+
   const handleAssignStaff = async (user, reason) => {
     try {
       await AdminAPI.assignStaffRole(user.id || user.Id || user.userId, reason);
       await loadUsers(); // Reload to update role
+      if (stationId) {
+        await loadStaffByStation(stationId); // Reload station staff
+      }
       alert('User promoted to Station Staff successfully');
     } catch (e) {
       alert(e?.message || 'Failed to assign staff role');
@@ -223,19 +272,240 @@ export default function AdminPage() {
     try {
       await AdminAPI.removeStaffRole(staff.id || staff.Id || staff.userId, reason);
       await loadUsers(); // Reload to update role
+      if (stationId) {
+        await loadStaffByStation(stationId); // Reload station staff
+      }
       alert('Staff role removed successfully');
     } catch (e) {
       alert(e?.message || 'Failed to remove staff role');
     }
   };
 
+  const handleAssignStaffToStation = async (staff, newStationId) => {
+    try {
+      const staffId = staff.id || staff.Id || staff.userId;
+      const currentStationId = staff.stationId || staff.StationId;
+      
+      // Use reassign if already has a station, otherwise use assign
+      if (currentStationId) {
+        await AdminAPI.reassignStaff(staffId, newStationId);
+      } else {
+        await AdminAPI.assignStaffToStation(newStationId, staffId);
+      }
+      
+      await loadUsers(); // Reload to update station
+      if (stationId) {
+        await loadStaffByStation(stationId); // Reload station staff
+      }
+      alert('Staff assigned to station successfully');
+    } catch (e) {
+      alert(e?.message || 'Failed to assign staff to station');
+    }
+  };
+
+  const handleUnassignStaff = async (staff) => {
+    try {
+      const staffId = staff.id || staff.Id || staff.userId;
+      await AdminAPI.unassignStaffFromStation(staffId);
+      await loadUsers(); // Reload to update station
+      if (stationId) {
+        await loadStaffByStation(stationId); // Reload station staff
+      }
+      alert('Staff unassigned from station successfully');
+    } catch (e) {
+      alert(e?.message || 'Failed to unassign staff from station');
+    }
+  };
+
   const handleDeleteUser = async (user, reason) => {
     try {
-      await AdminAPI.softDeleteUser(user.id || user.Id || user.userId, reason);
-      await loadUsers(); // Reload to remove deleted user
+      const userId = user.id || user.Id || user.userId;
+      await AdminAPI.softDeleteUser(userId, reason);
+      
+      // Remove from active users list immediately
+      setUsers(prev => prev.filter(u => 
+        (u.id || u.Id || u.userId) !== userId
+      ));
+      
+      // Reload to ensure sync with backend
+      await loadUsers();
       alert('User deleted successfully');
     } catch (e) {
       alert(e?.message || 'Failed to delete user');
+    }
+  };
+
+  const handleRestoreUser = async (user) => {
+    try {
+      const userId = user.userId || user.id || user.Id;
+      await AdminAPI.restoreUser(userId);
+      
+      // Remove from deleted users list
+      setDeletedUsers(prev => prev.filter(u => 
+        (u.userId || u.id || u.Id) !== userId
+      ));
+      
+      // Reload both lists to ensure sync
+      await loadDeletedUsers();
+      await loadUsers();
+      alert('User restored successfully');
+    } catch (e) {
+      alert(e?.message || 'Failed to restore user');
+    }
+  };
+
+  // Vehicle transfer functionality
+  const handleTransferCar = async (vehicle, targetStationId, reason) => {
+    try {
+      await AdminAPI.transferCar(vehicle.id, targetStationId, reason || '');
+      const targetStation = stations.find(s => (s.id || s.Id) === targetStationId);
+      alert(`Vehicle transferred successfully to ${targetStation?.name || targetStation?.Name || 'target station'}`);
+      // Reload vehicles for current station
+      await loadVehiclesForStation(stationId);
+      // Update slot info
+      await updateStationSlots(stationId);
+    } catch (e) {
+      alert(e?.message || 'Failed to transfer vehicle');
+      throw e;
+    }
+  };
+
+  // Update station slot information
+  const updateStationSlots = async (sid) => {
+    if (!sid) {
+      setStationSlots(null);
+      return;
+    }
+    try {
+      const report = await AdminAPI.getCarStatusReport(sid, null);
+      if (report) {
+        setStationSlots({
+          totalCars: report.totalCars || 0,
+          availableCars: report.availableCars || 0
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to load station slots:', e);
+    }
+  };
+
+  // Extract vehicle loading logic into separate function
+  const loadVehiclesForStation = async (sid) => {
+    try {
+      setLoadingVehicles(true);
+      let cars = [];
+      if (sid) {
+        // Show ALL vehicles for the station, regardless of availability
+        let byStation = [];
+        let available = [];
+        try { byStation = await AdminAPI.getCarsByStation(sid); } catch {}
+        try { available = await AdminAPI.getAvailableCarsByStation(sid); } catch {}
+        const toArray = (x) => Array.isArray(x) ? x : (x ? [x] : []);
+        const A = toArray(byStation), B = toArray(available);
+        // Merge unique by id (fallback to licensePlate)
+        const map = new Map();
+        for (const c of [...A, ...B]) {
+          const key = String(c?.id || c?.Id || c?.carId || c?.CarId || c?.licensePlate || c?.LicensePlate || Math.random());
+          if (!map.has(key)) map.set(key, c);
+        }
+        cars = Array.from(map.values());
+
+        // Always supplement with client-side filtered All Cars to catch backends that only return "available" by station
+        try {
+          const all = await AdminAPI.getAllCars(1, 1000);
+          const norm = (v) => (v == null ? '' : String(v).replace(/[{}]/g, '').toLowerCase());
+          const sidNorm = norm(sid);
+          const clientFiltered = (all || []).filter(c => {
+            const candidates = [
+              c.currentStationId, c.CurrentStationId, c.currentStationID,
+              c.stationId, c.StationId, c.stationID,
+              c.station?.id, c.station?.Id, c.station?.stationId, c.station?.StationId
+            ];
+            return candidates.some(st => st != null && norm(st) === sidNorm);
+          });
+          // Merge clientFiltered into cars (dedupe by id/licensePlate)
+          for (const c of clientFiltered) {
+            const key = String(c?.id || c?.Id || c?.carId || c?.CarId || c?.licensePlate || c?.LicensePlate);
+            if (key && !map.has(key)) {
+              map.set(key, c);
+            }
+          }
+          cars = Array.from(map.values());
+        } catch {}
+      } else {
+        // When no station is selected (All stations), fetch all cars with larger page size
+        try { cars = await AdminAPI.getAllCars(1, 1000); }
+        catch { try { cars = await AdminAPI.listCars({ page: 1, pageSize: 1000 }); } catch { cars = []; } }
+      }
+      // Ensure we always have an array
+      if (!Array.isArray(cars)) cars = cars ? [cars] : [];
+      
+      const normalizePercent = (v) => {
+        const n = Number(v); if (Number.isFinite(n) && n >= 0 && n <= 100) return Math.round(n); return null;
+      };
+      const mapped = (cars || []).map(c => {
+        const pick = (...vals) => vals.find(v => v != null && v !== '');
+        const stIdRaw = pick(c.currentStationId, c.CurrentStationId, c.currentStationID, c.stationId, c.StationId, c.stationID, c.station?.id, c.station?.Id, c.station?.stationId, c.station?.StationId);
+        const norm = (v) => (v == null ? '' : String(v).replace(/[{}]/g, '').toLowerCase());
+        const stId = stIdRaw || '';
+        const stName = (() => {
+          if (!stId) return null;
+          const match = stations.find(s => norm(s.id || s.Id) === norm(stId)) || null;
+          if (!match) return null;
+          return match.name || match.Name || null;
+        })();
+        return {
+          id: c.id || c.Id || c.carId || c.CarId,
+          name: c.name || c.Name || c.model || c.CarName || 'Car',
+          model: c.model || c.Model || null,
+          brand: c.brand || c.Brand || null,
+          licensePlate: c.licensePlate || c.LicensePlate || null,
+          img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || 'Car')}`,
+          battery: normalizePercent(c.currentBatteryLevel ?? c.CurrentBatteryLevel ?? c.batteryPercent ?? c.battery),
+          tech: c.condition ?? c.status ?? c.Status ?? null,
+          issue: c.issue ?? c.issueDescription ?? null,
+          capacity: c.batteryCapacity ?? c.BatteryCapacity ?? c.capacity ?? c.capacityKWh ?? c.batteryCapacityKWh ?? null,
+          stationId: stId,
+          stationName: stName || null
+        };
+      });
+      setVehicles(mapped);
+
+      // Opportunistically fetch battery percent for vehicles missing it
+      const needBattery = mapped.filter(v => v.battery == null);
+      const needCapacity = mapped.filter(v => v.capacity == null);
+      if (needBattery.length > 0) {
+        try {
+          const updates = await Promise.all(needBattery.map(async v => {
+            try {
+              const b = await AdminAPI.getCarBattery(v.id);
+              return { id: v.id, battery: normalizePercent(b) };
+            } catch { return { id: v.id, battery: null }; }
+          }));
+          setVehicles(prev => prev.map(v => {
+            const u = updates.find(x => x.id === v.id);
+            return u && u.battery != null ? { ...v, battery: u.battery } : v;
+          }));
+        } catch {}
+      }
+      if (needCapacity.length > 0) {
+        try {
+          const updatesCap = await Promise.all(needCapacity.map(async v => {
+            try {
+              const cap = await AdminAPI.getCarCapacity(v.id);
+              return { id: v.id, capacity: cap };
+            } catch { return { id: v.id, capacity: null }; }
+          }));
+          setVehicles(prev => prev.map(v => {
+            const u = updatesCap.find(x => x.id === v.id);
+            return u && u.capacity != null ? { ...v, capacity: u.capacity } : v;
+          }));
+        } catch {}
+      }
+    } catch (e) {
+      setError(e?.message || 'Failed to load vehicles');
+    } finally {
+      setLoadingVehicles(false);
     }
   };
 
@@ -291,127 +561,15 @@ export default function AdminPage() {
 
   // Load vehicles when station changes (and when stations list updates for name mapping)
   useEffect(() => {
-    let mounted = true
-    async function loadVehicles() {
-      try {
-        setLoadingVehicles(true)
-        let cars = []
-        if (stationId) {
-          // Show ALL vehicles for the station, regardless of availability
-          let byStation = []
-          let available = []
-          try { byStation = await AdminAPI.getCarsByStation(stationId) } catch {}
-          try { available = await AdminAPI.getAvailableCarsByStation(stationId) } catch {}
-          const toArray = (x) => Array.isArray(x) ? x : (x ? [x] : [])
-          const A = toArray(byStation), B = toArray(available)
-          // Merge unique by id (fallback to licensePlate)
-          const map = new Map()
-          for (const c of [...A, ...B]) {
-            const key = String(c?.id || c?.Id || c?.carId || c?.CarId || c?.licensePlate || c?.LicensePlate || Math.random())
-            if (!map.has(key)) map.set(key, c)
-          }
-          cars = Array.from(map.values())
-
-          // Always supplement with client-side filtered All Cars to catch backends that only return "available" by station
-          try {
-            const all = await AdminAPI.getAllCars(1, 300)
-            const norm = (v) => (v == null ? '' : String(v).replace(/[{}]/g, '').toLowerCase())
-            const sidNorm = norm(stationId)
-            const clientFiltered = (all || []).filter(c => {
-              const candidates = [
-                c.currentStationId, c.CurrentStationId, c.currentStationID,
-                c.stationId, c.StationId, c.stationID,
-                c.station?.id, c.station?.Id, c.station?.stationId, c.station?.StationId
-              ]
-              return candidates.some(st => st != null && norm(st) === sidNorm)
-            })
-            // Merge clientFiltered into cars (dedupe by id/licensePlate)
-            for (const c of clientFiltered) {
-              const key = String(c?.id || c?.Id || c?.carId || c?.CarId || c?.licensePlate || c?.LicensePlate)
-              if (key && !map.has(key)) {
-                map.set(key, c)
-              }
-            }
-            cars = Array.from(map.values())
-          } catch {}
-        } else {
-          try { cars = await AdminAPI.getAllCars(1, 100) }
-          catch { try { cars = await AdminAPI.listCars({ page: 1, pageSize: 100 }) } catch { cars = [] } }
-        }
-        // Ensure we always have an array
-        if (!Array.isArray(cars)) cars = cars ? [cars] : []
-        if (!mounted) return
-        const normalizePercent = (v) => {
-          const n = Number(v); if (Number.isFinite(n) && n >= 0 && n <= 100) return Math.round(n); return null
-        }
-        const mapped = (cars || []).map(c => {
-          const pick = (...vals) => vals.find(v => v != null && v !== '')
-          const stIdRaw = pick(c.currentStationId, c.CurrentStationId, c.currentStationID, c.stationId, c.StationId, c.stationID, c.station?.id, c.station?.Id, c.station?.stationId, c.station?.StationId)
-          const norm = (v) => (v == null ? '' : String(v).replace(/[{}]/g, '').toLowerCase())
-          const stId = stIdRaw || ''
-          const stName = (() => {
-            if (!stId) return null
-            const match = stations.find(s => norm(s.id || s.Id) === norm(stId)) || null
-            if (!match) return null
-            return match.name || match.Name || null
-          })()
-          return {
-          id: c.id || c.Id || c.carId || c.CarId,
-          name: c.name || c.Name || c.model || c.CarName || 'Car',
-          img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || 'Car')}`,
-          battery: normalizePercent(c.currentBatteryLevel ?? c.CurrentBatteryLevel ?? c.batteryPercent ?? c.battery),
-          tech: c.condition ?? c.status ?? c.Status ?? null,
-          issue: c.issue ?? c.issueDescription ?? null,
-          capacity: c.batteryCapacity ?? c.BatteryCapacity ?? c.capacity ?? c.capacityKWh ?? c.batteryCapacityKWh ?? null,
-          stationId: stId,
-          stationName: stName || null
-        }
-        })
-        setVehicles(mapped)
-
-        // Opportunistically fetch battery percent for vehicles missing it
-        const needBattery = mapped.filter(v => v.battery == null)
-        const needCapacity = mapped.filter(v => v.capacity == null)
-        if (needBattery.length > 0) {
-          try {
-            const updates = await Promise.all(needBattery.map(async v => {
-              try {
-                const b = await AdminAPI.getCarBattery(v.id)
-                return { id: v.id, battery: normalizePercent(b) }
-              } catch { return { id: v.id, battery: null } }
-            }))
-            if (!mounted) return
-            setVehicles(prev => prev.map(v => {
-              const u = updates.find(x => x.id === v.id)
-              return u && u.battery != null ? { ...v, battery: u.battery } : v
-            }))
-          } catch {}
-        }
-        if (needCapacity.length > 0) {
-          try {
-            const updatesCap = await Promise.all(needCapacity.map(async v => {
-              try {
-                const cap = await AdminAPI.getCarCapacity(v.id)
-                return { id: v.id, capacity: cap }
-              } catch { return { id: v.id, capacity: null } }
-            }))
-            if (!mounted) return
-            setVehicles(prev => prev.map(v => {
-              const u = updatesCap.find(x => x.id === v.id)
-              return u && u.capacity != null ? { ...v, capacity: u.capacity } : v
-            }))
-          } catch {}
-        }
-      } catch (e) {
-        if (!mounted) return
-        setError(e?.message || 'Failed to load vehicles')
-      } finally {
-        if (mounted) setLoadingVehicles(false)
-      }
+    let mounted = true;
+    async function load() {
+      if (!mounted) return;
+      await loadVehiclesForStation(stationId);
+      await updateStationSlots(stationId);
     }
-    loadVehicles()
-    return () => { mounted = false }
-  }, [stationId, stations])
+    load();
+    return () => { mounted = false; };
+  }, [stationId, stations]);
 
   // Load bookings for station when station changes
   useEffect(() => {
@@ -646,6 +804,13 @@ export default function AdminPage() {
     return () => { mounted = false }
   }, [stationId])
 
+  // Load staff by station when viewing staff section
+  useEffect(() => {
+    if (section === 'staff' && stationId) {
+      loadStaffByStation(stationId);
+    }
+  }, [section, stationId]);
+
   return (
     <div className="app-layout">
       <Header />
@@ -724,7 +889,10 @@ export default function AdminPage() {
               onRemove={removeVehicle}
               onUpdate={updateVehicle}
               stationId={stationId}
-              canDelete={String(role).toLowerCase() === 'admin'}
+              canDelete={true}
+              stationSlots={stationSlots}
+              onTransferCar={handleTransferCar}
+              stations={stations}
             />
           </>
         )}
@@ -733,18 +901,27 @@ export default function AdminPage() {
             {loadingUsers && <div style={{padding:'10px 12px'}}>Loading users...</div>}
             <UserSection
               users={users}
+              deletedUsers={deletedUsers}
+              loadingDeleted={loadingDeletedUsers}
               onAssignStaff={handleAssignStaff}
-              onDelete={handleDeleteUser}
+              onDeleteUser={handleDeleteUser}
+              onRestoreUser={handleRestoreUser}
+              onUserCreated={loadUsers}
+              onLoadDeleted={loadDeletedUsers}
             />
           </>
         )}
         {section === 'staff' && (
           <>
-            {loadingUsers && <div style={{padding:'10px 12px'}}>Loading staff...</div>}
+            {(loadingUsers || loadingStaff) && <div style={{padding:'10px 12px'}}>Loading staff...</div>}
             <StaffSection
               users={users}
+              staffByStation={staffByStation}
               stations={stations}
               onRemoveStaff={handleRemoveStaff}
+              onAssignStation={handleAssignStaffToStation}
+              onUnassignStation={handleUnassignStaff}
+              onStaffCreated={loadUsers}
             />
           </>
         )}

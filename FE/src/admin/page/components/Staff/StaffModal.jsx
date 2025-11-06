@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
-export default function StaffModal({ staff, stations, onClose, onRemoveStaff }) {
+export default function StaffModal({ staff, stations, onClose, onRemoveStaff, onAssignStation, onUnassignStation }) {
   const [loading, setLoading] = useState(false);
+  const [selectedStation, setSelectedStation] = useState('');
 
   if (!staff) return null;
 
@@ -14,7 +15,11 @@ export default function StaffModal({ staff, stations, onClose, onRemoveStaff }) 
   // Find station name
   const stationId = staff.stationId || staff.StationId;
   const station = stations.find(s => (s.id || s.Id) === stationId);
-  const stationName = station ? (station.name || station.Name) : (stationId || 'Unassigned');
+  const stationName = station ? (station.name || station.Name) : 
+                      staff.stationName || staff.StationName || 
+                      (stationId ? `Station ${stationId.substring(0, 8)}...` : 'Not Assigned');
+  
+  const isAssigned = stationId || staff.stationName || staff.StationName;
 
   const handleRemoveStaff = async () => {
     if (!window.confirm(`Are you sure you want to remove staff role from ${fullName}?`)) return;
@@ -26,6 +31,39 @@ export default function StaffModal({ staff, stations, onClose, onRemoveStaff }) 
       onClose?.();
     } catch (e) {
       alert(e?.message || 'Failed to remove staff role');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAssignStation = async () => {
+    if (!selectedStation) {
+      alert('Please select a station');
+      return;
+    }
+    
+    if (!window.confirm(`Assign ${fullName} to this station?`)) return;
+    
+    setLoading(true);
+    try {
+      await onAssignStation?.(staff, selectedStation);
+      onClose?.();
+    } catch (e) {
+      alert(e?.message || 'Failed to assign station');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUnassignStation = async () => {
+    if (!window.confirm(`Unassign ${fullName} from ${stationName}?`)) return;
+    
+    setLoading(true);
+    try {
+      await onUnassignStation?.(staff);
+      onClose?.();
+    } catch (e) {
+      alert(e?.message || 'Failed to unassign station');
     } finally {
       setLoading(false);
     }
@@ -59,6 +97,74 @@ export default function StaffModal({ staff, stations, onClose, onRemoveStaff }) 
             <strong>User ID:</strong>
             <span style={{fontSize: '12px', wordBreak: 'break-all'}}>{userId}</span>
           </div>
+        </div>
+
+        {/* Station Assignment Section */}
+        <div style={{padding: '20px', borderTop: '1px solid #eee'}}>
+          <h4 style={{marginBottom: '12px', color: '#333'}}>
+            {isAssigned ? 'Reassign to Different Station' : 'Assign to Station'}
+          </h4>
+          <div style={{display: 'flex', gap: '10px', alignItems: 'center', marginBottom: isAssigned ? '10px' : '0'}}>
+            <select 
+              value={selectedStation}
+              onChange={(e) => setSelectedStation(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '10px',
+                borderRadius: '8px',
+                border: '1px solid #ddd',
+                fontSize: '14px'
+              }}
+              disabled={loading}
+            >
+              <option value="">Select a station...</option>
+              {stations.map(s => (
+                <option 
+                  key={s.id || s.Id} 
+                  value={s.id || s.Id}
+                  disabled={(s.id || s.Id) === stationId}
+                >
+                  {s.name || s.Name || `Station ${s.id || s.Id}`}
+                  {(s.id || s.Id) === stationId ? ' (Current)' : ''}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleAssignStation}
+              disabled={loading || !selectedStation}
+              style={{
+                background: '#2196f3',
+                color: 'white',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: (loading || !selectedStation) ? 'not-allowed' : 'pointer',
+                opacity: (loading || !selectedStation) ? 0.6 : 1,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {loading ? 'Assigning...' : (isAssigned ? 'Reassign' : 'Assign')}
+            </button>
+          </div>
+          {isAssigned && onUnassignStation && (
+            <button
+              onClick={handleUnassignStation}
+              disabled={loading}
+              style={{
+                background: '#ff9800',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                fontSize: '13px',
+                width: '100%'
+              }}
+            >
+              {loading ? 'Unassigning...' : '🔓 Unassign from Station'}
+            </button>
+          )}
         </div>
 
         <div style={{padding: '20px', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'center'}}>

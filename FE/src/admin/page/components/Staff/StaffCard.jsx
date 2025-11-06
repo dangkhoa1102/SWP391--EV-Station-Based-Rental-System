@@ -9,7 +9,11 @@ export default function StaffCard({ staff, stations, onClick }) {
   // Find station name
   const stationId = staff.stationId || staff.StationId;
   const station = stations.find(s => (s.id || s.Id) === stationId);
-  const stationName = station ? (station.name || station.Name) : (stationId || 'Unassigned');
+  const stationName = station ? (station.name || station.Name) : 
+                      staff.stationName || staff.StationName || 
+                      (stationId ? `Station ${stationId.substring(0, 8)}...` : 'Not Assigned');
+  
+  const isUnassigned = !stationId && !staff.stationName && !staff.StationName;
 
   return (
     <div className="staff-card" onClick={onClick}>
@@ -17,7 +21,9 @@ export default function StaffCard({ staff, stations, onClick }) {
       <div className="staff-info">
         <div className="staff-name">{fullName}</div>
         <div className="staff-email">{email}</div>
-        <div className="staff-station">📍 {stationName}</div>
+        <div className="staff-station" style={{ color: isUnassigned ? '#ff9800' : 'inherit' }}>
+          {isUnassigned ? '⚠️' : '📍'} {stationName}
+        </div>
         {phone !== '—' && <div className="staff-phone">📞 {phone}</div>}
       </div>
     </div>
