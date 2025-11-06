@@ -13,18 +13,18 @@ namespace Monolithic.Services.Implementation
         private readonly EVStationBasedRentalSystemDbContext _context;
         private readonly IPhotoService _photoService;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IDiscordNotifier _notifier;
+        //private readonly IDiscordNotifier _notifier;
 
         public IncidentService(
             EVStationBasedRentalSystemDbContext context, 
             IPhotoService photoService,
-            IHttpContextAccessor httpContextAccessor, 
-            IDiscordNotifier notifier)
+            IHttpContextAccessor httpContextAccessor
+            /*IDiscordNotifier notifier*/)
         {
             _context = context;
             _photoService = photoService;
             _httpContextAccessor = httpContextAccessor;
-            _notifier = notifier;
+            //_notifier = notifier;
         }
 
         public async Task<IncidentResponse> CreateIncidentAsync(CreateIncidentFormRequest request)
@@ -58,13 +58,13 @@ namespace Monolithic.Services.Implementation
 
             _context.Incidents.Add(incident);
             await _context.SaveChangesAsync();
-            await _notifier.SendMessageAsync(
-    $"🚨 **New Incident Created!**\n" +
-    $"📋 Booking ID: `{incident.BookingId}`\n" +
-    $"🧍‍♂️ Staff: `{staffGuid}`\n" +
-    $"🕐 Reported At: {incident.ReportedAt:HH:mm:ss dd/MM/yyyy UTC}\n" +
-    $"💬 Description: {incident.Description}"
-);
+//            await _notifier.SendMessageAsync(
+//    $"🚨 **New Incident Created!**\n" +
+//    $"📋 Booking ID: `{incident.BookingId}`\n" +
+//    $"🧍‍♂️ Staff: `{staffGuid}`\n" +
+//    $"🕐 Reported At: {incident.ReportedAt:HH:mm:ss dd/MM/yyyy UTC}\n" +
+//    $"💬 Description: {incident.Description}"
+//);
 
             // Upload images nếu có
             if (request.Images != null && request.Images.Any())
