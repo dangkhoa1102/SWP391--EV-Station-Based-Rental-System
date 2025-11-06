@@ -42,10 +42,23 @@ export default function UpdateProfilePage() {
       console.log('✅ Profile initialized from localStorage')
       
       // Check which fields are empty (missing)
+      // Only check these 4 required fields for rental
       const missing = []
-      if (!localStorage.getItem('userAddress')) missing.push('address')
-      if (!localStorage.getItem('userDriverLicenseNumber')) missing.push('driverLicenseNumber')
-      if (!localStorage.getItem('userDriverLicenseExpiry')) missing.push('driverLicenseExpiry')
+      const address = localStorage.getItem('userAddress')
+      const dateOfBirth = localStorage.getItem('userDateOfBirth')
+      const driverLicenseNumber = localStorage.getItem('userDriverLicenseNumber')
+      const driverLicenseExpiry = localStorage.getItem('userDriverLicenseExpiry')
+      
+      console.log('📋 Checking 4 required fields:')
+      console.log('  Address:', address)
+      console.log('  DateOfBirth:', dateOfBirth)
+      console.log('  DriverLicenseNumber:', driverLicenseNumber)
+      console.log('  DriverLicenseExpiry:', driverLicenseExpiry)
+      
+      if (!address || address.trim() === '') missing.push('address')
+      if (!dateOfBirth || dateOfBirth.trim() === '') missing.push('dateOfBirth')
+      if (!driverLicenseNumber || driverLicenseNumber.trim() === '') missing.push('driverLicenseNumber')
+      if (!driverLicenseExpiry || driverLicenseExpiry.trim() === '') missing.push('driverLicenseExpiry')
       
       setMissingFields(missing)
       console.log('⚠️ Missing fields:', missing)
@@ -244,7 +257,7 @@ export default function UpdateProfilePage() {
       <div className="container">
         <div className="page-header">
           <h1>✏️ Update Your Profile</h1>
-          <p>Keep your information up to date to enjoy our services</p>
+          <p style={{ color: 'white' }}>Keep your information up to date to enjoy our services</p>
         </div>
 
         {missingFields.length > 0 && (
@@ -418,10 +431,13 @@ export default function UpdateProfilePage() {
 
           {/* Additional Information Section */}
           <div className="form-section">
-            <h2 className="section-title">📋 Additional Information (Optional)</h2>
+            <h2 className="section-title">📋 Additional Information</h2>
             
-            <div className="form-group">
-              <label htmlFor="identityNumber">Identity Number (CCCD)</label>
+            <div className={`form-group ${missingFields.includes('identityNumber') ? 'field-missing-group' : ''}`}>
+              <label htmlFor="identityNumber">
+                Identity Number (CCCD) *
+                {missingFields.includes('identityNumber') && <span className="required-badge">Required</span>}
+              </label>
               <input
                 type="text"
                 id="identityNumber"
@@ -429,6 +445,8 @@ export default function UpdateProfilePage() {
                 value={formData.identityNumber}
                 onChange={handleChange}
                 placeholder="123456789012"
+                className={missingFields.includes('identityNumber') ? 'field-missing' : ''}
+                required
               />
             </div>
           </div>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import UpdateProfileModal from './UpdateProfileModal'
 import NotificationModal from './NotificationModal'
 
 export default function RegisterModal(){
@@ -10,11 +9,10 @@ export default function RegisterModal(){
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [showUpdateProfile, setShowUpdateProfile] = useState(false)
   const [notification, setNotification] = useState({ isOpen: false, type: 'info', title: '', message: '' })
   const [isLoading, setIsLoading] = useState(false)
 
-  if(!showRegister && !showUpdateProfile) return null
+  if(!showRegister && !notification.isOpen) return null
 
   async function handleSubmit(e){
     e.preventDefault()
@@ -30,7 +28,7 @@ export default function RegisterModal(){
         isOpen: true,
         type: 'success',
         title: 'Account Created! 🎉',
-        message: 'Your account has been created successfully. Please complete your profile information.'
+        message: 'Your account has been created successfully. You can now login and complete your profile.'
       })
 
       // Clear form
@@ -39,14 +37,12 @@ export default function RegisterModal(){
       setPhone('')
       setPassword('')
       
-      // Close register modal and open update profile modal after 1.5s
+      // Close register modal after 2s
       setTimeout(() => {
-        console.log('⏱️ Timeout fired - closing register and opening profile modal')
+        console.log('⏱️ Registration complete - closing register modal')
         setShowRegister(false)
         setNotification({ ...notification, isOpen: false })
-        setShowUpdateProfile(true)
-        console.log('🎯 Update profile should now be visible')
-      }, 1500)
+      }, 2000)
 
     }catch(err){
       console.error('❌ Registration error:', err)
@@ -62,26 +58,6 @@ export default function RegisterModal(){
       setIsLoading(false)
     }
   }
-
-  const handleProfileUpdateSuccess = (profileData) => {
-    console.log('✅ Profile updated successfully')
-    setNotification({
-      isOpen: true,
-      type: 'success',
-      title: 'Profile Updated! ✅',
-      message: 'Your profile information has been saved. You can now start booking cars!'
-    })
-
-    setTimeout(() => {
-      setShowUpdateProfile(false)
-      setNotification({ ...notification, isOpen: false })
-      setShowRegister(false) // Also make sure register is closed
-      setEmail('')
-    }, 2000)
-  }
-
-  // Show component if either register or update profile is open, or notification is showing
-  if(!showRegister && !showUpdateProfile && !notification.isOpen) return null
 
   return (
     <>
@@ -117,17 +93,6 @@ export default function RegisterModal(){
           </div>
         </div>
       )}
-
-      {/* Update Profile Modal */}
-      <UpdateProfileModal
-        isOpen={showUpdateProfile}
-        userEmail={email}
-        onClose={() => {
-          setShowUpdateProfile(false)
-          setEmail('')
-        }}
-        onSuccess={handleProfileUpdateSuccess}
-      />
 
       {/* Notification Modal */}
       <NotificationModal

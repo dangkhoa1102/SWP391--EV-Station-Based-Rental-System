@@ -329,7 +329,7 @@ export default function BookingHistory(){
           <i className="fas fa-history"></i>
           <div className="page-header-text">
             <h1>Booking History</h1>
-            <p>Manage all your car rentals</p>
+            <p style={{ color: 'white' }}>Manage all your car rentals</p>
           </div>
         </div>
 

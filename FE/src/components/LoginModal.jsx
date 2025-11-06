@@ -17,9 +17,9 @@ export default function LoginModal(){
   const checkProfileCompleteness = async (userId) => {
     try {
       console.log('📋 Checking profile completeness for user:', userId)
-      const profile = await API.getMe()
+      const profile = await API.getMyProfile()
       
-      console.log('👤 Profile data:', profile)
+      console.log('👤 Profile data from /Users/Get-My-Profile:', profile)
       
       // Check if any critical field is null
       const incompletFields = []
