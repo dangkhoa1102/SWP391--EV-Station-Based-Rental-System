@@ -45,15 +45,23 @@ function MapController({ stations, userLocation }) {
   const map = useMap()
 
   useEffect(() => {
-    if (!userLocation) return
+    if (!userLocation || !map) return
 
-    // Focus on user location first with a reasonable zoom level
-    // This way user can see their current position clearly
-    // User can then zoom out to find stations
-    map.setView([userLocation.lat, userLocation.lng], 14, {
-      animate: true,
-      duration: 1
-    })
+    try {
+      // Add a small delay to ensure map is fully rendered
+      const timer = setTimeout(() => {
+        if (map && map._container) {
+          map.setView([userLocation.lat, userLocation.lng], 14, {
+            animate: true,
+            duration: 1
+          })
+        }
+      }, 100)
+
+      return () => clearTimeout(timer)
+    } catch (err) {
+      console.warn('⚠️ Error setting map view:', err.message)
+    }
   }, [map, userLocation])
 
   return null
