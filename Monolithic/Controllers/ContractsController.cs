@@ -108,12 +108,12 @@ namespace Monolithic.Controllers
         [HttpPost("hopdong/tao")]
         public async Task<ActionResult<ResponseDto<Guid>>> TaoHopDong(
             [FromQuery] Guid bookingId, 
-            [FromQuery] Guid renterId,
-            [FromBody] TaoHopDongDto? request = null)
+            [FromQuery] Guid renterId
+            /*[FromBody] TaoHopDongDto? request = null*/)
         {
             try
             {
-                var contractId = await _contractService.LuuHopDongVaTaoFileAsync(request, bookingId, renterId);
+                var contractId = await _contractService.LuuHopDongVaTaoFileAsync(/*request, */bookingId, renterId);
                 return Ok(ResponseDto<Guid>.Success(contractId, "The contract has been created successfully"));
             }
             catch (Exception ex)

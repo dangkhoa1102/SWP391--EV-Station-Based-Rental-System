@@ -55,7 +55,7 @@ namespace Monolithic.Services.Implementation
         /// <summary>
         /// Lưu hợp đồng thuê xe và tạo file Word từ template - TỰ ĐỘNG LẤY DỮ LIỆU TỪ USER/BOOKING/CAR
         /// </summary>
-        public async Task<Guid> LuuHopDongVaTaoFileAsync(TaoHopDongDto? request, Guid bookingId, Guid renterId)
+        public async Task<Guid> LuuHopDongVaTaoFileAsync(/*TaoHopDongDto? request, */Guid bookingId, Guid renterId)
         {
             // Verify booking exists and status
             var booking = await _bookingRepository.GetBookingWithDetailsAsync(bookingId);
@@ -147,7 +147,7 @@ namespace Monolithic.Services.Implementation
             );
 
             // Sử dụng DTO được truyền vào hoặc DTO tự động
-            var finalDto = request ?? autoDto;
+            var finalDto = /*request ?? */autoDto;
 
             // === TIẾP TỤC LOGIC CŨ ===
             DateTime? ngayHetHan = null;

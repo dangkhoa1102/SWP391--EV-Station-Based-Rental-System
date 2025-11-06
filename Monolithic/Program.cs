@@ -51,7 +51,7 @@ builder.Services.PostConfigure<PayOSSettings>(settings =>
         settings.ChecksumKey = checksumKey;
 });
 
-builder.Services.AddSingleton<Monolithic.Common.IDiscordNotifier, Monolithic.Common.DiscordNotifier>();
+//builder.Services.AddSingleton<Monolithic.Common.IDiscordNotifier, Monolithic.Common.DiscordNotifier>();
 
 // Configure EmailSettings settings từ appsettings.json
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
