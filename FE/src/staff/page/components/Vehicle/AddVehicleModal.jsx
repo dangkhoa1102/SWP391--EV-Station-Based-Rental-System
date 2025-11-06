@@ -1,6 +1,6 @@
 // src/components/Vehicle/AddVehicleModal.jsx
 import React, { useState } from 'react';
-import './Vehicle.css';
+import '../../styles/modals.css';
 
 export default function AddVehicleModal({ open, onClose, onSubmit, stationId }) {
   // API payload fields
@@ -79,26 +79,50 @@ export default function AddVehicleModal({ open, onClose, onSubmit, stationId }) 
   }
 
   return (
-    <div className="vehicle-modal-overlay" style={{display:'flex'}}>
-      <div className="vehicle-modal-content">
-        <span className="vehicle-modal-close" onClick={onClose}>&times;</span>
-        <h3>Add Vehicle</h3>
-        {error && <div style={{background:'#ffecec', color:'#b00020', padding:'8px 12px', borderRadius:6, marginBottom:8}}>{error}</div>}
-        <div className="form-grid">
-          <input value={brand} onChange={e=>setBrand(e.target.value)} placeholder="Brand *" />
-          <input value={model} onChange={e=>setModel(e.target.value)} placeholder="Model *" />
-          <input value={year} onChange={e=>setYear(e.target.value)} placeholder="Year *" type="number" min={1900} max={2100} />
-          <input value={color} onChange={e=>setColor(e.target.value)} placeholder="Color" />
-          <input value={licensePlate} onChange={e=>setLicensePlate(e.target.value)} placeholder="License Plate *" />
-          <input value={batteryCapacity} onChange={e=>setBatteryCapacity(e.target.value)} placeholder="Battery Capacity (kWh) *" type="number" min={0} max={100} />
-          <input value={currentBatteryLevel} onChange={e=>setCurrentBatteryLevel(e.target.value)} placeholder="Current Battery (%) *" type="number" min={0} max={100} />
-          <input value={rentalPricePerHour} onChange={e=>setRentalPricePerHour(e.target.value)} placeholder="Price / hour *" type="number" step="0.01" min={0} />
-          <input value={rentalPricePerDate} onChange={e=>setRentalPricePerDate(e.target.value)} placeholder="Price / day *" type="number" step="0.01" min={0} />
-          <input value={imageUrl} onChange={e=>setImageUrl(e.target.value)} placeholder="Image URL" />
-          <input value={description} onChange={e=>setDescription(e.target.value)} placeholder="Description" />
+    <div className="modal-overlay" style={{display:'flex'}}>
+      <div className="modal-content" style={{maxWidth: '600px', width: '90%', maxHeight: '85vh', overflow: 'auto'}}>
+        <span className="close-btn" onClick={onClose}>&times;</span>
+        <h3 style={{marginTop: 0, marginBottom: '16px'}}>Add Vehicle</h3>
+        {error && <div style={{background:'#ffecec', color:'#b00020', padding:'8px 12px', borderRadius:6, marginBottom:12}}>{error}</div>}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '12px',
+          marginBottom: '16px'
+        }}>
+          <input value={brand} onChange={e=>setBrand(e.target.value)} placeholder="Brand *" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={model} onChange={e=>setModel(e.target.value)} placeholder="Model *" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={year} onChange={e=>setYear(e.target.value)} placeholder="Year *" type="number" min={1900} max={2100} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={color} onChange={e=>setColor(e.target.value)} placeholder="Color" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={licensePlate} onChange={e=>setLicensePlate(e.target.value)} placeholder="License Plate *" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={batteryCapacity} onChange={e=>setBatteryCapacity(e.target.value)} placeholder="Battery Capacity (kWh) *" type="number" min={0} max={100} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={currentBatteryLevel} onChange={e=>setCurrentBatteryLevel(e.target.value)} placeholder="Current Battery (%) *" type="number" min={0} max={100} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={rentalPricePerHour} onChange={e=>setRentalPricePerHour(e.target.value)} placeholder="Price / hour *" type="number" step="0.01" min={0} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={rentalPricePerDate} onChange={e=>setRentalPricePerDate(e.target.value)} placeholder="Price / day *" type="number" step="0.01" min={0} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={imageUrl} onChange={e=>setImageUrl(e.target.value)} placeholder="Image URL" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px', gridColumn: '1 / -1'}} />
+          <input value={description} onChange={e=>setDescription(e.target.value)} placeholder="Description" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px', gridColumn: '1 / -1'}} />
         </div>
-        <div style={{display:'flex', justifyContent:'flex-end', marginTop:8}}>
-          <button onClick={handleAdd}>Create</button>
+        <div style={{display:'flex', justifyContent:'flex-end', gap: '10px'}}>
+          <button onClick={onClose} style={{
+            padding: '10px 24px',
+            background: '#6b7280',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '15px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}>Cancel</button>
+          <button onClick={handleAdd} style={{
+            padding: '10px 24px',
+            background: '#43a047',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '15px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}>Create Vehicle</button>
         </div>
       </div>
     </div>

@@ -18,7 +18,7 @@ export default function Sidebar({ onSelect, isOpen, toggleSidebar }) {
 
       {/* Sidebar container */}
       <div className={`sidebar ${isOpen ? 'active' : ''}`}>
-        <h2>FEC Staff</h2>
+        <h2>FEC Admin</h2>
         <div style={{ marginTop: '60px' }}></div>
 
         <button onClick={() => onSelect('booking')}>
@@ -27,8 +27,11 @@ export default function Sidebar({ onSelect, isOpen, toggleSidebar }) {
         <button onClick={() => onSelect('vehicle')}>
           <i className="fas fa-car"></i> Vehicle
         </button>
-        <button onClick={() => onSelect('profile')}>
-          <i className="fas fa-user-circle"></i> Profile
+        <button onClick={() => onSelect('user')}>
+          <i className="fas fa-users"></i> User
+        </button>
+        <button onClick={() => onSelect('staff')}>
+          <i className="fas fa-user-tie"></i> Staff
         </button>
       </div>
     </>

@@ -1,29 +1,9 @@
 // src/components/Vehicle/VehicleCard.jsx
 import React from 'react';
 
-export default function VehicleCard({ vehicle, onOpen, onRemove, onOpenUpdate, canDelete = true }) {
+export default function VehicleCard({ vehicle, onOpen }) {
   return (
-    <div className="vehicle-card" onClick={onOpen}>
-      {/* Action buttons */}
-      <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 6 }}>
-        <button
-          title="Edit"
-          className="vehicle-edit-btn"
-          onClick={(e) => { e.stopPropagation(); onOpenUpdate?.(vehicle); }}
-          style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 4 }}
-        >
-          Edit
-        </button>
-        {canDelete && (
-          <button
-            title="Delete"
-            className="vehicle-remove-btn"
-            onClick={(e) => { e.stopPropagation(); onRemove(vehicle.id); }}
-          >
-            &times;
-          </button>
-        )}
-      </div>
+    <div className="vehicle-card" onClick={onOpen} style={{cursor: 'pointer'}}>
       <img src={vehicle.img} alt={vehicle.name} />
       <div className="vehicle-info">
         <div className="vehicle-title">{vehicle.name}</div>

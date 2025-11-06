@@ -27,6 +27,7 @@ export default function StaffPage() {
   const [error, setError] = useState('');
   const [warning, setWarning] = useState('');
   const [role, setRole] = useState('');
+  const [stationSlots, setStationSlots] = useState(null);
 
   // Booking actions (call API then update locally)
   const confirmBooking = async (id) => {
@@ -128,6 +129,9 @@ export default function StaffPage() {
       const map = (c) => ({
         id: c.id || c.Id || c.carId || c.CarId,
         name: c.name || c.Name || [c.brand, c.model].filter(Boolean).join(' ') || 'Car',
+        model: c.model || c.Model || null,
+        brand: c.brand || c.Brand || null,
+        licensePlate: c.licensePlate || c.LicensePlate || null,
         img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || c.model || 'Car')}`,
         battery: Number.isFinite(c.currentBatteryLevel) ? Math.round(c.currentBatteryLevel) : undefined,
         tech: c.condition ?? c.status ?? c.Status ?? null,
@@ -135,6 +139,8 @@ export default function StaffPage() {
         capacity: c.batteryCapacity ?? c.BatteryCapacity ?? c.capacity ?? c.capacityKWh ?? c.batteryCapacityKWh ?? null
       })
       setVehicles(prev => [...prev, map(c)])
+      // Update slot info after adding
+      await updateStationSlots(stationId)
       return created
     } catch (e) {
       setError(e?.message || 'Failed to create vehicle')
@@ -145,6 +151,8 @@ export default function StaffPage() {
     try {
       await StaffAPI.deleteCar(id)
       setVehicles(prev => prev.filter(v => v.id !== id))
+      // Update slot info after removing
+      await updateStationSlots(stationId)
     } catch (e) {
       const code = e?.response?.status
       // If not authorized, show a friendly warning and stop
@@ -191,6 +199,25 @@ export default function StaffPage() {
       setError(e?.message || 'Failed to update vehicle')
     }
     setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...payload } : v));
+  };
+
+  // Update station slot information
+  const updateStationSlots = async (sid) => {
+    if (!sid) {
+      setStationSlots(null);
+      return;
+    }
+    try {
+      const report = await StaffAPI.getCarStatusReport(sid, null);
+      if (report) {
+        setStationSlots({
+          totalCars: report.totalCars || 0,
+          availableCars: report.availableCars || 0
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to load station slots:', e);
+    }
   };
 
   // Handle global body class to trigger CSS margin transitions
@@ -267,7 +294,7 @@ export default function StaffPage() {
 
           // Always supplement with client-side filtered All Cars to catch backends that only return "available" by station
           try {
-            const all = await StaffAPI.getAllCars(1, 300)
+            const all = await StaffAPI.getAllCars(1, 1000)
             const norm = (v) => (v == null ? '' : String(v).replace(/[{}]/g, '').toLowerCase())
             const sidNorm = norm(stationId)
             const clientFiltered = (all || []).filter(c => {
@@ -288,8 +315,9 @@ export default function StaffPage() {
             cars = Array.from(map.values())
           } catch {}
         } else {
-          try { cars = await StaffAPI.getAllCars(1, 100) }
-          catch { try { cars = await StaffAPI.listCars({ page: 1, pageSize: 100 }) } catch { cars = [] } }
+          // When no station is selected (All stations), fetch all cars with larger page size
+          try { cars = await StaffAPI.getAllCars(1, 1000) }
+          catch { try { cars = await StaffAPI.listCars({ page: 1, pageSize: 1000 }) } catch { cars = [] } }
         }
         // Ensure we always have an array
         if (!Array.isArray(cars)) cars = cars ? [cars] : []
@@ -311,6 +339,9 @@ export default function StaffPage() {
           return {
           id: c.id || c.Id || c.carId || c.CarId,
           name: c.name || c.Name || c.model || c.CarName || 'Car',
+          model: c.model || c.Model || null,
+          brand: c.brand || c.Brand || null,
+          licensePlate: c.licensePlate || c.LicensePlate || null,
           img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || 'Car')}`,
           battery: normalizePercent(c.currentBatteryLevel ?? c.CurrentBatteryLevel ?? c.batteryPercent ?? c.battery),
           tech: c.condition ?? c.status ?? c.Status ?? null,
@@ -362,7 +393,11 @@ export default function StaffPage() {
         if (mounted) setLoadingVehicles(false)
       }
     }
+    async function loadSlots() {
+      if (mounted) await updateStationSlots(stationId);
+    }
     loadVehicles()
+    loadSlots()
     return () => { mounted = false }
   }, [stationId, stations])
 
@@ -678,6 +713,7 @@ export default function StaffPage() {
               onUpdate={updateVehicle}
               stationId={stationId}
               canDelete={String(role).toLowerCase() === 'admin'}
+              stationSlots={stationSlots}
             />
           </>
         )}
