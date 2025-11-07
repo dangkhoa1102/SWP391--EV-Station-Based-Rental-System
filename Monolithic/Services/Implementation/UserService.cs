@@ -131,38 +131,42 @@ namespace Monolithic.Services.Implementation
             {
                 await _context.SaveChangesAsync();
 
-                var userDto = new UserDto
-                {
-                    Id = user.UserId.ToString(),
-                    Email = user.Email ?? "",
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    FullName = user.FullName,
-                    PhoneNumber = user.PhoneNumber,
-                    Address = user.Address,
-                    DateOfBirth = user.DateOfBirth,
-                    YearOfBirth = user.YearOfBirth,
-                    IdentityNumber = user.IdentityNumber,
-                    DriverLicenseNumber = user.DriverLicenseNumber,
-                    DriverLicenseExpiry = user.DriverLicenseExpiry,
-                    DriverLicenseClass = user.DriverLicenseClass,
-                    UserRole = user.UserRole,
-                    IsVerified = user.IsVerified,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    IsActive = user.IsActive,
-                    CccdImageUrl_Front = user.CccdImageUrl_Front,
-                    CccdImageUrl_Back = user.CccdImageUrl_Back,
-                    GplxImageUrl_Front = user.GplxImageUrl_Front,
-                    GplxImageUrl_Back = user.GplxImageUrl_Back
-                };
-
+                var userDto = MapToUserDto(user);
                 return DTOs.Common.ResponseDto<UserDto>.Success(userDto, "User profile updated successfully");
             }
             catch (Exception ex)
             {
                 return DTOs.Common.ResponseDto<UserDto>.Failure($"Error updating profile: {ex.Message}");
             }
+        }
+
+        private UserDto MapToUserDto(User user)
+        {
+            return new UserDto
+            {
+                Id = user.UserId.ToString(),
+                Email = user.Email ?? "",
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber,
+                Address = user.Address,
+                DateOfBirth = user.DateOfBirth,
+                YearOfBirth = user.YearOfBirth,
+                IdentityNumber = user.IdentityNumber,
+                DriverLicenseNumber = user.DriverLicenseNumber,
+                DriverLicenseExpiry = user.DriverLicenseExpiry,
+                DriverLicenseClass = user.DriverLicenseClass,
+                UserRole = user.UserRole,
+                IsVerified = user.IsVerified,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+                IsActive = user.IsActive,
+                CccdImageUrl_Front = user.CccdImageUrl_Front,
+                CccdImageUrl_Back = user.CccdImageUrl_Back,
+                GplxImageUrl_Front = user.GplxImageUrl_Front,
+                GplxImageUrl_Back = user.GplxImageUrl_Back
+            };
         }
 
         public async Task<(List<User> users, int total)> GetUsersAsync(int page, int pageSize, string? search = null, string? role = null, bool? isActive = null)
