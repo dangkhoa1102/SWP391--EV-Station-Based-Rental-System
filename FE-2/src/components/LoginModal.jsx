@@ -61,7 +61,11 @@ export default function LoginModal(){
       const userRole = localStorage.getItem('userRole') || loginResult?.role
       console.log('👥 User role:', userRole)
       
-      if (userRole === 'Renter' || userRole === 'Customer') {
+      // Check if role contains 'rent' or 'customer' (tolerant to variations like 'EV Renter')
+      const isRenterOrCustomer = userRole && /rent|customer/i.test(userRole)
+      console.log('👥 Is renter/customer:', isRenterOrCustomer)
+      
+      if (isRenterOrCustomer) {
         const isIncomplete = await checkProfileCompleteness(localStorage.getItem('userId'))
         
         if (isIncomplete) {

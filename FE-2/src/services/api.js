@@ -148,6 +148,16 @@ const API = {
         } else {
           console.warn('⚠️ Could not find userId in JWT token')
         }
+        
+        // Extract role from JWT (standard claim path)
+        const userRole = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] 
+                      || decoded.role 
+                      || decoded.Role
+        console.log('👥 Extracted userRole from JWT:', userRole)
+        if (userRole) {
+          localStorage.setItem('userRole', userRole)
+          console.log('👥 Saved userRole to localStorage:', userRole)
+        }
       } catch (e) {
         console.error('❌ Error decoding JWT:', e)
       }
@@ -168,7 +178,14 @@ const API = {
       localStorage.setItem('userId', directUserId)
     }
     
-    if (payload.user) localStorage.setItem('user', JSON.stringify(payload.user))
+    if (payload.user) {
+      localStorage.setItem('user', JSON.stringify(payload.user))
+      // Save userRole for profile completeness checks
+      if (payload.user.role) {
+        localStorage.setItem('userRole', payload.user.role)
+        console.log('👥 Saved userRole:', payload.user.role)
+      }
+    }
     return { raw: res.data, token, refreshToken, payload }
   },
 

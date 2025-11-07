@@ -546,9 +546,31 @@ export default function StaffPage() {
                 const full  = (u?.fullName || u?.FullName) || [first, last].filter(Boolean).join(' ') || null
                 const uname = u?.userName || u?.UserName || u?.username || u?.user_name || null
                 const addr = u?.address || u?.Address || ''
-                return { uid, firstName: first, lastName: last, fullName: full, userName: uname, address: addr }
+                // return { uid, firstName: first, lastName: last, fullName: full, userName: uname, address: addr }
+                // Additional fields that FE may want to show
+                const identity = u?.identityNumber || u?.IdentityNumber || u?.identity || ''
+                const cccdFront = u?.cccdImageUrl_Front || u?.CccdImageUrl_Front || u?.CccdImageUrl || u?.cccdFrontUrl || u?.cccdFront || ''
+                const cccdBack  = u?.cccdImageUrl_Back  || u?.CccdImageUrl_Back  || u?.cccdBackUrl  || u?.cccdBack  || ''
+                const gplxFront = u?.gplxImageUrl_Front || u?.GplxImageUrl_Front || u?.gplxFrontUrl || u?.gplxFront || ''
+                const gplxBack  = u?.gplxImageUrl_Back  || u?.GplxImageUrl_Back  || u?.gplxBackUrl  || u?.gplxBack  || ''
+                const phone = u?.phoneNumber || u?.PhoneNumber || u?.phone || u?.Phone || ''
+                return {
+                  uid,
+                  firstName: first,
+                  lastName: last,
+                  fullName: full,
+                  userName: uname,
+                  address: addr,
+                  identityNumber: identity,
+                  cccdFrontUrl: cccdFront,
+                  cccdBackUrl: cccdBack,
+                  gplxFrontUrl: gplxFront,
+                  gplxBackUrl: gplxBack,
+                  phone
+                }
               } catch {
-                return { uid, firstName: null, lastName: null, fullName: null, userName: null, address: '' }
+                // return { uid, firstName: null, lastName: null, fullName: null, userName: null, address: '' }
+                return { uid, firstName: null, lastName: null, fullName: null, userName: null, address: '', identityNumber: '', cccdFrontUrl: '', cccdBackUrl: '', gplxFrontUrl: '', gplxBackUrl: '', phone: '' }
               }
             }))
             if (!mounted) return
@@ -563,7 +585,16 @@ export default function StaffPage() {
                   lastName: b.lastName ?? r.lastName ?? null,
                   fullName: composed || b.customer || b.userName || null,
                   userName: b.userName ?? r.userName,
-                  address: b.address || r.address
+                  // address: b.address || r.address
+                  address: b.address || r.address,
+                  // merge additional identity/contact fields if missing on booking
+                  idString: b.idString || r.identityNumber || b.idString || '',
+                  identityNumber: b.identityNumber || r.identityNumber || b.idString || '',
+                  phone: b.phone || r.phone || '',
+                  cccdFrontUrl: b.cccdFrontUrl || r.cccdFrontUrl || '',
+                  cccdBackUrl: b.cccdBackUrl || r.cccdBackUrl || '',
+                  gplxFrontUrl: b.gplxFrontUrl || r.gplxFrontUrl || '',
+                  gplxBackUrl: b.gplxBackUrl || r.gplxBackUrl || ''
                 }
               }
               return b
