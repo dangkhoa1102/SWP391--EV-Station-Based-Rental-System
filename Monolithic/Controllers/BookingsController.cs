@@ -4,6 +4,7 @@ using Monolithic.Common;
 using Monolithic.DTOs.Booking;
 using Monolithic.DTOs.Common;
 using Monolithic.Services.Interfaces;
+using System.Security.Claims;
 
 namespace Monolithic.Controllers
 {
@@ -92,6 +93,13 @@ namespace Monolithic.Controllers
             var result = await _bookingService.GetBookingsAsync(request);
             return Ok(result);
         }
+        [HttpGet("Get-Active")]
+        public async Task<ActionResult<ResponseDto<PaginationDto<BookingDto>>>> GetActiveBookings([FromQuery] PaginationRequestDto request)
+        {
+            var result = await _bookingService.GetActiveBookingsAsync(request);
+            return Ok(result);
+        }
+
 
         /// <summary>
         /// Get booking by ID
@@ -123,7 +131,31 @@ namespace Monolithic.Controllers
             var result = await _bookingService.GetUserBookingsAsync(userIdClaim);
             return Ok(result);
         }
+        [HttpPost("Confirm-Refund/{bookingId:guid}")]
+        [Authorize(Roles = "Staff")]
+        public async Task<ActionResult<ResponseDto<BookingDto>>> ConfirmRefund(Guid bookingId)
+        {
+            try
+            {
+                // 🔐 Lấy staffId từ JWT (ClaimTypes.NameIdentifier)
+                var staffId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(staffId))
+                    return Unauthorized(ResponseDto<BookingDto>.Failure("Staff not authenticated."));
 
+                // ✅ Gọi service xử lý
+                var result = await _bookingService.ConfirmRefundAsync(bookingId, staffId);
+
+                if (!result.IsSuccess)
+                    return BadRequest(result);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<BookingDto>.Failure($"Error confirming refund: {ex.Message}"));
+            }
+        }
+       
         /// <summary>
         /// Update booking details
         /// </summary>

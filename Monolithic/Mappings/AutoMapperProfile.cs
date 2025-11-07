@@ -72,7 +72,9 @@ namespace Monolithic.Mappings
                 .ForMember(dest => dest.StationId, opt => opt.MapFrom(src => src.StationId))
                 .ForMember(dest => dest.StationName, opt => opt.MapFrom(src => src.Station != null ? src.Station.Name : ""))
                 .ForMember(dest => dest.PickupDateTime, opt => opt.MapFrom(src => src.StartTime))
-                .ForMember(dest => dest.ExpectedReturnDateTime, opt => opt.MapFrom(src => src.EndTime));
+                .ForMember(dest => dest.ExpectedReturnDateTime, opt => opt.MapFrom(src => src.EndTime))
+              .ForMember(dest => dest.RefundConfirmedBy, opt => opt.MapFrom(src => src.RefundConfirmedBy))
+    .ForMember(dest => dest.RefundConfirmedAt, opt => opt.MapFrom(src => src.RefundConfirmedAt));
 
 
             CreateMap<CreateBookingDto, Booking>()

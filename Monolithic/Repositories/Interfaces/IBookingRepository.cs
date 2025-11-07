@@ -1,4 +1,4 @@
-using Monolithic.Models;
+﻿using Monolithic.Models;
 
 namespace Monolithic.Repositories.Interfaces
 {
@@ -10,5 +10,7 @@ namespace Monolithic.Repositories.Interfaces
         Task<IEnumerable<Booking>> GetBookingsByCarAsync(Guid carId);
         Task<IEnumerable<Booking>> GetBookingsByStationAsync(Guid stationId);
         Task<bool> HasActiveBookingForCarAsync(Guid carId);
+
+        Task<IEnumerable<Booking>> GetActiveBookingsAsync();
     }
 }

@@ -45,6 +45,8 @@ namespace Monolithic.DTOs.Booking
         public DateTime CreatedAt { get; set; }
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime UpdatedAt { get; set; }
+        public string? RefundConfirmedBy { get; set; }
+        public DateTime? RefundConfirmedAt { get; set; }
 
         public decimal LateFee { get; set; } = 0;
         public decimal RefundAmount { get; set; }

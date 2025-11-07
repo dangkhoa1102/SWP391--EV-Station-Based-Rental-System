@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251107161432_addfinalu")]
+    partial class addfinalu
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -102,12 +105,6 @@ namespace Monolithic.Migrations
                     b.Property<decimal>("RefundAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("RefundConfirmedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RefundConfirmedBy")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("RentalAmount")
                         .HasColumnType("decimal(10,2)");
@@ -768,7 +765,7 @@ namespace Monolithic.Migrations
                         new
                         {
                             UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 11, 7, 17, 6, 53, 709, DateTimeKind.Utc).AddTicks(2637),
+                            CreatedAt = new DateTime(2025, 11, 7, 16, 14, 32, 225, DateTimeKind.Utc).AddTicks(2927),
                             DateOfBirth = new DateOnly(1, 1, 1),
                             Email = "admin@ev.com",
                             FirstName = "Admin",
