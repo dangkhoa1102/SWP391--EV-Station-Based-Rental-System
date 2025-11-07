@@ -1,0 +1,137 @@
+/* StationSection.css */
+
+.station-name-input {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: calc(100% - 16px); /* Adjust width to fit padding */
+}
+
+.btn-save-rename,
+.btn-cancel-rename {
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+
+.btn-save-rename {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-cancel-rename {
+  background-color: #6c757d;
+  color: white;
+}
+
+
+.station-section {
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.station-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.station-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.station-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.station-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.station-name {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.station-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.station-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.station-actions button:hover {
+  background-color: #f0f0f0;
+}
+
+.station-actions button i {
+  font-size: 16px;
+}
+
+.station-address {
+  color: #555;
+}
+
+.station-no-address {
+  color: #999;
+  font-style: italic;
+}
+
+.station-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.station-stats span b {
+  font-weight: 600;
+}
+
+.station-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.create-station-btn,
+.refresh-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.create-station-btn {
+  background-color: #28a745;
+}
+
+.refresh-btn {
+  background-color: #007bff;
+}

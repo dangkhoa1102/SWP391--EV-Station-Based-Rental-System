@@ -1,0 +1,427 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #4CAF50;
+    --primary-dark: #45a049;
+    --text: #333;
+    --bg: #f5f5f5;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: white;
+  color: var(--text);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  flex: 1;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 16px;
+}
+
+.header {
+  background: white;
+  border-bottom: 1px solid #ddd;
+  padding: 1rem 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.header .logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.header .logo a {
+  color: #ff6600;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.header .logo a:hover {
+  color: #e05500;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Staff Portal Button */
+.staff-portal-btn {
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 8px 18px;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-portal-btn {
+  background: linear-gradient(135deg, #e24a4a, #bd3535);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 8px 18px;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.staff-portal-btn:hover {
+  background: linear-gradient(135deg, #357abd, #2868a8);
+  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+  transform: translateY(-2px);
+}
+
+.staff-portal-btn i {
+  font-size: 1.1rem;
+}
+
+.login-nav-btn {
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  font-weight: 600;
+}
+
+.login-nav-btn:hover {
+  background: linear-gradient(135deg, #f7931e, #ff6b35);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  transform: translateY(-2px);
+}
+
+.footer {
+  background: #222;
+  color: #fff;
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: auto;
+  width: 100%;
+}
+
+/* Modal Overlay Styles */
+.modal-overlay {
+  display: none; 
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(3px);
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+/* Modal box */
+.modal-content {
+  background: #fff;
+  padding: 3rem 2rem;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-30px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Close button */
+.modal-content .close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #999;
+  background: none;
+  border: none;
+  transition: color 0.3s ease;
+}
+
+.modal-content .close-btn:hover {
+  color: #ff6b35;
+}
+
+/* Big "LOGIN" title */
+.modal-content h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #ff6600;
+  letter-spacing: 2px;
+}
+
+/* Form Styles */
+.modal-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Input group with icon */
+.modal-content .input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.modal-content .input-group i {
+  position: static;
+  margin: 0 6px 0 0;
+  color: #999;
+  font-size: 1.05rem;
+  pointer-events: none;
+  order: -1; /* visually put icon before input while keeping DOM order */
+}
+
+.modal-content .input-group input {
+  flex: 1 1 auto;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.modal-content .input-group input:focus {
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.modal-content .input-group input:focus + i,
+.modal-content .input-group input:focus ~ i {
+  color: #ff6b35;
+}
+
+/* Legacy input styles (without input-group) */
+.modal-content input[type="text"],
+.modal-content input[type="email"],
+.modal-content input[type="tel"],
+.modal-content input[type="password"] {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.modal-content input:focus {
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.modal-content input:valid {
+  border-color: #4CAF50;
+}
+
+/* Buttons */
+.modal-content button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.modal-content button[type="submit"]:hover {
+  background: linear-gradient(135deg, #f7931e, #ff6b35);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+/* Modal footer text with link */
+.modal-content .modal-footer-text {
+  text-align: center;
+  margin-top: 15px;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.modal-content .modal-footer-text a {
+  color: #ff6b35;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.modal-content .modal-footer-text a:hover {
+  color: #f7931e;
+  text-decoration: underline;
+}
+
+.modal-content button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+/* Links */
+.modal-content a {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #333;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal-content a:hover {
+  text-decoration: underline;
+  color: #ff6b35;
+}
+
+/* Password Hint */
+.password-hint {
+  color: #666;
+  font-size: 0.85rem;
+  margin-top: -10px;
+  display: block;
+  text-align: left;
+}
+
+/* Mobile Menu Styles */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #333;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0.5rem 0;
+  }
+
+  .header-container {
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    order: 1;
+    flex: 1;
+  }
+
+  .mobile-menu-btn {
+    display: block;
+    order: 2;
+  }
+
+  .nav {
+    order: 3;
+    width: 100%;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0.5rem 0;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+  }
+}
