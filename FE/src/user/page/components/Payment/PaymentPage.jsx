@@ -47,6 +47,18 @@ export default function PaymentPage(){
     return hours * pricePerHour
   }
 
+  const calculateRentalHours = () => {
+    if (!rentalContext) return 0
+    const pickup = new Date(`${rentalContext.pickupDate}T${rentalContext.pickupTime}`)
+    const returnDate = new Date(`${rentalContext.returnDate}T${rentalContext.returnTime}`)
+    return Math.ceil((returnDate - pickup) / (1000 * 60 * 60))
+  }
+
+  const getPricePerHour = () => {
+    if (!car) return 0
+    return parseFloat(car.rentalPricePerHour || car.RentalPricePerHour || 0)
+  }
+
   const calculateDepositAmount = () => {
     return calculateTotalPrice() * 0.3 // 30% deposit
   }
@@ -219,7 +231,7 @@ export default function PaymentPage(){
         alert(errorMsg)
       }
     } finally {
-      setLoading(false)
+      setLoading(false) 
     }
   }
 
@@ -240,7 +252,12 @@ export default function PaymentPage(){
           <div className="payment-info-column">
             {/* Rental Information */}
             <div className="info-section">
-              <h3 className="section-heading">Rental Information</h3>
+              <div className="section-header">
+                <h3 className="section-heading">Rental Information</h3>
+                <button type="button" className="edit-link" onClick={() => navigate('/cars')}>
+                  [Change]
+                </button>
+              </div>
               <div className="info-row">
                 <span className="info-label">Pick-up Location:</span>
                 <span className="info-value">{rentalContext.stationName}</span>
@@ -253,13 +270,22 @@ export default function PaymentPage(){
                 <span className="info-label">Return Date & Time:</span>
                 <span className="info-value">{rentalContext.returnDate} {rentalContext.returnTime}</span>
               </div>
+              <div className="info-row">
+                <span className="info-label">Total Rental Time:</span>
+                <span className="info-value">{calculateRentalHours()} hour{calculateRentalHours() !== 1 ? 's' : ''}</span>
+              </div>
             </div>
 
             {/* Car Information */}
             <div className="info-section">
-              <h3 className="section-heading">Car Information</h3>
+              <div className="section-header">
+                <h3 className="section-heading">Car Information</h3>
+                <button type="button" className="edit-link" onClick={() => navigate('/cars')}>
+                  [Pick another car ]
+                </button>
+              </div>     
               <div className="car-preview">
-                <img src={car.imageUrl || car.image || '/Picture/E car 1.jpg'} alt={car.model} />
+                <img src={car.imageUrl || car.image || '/Picture/E car 1.jpg'} alt={`${car.brand} ${car.model}`} onError={(e) => {e.target.src = '/Picture/E car 1.jpg'}} />
                 <div className="car-details">
                   <h4>{car.brand} {car.model}</h4>
                   <p><strong>Color:</strong> {car.color}</p>
@@ -271,30 +297,38 @@ export default function PaymentPage(){
             </div>
 
             {/* Price Summary */}
-            <div className="info-section">
+            <div className="info-section price-summary-section">
               <h3 className="section-heading">Price Summary</h3>
-              <div className="info-row">
-                <span className="info-label">Total Rental Cost:</span>
-                <span className="info-value">{formatVND(totalPrice)}</span>
-              </div>
-              <div className="info-row deposit-row">
-                <span className="info-label">Deposit Required (30%):</span>
-                <span className="info-value">{formatVND(depositAmount)}</span>
+              <div className="price-breakdown">
+                <div className="price-row">
+                  <span className="price-label">Unit Price:</span>
+                  <span className="price-value">
+                    <span className="price-amount">{formatVND(getPricePerHour())}</span>
+                    <span className="unit">/hour</span>
+                  </span>
+                </div>
+                <div className="price-row">
+                  <span className="price-label">Rental Time:</span>
+                  <span className="price-value">
+                    <span className="price-amount">× {calculateRentalHours()}</span>
+                    <span className="unit"> hour{calculateRentalHours() !== 1 ? 's' : ''}</span>
+                  </span>
+                </div>
+                <div className="price-divider"></div>
+                <div className="price-row total-row">
+                  <span className="price-label">Total Rental Cost:</span>
+                  <span className="price-value-total"><span className="price-amount">{formatVND(totalPrice)}</span></span>
+                </div>
+                <div className="price-row deposit-row-summary">
+                  <span className="price-label">Deposit Required (30%):</span>
+                  <span className="price-value-deposit"><span className="price-amount">{formatVND(depositAmount)}</span></span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right Column - Summary & CTA */}
-          <aside className="payment-summary-column" aria-label="Payment summary">
-            <div className="summary-card">
-              <div className="summary-pricing">
-                <div className="label">Total Rental Cost</div>
-                <div className="price-large">{formatVND(totalPrice)}</div>
-                <div className="label small">Deposit Required (30%)</div>
-                <div className="deposit-badge">{formatVND(depositAmount)}</div>
-              </div>
-            </div>
-          </aside>
+          {/* REMOVED - Summary merged into Price Summary section above */}
         </div>
 
         {/* Terms and Conditions */}
@@ -308,14 +342,23 @@ export default function PaymentPage(){
             <span style={{ marginLeft: '10px' }}>I agree to the <button type="button" className="link-button" onClick={() => setShowTermsModal(true)}>Terms and Conditions</button> and <button type="button" className="link-button" onClick={() => setShowPolicyModal(true)}>Privacy Policy</button></span>
           </label>
         </div>
+
+        {/* CTA Button */}
+        <div className="cta-button-container">
+          <button 
+            className="btn-confirm-booking" 
+            onClick={handleCreateBooking} 
+            disabled={!agreedToTerms || loading}
+          >
+            {loading ? 'Creating...' : 'Confirm and Deposit'}
+          </button>
+        </div>
       </div>
 
       {/* Bottom action bar */}
       <div className="page-actions" style={{ maxWidth: '980px', margin: '20px auto 60px', padding: '0 1rem' }}>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-          <button className="btn-create-booking" onClick={handleCreateBooking} disabled={!agreedToTerms || loading}>
-            {loading ? 'Creating...' : 'Confirm & Pay'}
-          </button>
+          {/* Button removed from here - now in main section above */}
         </div>
       </div>
 

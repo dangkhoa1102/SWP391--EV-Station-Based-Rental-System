@@ -193,21 +193,21 @@ export default function PaymentSuccess(){
           <>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
             <h1>Processing Payment...</h1>
-            <p style={{ color: '#666', marginTop: '8px' }}>Please wait while we confirm your payment.</p>
+            <p style={{ color: '#000', marginTop: '8px' }}>Please wait while we confirm your payment.</p>
           </>
         ) : error ? (
           <>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
             <h1>Payment Sync Issue</h1>
-            <p style={{ color: '#666', marginTop: '8px' }}>{error}</p>
-            <p style={{ color: '#999', marginTop: '8px', fontSize: '14px' }}>Redirecting to booking history...</p>
+            <p style={{ color: '#000', marginTop: '8px' }}>{error}</p>
+            <p style={{ color: '#000', marginTop: '8px', fontSize: '14px' }}>Redirecting to booking history...</p>
           </>
         ) : (
           <>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
             <h1>Payment Successful!</h1>
-            <p style={{ color: '#666', marginTop: '8px' }}>Your payment has been processed.</p>
-            <p style={{ color: '#999', marginTop: '8px', fontSize: '14px' }}>Redirecting to booking history...</p>
+            <p style={{ color: '#000', marginTop: '8px' }}>Your payment has been processed.</p>
+            <p style={{ color: '#000', marginTop: '8px', fontSize: '14px' }}>Redirecting to booking history...</p>
           </>
         )}
       </div>

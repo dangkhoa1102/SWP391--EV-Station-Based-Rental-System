@@ -33,7 +33,7 @@ export default function Header(){
   }, [dropdownOpen])
 
   // Check if user is Staff (role check)
-  const isStaff = user && (user.userRole === 'Station Staff' || user.role === 'Staff' || user.Role === 'Staff')
+  const isStaff = user && (user.userRole === 'Station Staff')
 
   return (
     <>

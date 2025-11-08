@@ -417,10 +417,10 @@ export default function BookingHistory(){
                 <div key={idx} className={`booking-card-shopee ${status.class}`}>
                   {/* Header with status */}
                   <div className="booking-card-header">
-                    <div className="booking-id">
+                    {/* <div className="booking-id">
                       <i className="fas fa-hashtag"></i>
                       Booking ID: {bookingId}
-                    </div>
+                    </div> */}
                     <span className={`status-badge ${status.class}`}>{status.text}</span>
                   </div>
 
@@ -477,7 +477,7 @@ export default function BookingHistory(){
                           <i className="fas fa-wallet"></i> {depositLoading ? 'Processing...' : 'Pay Deposit'}
                         </button>
                       )}
-                      {Number(booking.bookingStatus) === 2 && (
+                      {Number(booking.bookingStatus) === 6 && (
                         <button 
                           className="btn btn-feedback" 
                           onClick={(e) => handleOpenFeedbackModal(booking, e)}

@@ -101,7 +101,7 @@ export default function PaymentCancel() {
               ⏳
             </div>
             <h2 style={{ marginBottom: '1rem' }}>Processing Cancellation...</h2>
-            <p style={{ color: '#666' }}>Please wait while we cancel your booking.</p>
+            <p style={{ color: '#000' }}>Please wait while we cancel your booking.</p>
           </>
         ) : (
           <>
@@ -113,10 +113,10 @@ export default function PaymentCancel() {
               ❌
             </div>
             <h2 style={{ marginBottom: '1rem' }}>Payment Cancelled</h2>
-            <p style={{ color: '#666', marginBottom: '1rem' }}>
+            <p style={{ color: '#000', marginBottom: '1rem' }}>
               Your payment has been cancelled and your booking has been removed.
             </p>
-            <p style={{ color: '#999', fontSize: '0.9rem' }}>
+            <p style={{ color: '#000', fontSize: '0.9rem' }}>
               Redirecting to home page...
             </p>
           </>
