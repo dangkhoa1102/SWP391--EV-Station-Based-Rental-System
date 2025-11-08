@@ -398,28 +398,49 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<BookingDto>.Failure($"Error during cancel: {ex.Message}");
             }
         }
+        public async Task CancelBookingsAsync(IEnumerable<Booking> bookings, string reason)
+        {
+            var now = DateTime.UtcNow;
 
+            foreach (var booking in bookings)
+            {
+                // Cập nhật trạng thái booking
+                booking.BookingStatus = BookingStatus.Cancelled;
+                booking.IsActive = false;
+                booking.CheckOutNotes = reason;
+                booking.UpdatedAt = now;
 
+                await _bookingRepository.UpdateAsync(booking);
+
+                // Giải phóng xe liên quan
+                await _carRepository.UpdateCarStatusAsync(booking.CarId, true);
+            }
+        }
 
         public async Task AutoCancelNoShowBookingsAsync()
         {
             var now = DateTime.UtcNow;
-            // Assuming repository method that fetches pending or deposit paid bookings scheduled to start in the past
-            var pendingBookings = await _bookingRepository.FindAsync(b => b.IsActive &&
+
+            var pendingBookings = await _bookingRepository.FindAsync(b =>
+                b.IsActive &&
                 (b.BookingStatus == BookingStatus.Pending || b.BookingStatus == BookingStatus.DepositPaid) &&
-                b.StartTime.AddHours(1) < now);
+                b.StartTime.AddHours(1) < now
+            );
 
-            foreach (var b in pendingBookings)
-            {
-                b.BookingStatus = BookingStatus.Cancelled;
-                b.IsActive = false;
-                b.UpdatedAt = now;
-                await _bookingRepository.UpdateAsync(b);
+            await CancelBookingsAsync(pendingBookings, "No-show: more than 1h after start");
+        }
 
-                // deposit forfeited — optionally create a note/payment record that no refund made
-                // free car
-                await _carRepository.UpdateCarStatusAsync(b.CarId, true);
-            }
+        public async Task AutoExpirePendingBookingsAsync()
+        {
+            var now = DateTime.UtcNow;
+
+            var expiredBookings = await _bookingRepository.FindAsync(b =>
+                b.IsActive &&
+                b.BookingStatus == BookingStatus.Pending &&
+                b.CreatedAt.AddMinutes(30) < now
+            );
+
+            await CancelBookingsAsync(expiredBookings, "Expired: pending more than 30 minutes");
         }
         public async Task<bool> IsCarAvailableDuringPeriodAsync(Guid carId, DateTime startTime, DateTime endTime)
         {
