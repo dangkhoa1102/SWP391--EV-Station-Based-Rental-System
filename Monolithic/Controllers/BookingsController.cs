@@ -175,7 +175,7 @@ namespace Monolithic.Controllers
         [HttpPost("Cancel-By-{id}")]
         public async Task<ActionResult<ResponseDto<string>>> CancelBooking(Guid id, [FromQuery] string userId, [FromBody] string? reason = null)
         {
-            var result = await _bookingService.CancelBookingAsync(id, userId, reason);
+            var result = await _bookingService.CancelBookingAsync(id, userId);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             

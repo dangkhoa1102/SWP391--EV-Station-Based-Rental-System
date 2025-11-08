@@ -105,8 +105,7 @@ namespace Monolithic.Models
         DepositPaid,       // Đã thanh toán đặt cọc, chờ approve hợp đồng
         CheckedInPendingPayment,
         CheckedIn,         // Đã nhận xe, đang sử dụng
-        CheckedOutPendingPayment,
-        CheckedOut,        // Đã trả xe
+        CheckedOutPendingPayment, 
         Completed,         // Hoàn thành
         CancelledPendingRefund,
         Cancelled          // Đã hủy
