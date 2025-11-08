@@ -444,6 +444,50 @@ namespace Monolithic.Services.Implementation
 
             return true;
         }
+        public async Task<ResponseDto<List<CarDto>>> GetAvailableCarsByStationIdAsync(
+    Guid stationId, DateTime startTime, DateTime endTime)
+        {
+            try
+            {
+                // 1️⃣ Validate time
+                if (endTime <= startTime)
+                    return ResponseDto<List<CarDto>>.Failure("End time must be after start time");
+
+                // 2️⃣ Lấy tất cả xe đang hoạt động và thuộc stationId
+                var allCars = await _carRepository.FindAsync(c => c.IsActive && c.CurrentStationId == stationId);
+
+                // 3️⃣ Lấy tất cả booking đang active, chưa bị cancel
+                var activeBookings = await _bookingRepository.FindAsync(b =>
+                    b.IsActive &&
+                    (b.BookingStatus == BookingStatus.Pending ||
+                     b.BookingStatus == BookingStatus.DepositPaid ||
+                     b.BookingStatus == BookingStatus.CheckedIn ||
+                     b.BookingStatus == BookingStatus.CheckedOutPendingPayment)
+                );
+
+                // 4️⃣ Lọc ra các carId bị trùng thời gian
+                var unavailableCarIds = activeBookings
+                    .Where(b =>
+                        startTime < (b.EndTime ?? b.StartTime.AddHours(1)) &&
+                        endTime > b.StartTime)
+                    .Select(b => b.CarId)
+                    .Distinct()
+                    .ToHashSet();
+
+                // 5️⃣ Giữ lại xe không bị overlap
+                var availableCars = allCars
+                    .Where(c => !unavailableCarIds.Contains(c.CarId))
+                    .ToList();
+
+                // 6️⃣ Map sang DTO
+                var dto = _mapper.Map<List<CarDto>>(availableCars);
+                return ResponseDto<List<CarDto>>.Success(dto, $"{dto.Count} cars available at station {stationId} in this period");
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<List<CarDto>>.Failure($"Error getting available cars by station: {ex.Message}");
+            }
+        }
         public async Task<ResponseDto<List<CarDto>>> GetAvailableCarsAsync(DateTime startTime, DateTime endTime)
         {
             try
