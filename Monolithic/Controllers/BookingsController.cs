@@ -173,9 +173,14 @@ namespace Monolithic.Controllers
         /// Cancel a booking
         /// </summary>
         [HttpPost("Cancel-By-{id}")]
-        public async Task<ActionResult<ResponseDto<string>>> CancelBooking(Guid id, [FromQuery] string userId, [FromBody] string? reason = null)
+        public async Task<ActionResult<ResponseDto<BookingDto>>> CancelBooking(Guid id /*[FromQuery] string userId, [FromBody] string? reason = null*/)
         {
-            var result = await _bookingService.CancelBookingAsync(id, userId, reason);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized(ResponseDto<BookingDto>.Failure("User not authenticated"));
+            }
+            var result = await _bookingService.CancelBookingAsync(id, userIdClaim);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             
