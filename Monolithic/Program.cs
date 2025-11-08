@@ -252,6 +252,9 @@ builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(
 // (Khi ai đó hỏi IPhotoService, hãy tạo một PhotoService)
 builder.Services.AddScoped<IPhotoService, PhotoService>();
 
+// ĐĂNG KÝ HTTPCLIENTFACTORY
+builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
