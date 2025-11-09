@@ -31,12 +31,12 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<List<CarDto>>> GetAvailableCarsByStationIdAsync(Guid stationId, DateTime startTime, DateTime endTime);
         Task<ResponseDto<BookingDto>> ConfirmRefundAsync(Guid bookingId, string staffId);
 
-
         // Utility methods
         Task<ResponseDto<bool>> CheckCarAvailabilityAsync(CheckAvailabilityDto request);
         Task<ResponseDto<decimal>> CalculateBookingCostAsync(Guid carId, DateTime startTime, DateTime endTime);
         Task<ResponseDto<BookingStatusDto>> GetActiveBookingAsync(string userId);
         Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryAsync(string userId);
+        Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryByUserIdAsync(string userId);
         Task<ResponseDto<List<BookingDto>>> GetUpcomingBookingsAsync();
     }
 }
