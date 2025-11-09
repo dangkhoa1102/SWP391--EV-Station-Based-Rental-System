@@ -9618,23 +9618,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\scott\\.nuget\\packages\\": {},
+    "C:\\Users\\MINH KHOI\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\scott\\OneDrive\\Documents\\GitHub\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Monolithic.csproj",
+      "projectUniqueName": "C:\\Users\\MINH KHOI\\source\\repos\\daylafiletaotoi0311\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Monolithic.csproj",
       "projectName": "Monolithic",
-      "projectPath": "C:\\Users\\scott\\OneDrive\\Documents\\GitHub\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Monolithic.csproj",
-      "packagesPath": "C:\\Users\\scott\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\scott\\OneDrive\\Documents\\GitHub\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\obj\\",
+      "projectPath": "C:\\Users\\MINH KHOI\\source\\repos\\daylafiletaotoi0311\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\Monolithic.csproj",
+      "packagesPath": "C:\\Users\\MINH KHOI\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\MINH KHOI\\source\\repos\\daylafiletaotoi0311\\SWP391--EV-Station-Based-Rental-System\\Monolithic\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\scott\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\MINH KHOI\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -9757,6 +9757,12 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.Net.Sdk.Compilers.Toolset",
+            "version": "[9.0.306, 9.0.306]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -9765,7 +9771,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
       }
     }
   },

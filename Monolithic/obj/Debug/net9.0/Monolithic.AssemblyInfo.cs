@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Monolithic")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+939566884cc7eb6a3283be3efb488ff23bae6a1c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+043544ff21146640658fe78f79418600c404048c")]
 [assembly: System.Reflection.AssemblyProductAttribute("Monolithic")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Monolithic")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
