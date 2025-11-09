@@ -76,12 +76,14 @@ export default function CarListPage(){
       setLoading(true)
       
       let selectedStationId = null
+      let rentalContext = null
       
       // Try to use saved rentalContext (set by HomePage.submitSearch)
       try{
         const rc = JSON.parse(localStorage.getItem('rentalContext') || 'null')
         if(rc){
           selectedStationId = rc.stationId
+          rentalContext = rc
           setSearchData(prev => ({
             ...prev,
             location: rc.stationId,
@@ -96,10 +98,18 @@ export default function CarListPage(){
 
       // Load cars by station if available, otherwise load all cars
       let carsList = []
-      if(selectedStationId){
+      if(selectedStationId && rentalContext){
         console.log('🔍 Loading cars for station:', selectedStationId)
         try{
-          carsList = await API.getAvailableCarsByStation(selectedStationId)
+          // Combine pickup date and time into datetime string without timezone conversion
+          // Format: YYYY-MM-DDTHH:mm:ss (local time, not UTC)
+          const pickupDateTime = `${rentalContext.pickupDate}T${rentalContext.pickupTime}:00`
+          const returnDateTime = `${rentalContext.returnDate}T${rentalContext.returnTime}:00`
+          
+          console.log('📅 Pickup DateTime (local):', pickupDateTime)
+          console.log('📅 Return DateTime (local):', returnDateTime)
+          
+          carsList = await API.getAvailableCarsByStation(selectedStationId, pickupDateTime, returnDateTime)
           console.log('✅ Found', carsList.length, 'cars at this station')
         }catch(err){
           console.error('Failed to load cars by station, falling back to all cars', err)
@@ -152,7 +162,16 @@ export default function CarListPage(){
     
     // Fetch cars available at the selected station
     setLoading(true)
-    API.getAvailableCarsByStation(newSearchData.location)
+    
+    // Combine pickup date and time into datetime string without timezone conversion
+    // Format: YYYY-MM-DDTHH:mm:ss (local time, not UTC)
+    const pickupDateTime = `${newSearchData.pickupDate}T${newSearchData.pickupTime}:00`
+    const returnDateTime = `${newSearchData.returnDate}T${newSearchData.returnTime}:00`
+    
+    console.log('📅 Pickup DateTime (local):', pickupDateTime)
+    console.log('📅 Return DateTime (local):', returnDateTime)
+    
+    API.getAvailableCarsByStation(newSearchData.location, pickupDateTime, returnDateTime)
       .then(carsList => {
         setCars(carsList || [])
         setFilteredCars(carsList || [])

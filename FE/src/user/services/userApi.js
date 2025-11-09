@@ -286,10 +286,18 @@ const API = {
     }
   },
 
-  getAvailableCarsByStation: async (stationId) => {
+  getAvailableCarsByStation: async (stationId, startTime = null, endTime = null) => {
     try {
       console.log('🚗 Fetching available cars for station:', stationId)
-      const res = await apiClient.get(`/Cars/Get-Available-By-Station/${encodeURIComponent(stationId)}`)
+      console.log('   Start time:', startTime)
+      console.log('   End time:', endTime)
+      
+      // Build query parameters
+      const params = { stationId: stationId }
+      if (startTime) params.startTime = startTime
+      if (endTime) params.endTime = endTime
+      
+      const res = await apiClient.get(`/Bookings/available-cars-by-station`, { params })
       console.log('✅ Available cars response:', res.data)
       const responseData = res.data
       

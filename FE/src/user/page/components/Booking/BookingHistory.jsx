@@ -94,9 +94,12 @@ export default function BookingHistory(){
     const statuses = {
       0: { text: 'Pending', class: 'status-pending' },
       1: { text: 'Active', class: 'status-active' },
-      2: { text: 'Completed', class: 'status-completed' },
-      3: { text: 'Cancelled', class: 'status-cancelled' },
-      7: { text: 'Cancelled', class: 'status-cancelled' } // BookingStatus 7 = Cancelled
+      2: { text: 'Waiting for check-in', class: 'status-waiting-check-in' },
+      3: { text: 'Checked-in', class: 'status-checked-in' },
+      4: { text: 'Check-out pending', class: 'status-check-out-pending' }, 
+      5: { text: 'Completed', class: 'status-completed' } ,
+      6: { text: 'Cancelled pending refund', class: 'status-cancelled-pending-refund' } ,
+      7: { text: 'Cancelled', class: 'status-cancelled' } 
     }
 
     const idx = Number(status)
@@ -341,7 +344,11 @@ export default function BookingHistory(){
               <option value="">All</option>
               <option value="0">Pending</option>
               <option value="1">Active</option>
-              <option value="2">Completed</option>
+              <option value="2">Waiting for check-in</option>
+              <option value="3">Checked-in</option>
+              <option value="4">Checked-out pending</option>
+              <option value="5">Completed</option>
+              <option value="6">Cancelled pending refund</option>
               <option value="7">Cancelled</option>
             </select>
           </div>

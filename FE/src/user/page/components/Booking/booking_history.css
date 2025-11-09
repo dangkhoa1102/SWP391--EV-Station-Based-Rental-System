@@ -482,8 +482,28 @@
     color: white;
 }
 
+.status-badge.status-waiting-check-in {
+    background: linear-gradient(135deg, #ffa726, #fb8c00);
+    color: white;
+}
+
+.status-badge.status-checked-in {
+    background: linear-gradient(135deg, #29b6f6, #0288d1);
+    color: white;
+}
+
+.status-badge.status-check-out-pending {
+    background: linear-gradient(135deg, #ab47bc, #8e24aa);
+    color: white;
+}
+
 .status-badge.status-completed {
     background: linear-gradient(135deg, #42a5f5, #1e88e5);
+    color: white;
+}
+
+.status-badge.status-cancelled-pending-refund {
+    background: linear-gradient(135deg, #ef9a9a, #e57373);
     color: white;
 }
 
