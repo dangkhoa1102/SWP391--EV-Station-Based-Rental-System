@@ -1,0 +1,1480 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Monolithic</name>
+    </assembly>
+    <members>
+        <member name="T:Monolithic.Common.DateTimeConverter">
+            <summary>
+            Custom JSON converter for DateTime that formats to "yyyy-MM-dd HH:mm" (without seconds)
+            This ensures frontend compatibility by removing seconds and milliseconds from datetime values
+            </summary>
+        </member>
+        <member name="T:Monolithic.Common.NullableDateTimeConverter">
+            <summary>
+            Custom JSON converter for nullable DateTime that formats to "yyyy-MM-dd HH:mm" (without seconds)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetFleetOverview">
+            <summary>
+            Giám sát số lượng xe ở từng điểm (tổng quan)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetStationCarHistory(System.Guid,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Int32,System.Int32)">
+            <summary>
+            Theo dõi lịch sử giao/nhận xe theo station
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetCarStatusReport(System.Nullable{System.Guid},System.String)">
+            <summary>
+            Theo dõi tình trạng xe chi tiết
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.TransferCarBetweenStations(System.Guid,System.Guid,System.String)">
+            <summary>
+            Điều phối xe giữa các trạm (yêu cầu di chuyển xe)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetCustomerProfile(System.String)">
+            <summary>
+            Lấy hồ sơ khách hàng chi tiết
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetRiskCustomers(System.Int32,System.Decimal)">
+            <summary>
+            Lấy danh sách khách hàng có rủi ro (vi phạm, hư hỏng)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetCustomerComplaints(System.String,System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách khiếu nại từ khách hàng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetStaffByStation(System.Guid)">
+            <summary>
+            Lấy danh sách nhân viên theo trạm
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetStaffPerformance(System.String,System.Nullable{System.DateTime},System.Nullable{System.DateTime})">
+            <summary>
+            Theo dõi hiệu suất nhân viên
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetAllStaffPerformance(System.Nullable{System.DateTime},System.Nullable{System.DateTime})">
+            <summary>
+            Lấy tổng quan hiệu suất tất cả nhân viên
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.AssignStaffRole(System.String,System.String)">
+            <summary>
+            Cấp role "Station Staff" cho người dùng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.RemoveStaffRole(System.String,System.String)">
+            <summary>
+            Gỡ role "Station Staff" (downgrade về EVRenter)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.SoftDeleteUser(System.String,System.String)">
+            <summary>
+            Xóa mềm (soft delete) account - áp dụng cho StationStaff và EVRenter
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.RestoreUser(System.String)">
+            <summary>
+            Khôi phục account đã bị xóa mềm
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetDeletedAccounts(System.Int32,System.Int32,System.String)">
+            <summary>
+            Lấy danh sách các account đã bị xóa mềm (deactivated)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetAdminDashboard">
+            <summary>
+            Lấy dashboard tổng quan cho Admin
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetRevenueByStation(System.Nullable{System.DateTime},System.Nullable{System.DateTime})">
+            <summary>
+            Báo cáo doanh thu theo điểm thuê (station)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetCarUtilizationReport(System.Nullable{System.DateTime},System.Nullable{System.DateTime})">
+            <summary>
+            Báo cáo tỷ lệ sử dụng xe theo thời gian
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetPeakHoursAnalysis(System.Nullable{System.DateTime},System.Nullable{System.DateTime})">
+            <summary>
+            Phân tích giờ cao điểm (peak hours)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetRevenueTrends(System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String)">
+            <summary>
+            Báo cáo tổng hợp - Revenue trends theo thời gian
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AdminController.GetUserDocuments(System.Guid)">
+            <summary>
+            Lấy thông tin giấy tờ của user (CCCD và GPLX)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AuthController.Register(Monolithic.DTOs.Auth.RegisterRequestDto)">
+            <summary>
+            Đăng ký tài khoản mới
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AuthController.Login(Monolithic.DTOs.Auth.LoginRequestDto)">
+            <summary>
+            Đăng nhập hệ thống
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AuthController.Logout">
+            <summary>
+            Đăng xuất khỏi hệ thống
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.AuthController.RefreshToken(System.String)">
+            <summary>
+            Làm mới Access Token
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.CreateBookingWithDeposit(System.String,Monolithic.DTOs.Booking.CreateBookingDto)">
+            <summary>
+            Bước 1: Đặt xe + thanh toán đặt cọc
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.CheckInWithContract(Monolithic.DTOs.Booking.CheckInWithContractDto)">
+            <summary>
+            Bước 2: Approve hợp đồng
+            </summary>
+            <summary>
+            Bước 3: Check-in với ký hợp đồng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.CheckOutWithPayment(Monolithic.DTOs.Booking.CheckOutWithPaymentDto)">
+            <summary>
+            Bước 5: Check-out với thanh toán tiền thuê
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.GetBookings(Monolithic.DTOs.Common.PaginationRequestDto)">
+            <summary>
+            Get all bookings with pagination
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.GetBooking(System.Guid)">
+            <summary>
+            Get booking by ID
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.GetMyBookings">
+            <summary>
+            Get current user's bookings (from JWT token)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.UpdateBooking(System.Guid,Monolithic.DTOs.Booking.UpdateBookingDto)">
+            <summary>
+            Update booking details
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.CancelBooking(System.Guid,System.String,System.String)">
+            <summary>
+            Cancel a booking
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.CheckCarAvailability(Monolithic.DTOs.Booking.CheckAvailabilityDto)">
+            <summary>
+            Check car availability for specific dates
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.CalculateCost(System.Guid,System.DateTime,System.DateTime)">
+            <summary>
+            Calculate booking cost
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.GetMyActiveBooking">
+            <summary>
+            Get current user's active booking (from JWT token)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.GetMyBookingHistory">
+            <summary>
+            Get current user's booking history (from JWT token)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.BookingsController.GetUpcomingBookings">
+            <summary>
+            Get upcoming bookings
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.GetCars(Monolithic.DTOs.Common.PaginationRequestDto)">
+            <summary>
+            Lấy danh sách xe (có phân trang và tìm kiếm)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.GetCar(System.Guid)">
+            <summary>
+            Xem chi tiết thông tin xe theo ID
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.GetAvailableCars(System.Guid)">
+            <summary>
+            Lấy danh sách xe khả dụng tại trạm
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.SearchAvailableCars(System.Nullable{System.Guid},System.String,System.String,System.Nullable{System.Decimal},System.Nullable{System.Decimal},System.Nullable{System.Decimal},System.Int32,System.Int32)">
+            <summary>
+            Tìm kiếm xe khả dụng với bộ lọc (cho EV Renter) - Brand, model, giá, pin, trạm
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.CreateCar(Monolithic.DTOs.Car.CreateCarDto)">
+            <summary>
+            Tạo xe mới (Admin, Station Staff) - hỗ trợ upload ảnh
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.UpdateCar(System.Guid,Monolithic.DTOs.Car.UpdateCarDto)">
+            <summary>
+            Cập nhật thông tin xe (Admin, Station Staff)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.DeleteCar(System.Guid)">
+            <summary>
+            Xóa xe (soft delete - chuyển IsActive = false) (chỉ Admin)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.UpdateCarStatus(System.Guid,System.Boolean)">
+            <summary>
+            Cập nhật trạng thái khả dụng của xe (Admin, Station Staff)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.UpdateCarBatteryLevel(System.Guid,System.Decimal)">
+            <summary>
+            Cập nhật mức pin hiện tại của xe (Admin, Station Staff)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.UpdateCarLocation(System.Guid,System.Guid)">
+            <summary>
+            Cập nhật vị trí xe (chuyển trạm) (Admin, Station Staff)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.UpdateCarTechnicalStatus(System.Guid,Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto)">
+            <summary>
+            Cập nhật tình trạng kỹ thuật của xe (Station Staff, Admin)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.CarsController.RecordCarHandover(Monolithic.DTOs.Car.CarHandoverDto)">
+            <summary>
+            Bàn giao xe với chụp ảnh (Station Staff)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.GetByBooking(System.Guid)">
+            <summary>
+            Lấy hợp đồng theo booking ID
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.GetByRenter(System.Guid)">
+            <summary>
+            Lấy danh sách hợp đồng của người thuê
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.TaoHopDong(Monolithic.DTOs.Contract.TaoHopDongDto,System.Guid,System.Guid)">
+            <summary>
+            Lưu hợp đồng thuê xe và tạo file Word từ template
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.GuiEmailXacNhan(System.Guid,Monolithic.DTOs.Contract.GuiEmailRequestDto)">
+            <summary>
+            Gửi email xác nhận hợp đồng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.LayHopDongDeXacNhan(System.String)">
+            <summary>
+            Lấy hợp đồng để xác nhận (chuyển sang HTML)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.XacNhanKyHopDong(Monolithic.DTOs.Contract.KyHopDongRequestDto)">
+            <summary>
+            Xác nhận và ký hợp đồng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.XoaMemHopDong(System.Guid)">
+            <summary>
+            Xóa mềm hợp đồng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.DownloadHopDongByToken(System.String)">
+            <summary>
+            Download file hợp đồng DOCX bằng token (dùng cho link trong email)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.DownloadHopDongByContractId(System.Guid)">
+            <summary>
+            Download file hợp đồng DOCX theo ContractId (yêu cầu authentication)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.DownloadLatestContractByUserId(System.Guid)">
+            <summary>
+            Download hợp đồng mới nhất của user (yêu cầu authentication)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.ContractsController.GetByToken(System.String)">
+            <summary>
+            Lấy hợp đồng theo token xác nhận
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.GetFeedbacks(Monolithic.DTOs.Common.PaginationRequestDto)">
+            <summary>
+            Lấy danh sách đánh giá (có phân trang)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.GetFeedback(System.Guid)">
+            <summary>
+            Xem chi tiết đánh giá
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.GetCarFeedbacks(System.Guid)">
+            <summary>
+            Xem đánh giá của một xe
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.GetUserFeedbacks(System.String)">
+            <summary>
+            Xem đánh giá của người dùng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.GetFeedbackByBooking(System.Guid)">
+            <summary>
+            Xem đánh giá theo booking ID
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.CreateFeedback(System.String,Monolithic.DTOs.Feedback.CreateFeedbackDto)">
+            <summary>
+            Tạo đánh giá mới (yêu cầu đăng nhập)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.UpdateFeedback(System.Guid,System.String,Monolithic.DTOs.Feedback.UpdateFeedbackDto)">
+            <summary>
+            Cập nhật đánh giá (yêu cầu đăng nhập)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.DeleteFeedback(System.Guid,System.String)">
+            <summary>
+            Xóa đánh giá (yêu cầu đăng nhập)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.GetCarFeedbackSummary(System.Guid)">
+            <summary>
+            Xem thống kê đánh giá của xe
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.FeedbackController.GetCarAverageRating(System.Guid)">
+            <summary>
+            Xem điểm trung bình đánh giá của xe
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.IncidentsController.CreateIncident(Monolithic.DTOs.Incident.Request.CreateIncidentFormRequest)">
+            <summary>
+            Tạo báo cáo sự cố mới (có upload hình ảnh)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.IncidentsController.GetIncidents(System.Nullable{System.Guid},System.String,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách sự cố (có bộ lọc và phân trang)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.IncidentsController.GetIncident(System.Guid)">
+            <summary>
+            Xem chi tiết sự cố
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.IncidentsController.UpdateIncident(System.Guid,Monolithic.DTOs.Incident.Request.UpdateIncidentFormRequest)">
+            <summary>
+            Cập nhật thông tin sự cố
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.IncidentsController.ResolveIncident(System.Guid,Monolithic.DTOs.Incident.Request.UpdateIncidentRequest)">
+            <summary>
+            Đánh dấu sự cố đã được giải quyết
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.IncidentsController.DeleteIncident(System.Guid)">
+            <summary>
+            Xóa báo cáo sự cố
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.IncidentsController.GetMyIncidents(System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách sự cố liên quan đến booking của renter
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.IncidentsController.GetIncidentsByBooking(System.Guid,System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách sự cố theo BookingId
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StaffController.GetUserDocuments(System.Guid)">
+            <summary>
+            Staff: L?y thông tin gi?y t? c?a user (CCCD và GPLX)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StaffController.GetUsersWithPendingDocuments">
+            <summary>
+            Staff: L?y danh sách user có gi?y t? c?n xác minh
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StaffController.VerifyUserDocuments(Monolithic.DTOs.Admin.VerifyUserDocumentsDto)">
+            <summary>
+            Staff: Xác minh gi?y t? c?a user
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StaffController.GetDocumentVerificationStatistics">
+            <summary>
+            Staff: L?y th?ng kê v? tình tr?ng xác minh gi?y t?
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StaffController.GetMyProfile">
+            <summary>
+            Staff: Xem thông tin cá nhân và station ???c gán
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.GetStations(Monolithic.DTOs.Common.PaginationRequestDto)">
+            <summary>
+            Lấy danh sách trạm sạc (có phân trang)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.GetStation(System.Guid)">
+            <summary>
+            Xem chi tiết thông tin trạm sạc
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.CreateStation(Monolithic.DTOs.Station.CreateStationDto)">
+            <summary>
+            Tạo trạm sạc mới (Admin, Station Staff)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.UpdateStation(System.Guid,Monolithic.DTOs.Station.UpdateStationDto)">
+            <summary>
+            Cập nhật thông tin trạm sạc (Admin, Station Staff)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.DeleteStation(System.Guid)">
+            <summary>
+            Xóa trạm sạc (chỉ Admin)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.GetAvailableCars(System.Guid)">
+            <summary>
+            Xem danh sách xe khả dụng tại trạm
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.RecalculateSlots(System.Guid)">
+            <summary>
+            Tính toán lại AvailableSlots dựa trên số xe thực tế tại station (Admin/Staff)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.AssignStaffToStation(System.Guid,System.String)">
+            <summary>
+            Gán nhân viên (Station Staff) vào một trạm
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.UnassignStaffFromStation(System.String)">
+            <summary>
+            Bỏ gán nhân viên khỏi trạm (staff rời trạm)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.StationsController.ReassignStaff(System.String,System.Guid)">
+            <summary>
+            Chuyển nhân viên từ trạm này sang trạm khác
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.GetMyProfile">
+            <summary>
+            Xem thông tin cá nhân của user hiện tại
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.UpdateMyProfile(Monolithic.DTOs.Auth.UpdateUserDto)">
+            <summary>
+            Cập nhật thông tin cá nhân
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.ChangePassword(Monolithic.DTOs.Auth.ChangePasswordDto)">
+            <summary>
+            Đổi mật khẩu
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.GetAllUsers(System.Int32,System.Int32,System.String,System.String,System.Nullable{System.Boolean})">
+            <summary>
+            Lấy danh sách tất cả người dùng (có phân trang, tìm kiếm, lọc) - Admin only
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.GetUserById(System.String)">
+            <summary>
+            Xem thông tin chi tiết một user theo ID - Admin/StationStaff
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.SearchUsers(System.String)">
+            <summary>
+            Tìm kiếm người dùng theo tên, email (trả về tối đa 20 kết quả) - Admin/StationStaff
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.DeactivateUser(System.String)">
+            <summary>
+            Vô hiệu hóa tài khoản người dùng (soft delete) - Admin only
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.ActivateUser(System.String)">
+            <summary>
+            Kích hoạt lại tài khoản người dùng - Admin only
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.UpdateUserRole(System.String,System.String)">
+            <summary>
+            Cập nhật vai trò của người dùng - Admin only
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.GetTotalUsersCount">
+            <summary>
+            Lấy tổng số người dùng - Admin only
+            </summary>
+        </member>
+        <member name="M:Monolithic.Controllers.UsersController.GetUserStatisticsByRole">
+            <summary>
+            Lấy thống kê người dùng theo vai trò - Admin only
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Admin.AssignRoleRequestDto">
+            <summary>
+            DTO for assigning roles to users
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Admin.RemoveRoleRequestDto">
+            <summary>
+            DTO for removing roles from users
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Admin.SoftDeleteUserRequestDto">
+            <summary>
+            DTO for soft deleting users
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Admin.RestoreUserRequestDto">
+            <summary>
+            DTO for restoring deleted users
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Admin.RoleAssignmentResponseDto">
+            <summary>
+            Response DTO for role assignment operations
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Admin.DeletedUserDto">
+            <summary>
+            DTO for listing deactivated users
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Booking.ApproveContractDto">
+            <summary>
+            DTO cho việc approve hợp đồng (Bước 2)
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Booking.CheckInWithContractDto">
+            <summary>
+            DTO cho việc check-in với ký hợp đồng (Bước 3)
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Booking.CheckOutWithPaymentDto">
+            <summary>
+            DTO cho việc check-out và thanh toán tiền thuê (Bước 5)
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto">
+            <summary>
+            DTO ?? c?p nh?t tình tr?ng k? thu?t c?a xe
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto.EngineStatus">
+            <summary>
+            Tình tr?ng ??ng c? (Good, Fair, Poor, NeedRepair)
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto.TireStatus">
+            <summary>
+            Tình tr?ng l?p xe
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto.BrakeStatus">
+            <summary>
+            Tình tr?ng h? th?ng phanh
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto.LightStatus">
+            <summary>
+            Tình tr?ng ?èn chi?u sáng
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto.InteriorStatus">
+            <summary>
+            Tình tr?ng n?i th?t
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto.ExteriorStatus">
+            <summary>
+            Tình tr?ng ngo?i th?t
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto.TechnicalNotes">
+            <summary>
+            Ghi chú k? thu?t
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.UpdateCarTechnicalStatusDto.LastInspectionDate">
+            <summary>
+            Ngày ki?m tra cu?i cùng
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Car.CarHandoverDto">
+            <summary>
+            DTO cho vi?c bàn giao xe v?i hình ?nh
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.CarHandoverDto.HandoverType">
+            <summary>
+            Lo?i bàn giao: CheckIn ho?c CheckOut
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.CarHandoverDto.HandoverPhotos">
+            <summary>
+            ?nh xe tr??c khi bàn giao (nhi?u ?nh)
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.CarHandoverDto.Notes">
+            <summary>
+            Ghi chú v? tình tr?ng xe
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.CarHandoverDto.CurrentBatteryLevel">
+            <summary>
+            M?c pin hi?n t?i
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Car.CarHandoverDto.MileageReading">
+            <summary>
+            S? km ?ã ch?y (cho check-out)
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Car.CarHandoverResponseDto">
+            <summary>
+            Response sau khi bàn giao xe
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Contract.TaoHopDongDto">
+            <summary>
+            DTO ?? t?o h?p ??ng thuê xe ki?u HopDong
+            Ch?a t?t c? d? li?u ??ng c?n thi?t ?? ?i?n vào file Word template
+            </summary>
+        </member>
+        <member name="M:Monolithic.DTOs.Contract.TaoHopDongDto.#ctor(System.String,System.String,System.String,System.String,Monolithic.DTOs.Contract.ThongTinBenA,Monolithic.DTOs.Contract.ThongTinXe,Monolithic.DTOs.Contract.ThongTinGiaThue,System.String,System.String,System.Int32,System.String,Monolithic.DTOs.Contract.ThongTinGPLX)">
+            <summary>
+            DTO ?? t?o h?p ??ng thuê xe ki?u HopDong
+            Ch?a t?t c? d? li?u ??ng c?n thi?t ?? ?i?n vào file Word template
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Contract.ThongTinBenA">
+            <summary>
+            Thông tin bên A (ng??i thuê)
+            </summary>
+        </member>
+        <member name="M:Monolithic.DTOs.Contract.ThongTinBenA.#ctor(System.String,System.String,System.String,System.String)">
+            <summary>
+            Thông tin bên A (ng??i thuê)
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Contract.ThongTinXe">
+            <summary>
+            Thông tin v? xe
+            </summary>
+        </member>
+        <member name="M:Monolithic.DTOs.Contract.ThongTinXe.#ctor(System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Thông tin v? xe
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Contract.ThongTinGiaThue">
+            <summary>
+            Thông tin giá thuê và thanh toán
+            </summary>
+        </member>
+        <member name="M:Monolithic.DTOs.Contract.ThongTinGiaThue.#ctor(System.String,System.String,System.String,System.String)">
+            <summary>
+            Thông tin giá thuê và thanh toán
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Contract.ThongTinGPLX">
+            <summary>
+            Thông tin gi?y phép lái xe
+            </summary>
+        </member>
+        <member name="M:Monolithic.DTOs.Contract.ThongTinGPLX.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Thông tin gi?y phép lái xe
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Contract.HopDongXacNhanDto">
+            <summary>
+            DTO cho lu?ng xác nh?n h?p ??ng
+            </summary>
+        </member>
+        <member name="M:Monolithic.DTOs.Contract.HopDongXacNhanDto.#ctor(System.String,System.String,System.Nullable{System.DateTime},System.String)">
+            <summary>
+            DTO cho lu?ng xác nh?n h?p ??ng
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Contract.KyHopDongRequestDto">
+            <summary>
+            DTO ?? xác nh?n ký h?p ??ng
+            </summary>
+        </member>
+        <member name="M:Monolithic.DTOs.Contract.KyHopDongRequestDto.#ctor(System.String)">
+            <summary>
+            DTO ?? xác nh?n ký h?p ??ng
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Contract.GuiEmailRequestDto">
+            <summary>
+            DTO ?? g?i email xác nh?n h?p ??ng
+            </summary>
+        </member>
+        <member name="M:Monolithic.DTOs.Contract.GuiEmailRequestDto.#ctor(System.String)">
+            <summary>
+            DTO ?? g?i email xác nh?n h?p ??ng
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Payment.RecordStationPaymentDto">
+            <summary>
+            DTO ?? ghi nh?n thanh toán t?i ?i?m b?i Station Staff
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Payment.RecordStationPaymentDto.PaymentMethod">
+            <summary>
+            Ph??ng th?c thanh toán: Cash, Card, etc.
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Payment.RecordStationPaymentDto.ReferenceCode">
+            <summary>
+            Mã tham chi?u (n?u thanh toán b?ng th?)
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Payment.RecordStationPaymentDto.Notes">
+            <summary>
+            Ghi chú
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Payment.RecordDepositDto">
+            <summary>
+            DTO ?? ghi nh?n ??t c?c t?i ?i?m
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Payment.RecordRefundDto">
+            <summary>
+            DTO ?? ghi nh?n hoàn c?c
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Payment.RecordRefundDto.RefundReason">
+            <summary>
+            Lý do hoàn c?c (n?u có kh?u tr?)
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Payment.RecordRefundDto.DamageFee">
+            <summary>
+            Phí h? h?ng (n?u có)
+            </summary>
+        </member>
+        <member name="P:Monolithic.DTOs.Payment.RecordRefundDto.LateFee">
+            <summary>
+            Phí tr? mu?n (n?u có)
+            </summary>
+        </member>
+        <member name="T:Monolithic.DTOs.Payment.StationPaymentResponseDto">
+            <summary>
+            Response sau khi ghi nh?n thanh toán t?i ?i?m
+            </summary>
+        </member>
+        <member name="T:Monolithic.Migrations.InitialCreate">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.InitialCreate.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.InitialCreate.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.updateBookingDb">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.updateBookingDb.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.updateBookingDb.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.updateBookingDb.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddRefreshTokenToUser">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddRefreshTokenToUser.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddRefreshTokenToUser.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddRefreshTokenToUser.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddPaymentSystem">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddPaymentSystem.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddPaymentSystem.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddPaymentSystem.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddPaymentTable">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddPaymentTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddPaymentTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddPaymentTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.UpdateBookingFlowWithDepositAndContract">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateBookingFlowWithDepositAndContract.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateBookingFlowWithDepositAndContract.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateBookingFlowWithDepositAndContract.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.UpdateBookingStatusEnum">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateBookingStatusEnum.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateBookingStatusEnum.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateBookingStatusEnum.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.UpdatePaymentStatusEnum">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdatePaymentStatusEnum.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdatePaymentStatusEnum.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdatePaymentStatusEnum.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.UpdateDb1">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateDb1.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateDb1.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateDb1.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddDocumentImageUrlsToRenter">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddDocumentImageUrlsToRenter.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddDocumentImageUrlsToRenter.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddDocumentImageUrlsToRenter.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddUserVerificationAndImages">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddUserVerificationAndImages.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddUserVerificationAndImages.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddUserVerificationAndImages.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddFrontBackDocumentImages">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddFrontBackDocumentImages.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddFrontBackDocumentImages.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddFrontBackDocumentImages.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddUserImageFields">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddUserImageFields.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddUserImageFields.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddUserImageFields.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.addpayment2db">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addpayment2db.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addpayment2db.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addpayment2db.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.updatepayment2db">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.updatepayment2db.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.updatepayment2db.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.updatepayment2db.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.UpdateDb2">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateDb2.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateDb2.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateDb2.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.addbbookingpaymentflow">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addbbookingpaymentflow.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addbbookingpaymentflow.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addbbookingpaymentflow.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.UpdateModels">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateModels.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateModels.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateModels.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddBookingIdToFeedback">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddBookingIdToFeedback.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddBookingIdToFeedback.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddBookingIdToFeedback.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddHardcodedAdminUser">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddHardcodedAdminUser.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddHardcodedAdminUser.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddHardcodedAdminUser.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.UpdateAdminPassword">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateAdminPassword.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateAdminPassword.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateAdminPassword.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddContractAdvancedFeatures">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddContractAdvancedFeatures.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddContractAdvancedFeatures.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddContractAdvancedFeatures.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddHopDongFieldsToContract">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddHopDongFieldsToContract.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddHopDongFieldsToContract.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddHopDongFieldsToContract.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.addtodboaymenttest">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addtodboaymenttest.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addtodboaymenttest.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addtodboaymenttest.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.addpaymenrt">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addpaymenrt.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addpaymenrt.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addpaymenrt.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddUserStationRelation">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddUserStationRelation.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddUserStationRelation.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddUserStationRelation.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddStaffIdToIncident">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddStaffIdToIncident.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddStaffIdToIncident.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddStaffIdToIncident.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.RemoveReportedByFromIncident">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.RemoveReportedByFromIncident.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.RemoveReportedByFromIncident.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.RemoveReportedByFromIncident.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.UpdateIncidentIdToGuidManual">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateIncidentIdToGuidManual.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateIncidentIdToGuidManual.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateIncidentIdToGuidManual.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddCarTechnicalStatusAndHandover">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddCarTechnicalStatusAndHandover.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddCarTechnicalStatusAndHandover.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddCarTechnicalStatusAndHandover.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.FixIncidentCostIncurredPrecision">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.FixIncidentCostIncurredPrecision.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.FixIncidentCostIncurredPrecision.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.FixIncidentCostIncurredPrecision.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.admigratetodb1">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.admigratetodb1.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.admigratetodb1.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.admigratetodb1.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddStationId">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddStationId.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddStationId.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddStationId.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddSupportRequestTable">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddSupportRequestTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddSupportRequestTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddSupportRequestTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.addfinalpaytodb">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addfinalpaytodb.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addfinalpaytodb.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addfinalpaytodb.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.fixIncident">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.fixIncident.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.fixIncident.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.fixIncident.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.SyncPaymentModel">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.SyncPaymentModel.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.SyncPaymentModel.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.SyncPaymentModel.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.UpdateStationCarValidation">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateStationCarValidation.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateStationCarValidation.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.UpdateStationCarValidation.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.addcardb">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addcardb.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addcardb.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.addcardb.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Migrations.AddSeatsToCarModel">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddSeatsToCarModel.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddSeatsToCarModel.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:Monolithic.Migrations.AddSeatsToCarModel.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:Monolithic.Models.CarHandover">
+            <summary>
+            Model ?? l?u tr? thông tin bàn giao xe (check-in/check-out)
+            </summary>
+        </member>
+        <member name="P:Monolithic.Models.CarHandover.HandoverType">
+            <summary>
+            Lo?i bàn giao: CheckIn ho?c CheckOut
+            </summary>
+        </member>
+        <member name="P:Monolithic.Models.CarHandover.PhotoUrls">
+            <summary>
+            URLs c?a các ?nh bàn giao (phân cách b?i ;)
+            </summary>
+        </member>
+        <member name="P:Monolithic.Models.CarHandover.PhotoPublicIds">
+            <summary>
+            PublicIds c?a Cloudinary (phân cách b?i ;)
+            </summary>
+        </member>
+        <member name="P:Monolithic.Models.CarHandover.Notes">
+            <summary>
+            Ghi chú v? tình tr?ng xe
+            </summary>
+        </member>
+        <member name="P:Monolithic.Models.CarHandover.BatteryLevelAtHandover">
+            <summary>
+            M?c pin t?i th?i ?i?m bàn giao
+            </summary>
+        </member>
+        <member name="P:Monolithic.Models.CarHandover.MileageReading">
+            <summary>
+            S? km ?ã ch?y (cho check-out)
+            </summary>
+        </member>
+        <member name="T:Monolithic.Models.EmailSettings">
+            <summary>
+            Configuration settings for email/SMTP
+            </summary>
+        </member>
+        <member name="T:Monolithic.Models.PayOSSettings">
+            <summary>
+            Configuration settings for PayOS payment gateway
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.BookingServiceImpl.CreateBookingAsync(System.String,Monolithic.DTOs.Booking.CreateBookingDto)">
+            <summary>
+            Step 1: Create booking with deposit payment (Đặt xe + thanh toán đặt cọc)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.BookingServiceImpl.CheckOutBookingAsync(Monolithic.DTOs.Booking.CheckOutWithPaymentDto)">
+            <summary>
+            Step 5: Check-out with rental payment (Check-out + thanh toán tiền thuê)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractEmailService.SendConfirmationEmailAsync(System.String,System.String,System.String)">
+            <summary>
+            G?i email xác nh?n h?p ??ng v?i link ký và link download
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.LuuHopDongVaTaoFileAsync(Monolithic.DTOs.Contract.TaoHopDongDto,System.Guid,System.Guid)">
+            <summary>
+            Lưu hợp đồng thuê xe và tạo file Word từ template
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.ReplaceTextInDocumentAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Thay thế text trong Word document sử dụng DocumentFormat.OpenXml
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.GuiEmailXacNhanAsync(System.Guid,System.String)">
+            <summary>
+            Gửi email xác nhận hợp đồng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.LayHopDongDeXacNhanAsync(System.String)">
+            <summary>
+            Lấy hợp đồng để xác nhận (chuyển sang HTML)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.XacNhanKyHopDongAsync(System.String)">
+            <summary>
+            Xác nhận và ký hợp đồng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.XoaMemHopDongAsync(System.Guid)">
+            <summary>
+            Xóa mềm hợp đồng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.GetContractByTokenAsync(System.String)">
+            <summary>
+            Lấy hợp đồng theo token xác nhận
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.LayHopDongDaKyAsync(System.Guid)">
+            <summary>
+            Lấy hợp đồng đã ký để xem lại (HTML)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.DownloadHopDongFileAsync(System.Guid)">
+            <summary>
+            Download file hợp đồng DOCX
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.DownloadHopDongFileByTokenAsync(System.String)">
+            <summary>
+            Download file hợp đồng bằng token (cho email link)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.DownloadHopDongFileByContractIdAsync(System.Guid,System.Nullable{System.Guid},System.String)">
+            <summary>
+            Download file hợp đồng theo ContractId với kiểm tra quyền truy cập
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.ContractServiceImpl.DownloadLatestContractByUserIdAsync(System.Guid,System.Nullable{System.Guid},System.String)">
+            <summary>
+            Download hợp đồng mới nhất của user theo RenterId
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.StationServiceImpl.RecalculateStationAvailableSlotsAsync(System.Guid)">
+            <summary>
+            Tính toán lại AvailableSlots dựa trên số xe thực tế tại station
+            AvailableSlots = TotalSlots - (số xe hiện tại tại station)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.StationServiceImpl.CanAddCarToStationAsync(System.Guid)">
+            <summary>
+            Kiểm tra xem station có thể thêm xe mới không
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Implementation.StationServiceImpl.UpdateStationAvailableSlotsAsync(System.Guid,System.Int32)">
+            <summary>
+            Cập nhật AvailableSlots khi có thay đổi xe (thêm/xóa/chuyển)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractEmailService.SendConfirmationEmailAsync(System.String,System.String,System.String)">
+            <summary>
+            G?i email xác nh?n h?p ??ng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.LuuHopDongVaTaoFileAsync(Monolithic.DTOs.Contract.TaoHopDongDto,System.Guid,System.Guid)">
+            <summary>
+            L?u h?p ??ng thuê xe và t?o file t? template
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.GuiEmailXacNhanAsync(System.Guid,System.String)">
+            <summary>
+            G?i email xác nh?n h?p ??ng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.LayHopDongDeXacNhanAsync(System.String)">
+            <summary>
+            L?y h?p ??ng ?? xác nh?n (chuy?n sang HTML)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.XacNhanKyHopDongAsync(System.String)">
+            <summary>
+            Xác nh?n và ký h?p ??ng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.XoaMemHopDongAsync(System.Guid)">
+            <summary>
+            Xóa m?m h?p ??ng
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.GetContractByTokenAsync(System.String)">
+            <summary>
+            L?y h?p ??ng theo token xác nh?n
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.LayHopDongDaKyAsync(System.Guid)">
+            <summary>
+            L?y h?p ??ng ?ã ký theo contractId (?? xem l?i)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.DownloadHopDongFileAsync(System.Guid)">
+            <summary>
+            Download file h?p ??ng DOCX
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.DownloadHopDongFileByTokenAsync(System.String)">
+            <summary>
+            Download file h?p ??ng b?ng token (cho email link)
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.DownloadHopDongFileByContractIdAsync(System.Guid,System.Nullable{System.Guid},System.String)">
+            <summary>
+            Download file h?p ??ng theo ContractId v?i ki?m tra quy?n truy c?p
+            </summary>
+        </member>
+        <member name="M:Monolithic.Services.Interfaces.IContractService.DownloadLatestContractByUserIdAsync(System.Guid,System.Nullable{System.Guid},System.String)">
+            <summary>
+            Download h?p ??ng m?i nh?t c?a user theo RenterId
+            </summary>
+        </member>
+    </members>
+</doc>

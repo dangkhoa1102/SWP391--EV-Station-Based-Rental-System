@@ -89,8 +89,34 @@
 }
 .booking-status-pending { background: #f9a825; }
 .booking-status-booked { background: #1976d2; }
-.booking-status-denied { background: #e53935; }
+.booking-status-waiting-checkin { background: #ff9800; }
+.booking-status-checkedin { background: #00897b; }
+.booking-status-checkout-pending { background: #0097a7; }
 .booking-status-completed { background: #43a047; }
+.booking-status-cancelled-pending { background: #d32f2f; }
+.booking-status-cancelled { background: #c62828; }
+.booking-status-denied { background: #e53935; }
+
+/* Inline loading indicator for pending and other wait states */
+.loading-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 0.92rem;
+  margin-top: 4px;
+}
+.loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #cfcfcf;
+  border-top-color: #1976d2;
+  border-radius: 50%;
+  animation: booking-spin 0.8s linear infinite;
+}
+@keyframes booking-spin {
+  to { transform: rotate(360deg); }
+}
 
 /* Position the booking filter bar closer to the top-left */
 #booking.section {

@@ -8,6 +8,7 @@ const apiClient = axios.create({
   timeout: 10000
 })
 
+// Request interceptor - add token to all requests
 apiClient.interceptors.request.use(cfg => {
   try {
     const t = localStorage.getItem('token')
@@ -16,9 +17,101 @@ apiClient.interceptors.request.use(cfg => {
     }
   } catch (e) {}
   return cfg
-})
+}, error => Promise.reject(error))
 
-apiClient.interceptors.response.use(r => r, e => Promise.reject(e))
+// Response interceptor - handle token refresh on 401
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+  failedQueue = []
+}
+
+apiClient.interceptors.response.use(
+  response => response,
+  async error => {
+    const originalRequest = error.config
+
+    // If error is 401 and we haven't tried to refresh yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`
+          return apiClient(originalRequest)
+        }).catch(err => Promise.reject(err))
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        console.log('🔄 Token expired, refreshing...')
+        
+        // Get refresh token from localStorage
+        const refreshToken = localStorage.getItem('refreshToken')
+        if (!refreshToken) {
+          throw new Error('No refresh token available')
+        }
+
+        // Call refresh token API
+        const response = await axios.post(`${SWAGGER_ROOT}/Auth/Refresh-Token`, {
+          refreshToken: refreshToken
+        })
+
+        const newToken = response.data?.data?.token || response.data?.token || response.data?.accessToken
+        const newRefreshToken = response.data?.data?.refreshToken || response.data?.refreshToken
+
+        if (newToken) {
+          console.log('✅ Token refreshed successfully')
+          localStorage.setItem('token', newToken)
+          if (newRefreshToken) {
+            localStorage.setItem('refreshToken', newRefreshToken)
+          }
+          
+          // Update the original request with new token
+          originalRequest.headers.Authorization = `Bearer ${newToken}`
+          
+          // Process queued requests
+          processQueue(null, newToken)
+          
+          isRefreshing = false
+          
+          // Retry the original request
+          return apiClient(originalRequest)
+        } else {
+          throw new Error('No token in refresh response')
+        }
+      } catch (refreshError) {
+        console.error('❌ Token refresh failed:', refreshError)
+        processQueue(refreshError, null)
+        isRefreshing = false
+        
+        // Clear tokens and redirect to login
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('user')
+        localStorage.removeItem('userId')
+        
+        // Redirect to home/login page
+        window.location.href = '/'
+        
+        return Promise.reject(refreshError)
+      }
+    }
+
+    return Promise.reject(error)
+  }
+)
 
 const API = {
   baseURL: SWAGGER_ROOT,
@@ -29,9 +122,11 @@ const API = {
     console.log('🔐 Login response:', res.data)
     const payload = res.data?.data || res.data || {}
     const token = payload.token || payload.accessToken || res.data?.token
+    const refreshToken = payload.refreshToken || res.data?.refreshToken
     
     if (token) {
       localStorage.setItem('token', token)
+      console.log('✅ Access token saved')
       try {
         const decoded = API.decodeJwt(token)
         console.log('🔓 Decoded JWT:', decoded)
@@ -53,9 +148,26 @@ const API = {
         } else {
           console.warn('⚠️ Could not find userId in JWT token')
         }
+        
+        // Extract role from JWT
+        const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] 
+                  || decoded.role 
+                  || decoded.Role
+        if (role) {
+          localStorage.setItem('userRole', role)
+          console.log('👥 User role saved:', role)
+        }
       } catch (e) {
         console.error('❌ Error decoding JWT:', e)
       }
+    }
+    
+    // Save refresh token if available
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken)
+      console.log('✅ Refresh token saved')
+    } else {
+      console.warn('⚠️ No refresh token in response')
     }
     
     // Also check if userId is directly in the response payload
@@ -66,7 +178,41 @@ const API = {
     }
     
     if (payload.user) localStorage.setItem('user', JSON.stringify(payload.user))
-    return { raw: res.data, token, payload }
+    
+    // For Staff role, fetch additional info including stationId from /Users/Get-My-Profile
+    try {
+      const userRole = localStorage.getItem('userRole')
+      console.log('🔍 Checking if user is Staff - userRole:', userRole)
+      // Check for various staff role names
+      const isStaff = userRole && (
+        userRole.includes('Staff') || 
+        userRole.includes('staff') || 
+        userRole === 'StationManager' || 
+        userRole.includes('Manager')
+      )
+      if (isStaff) {
+        console.log('📍 Staff user detected, fetching profile with station info...')
+        const profileData = await API.getMyProfile()
+        console.log('👨‍💼 Staff profile data from getMyProfile():', profileData)
+        
+        const stationId = profileData?.stationId || profileData?.StationId
+        console.log('🔎 Extracted stationId from profile:', stationId)
+        if (stationId) {
+          localStorage.setItem('stationId', stationId)
+          console.log('✅ Station ID saved to localStorage:', stationId)
+          console.log('📋 Verify - localStorage.getItem("stationId"):', localStorage.getItem('stationId'))
+        } else {
+          console.warn('⚠️ No station ID found in profile for staff user. Full profile:', profileData)
+        }
+      } else {
+        console.log('ℹ️ User is not Staff/StationManager, skipping station ID save')
+      }
+    } catch (e) {
+      console.error('❌ Error fetching staff profile:', e)
+      console.error('Stack:', e.stack)
+    }
+    
+    return { raw: res.data, token, refreshToken, payload }
   },
 
   register: async (fullName, email, phoneNumber, password) => {
@@ -75,7 +221,7 @@ const API = {
   },
 
   refreshToken: async () => { const res = await apiClient.post('/Auth/Refresh-Token'); return res.data },
-  logout: async () => { const res = await apiClient.post('/Auth/Logout'); localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); localStorage.removeItem('user'); localStorage.removeItem('userEmail'); return res.data },
+  logout: async () => { const res = await apiClient.post('/Auth/Logout'); localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); localStorage.removeItem('user'); localStorage.removeItem('userEmail'); localStorage.removeItem('stationId'); localStorage.removeItem('userRole'); return res.data },
   forgotPassword: async (email) => { const res = await apiClient.post('/Auth/forgot-password', { email }); return res.data },
   getMe: async () => { 
     const res = await apiClient.get('/Auth/Me')
@@ -104,6 +250,7 @@ const API = {
   // simplified: expose generic wrappers
   get: async (endpoint, opts) => (await apiClient.get(endpoint, opts)).data,
   post: async (endpoint, body, opts) => (await apiClient.post(endpoint, body, opts)).data,
+  put: async (endpoint, body, opts) => (await apiClient.put(endpoint, body, opts)).data,
 
   updateUserAvatar: async (userId, avatarUrl) => {
     const res = await apiClient.post(`/Users/${encodeURIComponent(userId)}/avatar`, { avatarUrl })
