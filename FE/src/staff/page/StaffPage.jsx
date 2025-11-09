@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import BookingSection from './components/Booking/BookingSection';
 import VehicleSection from './components/Vehicle/VehicleSection';
 import ProfileSection from './components/Profile/ProfileSection';
+import IncidentSection from './components/Incident/IncidentSection';
 import StaffAPI from '../services/staffApi';
 
 // Start with empty lists; we will load from API
@@ -92,6 +93,21 @@ export default function StaffPage() {
                 : nextStatus === 'denied' ? 'Denied'
                 : nextStatus
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: nextStatus, statusLabel: label } : b))
+  }
+
+  // Handle FormData from CreateIncidentModal and call StaffAPI.createIncident
+  const handleCreateIncident = async (formData) => {
+    try {
+      const bookingId = formData.get('bookingId') || '';
+      const description = formData.get('description') || '';
+      let images = [];
+      try { images = formData.getAll ? formData.getAll('images') : []; } catch (e) { images = [] }
+      const created = await StaffAPI.createIncident(bookingId, description, images);
+      return created;
+    } catch (e) {
+      console.error('❌ create incident failed', e?.response?.data || e?.message || e);
+      throw e;
+    }
   }
 
 
@@ -712,6 +728,14 @@ export default function StaffPage() {
               stationSlots={stationSlots}
             />
           </>
+        )}
+        {section === 'incident' && (
+          <IncidentSection
+            incidents={[]}
+            bookings={bookings}
+            onCreateIncident={handleCreateIncident}
+            onRefresh={async () => { /* optional: refresh incidents from server */ }}
+          />
         )}
         {section === 'profile' && <ProfileSection />}
       </main>

@@ -1467,4 +1467,52 @@ API.assignStaffToStation = async (stationId, staffId) => {
   throw new Error('Assign staff to station endpoint not found')
 }
 
+/**
+ * Create an incident report with optional image uploads
+ * @param {string} bookingId
+ * @param {string} description
+ * @param {File[]} images
+ */
+API.createIncident = async (bookingId, description, images = []) => {
+  if (!bookingId || !description) throw new Error('bookingId and description are required')
+
+  // Build FormData
+  const fd = new FormData()
+  fd.append('bookingId', bookingId)
+  fd.append('description', description)
+  if (images && images.length) {
+    for (const f of images) fd.append('images', f)
+  }
+
+  const attempts = [
+    '/Incidents/Create',
+    '/incidents/Create',
+    '/Incidents/CreateIncident'
+  ]
+  let lastErr = null
+  for (const url of attempts) {
+    try {
+      // Note: allow axios to set the multipart boundary header
+      const res = await apiClient.post(url, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      const body = res?.data
+      if (body && typeof body === 'object' && 'data' in body) {
+        if (body.isSuccess === false) {
+          const msg = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : 'Request failed')
+          const err = new Error(msg)
+          err.body = body
+          throw err
+        }
+        return body.data
+      }
+      return body
+    } catch (e) {
+      lastErr = e
+      const code = e?.response?.status
+      // bubble non-404/405 errors
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw lastErr || new Error('Create incident endpoint not found')
+}
+
 export default API
