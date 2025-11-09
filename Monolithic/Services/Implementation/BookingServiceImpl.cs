@@ -833,21 +833,6 @@ namespace Monolithic.Services.Implementation
             }
         }
 
-        public async Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryByUserIdAsync(string userId)
-        {
-            try
-            {
-                var bookings = await _bookingRepository.GetUserBookingsAsync(userId);
-                var history = _mapper.Map<List<BookingHistoryDto>>(bookings);
-
-                return ResponseDto<List<BookingHistoryDto>>.Success(history);
-            }
-            catch (Exception ex)
-            {
-                return ResponseDto<List<BookingHistoryDto>>.Failure($"Error getting booking history for user: {ex.Message}");
-            }
-        }
-
         public async Task<ResponseDto<List<BookingDto>>> GetUpcomingBookingsAsync()
         {
             try
@@ -881,10 +866,24 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<List<BookingHistoryDto>>.Failure($"Error getting booking history for user: {ex.Message}");
             }
         }
+        public async Task<ResponseDto<List<BookingDto>>> GetBookingsByStationIdAsync(Guid stationId)
+        {
+            if (stationId == Guid.Empty)
+            {
+                return ResponseDto<List<BookingDto>>.Failure("StationId is required");
+            }
 
-
-
-
+            try
+            {
+                var bookings = await _bookingRepository.GetBookingsByStationAsync(stationId);
+                var dto = _mapper.Map<List<BookingDto>>(bookings);
+                return ResponseDto<List<BookingDto>>.Success(dto);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<List<BookingDto>>.Failure($"Error getting bookings by station: {ex.Message}");
+            }
+        }
 
 
 

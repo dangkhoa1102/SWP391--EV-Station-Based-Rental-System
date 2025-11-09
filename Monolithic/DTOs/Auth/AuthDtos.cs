@@ -61,6 +61,7 @@ namespace Monolithic.DTOs.Auth
         [JsonConverter(typeof(NullableDateTimeConverter))]
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; }
+        public Guid? StationId { get; set; }
         
         // Document URLs (for profile viewing)
         public string? CccdImageUrl_Front { get; set; }

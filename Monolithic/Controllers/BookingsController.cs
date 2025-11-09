@@ -118,6 +118,25 @@ namespace Monolithic.Controllers
             var result = await _bookingService.GetBookingsAsync(request);
             return Ok(result);
         }
+
+        /// <summary>
+        /// Get bookings by station (Admin and Station Staff only)
+        /// </summary>
+        [HttpGet("By-Station/{stationId:guid}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<List<BookingDto>>>> GetBookingsByStation(Guid stationId)
+        {
+            if (stationId == Guid.Empty)
+                return BadRequest(ResponseDto<List<BookingDto>>.Failure("StationId is required"));
+
+            var result = await _bookingService.GetBookingsByStationIdAsync(stationId);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpGet("Get-Active")]
         public async Task<ActionResult<ResponseDto<PaginationDto<BookingDto>>>> GetActiveBookings([FromQuery] PaginationRequestDto request)
         {
@@ -284,29 +303,7 @@ namespace Monolithic.Controllers
             
             var result = await _bookingService.GetBookingHistoryAsync(userIdClaim);
             return Ok(result);
-        }
-
-        /// <summary>
-        /// Get a specific user's booking history (Admin and Station Staff only)
-        /// </summary>
-        [HttpGet("User-Booking-History/{userId}")]
-        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
-        public async Task<ActionResult<ResponseDto<List<BookingHistoryDto>>>> GetBookingHistoryByUserId(string userId)
-        {
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                return BadRequest(ResponseDto<List<BookingHistoryDto>>.Failure("UserId is required"));
-            }
-
-            var result = await _bookingService.GetBookingHistoryByUserIdAsync(userId);
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(result);
-            }
-
-            return Ok(result);
-        }
+        }      
 
         /// <summary>
         /// Get upcoming bookings

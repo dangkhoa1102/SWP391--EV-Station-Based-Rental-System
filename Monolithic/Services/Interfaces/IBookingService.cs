@@ -40,7 +40,6 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryAsync(string userId);
         Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryByUserIdAsync(string userId);
         Task<ResponseDto<List<BookingDto>>> GetUpcomingBookingsAsync();
-
-        Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryByUserIdAsync(string userId);
+        Task<ResponseDto<List<BookingDto>>> GetBookingsByStationIdAsync(Guid stationId);
     }
 }

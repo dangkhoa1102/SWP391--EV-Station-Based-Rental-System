@@ -62,6 +62,9 @@ namespace Monolithic.Repositories.Implementation
         {
             return await _dbContext.Bookings
                 .Where(b => b.StationId == stationId)
+                .Include(b => b.Car)
+                .Include(b => b.Station)
+                .Include(b => b.User)
                 .AsNoTracking()
                 .ToListAsync();
         }
