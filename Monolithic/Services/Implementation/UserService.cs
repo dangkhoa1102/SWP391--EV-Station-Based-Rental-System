@@ -162,6 +162,7 @@ namespace Monolithic.Services.Implementation
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
                 IsActive = user.IsActive,
+                StationId = user.StationId,
                 CccdImageUrl_Front = user.CccdImageUrl_Front,
                 CccdImageUrl_Back = user.CccdImageUrl_Back,
                 GplxImageUrl_Front = user.GplxImageUrl_Front,

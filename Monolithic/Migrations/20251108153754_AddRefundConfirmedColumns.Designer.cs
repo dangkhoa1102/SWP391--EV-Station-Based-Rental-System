@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251108153754_AddRefundConfirmedColumns")]
+    partial class AddRefundConfirmedColumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,10 +44,6 @@ namespace Monolithic.Migrations
 
                     b.Property<DateTime?>("CheckInAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("CheckInPhotoUrl")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("CheckOutNotes")
                         .HasMaxLength(500)
@@ -772,7 +771,7 @@ namespace Monolithic.Migrations
                         new
                         {
                             UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 11, 9, 6, 3, 20, 665, DateTimeKind.Utc).AddTicks(5105),
+                            CreatedAt = new DateTime(2025, 11, 8, 15, 37, 52, 968, DateTimeKind.Utc).AddTicks(9629),
                             DateOfBirth = new DateOnly(1, 1, 1),
                             Email = "admin@ev.com",
                             FirstName = "Admin",

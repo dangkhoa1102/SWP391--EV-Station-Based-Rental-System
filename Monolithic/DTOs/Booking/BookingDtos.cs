@@ -190,15 +190,23 @@ namespace Monolithic.DTOs.Booking
         
         [StringLength(500)]
         public string? CheckInNotes { get; set; }
-        
-        [StringLength(1000)]
-        public string? CheckInPhotoUrl { get; set; }
+    }
+
+    /// <summary>
+    /// DTO form data cho việc check-in với upload ảnh
+    /// </summary>
+    public class CheckInWithContractFormDto
+    {
+        [Required]
+        public Guid BookingId { get; set; }
         
         [Required]
-        public string StaffSignature { get; set; } = string.Empty; // Chữ ký của staff
+        public Guid StaffId { get; set; }
         
-        [Required]
-        public string CustomerSignature { get; set; } = string.Empty; // Chữ ký của khách hàng
+        [StringLength(500)]
+        public string? CheckInNotes { get; set; }
+
+        public IFormFile? CheckInPhoto { get; set; }
     }
 
     /// <summary>
