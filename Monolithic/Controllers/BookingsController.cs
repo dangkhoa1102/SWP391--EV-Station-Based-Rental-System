@@ -45,7 +45,8 @@ namespace Monolithic.Controllers
         /// Bước 3: Check-in với ký hợp đồng
         /// </summary>
         [HttpPost("Check-In-With-Contract")]
-        public async Task<ActionResult<ResponseDto<BookingDto>>> CheckInWithContract([FromBody] CheckInWithContractDto request)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ResponseDto<BookingDto>>> CheckInWithContract([FromForm] CheckInWithContractFormDto request)
         {
             // Lấy userId từ JWT token claims
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -54,7 +55,15 @@ namespace Monolithic.Controllers
                 return Unauthorized(ResponseDto<BookingDto>.Failure("User not authenticated"));
             }
 
-            var result = await _bookingService.CheckInWithContractAsync(request, userIdClaim);
+            // Tạo dto từ form data
+            var checkInRequest = new CheckInWithContractDto
+            {
+                BookingId = request.BookingId,
+                StaffId = request.StaffId,
+                CheckInNotes = request.CheckInNotes
+            };
+
+            var result = await _bookingService.CheckInWithContractAsync(checkInRequest, userIdClaim, request.CheckInPhoto);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             
@@ -116,6 +125,23 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Get active bookings by station with pagination
+        /// </summary>
+        [HttpGet("Get-Active-By-Station/{stationId:guid}")]
+        public async Task<ActionResult<ResponseDto<PaginationDto<BookingDto>>>> GetActiveBookingsByStation(
+            Guid stationId,
+            [FromQuery] PaginationRequestDto request)
+        {
+            if (stationId == Guid.Empty)
+                return BadRequest(ResponseDto<PaginationDto<BookingDto>>.Failure("StationId is required"));
+
+            var result = await _bookingService.GetActiveBookingsByStationAsync(stationId, request);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
 
         /// <summary>
         /// Get booking by ID
@@ -289,6 +315,28 @@ namespace Monolithic.Controllers
         public async Task<ActionResult<ResponseDto<List<BookingDto>>>> GetUpcomingBookings()
         {
             var result = await _bookingService.GetUpcomingBookingsAsync();
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get a specific user's booking history (Admin and Station Staff only)
+        /// </summary>
+        [HttpGet("User-Booking-History/{userId}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<List<BookingHistoryDto>>>> GetBookingHistoryByUserId(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return BadRequest(ResponseDto<List<BookingHistoryDto>>.Failure("UserId is required"));
+            }
+
+            var result = await _bookingService.GetBookingHistoryByUserIdAsync(userId);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
             return Ok(result);
         }
 

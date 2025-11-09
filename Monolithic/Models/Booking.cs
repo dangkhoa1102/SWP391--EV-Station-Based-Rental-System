@@ -61,6 +61,8 @@ namespace Monolithic.Models
 
         public DateTime? CheckInAt { get; set; } // Thời gian check-in
 
+        [StringLength(1000)]
+        public string? CheckInPhotoUrl { get; set; }
        
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
