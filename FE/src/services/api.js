@@ -148,6 +148,15 @@ const API = {
         } else {
           console.warn('⚠️ Could not find userId in JWT token')
         }
+        
+        // Extract role from JWT
+        const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] 
+                  || decoded.role 
+                  || decoded.Role
+        if (role) {
+          localStorage.setItem('userRole', role)
+          console.log('👥 User role saved:', role)
+        }
       } catch (e) {
         console.error('❌ Error decoding JWT:', e)
       }
@@ -169,6 +178,40 @@ const API = {
     }
     
     if (payload.user) localStorage.setItem('user', JSON.stringify(payload.user))
+    
+    // For Staff role, fetch additional info including stationId from /Users/Get-My-Profile
+    try {
+      const userRole = localStorage.getItem('userRole')
+      console.log('🔍 Checking if user is Staff - userRole:', userRole)
+      // Check for various staff role names
+      const isStaff = userRole && (
+        userRole.includes('Staff') || 
+        userRole.includes('staff') || 
+        userRole === 'StationManager' || 
+        userRole.includes('Manager')
+      )
+      if (isStaff) {
+        console.log('📍 Staff user detected, fetching profile with station info...')
+        const profileData = await API.getMyProfile()
+        console.log('👨‍💼 Staff profile data from getMyProfile():', profileData)
+        
+        const stationId = profileData?.stationId || profileData?.StationId
+        console.log('🔎 Extracted stationId from profile:', stationId)
+        if (stationId) {
+          localStorage.setItem('stationId', stationId)
+          console.log('✅ Station ID saved to localStorage:', stationId)
+          console.log('📋 Verify - localStorage.getItem("stationId"):', localStorage.getItem('stationId'))
+        } else {
+          console.warn('⚠️ No station ID found in profile for staff user. Full profile:', profileData)
+        }
+      } else {
+        console.log('ℹ️ User is not Staff/StationManager, skipping station ID save')
+      }
+    } catch (e) {
+      console.error('❌ Error fetching staff profile:', e)
+      console.error('Stack:', e.stack)
+    }
+    
     return { raw: res.data, token, refreshToken, payload }
   },
 
@@ -178,7 +221,7 @@ const API = {
   },
 
   refreshToken: async () => { const res = await apiClient.post('/Auth/Refresh-Token'); return res.data },
-  logout: async () => { const res = await apiClient.post('/Auth/Logout'); localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); localStorage.removeItem('user'); localStorage.removeItem('userEmail'); return res.data },
+  logout: async () => { const res = await apiClient.post('/Auth/Logout'); localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); localStorage.removeItem('user'); localStorage.removeItem('userEmail'); localStorage.removeItem('stationId'); localStorage.removeItem('userRole'); return res.data },
   forgotPassword: async (email) => { const res = await apiClient.post('/Auth/forgot-password', { email }); return res.data },
   getMe: async () => { 
     const res = await apiClient.get('/Auth/Me')

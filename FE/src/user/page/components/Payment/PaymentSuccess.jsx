@@ -67,7 +67,7 @@ export default function PaymentSuccess(){
         const bookingDetails = await API.getBookingById(bookingId)
         const bookingStatus = Number(bookingDetails?.bookingStatus || bookingDetails?.BookingStatus)
         
-        console.log('📊 Booking status after payment:', bookingStatus)
+        console.log('📊 Booking status after payment:', bookingStatus, '(0=Pending, 1=Active, 2=Waiting Check-in, 3=Checked-in, 4=Check-out Pending, 5=Completed)')
         
         setSyncing(false)
         
@@ -82,13 +82,17 @@ export default function PaymentSuccess(){
           }
           
           // Determine redirect destination based on booking status
-          // Status 1 (Active) = Deposit paid, go back to booking history
-          // Status 3 (Checked-in) = Final payment done, go to staff page
+          // Status 1 (Active) = Deposit paid → booking-history (user view rental)
+          // Status 3 (Checked-in) = Final payment done → staff page (staff check-in/checkout)
           if (bookingStatus === 3) {
-            console.log('🎯 Final payment complete (Status 3), redirecting to staff page...')
+            console.log('🎯 Final payment complete (Status 3: Checked-in), redirecting to staff page...')
             navigate('/staff')
+          } else if (bookingStatus === 1) {
+            console.log('💳 Deposit payment complete (Status 1: Active), redirecting to booking history...')
+            navigate('/booking-history')
           } else {
-            console.log('💳 Deposit payment complete (Status 1), redirecting to booking history...')
+            // For other statuses, go to booking history
+            console.log('ℹ️ Booking status:', bookingStatus, '- redirecting to booking history as default')
             navigate('/booking-history')
           }
         }, 1500)

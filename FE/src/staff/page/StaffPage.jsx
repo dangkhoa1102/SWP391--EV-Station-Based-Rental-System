@@ -252,11 +252,29 @@ export default function StaffPage() {
     async function loadStations() {
       try {
         setLoadingStations(true)
+        
+        // Staff MUST have stationId from login
+        const savedStationId = localStorage.getItem('stationId')
+        if (savedStationId) {
+          console.log('📍 Staff assigned station from localStorage:', savedStationId)
+          if (mounted) setStationId(savedStationId)
+          
+          // Load station name for display
+          try {
+            const allStations = await StaffAPI.getAllStations(1, 100)
+            if (mounted) setStations(allStations || [])
+          } catch (e) {
+            console.warn('⚠️ Failed to load stations for display:', e)
+          }
+          return
+        }
+        
+        // Fallback: if no stationId in localStorage (shouldn't happen for staff)
+        console.warn('⚠️ No stationId found in localStorage for staff user')
         const s = await StaffAPI.getAllStations(1, 100)
         if (!mounted) return
         setStations(s || [])
-        const firstId = (s && s[0] && (s[0].id || s[0].Id)) || ''
-        setStationId(prev => prev || firstId)
+        // Don't auto-select - staff should only see their assigned station
       } catch (e) {
         if (!mounted) return
         setError(e?.message || 'Failed to load stations')
@@ -409,40 +427,20 @@ export default function StaffPage() {
         setLoadingBookings(true)
         let items = []
         if (stationId) {
+          console.log('📅 Loading active bookings for station:', stationId)
           try {
-            items = await StaffAPI.getBookingsByStation(stationId)
-          } catch {
+            // Load ONLY active bookings for this station (no fallback to all)
+            items = await StaffAPI.getBookingsByStation(stationId, 1, 200)
+            console.log('✅ Loaded active bookings:', items?.length)
+          } catch (e) {
+            console.error('❌ Error loading bookings:', e)
             items = []
           }
-          // Fallback: if nothing returned, fetch all and client-filter by station
-          if (!items || items.length === 0) {
-            try {
-              const all = await StaffAPI.listBookings({ page: 1, pageSize: 200 })
-              const sid = String(stationId)
-              items = (all || []).filter(b => {
-                const st = b.stationId || b.StationId || b.station?.id || b.station?.Id || b.pickupStationId || b.PickupStationId
-                return st != null && String(st) === sid
-              })
-            } catch {}
-          }
-          // Always enforce station scoping even if backend returned all bookings
-          if (items && items.length > 0) {
-            const sid = String(stationId)
-            items = items.filter(b => {
-              const candidates = [
-                b.stationId, b.StationId, b.station?.id, b.station?.Id,
-                b.pickupStationId, b.PickupStationId, b.pickUpStationId, b.PickUpStationId,
-                b.startStationId, b.StartStationId, b.originStationId, b.OriginStationId,
-                b.fromStationId, b.FromStationId,
-                b.car?.stationId, b.car?.StationId, b.car?.currentStationId,
-                b.vehicle?.stationId, b.vehicle?.StationId
-              ]
-              return candidates.some(v => v != null && String(v) === sid)
-            })
-          }
         } else {
-          items = await StaffAPI.listBookings({ page: 1, pageSize: 100 })
+          console.warn('⚠️ No station ID set')
+          items = []
         }
+
         if (!mounted) return
         const mapped = (items || []).map(b => {
           const id = b.id || b.Id || b.bookingId || b.BookingId
@@ -675,14 +673,9 @@ export default function StaffPage() {
           <>
             <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:12}}>
               <label style={{fontWeight:600}}>Station:</label>
-              <select value={stationId} onChange={e=>setStationId(e.target.value)} disabled={loadingStations}>
-                <option value="">All stations</option>
-                {stations.map(s => {
-                  const id = s.id || s.Id
-                  const name = s.name || s.Name || s.stationName || `Station ${id}`
-                  return <option key={id} value={id}>{name}</option>
-                })}
-              </select>
+              <span style={{padding:'8px 12px', background:'#f0f0f0', borderRadius:4, fontWeight:500}}>
+                {stations.find(s => (s.id || s.Id) === stationId)?.name || stations.find(s => (s.id || s.Id) === stationId)?.Name || stationId}
+              </span>
               {loadingBookings && <span>Loading bookings…</span>}
             </div>
             {!loadingBookings && bookings.length === 0 && (
@@ -704,14 +697,9 @@ export default function StaffPage() {
           <>
             <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:12}}>
               <label style={{fontWeight:600}}>Station:</label>
-              <select value={stationId} onChange={e=>setStationId(e.target.value)} disabled={loadingStations}>
-                <option value="">All stations</option>
-                {stations.map(s => {
-                  const id = s.id || s.Id
-                  const name = s.name || s.Name || s.stationName || `Station ${id}`
-                  return <option key={id} value={id}>{name}</option>
-                })}
-              </select>
+              <span style={{padding:'8px 12px', background:'#f0f0f0', borderRadius:4, fontWeight:500}}>
+                {stations.find(s => (s.id || s.Id) === stationId)?.name || stations.find(s => (s.id || s.Id) === stationId)?.Name || stationId}
+              </span>
               {loadingVehicles && <span>Loading vehicles…</span>}
             </div>
             <VehicleSection
