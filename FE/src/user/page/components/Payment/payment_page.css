@@ -5,7 +5,7 @@
   padding: 6.5rem 1rem 3.5rem;
   background: #fafafa;
   min-height: 100vh;
-  color: #000;
+  color: #1a1a1a;
   font-size: 16px; /* increase base font size for better readability */
   line-height: 1.6;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
@@ -93,7 +93,7 @@
   margin: 0 0 12px 0;
   font-size: 1.1rem;
   font-weight: 900;
-  color: #000;
+  color: #1a1a1a;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid #ff6a00;
@@ -110,17 +110,17 @@
 }
 .info-row:last-child { border-bottom: none }
 .info-label { 
-  color: #1a1a1a; 
-  font-weight: 900; 
-  font-size: 1rem;
+  color: #1a1a1a !important; 
+  font-weight: 900 !important; 
+  font-size: 1rem !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex: 1;
 }
 .info-value { 
-  color: #1a1a1a; 
-  font-weight: 900;
-  font-size: 1.05rem;
+  color: #1a1a1a !important; 
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
   text-align: right;
   flex: 1;
 }
@@ -134,15 +134,15 @@
   font-weight: 700;
 }
 .deposit-row .info-label {
-  color: #000; 
-  font-weight: 900;
+  color: #1a1a1a !important; 
+  font-weight: 900 !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 .deposit-row .info-value { 
-  color: #000; 
-  font-weight: 900; 
-  font-size: 1.1rem;
+  color: #1a1a1a !important; 
+  font-weight: 900 !important; 
+  font-size: 1.1rem !important;
 }
 
 .car-preview { 
@@ -185,7 +185,7 @@
   display: flex; 
   align-items: center; 
   gap: 12px; 
-  color: #000; 
+  color: #1a1a1a; 
   font-size: 0.98rem;
   font-weight: 700;
 }
@@ -369,13 +369,13 @@
 .payment-modal { max-width:820px }
 .payment-content { display:flex; gap:12px; align-items:flex-start }
 .qr-section { flex:0 0 200px }
-.qr-placeholder { width:200px; height:200px; background:#fff; border:1px dashed #eef2f7; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:700 }
+.qr-placeholder { width:200px; height:200px; background:#fff; border:1px dashed #eef2f7; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#1a1a1a; font-weight:700 }
 .payment-details { flex:1 }
 .payment-info-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f3f6fb }
 .payment-info-row.highlight { background:#fffaf0; padding:12px; border-radius:8px; margin:8px 0 }
 
-.payment-note { margin-top:12px; padding:12px; background:#fffaf0; border-left:4px solid #ffd8b5; border-radius:8px; color:#000 }
-.payment-timer { margin-top:12px; padding:10px; background:#fff; border-radius:10px; text-align:center; font-weight:800; color:#000 }
+.payment-note { margin-top:12px; padding:12px; background:#fffaf0; border-left:4px solid #ffd8b5; border-radius:8px; color:#1a1a1a }
+.payment-timer { margin-top:12px; padding:10px; background:#fff; border-radius:10px; text-align:center; font-weight:800; color:#1a1a1a }
 
 /* Modal styles - matching SearchModal design */
 .payment-page .modal-overlay { position:fixed !important; inset:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; background:rgba(0,0,0,0.5) !important; backdrop-filter:blur(3px) !important; padding:0 !important; z-index:1200 !important; overflow:hidden !important }
@@ -495,9 +495,17 @@ success-modal h3 {
   border-bottom: none;
 }
 
+.price-label {
+  color: #1a1a1a !important;
+  font-weight: 900 !important;
+  font-size: 1rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .price-value {
   /* Ensure payment page numeric values are prominent and not overridden by other global styles */
-  color: #000 !important;
+  color: #1a1a1a !important;
   font-weight: 900 !important;
   font-size: 1rem !important;
   text-align: right;
@@ -508,7 +516,7 @@ success-modal h3 {
 /* Extra specificity for the price summary section to override other .price-value rules in the app
    and keep sizes consistent: numbers use 1rem, total is slightly larger for emphasis */
 .price-summary-section .price-value {
-  color: #000 !important;
+  color: #1a1a1a !important;
   font-weight: 900 !important;
   font-size: 1rem !important;
 }
@@ -566,9 +574,9 @@ success-modal h3 {
 }
 
 .price-value-total {
-  color: #000;
-  font-weight: 900;
-  font-size: 1.2rem;
+  color: #1a1a1a !important;
+  font-weight: 900 !important;
+  font-size: 1.2rem !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -580,7 +588,7 @@ success-modal h3 {
 }
 
 .price-value-deposit {
-  color: #000;
-  font-weight: 800;
-  font-size: 1.05rem;
+  color: #1a1a1a !important;
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
 }
