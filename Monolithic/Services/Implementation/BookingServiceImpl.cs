@@ -123,7 +123,7 @@ namespace Monolithic.Services.Implementation
             }
         }
 
-        public async Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request, string? callerUserId)
+        public async Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request, string? callerUserId, IFormFile? checkInPhoto)
         {
             // 1️⃣ Lấy thông tin booking
             var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
@@ -151,12 +151,45 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<BookingDto>.Failure("Contract not confirmed");
             }
 
-            if (contract.RenterId != callerGuid)
-            {
-                return ResponseDto<BookingDto>.Failure("Forbidden: caller is not the renter who signed the contract");
-            }
+            //if (contract.RenterId != callerGuid)
+            //{
+            //    return ResponseDto<BookingDto>.Failure("Forbidden: caller is not the renter who signed the contract");
+            //}
 
-           
+            // 3️⃣ Handle photo upload if provided
+            string? checkInPhotoUrl = null;
+            if (checkInPhoto != null && checkInPhoto.Length > 0)
+            {
+                try
+                {
+                    // Validate file
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                    var fileExtension = Path.GetExtension(checkInPhoto.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(fileExtension))
+                        return ResponseDto<BookingDto>.Failure("Invalid file type. Only images are allowed.");
+
+                    if (checkInPhoto.Length > 5 * 1024 * 1024) // 5MB max
+                        return ResponseDto<BookingDto>.Failure("File size exceeds 5MB limit.");
+
+                    // Save file
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "check-in-photos");
+                    Directory.CreateDirectory(uploadsFolder);
+                    
+                    var uniqueFileName = $"{request.BookingId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}{fileExtension}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await checkInPhoto.CopyToAsync(fileStream);
+                    }
+
+                    checkInPhotoUrl = $"/uploads/check-in-photos/{uniqueFileName}";
+                }
+                catch (Exception ex)
+                {
+                    return ResponseDto<BookingDto>.Failure($"Error uploading photo: {ex.Message}");
+                }
+            }
 
             // 4️⃣ Cập nhật thông tin check-in trên booking
             booking.CheckInAt = DateTime.UtcNow;
@@ -164,11 +197,12 @@ namespace Monolithic.Services.Implementation
             booking.BookingStatus = BookingStatus.CheckedInPendingPayment;
             booking.IsContractApproved = true;
             booking.ContractApprovedAt = DateTime.UtcNow;
+            booking.CheckInPhotoUrl = checkInPhotoUrl;
 
             // 5️⃣ Cập nhật slot trống của station (xe đã rời đi)
             //var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
             //if (!stationUpdateResult)
-            //    return ResponseDto<BookingDto>.Failure("Failed to update station slots");
+            //    return ResponseDto<BookingDto>.Failure("Failed to update station slots")
 
             // 6️⃣ Cập nhật DB
             var updated = await _bookingRepository.UpdateAsync(booking);
@@ -606,6 +640,30 @@ namespace Monolithic.Services.Implementation
             }
         }
 
+        public async Task<ResponseDto<PaginationDto<BookingDto>>> GetActiveBookingsByStationAsync(Guid stationId, PaginationRequestDto request)
+        {
+            try
+            {
+                Expression<Func<Booking, bool>> predicate = b => b.IsActive && b.StationId == stationId;
+
+                var (items, total) = await _bookingRepository.GetPagedAsync(
+                    request.Page,
+                    request.PageSize,
+                    predicate,
+                    b => b.CreatedAt,
+                    true
+                );
+
+                var dto = _mapper.Map<List<BookingDto>>(items);
+                var pagination = new PaginationDto<BookingDto>(dto, request.Page, request.PageSize, total);
+                return ResponseDto<PaginationDto<BookingDto>>.Success(pagination);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<PaginationDto<BookingDto>>.Failure($"Error getting active bookings by station: {ex.Message}");
+            }
+        }
+
         public async Task<ResponseDto<BookingDto>> GetBookingByIdAsync(Guid id)
         {
             try
@@ -752,8 +810,8 @@ namespace Monolithic.Services.Implementation
                 if (booking == null)
                 {
                     return ResponseDto<BookingStatusDto>.Failure("No active booking found");
-                }
-                return ResponseDto<BookingStatusDto>.Success(_mapper.Map<BookingStatusDto>(booking));
+                }              
+                    return ResponseDto<BookingStatusDto>.Success(_mapper.Map<BookingStatusDto>(booking));
             }
             catch (Exception ex)
             {
@@ -794,7 +852,20 @@ namespace Monolithic.Services.Implementation
             }
         }
 
-      
+        public async Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryByUserIdAsync(string userId)
+        {
+            try
+            {
+                var bookings = await _bookingRepository.GetUserBookingsAsync(userId);
+                var history = _mapper.Map<List<BookingHistoryDto>>(bookings);
+
+                return ResponseDto<List<BookingHistoryDto>>.Success(history);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<List<BookingHistoryDto>>.Failure($"Error getting booking history for user: {ex.Message}");
+            }
+        }
 
 
 

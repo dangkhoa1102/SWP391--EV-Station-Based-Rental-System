@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Monolithic.Data;
 using Monolithic.Models;
 using Monolithic.Repositories.Interfaces;
+using System.Linq.Expressions;
 
 namespace Monolithic.Repositories.Implementation
 {
@@ -38,7 +39,7 @@ namespace Monolithic.Repositories.Implementation
                     b.UserId == userGuid &&
                     b.BookingStatus != BookingStatus.Completed &&
                     b.BookingStatus != BookingStatus.Cancelled);
-        }
+        }        
 
         public async Task<Booking?> GetBookingWithDetailsAsync(Guid bookingId)
         {
@@ -83,6 +84,42 @@ namespace Monolithic.Repositories.Implementation
                 .OrderByDescending(b => b.CreatedAt)
                 .AsNoTracking()
                 .ToListAsync();
+        }
+
+        /// <summary>
+        /// Override GetPagedAsync ?? include navigation properties cho Booking
+        /// </summary>
+        public async Task<(IEnumerable<Booking> items, int totalCount)> GetPagedAsync(
+            int page,
+            int pageSize,
+            Expression<Func<Booking, bool>>? predicate = null,
+            Expression<Func<Booking, object>>? orderBy = null,
+            bool orderByDescending = false)
+        {
+            IQueryable<Booking> query = _dbContext.Bookings
+                .Include(b => b.Car)
+                .Include(b => b.Station)
+                .Include(b => b.User);
+
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            var totalCount = await query.CountAsync();
+
+            if (orderBy != null)
+            {
+                query = orderByDescending ? query.OrderByDescending(orderBy) : query.OrderBy(orderBy);
+            }
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return (items, totalCount);
         }
     }
 }
