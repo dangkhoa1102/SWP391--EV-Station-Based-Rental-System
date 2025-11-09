@@ -733,44 +733,18 @@ const API = {
   },
 
   // Bookings
-  // Station-scoped bookings with multiple backend fallbacks
   getBookingsByStation: async (stationId) => {
     if (!stationId) return []
-    const id = encodeURIComponent(stationId)
-    const attempts = [
-      // Legacy
-      { url: `/Bookings/Get-By-Station/${id}` },
-      { url: '/Bookings/Get-By-Station', opts: { params: { stationId } } },
-      { url: '/Bookings/Get-By-Station', opts: { params: { StationId: stationId } } },
-      { url: '/Bookings/Get-By-Station', opts: { params: { stationID: stationId } } },
-      { url: '/Bookings/Get-All-By-Station', opts: { params: { stationId } } },
-      { url: `/Bookings/Get-All-By-Station/${id}` },
-      { url: '/Bookings/Get-All', opts: { params: { stationId } } },
-      { url: `/Stations/${id}/Bookings` },
-      // REST style
-      { url: `/booking/station/${id}` },
-      { url: '/booking', opts: { params: { stationId } } },
-      { url: '/booking', opts: { params: { station: stationId } } }
-    ]
-    for (const a of attempts) {
-      try {
-        const res = await apiClient.get(a.url, a.opts)
-        const body = res.data
-        if (Array.isArray(body)) return body
-        if (Array.isArray(body?.data?.data)) return body.data.data
-        if (Array.isArray(body?.data?.items)) return body.data.items
-        if (Array.isArray(body?.data)) return body.data
-        if (Array.isArray(body?.items)) return body.items
-        if (Array.isArray(body?.bookings)) return body.bookings
-        if (Array.isArray(body?.results)) return body.results
-        if (body && (body.id || body.bookingId || body.BookingId)) return [body]
-      } catch (e) {
-        const code = e?.response?.status
-        // Continue on 400 as well (often validation on route shape)
-        if (code && code !== 404 && code !== 405 && code !== 400) throw e
-      }
+    try {
+      console.log(`📅 Fetching bookings for station: ${stationId}`)
+      const res = await apiClient.get(`/Bookings/By-Station/${stationId}`)
+      const body = res.data
+      console.log('✅ Bookings for station response:', body)
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      console.error(`❌ Failed to fetch bookings for station ${stationId}:`, e.response?.data || e.message)
+      return []
     }
-    return []
   },
 
   listBookings: async (opts = { page: 1, pageSize: 100 }) => {
