@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Monolithic.Common;
 using Monolithic.DTOs.Booking;
+using Monolithic.DTOs.Car;
 using Monolithic.DTOs.Common;
 using Monolithic.Services.Interfaces;
 using System.Security.Claims;
@@ -78,7 +79,22 @@ namespace Monolithic.Controllers
             var result = await _bookingService.GetAvailableCarsAsync(startTime, endTime);
             return Ok(result);
         }
+        [HttpGet("available-cars-by-station")]
+        public async Task<ActionResult<ResponseDto<List<CarDto>>>> GetAvailableCarsByStation(
+    [FromQuery] Guid stationId,
+    [FromQuery] DateTime startTime,
+    [FromQuery] DateTime endTime)
+        {
+            if (stationId == Guid.Empty)
+                return BadRequest(ResponseDto<List<CarDto>>.Failure("StationId is required"));
 
+            var result = await _bookingService.GetAvailableCarsByStationIdAsync(stationId, startTime, endTime);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
         #endregion
 
 
@@ -173,14 +189,9 @@ namespace Monolithic.Controllers
         /// Cancel a booking
         /// </summary>
         [HttpPost("Cancel-By-{id}")]
-        public async Task<ActionResult<ResponseDto<BookingDto>>> CancelBooking(Guid id /*[FromQuery] string userId, [FromBody] string? reason = null*/)
+        public async Task<ActionResult<ResponseDto<string>>> CancelBooking(Guid id, [FromQuery] string userId, [FromBody] string? reason = null)
         {
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                return Unauthorized(ResponseDto<BookingDto>.Failure("User not authenticated"));
-            }
-            var result = await _bookingService.CancelBookingAsync(id, userIdClaim);
+            var result = await _bookingService.CancelBookingAsync(id, userId);
             if (!result.IsSuccess) 
                 return BadRequest(result);
             
@@ -230,6 +241,7 @@ namespace Monolithic.Controllers
             
             return Ok(result);
         }
+
 
         /// <summary>
         /// Get current user's booking history (from JWT token)

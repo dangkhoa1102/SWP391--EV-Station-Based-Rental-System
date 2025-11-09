@@ -28,7 +28,7 @@ namespace Monolithic.Services.Implementation
         private readonly IConfiguration _configuration;
 
         // token lifetime in hours
-        private const int TokenLifetimeHours = 24;
+        private const int TokenLifetimeHours = 10;
 
         public ContractServiceImpl(
             IContractRepository contractRepository,
@@ -422,7 +422,7 @@ namespace Monolithic.Services.Implementation
 
             // Tạo token và thời gian hết hạn
             contract.ConfirmationToken = Guid.NewGuid().ToString("N");
-            contract.TokenExpiry = DateTime.UtcNow.AddHours(TokenLifetimeHours);
+            contract.TokenExpiry = DateTime.UtcNow.AddMinutes(TokenLifetimeHours);
 
             // Cập nhật hợp đồng với token mới
             await _contractRepository.UpdateAsync(contract);
@@ -786,7 +786,7 @@ namespace Monolithic.Services.Implementation
             var tokenHash = ComputeSha256Hash(token);
 
             contract.ConfirmationTokenHash = tokenHash;
-            contract.TokenExpiresAt = DateTime.UtcNow.AddHours(TokenLifetimeHours);
+            contract.TokenExpiresAt = DateTime.UtcNow.AddMinutes(TokenLifetimeHours);
             contract.SignerEmail = email;
             await _contractRepository.UpdateAsync(contract);
 

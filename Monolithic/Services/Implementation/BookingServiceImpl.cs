@@ -203,106 +203,84 @@ namespace Monolithic.Services.Implementation
 
                 if (booking.BookingStatus != BookingStatus.CheckedIn)
                     return ResponseDto<BookingDto>.Failure($"Cannot checkout booking with status: {booking.BookingStatus}");
+             
 
-                // 2️⃣ Ghi nhận dữ liệu thực tế khi trả xe
+              
+                // 2️⃣ Record actual return info
                 booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.UtcNow;
                 booking.CheckOutNotes = request.CheckOutNotes;
                 booking.CheckOutPhotoUrl = request.CheckOutPhotoUrl;
                 booking.DamageFee = Math.Round(request.DamageFee, 2);
                 booking.UpdatedAt = DateTime.UtcNow;
 
+              
                 var actualReturn = booking.ActualReturnDateTime.Value;
                 if (actualReturn < booking.StartTime)
                     return ResponseDto<BookingDto>.Failure("Actual return date cannot be earlier than pickup date.");
+
+               
+                // 3️⃣ Setup rental parameters
                 var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
                 var graceMinutes = 30;
 
-                // --- IMPORTANT: lưu giá thuê đã dự kiến / đã thanh toán (nếu có) trước khi ghi đè
-                var originalRental = booking.RentalAmount; // <-- giữ lại giá rental ban đầu (dự kiến hoặc đã set lúc create/check-in)
+                
 
-                // 3️⃣ Tính số giờ thuê thực tế và cập nhật booking.RentalAmount (thực tế)
-                var totalHours = Math.Ceiling((actualReturn - booking.StartTime).TotalHours);
-                if (totalHours < 1) totalHours = 1;
-                var actualRentalAmount = Math.Round((decimal)totalHours * booking.HourlyRate, 2);
-                booking.RentalAmount = actualRentalAmount;
-
-                // 4️⃣ Kiểm tra trễ
-                bool isLate = actualReturn > expectedReturn.AddMinutes(graceMinutes);
-                booking.LateFee = 0;
-
-                decimal finalAmount = booking.TotalAmount; // mặc định giữ nguyên giá ban đầu
-                decimal refundAmount = 0;
-                decimal extraAmount = 0;
-
-                if (isLate)
-                {
-                    // 5️⃣ Nếu trả trễ → tính late fee + damage fee
-                    var delayMinutes = (actualReturn - expectedReturn).TotalMinutes;
-                    var hoursLate = (decimal)delayMinutes / 60m;
-                    booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
-
-                    // Tổng tiền mới = expected total + lateFee + damageFee
-                    finalAmount = originalRental + booking.LateFee + booking.DepositAmount + booking.DamageFee;
-
-                    // Không hoàn deposit
-                    refundAmount = 0;
-                    extraAmount = booking.LateFee + booking.DamageFee; // thêm tiền nếu thiếu
-                }
-                else
-                {
-                    // 6️⃣ Nếu đúng giờ hoặc sớm → không tính lại tiền thuê
-                    booking.LateFee = 0;
-                    finalAmount = booking.TotalAmount;
-
-                    // Hoàn deposit - damageFee
-                    refundAmount = booking.DepositAmount - booking.DamageFee;
-
-                    if (refundAmount < 0)
+              
+                    if (booking.RentalAmount <= 0)
                     {
-                        extraAmount = -refundAmount;
-                        refundAmount = 0;
+                       
+                        // fallback: if missing, calculate based on duration and rates
+                        var duration = (booking.EndTime ?? booking.StartTime.AddHours(1)) - booking.StartTime;
+                        var totalHours = (decimal)duration.TotalHours;
+                        var totalDays = (decimal)duration.TotalDays;
+                        booking.RentalAmount = totalDays >= 1
+                            ? Math.Ceiling(totalDays) * booking.DailyRate
+                            : Math.Ceiling(totalHours) * booking.HourlyRate;
+                        booking.RentalAmount = Math.Round(booking.RentalAmount, 2);
                     }
+                booking.LateFee = 0m;
+                if (actualReturn > expectedReturn.AddMinutes(graceMinutes))
+                {
+                    var delayMinutes = (actualReturn - expectedReturn).TotalMinutes;
+                    var hoursLate = Convert.ToDecimal(delayMinutes / 60.0);
+                    booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
                 }
 
+               
+                // 6️⃣ Compute total = rental + deposit + late + damage
+                var totalAmount = booking.RentalAmount + booking.DepositAmount + booking.LateFee + booking.DamageFee;
+                booking.TotalAmount = Math.Round(totalAmount, 2);
 
-                // 5️⃣ Tổng tiền thực tế cuối cùng (phải trả tổng = thuê thực tế + fees)
-                var finalAmountT = booking.RentalAmount + booking.LateFee + booking.DamageFee;
-                booking.TotalAmount = Math.Round(finalAmountT, 2);
+               
+                // 7️⃣ Determine extra or refund
+                decimal alreadyPaid = booking.DepositAmount + booking.RentalAmount; // deposit + rental already paid
+                var difference = totalAmount - alreadyPaid;
 
-                // 6️⃣ Tính rentalPaid đúng: 
-                // OPTION A (recommended if you track payments): lấy tổng đã thanh toán từ PaymentService (successful payments)
-                // OPTION B (fallback): dùng originalRental (giá thuê dự kiến / hoặc đã thanh toán ở check-in)
-                decimal rentalPaid;
-
-             
-                rentalPaid = originalRental;
-
-                var difference = finalAmount - rentalPaid;
-
-                // 7️⃣ Nếu difference > 0 → Extra; < 0 → Refund
-                booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0;
-                booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0;
-                booking.DepositRefunded = booking.RefundAmount > 0;
-
-                // 8️⃣ Ghi nhận toán cuối
+               
+                booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0m;
+                booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0m;
+                booking.DepositRefunded = booking.RefundAmount > 0m;
                 booking.FinalPaymentAmount = Math.Round(difference, 2);
+
+                
+                // 8️⃣ Update status
                 booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
                 booking.UpdatedAt = DateTime.UtcNow;
 
-                // 9️⃣ Cập nhật slot trống của station (xe đã quay về chiếm chỗ)
-                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, -1);
+                // 9️⃣ Update station slot (+1 available)
+                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
                 if (!stationUpdateResult)
-                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout");
-
-                // 🔟 Lưu thay đổi booking
+                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout.");
+                // 🔟 Save changes
                 var updatedBooking = await _bookingRepository.UpdateAsync(booking);
                 var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
 
-                // 11️⃣ Tạo message phản hồi
+               
+                // 🪄 Response message
                 string message = bookingDto.FinalPaymentAmount switch
                 {
-                    > 0 => $"Checkout complete. Extra payment required: {bookingDto.ExtraAmount:C}. Please call Payment API with PaymentType = Extra.",
-                    < 0 => $"Checkout complete. Refund to process: {bookingDto.RefundAmount:C}. Please call Payment API with PaymentType = Refund.",
+                    > 0 => $"Checkout complete. Extra payment required: XDR{bookingDto.ExtraAmount:N2}. Please call Payment API with PaymentType = Extra.",
+                    < 0 => $"Checkout complete. Refund to process: XDR{bookingDto.RefundAmount:N2}. Please call Payment API with PaymentType = Refund.",
                     _ => "Checkout complete. No extra payment or refund required."
                 };
 
@@ -420,28 +398,49 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<BookingDto>.Failure($"Error during cancel: {ex.Message}");
             }
         }
+        public async Task CancelBookingsAsync(IEnumerable<Booking> bookings, string reason)
+        {
+            var now = DateTime.UtcNow;
 
+            foreach (var booking in bookings)
+            {
+                // Cập nhật trạng thái booking
+                booking.BookingStatus = BookingStatus.Cancelled;
+                booking.IsActive = false;
+                booking.CheckOutNotes = reason;
+                booking.UpdatedAt = now;
 
+                await _bookingRepository.UpdateAsync(booking);
+
+                // Giải phóng xe liên quan
+                await _carRepository.UpdateCarStatusAsync(booking.CarId, true);
+            }
+        }
 
         public async Task AutoCancelNoShowBookingsAsync()
         {
             var now = DateTime.UtcNow;
-            // Assuming repository method that fetches pending or deposit paid bookings scheduled to start in the past
-            var pendingBookings = await _bookingRepository.FindAsync(b => b.IsActive &&
+
+            var pendingBookings = await _bookingRepository.FindAsync(b =>
+                b.IsActive &&
                 (b.BookingStatus == BookingStatus.Pending || b.BookingStatus == BookingStatus.DepositPaid) &&
-                b.StartTime.AddHours(1) < now);
+                b.StartTime.AddHours(1) < now
+            );
 
-            foreach (var b in pendingBookings)
-            {
-                b.BookingStatus = BookingStatus.Cancelled;
-                b.IsActive = false;
-                b.UpdatedAt = now;
-                await _bookingRepository.UpdateAsync(b);
+            await CancelBookingsAsync(pendingBookings, "No-show: more than 1h after start");
+        }
 
-                // deposit forfeited — optionally create a note/payment record that no refund made
-                // free car
-                await _carRepository.UpdateCarStatusAsync(b.CarId, true);
-            }
+        public async Task AutoExpirePendingBookingsAsync()
+        {
+            var now = DateTime.UtcNow;
+
+            var expiredBookings = await _bookingRepository.FindAsync(b =>
+                b.IsActive &&
+                b.BookingStatus == BookingStatus.Pending &&
+                b.CreatedAt.AddMinutes(30) < now
+            );
+
+            await CancelBookingsAsync(expiredBookings, "Expired: pending more than 30 minutes");
         }
         public async Task<bool> IsCarAvailableDuringPeriodAsync(Guid carId, DateTime startTime, DateTime endTime)
         {
@@ -465,6 +464,50 @@ namespace Monolithic.Services.Implementation
             }
 
             return true;
+        }
+        public async Task<ResponseDto<List<CarDto>>> GetAvailableCarsByStationIdAsync(
+    Guid stationId, DateTime startTime, DateTime endTime)
+        {
+            try
+            {
+                // 1️⃣ Validate time
+                if (endTime <= startTime)
+                    return ResponseDto<List<CarDto>>.Failure("End time must be after start time");
+
+                // 2️⃣ Lấy tất cả xe đang hoạt động và thuộc stationId
+                var allCars = await _carRepository.FindAsync(c => c.IsActive && c.CurrentStationId == stationId);
+
+                // 3️⃣ Lấy tất cả booking đang active, chưa bị cancel
+                var activeBookings = await _bookingRepository.FindAsync(b =>
+                    b.IsActive &&
+                    (b.BookingStatus == BookingStatus.Pending ||
+                     b.BookingStatus == BookingStatus.DepositPaid ||
+                     b.BookingStatus == BookingStatus.CheckedIn ||
+                     b.BookingStatus == BookingStatus.CheckedOutPendingPayment)
+                );
+
+                // 4️⃣ Lọc ra các carId bị trùng thời gian
+                var unavailableCarIds = activeBookings
+                    .Where(b =>
+                        startTime < (b.EndTime ?? b.StartTime.AddHours(1)) &&
+                        endTime > b.StartTime)
+                    .Select(b => b.CarId)
+                    .Distinct()
+                    .ToHashSet();
+
+                // 5️⃣ Giữ lại xe không bị overlap
+                var availableCars = allCars
+                    .Where(c => !unavailableCarIds.Contains(c.CarId))
+                    .ToList();
+
+                // 6️⃣ Map sang DTO
+                var dto = _mapper.Map<List<CarDto>>(availableCars);
+                return ResponseDto<List<CarDto>>.Success(dto, $"{dto.Count} cars available at station {stationId} in this period");
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<List<CarDto>>.Failure($"Error getting available cars by station: {ex.Message}");
+            }
         }
         public async Task<ResponseDto<List<CarDto>>> GetAvailableCarsAsync(DateTime startTime, DateTime endTime)
         {

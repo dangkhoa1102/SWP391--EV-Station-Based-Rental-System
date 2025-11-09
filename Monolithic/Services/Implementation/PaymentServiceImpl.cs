@@ -301,7 +301,7 @@ namespace Monolithic.Services
             // Cập nhật booking status dựa trên loại payment
             if (request.PaymentType == PaymentType.Rental)
             {
-                if (booking.BookingStatus == BookingStatus.CheckedOut || 
+                if (
                     booking.BookingStatus == BookingStatus.CheckedOutPendingPayment)
                 {
                     booking.BookingStatus = BookingStatus.Completed;
