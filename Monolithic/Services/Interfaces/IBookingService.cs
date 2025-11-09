@@ -10,11 +10,13 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<BookingDto>> CreateBookingAsync(string userId, CreateBookingDto request);
 
         // Pass caller user id (from JWT) to allow server-side verification of renter before check-in
-        Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request, string? callerUserId);
+        Task<ResponseDto<BookingDto>> CheckInWithContractAsync(CheckInWithContractDto request, string? callerUserId, IFormFile? checkInPhoto);
         Task<ResponseDto<BookingDto>> CheckOutBookingAsync(CheckOutWithPaymentDto request);
         
        
         Task<ResponseDto<PaginationDto<BookingDto>>> GetActiveBookingsAsync(PaginationRequestDto request);
+
+        Task<ResponseDto<PaginationDto<BookingDto>>> GetActiveBookingsByStationAsync(Guid stationId, PaginationRequestDto request);
 
         // Booking management methods
         Task<ResponseDto<PaginationDto<BookingDto>>> GetBookingsAsync(PaginationRequestDto request);
@@ -38,5 +40,6 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryAsync(string userId);
         Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryByUserIdAsync(string userId);
         Task<ResponseDto<List<BookingDto>>> GetUpcomingBookingsAsync();
+        Task<ResponseDto<List<BookingDto>>> GetBookingsByStationIdAsync(Guid stationId);
     }
 }
