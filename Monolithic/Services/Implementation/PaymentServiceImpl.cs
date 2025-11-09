@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EVStation_basedRentalSystem.Services.AuthAPI.Models.Dto.Response;
+using Microsoft.EntityFrameworkCore;
 using Monolithic.Data;
 using Monolithic.DTOs.Payment;
 using Monolithic.Models;
@@ -18,9 +19,18 @@ namespace Monolithic.Services
         // 1️⃣ Create payment (Deposit, Extra, Refund)
         public async Task<Payment> CreatePaymentAsync(CreatePaymentDto dto)
         {
-            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == dto.BookingId);
+            var booking = await _dbContext.Bookings
+                .FirstOrDefaultAsync(b => b.BookingId == dto.BookingId);
+
             if (booking == null)
                 throw new Exception("Booking not found");
+
+            // Require contract to be created and confirmed for this booking
+            //var contract = await _dbContext.Contracts
+            //    .FirstOrDefaultAsync(c => c.BookingId == dto.BookingId && !c.IsDeleted);
+
+            //if (contract == null || !contract.IsConfirmed)
+            //    throw new InvalidOperationException("Contract not found or not confirmed for this booking");                
 
             // prevent duplicate same-type payment
             var existing = await _dbContext.Payments
@@ -29,32 +39,43 @@ namespace Monolithic.Services
             if (existing != null)
                 return existing;
 
-            // calculate amount based on logic
             decimal amount = dto.PaymentType switch
             {
                 PaymentType.Deposit => booking.DepositAmount,
-                PaymentType.Rental => booking.TotalAmount,  // 100% rental amount
-                PaymentType.Extra => booking.ExtraAmount,
-                PaymentType.Refund => booking.RefundAmount,
+                PaymentType.Rental => booking.TotalAmount,
+                PaymentType.Extra => booking.LateFee + booking.DamageFee, // ✅ use only late + damage
+                PaymentType.Refund => booking.RefundAmount,               // ✅ just record refund, no QR
                 _ => throw new Exception("Invalid payment type")
             };
 
-            if (amount <= 0)
+            if (dto.PaymentType != PaymentType.Refund && amount <= 0)
                 throw new Exception($"No payment required for type {dto.PaymentType}");
 
             var payment = new Payment
             {
                 PaymentId = Guid.NewGuid(),
                 BookingId = booking.BookingId,
-                Amount = amount,
+                Amount = Math.Round(amount, 2),
                 PaymentType = dto.PaymentType,
                 Description = dto.Description ?? $"{dto.PaymentType} for booking {booking.BookingId}",
-                PaymentStatus = PaymentStatus.Pending,
+                PaymentStatus = dto.PaymentType == PaymentType.Refund
+                    ? PaymentStatus.Success  // ✅ Refunds are auto-success (manual handling)
+                    : PaymentStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
             await _dbContext.Payments.AddAsync(payment);
+
+            // Update booking if refund
+            if (dto.PaymentType == PaymentType.Refund)
+            {
+                booking.BookingStatus = BookingStatus.Completed;
+                booking.IsActive = false;
+                booking.DepositRefunded = true;
+                booking.UpdatedAt = DateTime.UtcNow;
+            }
+
             await _dbContext.SaveChangesAsync();
             return payment;
         }
@@ -84,18 +105,15 @@ namespace Monolithic.Services
                             break;
 
                         case PaymentType.Rental:
-                            // ✅ Rental success = 100% check-in payment
                             booking.BookingStatus = BookingStatus.CheckedIn;
                             break;
 
                         case PaymentType.Extra:
-                            // ✅ Handle extra charge at checkout
-                            booking.BookingStatus = BookingStatus.CheckedOut;
+                            booking.BookingStatus = BookingStatus.Completed;
                             booking.IsActive = false;
                             break;
 
                         case PaymentType.Refund:
-                            // ✅ Refund done => booking completed
                             booking.BookingStatus = BookingStatus.Completed;
                             booking.IsActive = false;
                             booking.DepositRefunded = true;
@@ -109,7 +127,6 @@ namespace Monolithic.Services
             await _dbContext.SaveChangesAsync();
             return payment;
         }
-
 
         // 3️⃣ Get single payment
         public async Task<Payment?> GetPaymentByIdAsync(Guid paymentId)
@@ -143,10 +160,172 @@ namespace Monolithic.Services
                 .Where(p => p.Booking.UserId == userId)
                 .ToListAsync();
         }
-
-        public Task<decimal> GetTotalAmountByBookingAsync(Guid bookingId)
+        public async Task<decimal> GetStationRevenueAsync(Guid stationId, DateTime? from = null, DateTime? to = null)
         {
-            throw new NotImplementedException();
+            var query = _dbContext.Payments
+                .Include(p => p.Booking)
+                .Where(p => p.Booking.StationId == stationId && p.PaymentStatus == PaymentStatus.Success);
+
+            if (from.HasValue)
+                query = query.Where(p => p.CreatedAt >= from.Value);
+            if (to.HasValue)
+                query = query.Where(p => p.CreatedAt <= to.Value);
+
+            var totalRevenue = await query.SumAsync(p =>
+                p.PaymentType == PaymentType.Refund ? -p.Amount : p.Amount);
+
+            return Math.Round(totalRevenue, 2);
+        }
+
+        public async Task<decimal> GetTotalAmountByBookingAsync(Guid bookingId)
+        {
+            return await _dbContext.Payments
+                .Where(p => p.BookingId == bookingId && p.PaymentStatus == PaymentStatus.Success)
+                .SumAsync(p => p.PaymentType == PaymentType.Refund ? -p.Amount : p.Amount);
+        }
+
+        // Station Payment Methods
+        public async Task<StationPaymentResponseDto> RecordStationDepositAsync(RecordDepositDto request, Guid staffId)
+        {
+            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+            if (booking == null)
+                throw new ArgumentException("Booking not found");
+
+            var payment = new Payment
+            {
+                PaymentId = Guid.NewGuid(),
+                BookingId = request.BookingId,
+                Amount = request.Amount,
+                PaymentType = PaymentType.Deposit,
+                PaymentStatus = PaymentStatus.Success,
+                TransactionId = request.ReferenceCode ?? $"STATION-DEP-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                PaidAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _dbContext.Payments.Add(payment);
+
+            // Cập nhật booking status
+            if (booking.BookingStatus == BookingStatus.Pending)
+            {
+                booking.BookingStatus = BookingStatus.DepositPaid;
+                booking.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            return new StationPaymentResponseDto
+            {
+                PaymentId = payment.PaymentId,
+                BookingId = payment.BookingId,
+                PaymentType = payment.PaymentType,
+                Amount = payment.Amount,
+                PaymentMethod = request.PaymentMethod,
+                Status = payment.PaymentStatus,
+                ReferenceCode = payment.TransactionId,
+                RecordedAt = payment.PaidAt ?? DateTime.UtcNow,
+                RecordedByStaffId = staffId,
+                Notes = request.Notes
+            };
+        }
+
+        public async Task<StationPaymentResponseDto> RecordStationRefundAsync(RecordRefundDto request, Guid staffId)
+        {
+            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+            if (booking == null)
+                throw new ArgumentException("Booking not found");
+
+            // Cập nhật các phí
+            booking.LateFee = request.LateFee;
+            booking.DamageFee = request.DamageFee;
+
+            var payment = new Payment
+            {
+                PaymentId = Guid.NewGuid(),
+                BookingId = request.BookingId,
+                Amount = request.RefundAmount,
+                PaymentType = PaymentType.Refund,
+                PaymentStatus = PaymentStatus.Success,
+                TransactionId = $"STATION-REF-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                RefundReason = request.RefundReason,
+                RefundedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _dbContext.Payments.Add(payment);
+
+            // Đánh dấu đã hoàn cọc
+            booking.DepositRefunded = true;
+            booking.UpdatedAt = DateTime.UtcNow;
+
+            await _dbContext.SaveChangesAsync();
+
+            return new StationPaymentResponseDto
+            {
+                PaymentId = payment.PaymentId,
+                BookingId = payment.BookingId,
+                PaymentType = payment.PaymentType,
+                Amount = payment.Amount,
+                PaymentMethod = request.PaymentMethod,
+                Status = payment.PaymentStatus,
+                ReferenceCode = payment.TransactionId,
+                RecordedAt = payment.RefundedAt ?? DateTime.UtcNow,
+                RecordedByStaffId = staffId,
+                Notes = request.Notes
+            };
+        }
+
+        public async Task<StationPaymentResponseDto> RecordStationPaymentAsync(RecordStationPaymentDto request, Guid staffId)
+        {
+            var booking = await _dbContext.Bookings.FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+            if (booking == null)
+                throw new ArgumentException("Booking not found");
+
+            var payment = new Payment
+            {
+                PaymentId = Guid.NewGuid(),
+                BookingId = request.BookingId,
+                Amount = request.Amount,
+                PaymentType = request.PaymentType,
+                PaymentStatus = PaymentStatus.Success,
+                TransactionId = request.ReferenceCode ?? $"STATION-PAY-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                PaidAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _dbContext.Payments.Add(payment);
+
+            // Cập nhật booking status dựa trên loại payment
+            if (request.PaymentType == PaymentType.Rental)
+            {
+                if (
+                    booking.BookingStatus == BookingStatus.CheckedOutPendingPayment)
+                {
+                    booking.BookingStatus = BookingStatus.Completed;
+                }
+            }
+
+            booking.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync();
+
+            return new StationPaymentResponseDto
+            {
+                PaymentId = payment.PaymentId,
+                BookingId = payment.BookingId,
+                PaymentType = payment.PaymentType,
+                Amount = payment.Amount,
+                PaymentMethod = request.PaymentMethod,
+                Status = payment.PaymentStatus,
+                ReferenceCode = payment.TransactionId,
+                RecordedAt = payment.PaidAt ?? DateTime.UtcNow,
+                RecordedByStaffId = staffId,
+                Notes = request.Notes
+            };
+        }
+        
         }
     }
-}
+

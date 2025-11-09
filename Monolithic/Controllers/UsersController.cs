@@ -22,6 +22,43 @@ namespace Monolithic.Controllers
             _userService = userService;
         }
 
+        #region Helper Methods
+
+        /// <summary>
+        /// Map User model to UserDto with all fields
+        /// </summary>
+        private UserDto MapToUserDto(Models.User user)
+        {
+            return new UserDto
+            {
+                Id = user.UserId.ToString(),
+                Email = user.Email ?? "",
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber,
+                Address = user.Address,
+                DateOfBirth = user.DateOfBirth,
+                YearOfBirth = user.YearOfBirth,
+                IdentityNumber = user.IdentityNumber,
+                DriverLicenseNumber = user.DriverLicenseNumber,
+                DriverLicenseExpiry = user.DriverLicenseExpiry,
+                DriverLicenseClass = user.DriverLicenseClass,
+                UserRole = user.UserRole,
+                IsVerified = user.IsVerified,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+                IsActive = user.IsActive,
+                StationId = user.StationId,
+                CccdImageUrl_Front = user.CccdImageUrl_Front,
+                CccdImageUrl_Back = user.CccdImageUrl_Back,
+                GplxImageUrl_Front = user.GplxImageUrl_Front,
+                GplxImageUrl_Back = user.GplxImageUrl_Back
+            };
+        }
+
+        #endregion
+
         #region Current User APIs
 
         /// <summary>
@@ -117,18 +154,7 @@ namespace Monolithic.Controllers
             {
                 var (users, total) = await _userService.GetUsersAsync(page, pageSize, search, role, isActive);
 
-                var userDtos = users.Select(u => new UserDto
-                {
-                    Id = u.UserId.ToString(),
-                    Email = u.Email ?? "",
-                    FirstName = u.FirstName,
-                    LastName = u.LastName,
-                    PhoneNumber = u.PhoneNumber ?? "",
-                    UserRole = u.UserRole,
-                    IsActive = u.IsActive,
-                    CreatedAt = u.CreatedAt,
-                    UpdatedAt = u.UpdatedAt
-                }).ToList();
+                var userDtos = users.Select(MapToUserDto).ToList();
 
                 var paginationDto = new PaginationDto<UserDto>(userDtos, page, pageSize, total);
 
@@ -155,18 +181,7 @@ namespace Monolithic.Controllers
                     return NotFound(ResponseDto<UserDto>.Failure("Không tìm thấy người dùng"));
                 }
 
-                var userDto = new UserDto
-                {
-                    Id = user.UserId.ToString(),
-                    Email = user.Email ?? "",
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    PhoneNumber = user.PhoneNumber ?? "",
-                    UserRole = user.UserRole,
-                    IsActive = user.IsActive,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt
-                };
+                var userDto = MapToUserDto(user);
 
                 return Ok(ResponseDto<UserDto>.Success(userDto));
             }
@@ -192,18 +207,7 @@ namespace Monolithic.Controllers
 
                 var users = await _userService.SearchUsersByNameAsync(searchTerm);
 
-                var userDtos = users.Select(u => new UserDto
-                {
-                    Id = u.UserId.ToString(),
-                    Email = u.Email ?? "",
-                    FirstName = u.FirstName,
-                    LastName = u.LastName,
-                    PhoneNumber = u.PhoneNumber ?? "",
-                    UserRole = u.UserRole,
-                    IsActive = u.IsActive,
-                    CreatedAt = u.CreatedAt,
-                    UpdatedAt = u.UpdatedAt
-                }).ToList();
+                var userDtos = users.Select(MapToUserDto).ToList();
 
                 return Ok(ResponseDto<List<UserDto>>.Success(userDtos));
             }
@@ -299,6 +303,27 @@ namespace Monolithic.Controllers
             {
                 return BadRequest(ResponseDto<string>.Failure($"Lỗi: {ex.Message}"));
             }
+        }
+
+        /// <summary>
+        /// Cập nhật thông tin hồ sơ người dùng (Admin/StationStaff có thể update cho user khác)
+        /// </summary>
+        [HttpPut("Update-Profile-By-{userId}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<UserDto>>> UpdateUserProfile(string userId, [FromBody] UpdateUserDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ResponseDto<UserDto>.Failure("Dữ liệu không hợp lệ"));
+            }
+
+            var result = await _userService.UpdateUserProfileAsync(userId, request);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
         }
 
         /// <summary>

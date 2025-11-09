@@ -11,7 +11,9 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<StationDto>> UpdateStationAsync(Guid id, UpdateStationDto request);
         Task<ResponseDto<string>> DeleteStationAsync(Guid id);
         Task<ResponseDto<List<StationCarDto>>> GetAvailableCarsAtStationAsync(Guid stationId);
-        Task<ResponseDto<string>> UpdateStationSlotsAsync(Guid id, int totalSlots);
         Task<ResponseDto<string>> RecalculateStationAvailableSlotsAsync(Guid stationId);
+        Task<bool> CanAddCarToStationAsync(Guid stationId);
+        Task<ResponseDto<string>> UpdateStationAvailableSlotsAsync(Guid stationId, int change);
+     
     }
 }

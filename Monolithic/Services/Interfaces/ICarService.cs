@@ -18,5 +18,7 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<string>> UpdateCarStatusAsync(Guid id, bool isAvailable);
         Task<ResponseDto<string>> UpdateCarBatteryLevelAsync(Guid id, decimal batteryLevel);
         Task<ResponseDto<string>> UpdateCarLocationAsync(Guid id, Guid stationId);
+        Task<ResponseDto<string>> UpdateCarTechnicalStatusAsync(Guid id, UpdateCarTechnicalStatusDto request);
+        Task<ResponseDto<CarHandoverResponseDto>> RecordCarHandoverAsync(CarHandoverDto request, Guid staffId);
     }
 }

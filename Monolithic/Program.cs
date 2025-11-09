@@ -29,8 +29,40 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.PostConfigure<CloudinarySettings>(settings =>
 {
     settings.CloudName = Environment.GetEnvironmentVariable("CLOUD_NAME") ?? settings.CloudName;
-    settings.ApiKey = Environment.GetEnvironmentVariable("API_KEY") ?? settings.ApiKey;
-    settings.ApiSecret = Environment.GetEnvironmentVariable("API_SECRET") ?? settings.ApiSecret;
+    settings.ApiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY") ?? settings.ApiKey;
+    settings.ApiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET") ?? settings.ApiSecret;
+});
+
+// Configure PayOS settings từ appsettings.json
+builder.Services.Configure<PayOSSettings>(builder.Configuration.GetSection("PayOS"));
+
+// PostConfigure PayOS settings để ghi đè từ biến môi trường
+builder.Services.PostConfigure<PayOSSettings>(settings =>
+{
+    var clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
+    var apiKey = Environment.GetEnvironmentVariable("PAYOS_API_KEY");
+    var checksumKey = Environment.GetEnvironmentVariable("CHECKSUM_KEY");
+    
+    if (!string.IsNullOrEmpty(clientId))
+        settings.ClientId = clientId;
+    if (!string.IsNullOrEmpty(apiKey))
+        settings.ApiKey = apiKey;
+    if (!string.IsNullOrEmpty(checksumKey))
+        settings.ChecksumKey = checksumKey;
+});
+
+//builder.Services.AddSingleton<Monolithic.Common.IDiscordNotifier, Monolithic.Common.DiscordNotifier>();
+
+// Configure EmailSettings settings từ appsettings.json
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+// PostConfigure EmailSettings để ghi đè từ biến môi trường
+builder.Services.PostConfigure<EmailSettings>(settings =>
+{
+    var password = Environment.GetEnvironmentVariable("PASSWORD");
+    
+    if (!string.IsNullOrEmpty(password))
+        settings.Password = password;
 });
 
 // Add services to the container.
@@ -43,6 +75,12 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.WriteIndented = true;
     });
+
+// Configure form size limit for file uploads (25MB)
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 26214400; // 25MB
+});
 
 // HttpContext accessor for services needing user claims
 builder.Services.AddHttpContextAccessor();
@@ -190,6 +228,8 @@ builder.Services.AddScoped<ICarRepository, CarRepositoryImpl>();
 builder.Services.AddScoped<IBookingRepository, BookingRepositoryImpl>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepositoryImpl>();
 builder.Services.AddScoped<IContractRepository, ContractRepositoryImpl>();
+builder.Services.AddHostedService<BookingAutoCancelService>();
+
 
 // Services - Using separate implementation classes
 builder.Services.AddScoped<IStationService, StationServiceImpl>();
@@ -198,6 +238,7 @@ builder.Services.AddScoped<IBookingService, BookingServiceImpl>();
 builder.Services.AddScoped<IFeedbackService, FeedbackServiceImpl>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IContractService, ContractServiceImpl>();
+builder.Services.AddScoped<IContractEmailService, ContractEmailService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPaymentService, PaymentServiceImpl>();
 builder.Services.AddScoped<PayOSService>();
@@ -212,6 +253,9 @@ builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(
 // 2. Đăng ký PhotoService với Dependency Injection
 // (Khi ai đó hỏi IPhotoService, hãy tạo một PhotoService)
 builder.Services.AddScoped<IPhotoService, PhotoService>();
+
+// ĐĂNG KÝ HTTPCLIENTFACTORY
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 

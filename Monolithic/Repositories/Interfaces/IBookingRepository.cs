@@ -1,4 +1,5 @@
-using Monolithic.Models;
+﻿using Monolithic.Models;
+using System.Linq.Expressions;
 
 namespace Monolithic.Repositories.Interfaces
 {
@@ -10,5 +11,14 @@ namespace Monolithic.Repositories.Interfaces
         Task<IEnumerable<Booking>> GetBookingsByCarAsync(Guid carId);
         Task<IEnumerable<Booking>> GetBookingsByStationAsync(Guid stationId);
         Task<bool> HasActiveBookingForCarAsync(Guid carId);
+
+        Task<IEnumerable<Booking>> GetActiveBookingsAsync();
+
+        Task<(IEnumerable<Booking> items, int totalCount)> GetPagedAsync(
+            int page,
+            int pageSize,
+            Expression<Func<Booking, bool>>? predicate = null,
+            Expression<Func<Booking, object>>? orderBy = null,
+            bool orderByDescending = false);
     }
 }

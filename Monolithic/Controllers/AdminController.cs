@@ -2,7 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Monolithic.Common;
 using Monolithic.DTOs.Common;
+using Monolithic.DTOs.Admin;
 using Monolithic.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Monolithic.Data;
 
 namespace Monolithic.Controllers
 {
@@ -15,17 +18,20 @@ namespace Monolithic.Controllers
         private readonly IStationService _stationService;
         private readonly IBookingService _bookingService;
         private readonly IUserService _userService;
+        private readonly EVStationBasedRentalSystemDbContext _context;
 
         public AdminController(
             ICarService carService,
             IStationService stationService,
             IBookingService bookingService,
-            IUserService userService)
+            IUserService userService,
+            EVStationBasedRentalSystemDbContext context)
         {
             _carService = carService;
             _stationService = stationService;
             _bookingService = bookingService;
             _userService = userService;
+            _context = context;
         }
 
         #region Fleet & Station Management (Quản lý đội xe & điểm thuê)
@@ -435,6 +441,270 @@ namespace Monolithic.Controllers
 
                 return Ok(ResponseDto<object>.Success(overview, 
                     $"Tổng quan {overview.Count} nhân viên"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseDto<object>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        #endregion
+
+        #region User Role Management (Quản lý role người dùng)
+
+        /// <summary>
+        /// Cấp role "Station Staff" cho người dùng
+        /// </summary>
+        [HttpPost("Users/{userId}/Assign-Staff-Role")]
+        public async Task<ActionResult<ResponseDto<object>>> AssignStaffRole(
+            [FromRoute] string userId,
+            [FromQuery] string? reason = null)
+        {
+            try
+            {
+                var user = await _userService.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(ResponseDto<object>.Failure("Không tìm thấy người dùng"));
+                }
+
+                // Chỉ có thể cấp role cho EVRenter
+                if (user.UserRole != AppRoles.EVRenter)
+                {
+                    return BadRequest(ResponseDto<object>.Failure(
+                        $"Chỉ có thể cấp role Station Staff cho EVRenter, người dùng này có role: {user.UserRole}"));
+                }
+
+                // Cấp role
+                var updateSuccess = await _userService.UpdateUserRoleAsync(userId, AppRoles.StationStaff);
+                if (!updateSuccess)
+                {
+                    return BadRequest(ResponseDto<object>.Failure("Lỗi cập nhật role"));
+                }
+
+                var result = new
+                {
+                    UserId = user.UserId,
+                    FullName = $"{user.FirstName} {user.LastName}",
+                    Email = user.Email,
+                    OldRole = AppRoles.EVRenter,
+                    NewRole = AppRoles.StationStaff,
+                    AssignedBy = "Admin",
+                    AssignedAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Reason = reason ?? "Không có lý do"
+                };
+
+                return Ok(ResponseDto<object>.Success(result, 
+                    $"Đã cấp role Station Staff cho {user.FirstName} {user.LastName}"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseDto<object>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Gỡ role "Station Staff" (downgrade về EVRenter)
+        /// </summary>
+        [HttpPost("Users/{userId}/Remove-Staff-Role")]
+        public async Task<ActionResult<ResponseDto<object>>> RemoveStaffRole(
+            [FromRoute] string userId,
+            [FromQuery] string? reason = null)
+        {
+            try
+            {
+                var user = await _userService.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(ResponseDto<object>.Failure("Không tìm thấy người dùng"));
+                }
+
+                // Chỉ có thể gỡ role từ StationStaff
+                if (user.UserRole != AppRoles.StationStaff)
+                {
+                    return BadRequest(ResponseDto<object>.Failure(
+                        $"Người dùng này không có role Station Staff, role hiện tại: {user.UserRole}"));
+                }
+
+                // Gỡ role (downgrade về EVRenter)
+                var updateSuccess = await _userService.UpdateUserRoleAsync(userId, AppRoles.EVRenter);
+                if (!updateSuccess)
+                {
+                    return BadRequest(ResponseDto<object>.Failure("Lỗi cập nhật role"));
+                }
+
+                var result = new
+                {
+                    UserId = user.UserId,
+                    FullName = $"{user.FirstName} {user.LastName}",
+                    Email = user.Email,
+                    OldRole = AppRoles.StationStaff,
+                    NewRole = AppRoles.EVRenter,
+                    RemovedBy = "Admin",
+                    RemovedAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Reason = reason ?? "Không có lý do"
+                };
+
+                return Ok(ResponseDto<object>.Success(result, 
+                    $"Đã gỡ role Station Staff từ {user.FirstName} {user.LastName}"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseDto<object>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Xóa mềm (soft delete) account - áp dụng cho StationStaff và EVRenter
+        /// </summary>
+        [HttpPost("Users/{userId}/Soft-Delete")]
+        public async Task<ActionResult<ResponseDto<object>>> SoftDeleteUser(
+            [FromRoute] string userId,
+            [FromQuery] string? reason = null)
+        {
+            try
+            {
+                var user = await _userService.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(ResponseDto<object>.Failure("Không tìm thấy người dùng"));
+                }
+
+                // Không cho phép xóa account Admin
+                if (user.UserRole == AppRoles.Admin)
+                {
+                    return BadRequest(ResponseDto<object>.Failure("Không thể xóa account Admin"));
+                }
+
+                // Chỉ xóa EVRenter và StationStaff
+                if (user.UserRole != AppRoles.EVRenter && user.UserRole != AppRoles.StationStaff)
+                {
+                    return BadRequest(ResponseDto<object>.Failure(
+                        $"Chỉ có thể xóa EVRenter hoặc StationStaff, role này không được phép: {user.UserRole}"));
+                }
+
+                // Thực hiện soft delete (đặt IsActive = false)
+                var deactivateSuccess = await _userService.DeactivateUserAsync(userId);
+                if (!deactivateSuccess)
+                {
+                    return BadRequest(ResponseDto<object>.Failure("Lỗi xóa account"));
+                }
+
+                var result = new
+                {
+                    UserId = user.UserId,
+                    FullName = $"{user.FirstName} {user.LastName}",
+                    Email = user.Email,
+                    UserRole = user.UserRole,
+                    DeletedBy = "Admin",
+                    DeletedAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Reason = reason ?? "Không có lý do",
+                    Status = "Soft Deleted (Deactivated)",
+                    Note = "Account này đã bị vô hiệu hóa. Có thể khôi phục bằng cách kích hoạt lại"
+                };
+
+                return Ok(ResponseDto<object>.Success(result, 
+                    $"Đã xóa mềm account {user.FirstName} {user.LastName}"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseDto<object>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Khôi phục account đã bị xóa mềm
+        /// </summary>
+        [HttpPost("Users/{userId}/Restore")]
+        public async Task<ActionResult<ResponseDto<object>>> RestoreUser([FromRoute] string userId)
+        {
+            try
+            {
+                var user = await _userService.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(ResponseDto<object>.Failure("Không tìm thấy người dùng"));
+                }
+
+                if (user.IsActive)
+                {
+                    return BadRequest(ResponseDto<object>.Failure("Account này đang hoạt động, không cần khôi phục"));
+                }
+
+                // Khôi phục account (đặt IsActive = true)
+                var activateSuccess = await _userService.ActivateUserAsync(userId);
+                if (!activateSuccess)
+                {
+                    return BadRequest(ResponseDto<object>.Failure("Lỗi khôi phục account"));
+                }
+
+                var result = new
+                {
+                    UserId = user.UserId,
+                    FullName = $"{user.FirstName} {user.LastName}",
+                    Email = user.Email,
+                    UserRole = user.UserRole,
+                    RestoredBy = "Admin",
+                    RestoredAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                    Status = "Active"
+                };
+
+                return Ok(ResponseDto<object>.Success(result, 
+                    $"Đã khôi phục account {user.FirstName} {user.LastName}"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseDto<object>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách các account đã bị xóa mềm (deactivated)
+        /// </summary>
+        [HttpGet("Users/Deleted-Accounts")]
+        public async Task<ActionResult<ResponseDto<object>>> GetDeletedAccounts(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? role = null)
+        {
+            try
+            {
+                // Lấy danh sách tất cả deactivated users
+                var (deletedUsers, total) = await _userService.GetUsersAsync(
+                    page, 
+                    pageSize, 
+                    search: null, 
+                    role: role,
+                    isActive: false  // Chỉ lấy inactive users
+                );
+
+                var deletedAccountsList = deletedUsers
+                    .Where(u => u.UserRole == AppRoles.EVRenter || u.UserRole == AppRoles.StationStaff)
+                    .Select(u => new
+                    {
+                        UserId = u.UserId,
+                        FullName = $"{u.FirstName} {u.LastName}",
+                        Email = u.Email,
+                        UserRole = u.UserRole,
+                        CreatedAt = u.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                        DeactivatedAt = u.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "N/A",
+                        DaysDeactivated = u.UpdatedAt.HasValue 
+                            ? (int)(DateTime.UtcNow - u.UpdatedAt.Value).TotalDays 
+                            : 0
+                    })
+                    .ToList();
+
+                var result = new
+                {
+                    TotalCount = total,
+                    Page = page,
+                    PageSize = pageSize,
+                    DeletedAccounts = deletedAccountsList,
+                    RoleFilter = role ?? "All"
+                };
+
+                return Ok(ResponseDto<object>.Success(result, 
+                    $"Tìm thấy {deletedAccountsList.Count} account đã bị xóa mềm"));
             }
             catch (Exception ex)
             {
@@ -981,6 +1251,52 @@ namespace Monolithic.Controllers
         }
 
         #endregion
+
+ #region Document Management
+
+   /// <summary>
+/// Lấy thông tin giấy tờ của user (CCCD và GPLX)
+        /// </summary>
+     [HttpGet("Users/{userId}/Documents")]
+        public async Task<ActionResult<ResponseDto<UserDocumentDetailsDto>>> GetUserDocuments(Guid userId)
+        {
+            try
+    {
+     var user = await _context.Users.FindAsync(userId);
+     if (user == null)
+              {
+        return NotFound(ResponseDto<UserDocumentDetailsDto>.Failure("Không tìm thấy người dùng"));
+              }
+
+     var documentDetails = new UserDocumentDetailsDto
+         {
+               UserId = user.UserId,
+            FullName = $"{user.FirstName} {user.LastName}",
+     Email = user.Email ?? "",
+          PhoneNumber = user.PhoneNumber,
+         UserRole = user.UserRole,
+           CccdImageUrl_Front = user.CccdImageUrl_Front,
+     CccdImageUrl_Back = user.CccdImageUrl_Back,
+       GplxImageUrl_Front = user.GplxImageUrl_Front,
+        GplxImageUrl_Back = user.GplxImageUrl_Back,
+        DriverLicenseNumber = user.DriverLicenseNumber,
+ DriverLicenseExpiry = user.DriverLicenseExpiry,
+       IsVerified = user.IsVerified,
+    CreatedAt = user.CreatedAt,
+       UpdatedAt = user.UpdatedAt
+        };
+
+         return Ok(ResponseDto<UserDocumentDetailsDto>.Success(documentDetails, "Lấy thông tin giấy tờ thành công"));
+ }
+         catch (Exception ex)
+  {
+                return BadRequest(ResponseDto<UserDocumentDetailsDto>.Failure($"Lỗi: {ex.Message}"));
+}
+        }
+
+        #endregion
+
+        // ...existing code for other sections...
     }
 }
 

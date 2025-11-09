@@ -49,8 +49,15 @@ namespace Monolithic.Models
         [Required]
         public Guid CurrentStationId { get; set; }
 
+        [Required]
+        [Range(2, 50)]
+        public int Seats { get; set; } = 4;
+
         public bool IsActive { get; set; } = true;
-        public string ImageUrl { get; set; } = string.Empty;    
+        public string ImageUrl { get; set; } = string.Empty;
+        public string? CarImagePublicId { get; set; } = string.Empty;
+
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

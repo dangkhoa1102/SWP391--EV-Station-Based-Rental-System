@@ -33,6 +33,7 @@ namespace Monolithic.Models
     
         [Required]
         [Column(TypeName = "decimal(10,2)")]
+
         public decimal TotalAmount { get; set; }
 
         [Required]
@@ -60,12 +61,17 @@ namespace Monolithic.Models
 
         public DateTime? CheckInAt { get; set; } // Thời gian check-in
 
+        [StringLength(1000)]
+        public string? CheckInPhotoUrl { get; set; }
        
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         [StringLength(500)]
         public string? CheckOutNotes { get; set; }
+
+        public DateTime? RefundConfirmedAt { get; set; }
+        public string? RefundConfirmedBy { get; set; }
 
         [StringLength(1000)]
         public string? CheckOutPhotoUrl { get; set; }
@@ -101,9 +107,9 @@ namespace Monolithic.Models
         DepositPaid,       // Đã thanh toán đặt cọc, chờ approve hợp đồng
         CheckedInPendingPayment,
         CheckedIn,         // Đã nhận xe, đang sử dụng
-        CheckedOutPendingPayment,
-        CheckedOut,        // Đã trả xe, chờ thanh toán tiền thuê
+        CheckedOutPendingPayment, 
         Completed,         // Hoàn thành
+        CancelledPendingRefund,
         Cancelled          // Đã hủy
     }
 }

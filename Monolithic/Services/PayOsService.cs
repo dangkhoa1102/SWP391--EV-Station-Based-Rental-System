@@ -1,21 +1,26 @@
-﻿
-
-using Monolithic.Models;
+﻿using Monolithic.Models;
+using Microsoft.Extensions.Options;
 using Net.payOS;
 using Net.payOS.Types;
+
 namespace Monolithic.Services
 {
     public class PayOSService
     {
         private readonly PayOS _payOS;
 
-        public PayOSService(IConfiguration configuration)
+        public PayOSService(IOptions<PayOSSettings> payOSSettings)
         {
-            _payOS = new PayOS(
-                configuration["PayOS:ClientId"] ?? throw new Exception("Missing PAYOS_CLIENT_ID"),
-                configuration["PayOS:ApiKey"] ?? throw new Exception("Missing PAYOS_API_KEY"),
-                configuration["PayOS:ChecksumKey"] ?? throw new Exception("Missing PAYOS_CHECKSUM_KEY")
-            );
+            var settings = payOSSettings.Value;
+            
+            if (string.IsNullOrEmpty(settings.ClientId))
+                throw new InvalidOperationException("PayOS ClientId is not configured. Make sure CLIENT_ID environment variable is set.");
+            if (string.IsNullOrEmpty(settings.ApiKey))
+                throw new InvalidOperationException("PayOS ApiKey is not configured. Make sure API_KEY environment variable is set.");
+            if (string.IsNullOrEmpty(settings.ChecksumKey))
+                throw new InvalidOperationException("PayOS ChecksumKey is not configured. Make sure CHECKSUM_KEY environment variable is set.");
+
+            _payOS = new PayOS(settings.ClientId, settings.ApiKey, settings.ChecksumKey);
         }
 
         public async Task<(string checkoutUrl, string qrCode, long orderCode)> GeneratePaymentQR(Payment payment)
@@ -32,8 +37,8 @@ namespace Monolithic.Services
                 (int)payment.Amount,
                 "Booking payment",
                 items,
-                "https://localhost:3000/payment-cancel",
-                "https://localhost:3000/payment-success"
+               "http://localhost:5173/payment-cancel",
+                "http://localhost:5173/payment-success"
             );
 
             CreatePaymentResult result = await _payOS.createPaymentLink(paymentData);
