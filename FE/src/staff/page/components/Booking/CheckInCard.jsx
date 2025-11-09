@@ -3,9 +3,7 @@ import StaffAPI from '../../../services/staffApi'
 
 export default function CheckInCard({ booking, onClose, onCheckedIn }){
   const [checkInNotes, setCheckInNotes] = useState('')
-  const [checkInPhotoUrl, setCheckInPhotoUrl] = useState('')
-  const [staffSignature, setStaffSignature] = useState('')
-  const [customerSignature, setCustomerSignature] = useState('')
+  const [checkInPhoto, setCheckInPhoto] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [serverTime, setServerTime] = useState(null)
@@ -48,24 +46,15 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
         if (!staffId) throw ridErr
       }
 
-      // Build payload; omit optional fields if blank and validate URL shape
+      // Build payload for multipart/form-data
       const payload = {
         bookingId: booking.id,
         staffId,
-        staffSignature,
-        customerSignature,
       }
       const notes = (checkInNotes || '').trim()
       if (notes) payload.checkInNotes = notes
-      const photo = (checkInPhotoUrl || '').trim()
-      if (photo) {
-        try {
-          // Simple URL validation to avoid backend rejecting invalid URLs
-          const u = new URL(photo)
-          if (u.protocol === 'http:' || u.protocol === 'https:') {
-            payload.checkInPhotoUrl = photo
-          }
-        } catch {}
+      if (checkInPhoto) {
+        payload.checkInPhoto = checkInPhoto
       }
       await StaffAPI.checkInWithContract(payload)
       if (typeof onCheckedIn === 'function') onCheckedIn(booking.id, payload)
@@ -105,16 +94,18 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
             <textarea rows={5} value={checkInNotes} onChange={e=>setCheckInNotes(e.target.value)} placeholder="Notes about the vehicle condition, accessories, battery, etc." />
           </label>
           <label style={{display:'flex', flexDirection:'column', gap:6}}>
-            <span>Check-in Photo URL</span>
-            <input type="url" value={checkInPhotoUrl} onChange={e=>setCheckInPhotoUrl(e.target.value)} placeholder="https://..." />
-          </label>
-          <label style={{display:'flex', flexDirection:'column', gap:6}}>
-            <span>Staff Signature</span>
-            <input type="text" value={staffSignature} onChange={e=>setStaffSignature(e.target.value)} placeholder="Type staff name or paste signature URL" />
-          </label>
-          <label style={{display:'flex', flexDirection:'column', gap:6}}>
-            <span>Customer Signature</span>
-            <input type="text" value={customerSignature} onChange={e=>setCustomerSignature(e.target.value)} placeholder="Type customer name or paste signature URL" />
+            <span>Check-in Photo (Optional)</span>
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={e => setCheckInPhoto(e.target.files[0] || null)} 
+              placeholder="Select an image file" 
+            />
+            {checkInPhoto && (
+              <div style={{fontSize:12, color:'#666'}}>
+                Selected: {checkInPhoto.name} ({(checkInPhoto.size / 1024 / 1024).toFixed(2)} MB)
+              </div>
+            )}
           </label>
           <div style={{display:'flex', gap:12, justifyContent:'flex-end'}}>
             <button type="button" onClick={onClose} style={{background:'transparent', color:'#333', border:'1px solid #aaa', borderRadius:8, padding:'8px 14px'}}>Cancel</button>

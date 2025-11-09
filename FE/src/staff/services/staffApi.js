@@ -1414,20 +1414,38 @@ API.resolveStaffId = async (userId = null) => {
 
 // Check-In with Contract (specific canonical endpoint)
 // Expected payload shape:
-// { bookingId: GUID, staffId: GUID, staffSignature: string, customerSignature: string, checkInNotes?: string, checkInPhotoUrl?: string }
+// { bookingId: GUID, staffId: GUID, checkInNotes?: string, checkInPhoto?: File }
 API.checkInWithContract = async (payload) => {
-  if (!payload || !payload.bookingId || !payload.staffId || !payload.staffSignature || !payload.customerSignature) {
-    throw new Error('Missing required fields: bookingId, staffId, staffSignature, customerSignature')
+  if (!payload || !payload.bookingId || !payload.staffId) {
+    throw new Error('Missing required fields: bookingId, staffId')
   }
+  
+  // Create FormData for multipart/form-data
+  const formData = new FormData()
+  formData.append('BookingId', payload.bookingId)
+  formData.append('StaffId', payload.staffId)
+  
+  if (payload.checkInNotes) {
+    formData.append('CheckInNotes', payload.checkInNotes)
+  }
+  
+  if (payload.checkInPhoto && payload.checkInPhoto instanceof File) {
+    formData.append('CheckInPhoto', payload.checkInPhoto)
+  }
+  
   const attempts = [
-    '/bookings/Check-In-With-Contract',
+    '/api/Bookings/Check-In-With-Contract',
     '/Bookings/Check-In-With-Contract',
-    '/Bookings/CheckInWithContract',
+    '/bookings/Check-In-With-Contract',
   ]
   let lastErr
   for (const url of attempts) {
     try {
-      const res = await apiClient.post(url, payload)
+      const res = await apiClient.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
       const body = res?.data
       if (body && typeof body === 'object' && 'data' in body) {
         if (body.isSuccess === false) {
