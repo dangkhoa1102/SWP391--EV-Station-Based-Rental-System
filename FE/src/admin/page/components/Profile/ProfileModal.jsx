@@ -1,76 +1,8 @@
-<<<<<<< Updated upstream
-// src/components/Profile/ProfileModal.jsx
-import React from 'react';
-import './Profile.css';
-
-export default function ProfileModal({ open, onClose }) {
-  if (!open) return null;
-  return (
-    <div className="profile-modal-overlay" style={{display:'flex'}}>
-      <div className="profile-modal-content">
-        <span className="profile-modal-close" onClick={onClose}>&times;</span>
-        <h2>Staff Profile</h2>
-        <img src="https://via.placeholder.com/180x180?text=Staff" alt="Staff" style={{borderRadius:'50%'}} />
-        <div className="profile-info-grid">
-          <div className="profile-info-card">
-            <strong>Name</strong>
-            <div>Nguyen Van Staff</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Email</strong>
-            <div>staff@fec.com</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Role</strong>
-            <div>Station Staff</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Phone</strong>
-            <div>0123-456-789</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Address</strong>
-            <div>123 Main St, City</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Joined</strong>
-            <div>2024-01-15</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Employee ID</strong>
-            <div>FEC-STA-0097</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Station</strong>
-            <div>EV Station 03 - District Center</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Shifts</strong>
-            <div>Mon–Fri, 08:00–16:00</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Last Login</strong>
-            <div>2025-10-21 17:24</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Certifications</strong>
-            <div>EV Safety L2, Customer Service</div>
-          </div>
-          <div className="profile-info-card">
-            <strong>Emergency Contact</strong>
-            <div>Tran Thi B (Spouse) – 0987-654-321</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-=======
 // src/components/Profile/ProfileModal.jsx
 import React, { useEffect, useState } from 'react';
 import './Profile.css';
-import './StaffProfile.css';
-import StaffAPI from '../../../services/staffApi';
+import './AdminProfile.css';
+import AdminAPI from '../../../services/adminApi';
 import { PLACEHOLDER } from '../../../../utils/placeholder';
 
 export default function ProfileModal({ open, onClose, inline = false }) {
@@ -86,18 +18,18 @@ export default function ProfileModal({ open, onClose, inline = false }) {
       try {
         setLoading(true)
         setError('')
-        // Fetch staff profile and auth info (same endpoints as user, via staff API)
+        // Fetch Admin Profile and auth info (same endpoints as user, via admin API)
         let p = {}
         let a = {}
         try {
-          p = await StaffAPI.getMyProfile()
+          p = await AdminAPI.getMyProfile()
         } catch (e1) {
           if (e1?.response?.status === 401) {
             console.warn('Get-My-Profile unauthorized (401)')
           }
         }
         try {
-          a = await StaffAPI.getMe()
+          a = await AdminAPI.getMe()
         } catch (e2) {
           if (e2?.response?.status === 401) {
             console.warn('/Auth/Me unauthorized (401)')
@@ -113,7 +45,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
           if (!userId) {
             const t = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
             if (t) {
-              const claims = StaffAPI.decodeJwt(t)
+              const claims = AdminAPI.decodeJwt(t)
               userId = claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || claims.nameidentifier || claims.sub || claims.userId || claims.UserId || claims.id || claims.Id
             }
           }
@@ -123,7 +55,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
             try {
               const t = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
               if (t) {
-                const claims = StaffAPI.decodeJwt(t)
+                const claims = AdminAPI.decodeJwt(t)
                 const roleClaim = claims?.role || claims?.Role || claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
                 if (roleClaim) a = { ...a, role: roleClaim }
               }
@@ -134,7 +66,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
           const needUser = !p?.userName && !a?.userName || !p?.address || !p?.stationName
           if (userId && needUser) {
             try {
-              const u = await StaffAPI.getUserById(userId)
+              const u = await AdminAPI.getUserById(userId)
               if (!mounted) return
               const merged = { ...p }
               if (!merged.userName) merged.userName = u?.userName || u?.UserName || u?.username || ''
@@ -146,7 +78,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
         } catch {}
         if ((!p || Object.keys(p).length === 0) && (!a || Object.keys(a).length === 0)) {
           const hasToken = typeof localStorage !== 'undefined' && !!localStorage.getItem('token')
-          setError(hasToken ? 'You may not have permission to view this profile.' : 'You are not logged in. Please log in with a staff account.')
+          setError(hasToken ? 'You may not have permission to view this profile.' : 'You are not logged in. Please log in with a admin account.')
         }
       } catch (e) {
         if (!mounted) return
@@ -167,7 +99,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
     try {
       const t = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
       if (t) {
-        const claims = StaffAPI.decodeJwt(t)
+        const claims = AdminAPI.decodeJwt(t)
         userName = claims?.preferred_username || claims?.unique_name || claims?.userName || claims?.username || claims?.name || ''
       }
     } catch {}
@@ -180,36 +112,36 @@ export default function ProfileModal({ open, onClose, inline = false }) {
   const employeeId = profile.employeeId || profile.id || auth.userId || auth.id || '—'
   const station = profile.stationName || profile.station || '—'
   const role = profile.role || auth.role || (Array.isArray(auth.roles) ? auth.roles.join(', ') : (auth.roles || '—'))
-  const avatar = profile.avatarUrl || auth.avatarUrl || PLACEHOLDER.avatarLarge('Staff')
+  const avatar = profile.avatarUrl || auth.avatarUrl || PLACEHOLDER.avatarLarge('Admin')
 
   if (inline) {
     // Professional Facebook-like profile
     return (
-      <div className="staff-profile-page">
+      <div className="admin-profile-page">
         {/* Cover */}
-        <div className="staff-cover">
-          <div className="staff-cover-gradient" />
+        <div className="admin-cover">
+          <div className="admin-cover-gradient" />
         </div>
         {/* Header: avatar + name/role */}
-        <div className="staff-header">
-          <div className="staff-header-inner">
-            <div className="staff-avatar">
+        <div className="admin-header">
+          <div className="admin-header-inner">
+            <div className="admin-avatar">
               <img src={avatar} alt="Avatar" />
             </div>
-            <div className="staff-title">
+            <div className="admin-title">
               <h1>{fullName}</h1>
-              <div className="staff-meta">
-                <span className="staff-role">{role || '—'}</span>
-                {station && <span className="staff-sep">•</span>}
-                <span className="staff-station">{station}</span>
+              <div className="admin-meta">
+                <span className="admin-role">{role || '—'}</span>
+                {station && <span className="admin-sep">•</span>}
+                <span className="admin-station">{station}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Content grid */}
-        <div className="staff-content">
-          <div className="staff-col">
+        <div className="admin-content">
+          <div className="admin-col">
             <div className="card">
               <div className="card-header">About</div>
               <div className="card-body info-list">
@@ -222,7 +154,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
             </div>
           </div>
 
-          <div className="staff-col">
+          <div className="admin-col">
             <div className="card">
               <div className="card-header">Contact</div>
               <div className="card-body info-list">
@@ -235,7 +167,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
         </div>
 
         {error && (
-          <div className="staff-error">{error}</div>
+          <div className="admin-error">{error}</div>
         )}
       </div>
     )
@@ -246,11 +178,11 @@ export default function ProfileModal({ open, onClose, inline = false }) {
     <div className="profile-modal-overlay" style={{display:'flex'}}>
       <div className="profile-modal-content">
         <span className="profile-modal-close" onClick={onClose}>&times;</span>
-        <h2>Staff Profile</h2>
+        <h2>Admin Profile</h2>
         {error && (
           <div style={{background:'#ffecec', color:'#b00020', padding:'8px 12px', borderRadius:6, marginBottom:12}}>{error}</div>
         )}
-        <img src={avatar} alt="Staff" style={{borderRadius:'50%'}} />
+        <img src={avatar} alt="Admin" style={{borderRadius:'50%'}} />
         {loading ? (
           <div style={{padding:16}}>Loading profile…</div>
         ) : (
@@ -293,4 +225,3 @@ export default function ProfileModal({ open, onClose, inline = false }) {
     </div>
   );
 }
->>>>>>> Stashed changes

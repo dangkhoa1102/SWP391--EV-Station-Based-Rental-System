@@ -1,80 +1,7 @@
-<<<<<<< Updated upstream
-// src/components/Booking/BookingModal.jsx
-import React from 'react';
-import '../../styles/modals.css';
-
-export default function BookingModal({ booking, onClose, onConfirm, onComplete, onDeny }) {
-  if (!booking) return null;
-
-  return (
-    <div id="bookingModal" className="modal-overlay" style={{display: 'flex'}}>
-      <div className="modal-content" style={{display:'flex', flexDirection:'column', width:'min(920px,95vw)', maxHeight:'90vh', overflow:'auto'}}>
-        <span className="close-btn" onClick={onClose}>&times;</span>
-        <div style={{display:'flex', gap:24, flexWrap:'wrap'}}>
-          <div style={{flex:'0 0 220px'}}>
-            <img id="modalImage" src={booking.facePhoto || booking.img} alt="" style={{width:'100%', borderRadius:8, objectFit:'cover'}} />
-            <h3 id="modalTitle" style={{marginTop:12}}>{booking.title}</h3>
-            <div id="modalStatus">Status: {booking.status}</div>
-            <div id="modalCustomer">Customer: {booking.customer}</div>
-            <div id="modalDate">Date: {booking.date}</div>
-          </div>
-
-          <div style={{flex:'1 1 380px', display:'flex', flexDirection:'column', gap:14}}>
-            <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between'}}>
-              <span style={{fontWeight:600}}>ID Card (CMND/CCCD):</span>
-              <div style={{display:'flex', alignItems:'center', gap:12}}>
-                <span id="modalIDValue" style={{fontWeight:600}}>{booking.idString}</span>
-                <label><input type="checkbox" id="checkID" /> Verified</label>
-              </div>
-            </div>
-
-            <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <span style={{fontWeight:600}}>Face Photo:</span>
-              <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <input id="uploadFace" type="file" accept="image/*" disabled={!!booking.facePhoto} />
-                <label><input type="checkbox" id="checkFace" defaultChecked={!!booking.facePhoto} /> Verified</label>
-              </div>
-            </div>
-
-            <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <span style={{fontWeight:600}}>Phone Number:</span>
-              <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <input id="customerPhone" defaultValue={booking.phone} style={{padding:6}} />
-                <label><input type="checkbox" id="checkPhone" /> Verified</label>
-              </div>
-            </div>
-
-            <div style={{background:'#e3f2fd', padding:14, borderRadius:10, display:'flex', gap:12, justifyContent:'center'}}>
-              <button id="confirmBookingBtn" onClick={onConfirm} style={{background:'#43a047', color:'white', padding:'8px 16px', borderRadius:14}}>Confirm Booking</button>
-              <button id="completeBookingBtn" onClick={onComplete} style={{background:'#1565c0', color:'white', padding:'8px 16px', borderRadius:14}}>Mark as Completed</button>
-              <button id="denyBookingBtn" onClick={onDeny} style={{background:'#e53935', color:'white', padding:'8px 16px', borderRadius:14}}>Deny Booking</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="modalTransactionInfo" style={{marginTop:24, width:'100%', display: booking.status === 'completed' ? 'block' : 'none'}}>
-          <h4>Transaction Details</h4>
-          <ul style={{fontSize:'1rem'}}>
-            <li>Find rental location on map</li>
-            <li>View available vehicles (type, battery, price)</li>
-            <li>Book in advance or on-site</li>
-            <li>Check-in at counter/app</li>
-            <li>Sign electronic contract</li>
-            <li>Confirm handover with staff (vehicle check, photo)</li>
-            <li>Return vehicle at rental location</li>
-            <li>Staff checks and confirms vehicle condition</li>
-            <li>Pay any additional fees</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-}
-=======
 // src/components/Booking/BookingModal.jsx
 import React, { useEffect, useState } from 'react';
 import '../../styles/modals.css';
-import StaffAPI from '../../../services/staffApi';
+import AdminAPI from '../../../services/adminApi';
 
 export default function BookingModal({ booking, onClose, onProceed, onCancel, onStatusUpdated }) {
   const [verifiedFront, setVerifiedFront] = useState(false)
@@ -109,7 +36,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     async function resolveName() {
       setLoadingName(true)
       try {
-        const { firstName, lastName } = await StaffAPI.getUserNameByBookingId(booking.id)
+        const { firstName, lastName } = await AdminAPI.getUserNameByBookingId(booking.id)
         if (!cancelled) setResolvedFullName(compose(firstName, lastName))
       } catch (e) {
         // ignore, fall back to provided booking fields
@@ -130,7 +57,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     onCancel?.(booking, reason)
   }
 
-  // Helpers for payment flow when status === 'checked-in'
+  // Helpers for payment flow - use same mapping as AdminPage
   // Backend BookingStatus enum: 0=Pending, 1=Booked, 2=Contracted, 3=Checked In, 4=On-Going, 7=Cancelled
   const mapStatusFromRaw = (raw) => {
     let status = 'booked'
@@ -161,7 +88,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setActionLoading(true)
     try {
       // 1) Create payment (PaymentType = 'Rental')
-      const p = await StaffAPI.createPayment(booking.id, 'Rental', 'Rental payment at check-in')
+      const p = await AdminAPI.createPayment(booking.id, 'Rental', 'Rental payment at check-in')
       // Persist booking id for success page to sync
       try { localStorage.setItem('currentBookingId', booking.id) } catch {}
       // Extract checkoutUrl and qrCode if present
@@ -192,9 +119,9 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setErrorMsg('')
     setActionLoading(true)
     try {
-      await StaffAPI.syncPaymentStatus(booking.id)
+      await AdminAPI.syncPaymentStatus(booking.id)
       setLastSyncAt(new Date())
-      const fresh = await StaffAPI.getBookingById(booking.id)
+      const fresh = await AdminAPI.getBookingById(booking.id)
       if (!fresh) {
         setErrorMsg('Booking no longer exists')
         return
@@ -219,7 +146,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setPaymentLoading(true)
     setErrorMsg('')
     try {
-      const p = await StaffAPI.getPaymentByBooking(booking.id)
+      const p = await AdminAPI.getPaymentByBooking(booking.id)
       setPaymentInfo(p)
     } catch (e) {
       setErrorMsg(e?.response?.data?.message || e?.message || 'Unable to load payment info')
@@ -424,4 +351,3 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     </div>
   );
 }
->>>>>>> Stashed changes
