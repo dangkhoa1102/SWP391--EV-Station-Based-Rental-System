@@ -507,6 +507,23 @@ const API = {
     }
   },
 
+  getBookingById: async (bookingId) => {
+    try {
+      console.log('📖 Fetching booking details for ID:', bookingId)
+      const res = await apiClient.get(`/Bookings/${bookingId}`)
+      console.log('✅ Booking details response:', res.data)
+      
+      // Handle various response shapes
+      if (res.data?.data) {
+        return res.data.data
+      }
+      return res.data || {}
+    } catch (e) {
+      console.error('❌ Error fetching booking by ID:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
   cancelBooking: async (bookingId, userId) => {
     try {
       console.log('🚫 Cancelling booking:', bookingId)

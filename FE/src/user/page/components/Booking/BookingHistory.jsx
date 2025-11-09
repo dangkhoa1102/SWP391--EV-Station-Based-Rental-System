@@ -47,9 +47,9 @@ export default function BookingHistory(){
       }
 
       const res = await API.getUserBookings()
-      // console.log('📦 Bookings loaded - count:', res?.length)
-      // console.log('📦 First booking sample:', res?.[0])
-      // console.log('📦 All bookings:', res)
+      console.log('📦 Bookings loaded - count:', res?.length)
+      console.log('📦 First booking sample:', res?.[0])
+      console.log('📦 All bookings:', res)
       setAllBookings(res || [])
     }catch(e){ 
       console.error('Error loading bookings:', e)
@@ -97,13 +97,16 @@ export default function BookingHistory(){
       2: { text: 'Waiting for check-in', class: 'status-waiting-check-in' },
       3: { text: 'Checked-in', class: 'status-checked-in' },
       4: { text: 'Check-out pending', class: 'status-check-out-pending' }, 
-      5: { text: 'Completed', class: 'status-completed' } ,
-      6: { text: 'Cancelled pending refund', class: 'status-cancelled-pending-refund' } ,
-      7: { text: 'Cancelled', class: 'status-cancelled' } 
+      5: { text: 'Completed', class: 'status-completed' },
+      6: { text: 'Cancelled pending refund', class: 'status-cancelled-pending-refund' },
+      7: { text: 'Cancelled', class: 'status-cancelled' }
     }
 
     const idx = Number(status)
-    if (Number.isNaN(idx) || !(idx in statuses)) return statuses[3]
+    if (Number.isNaN(idx) || !(idx in statuses)) {
+      console.warn('⚠️ Unknown booking status:', status, 'type:', typeof status)
+      return statuses[0] // Return Pending as default instead of Checked-in
+    }
     return statuses[idx]
   }
 
@@ -389,6 +392,13 @@ export default function BookingHistory(){
         {!loading && filteredBookings.length > 0 && (
           <div className="bookings-list">
             {filteredBookings.map((booking, idx)=>{
+              console.log('🎫 Booking #' + idx, {
+                id: booking.id || booking.bookingId,
+                bookingStatus: booking.bookingStatus,
+                BookingStatus: booking.BookingStatus,
+                statusType: typeof booking.bookingStatus,
+                fullBooking: booking
+              })
               const status = getBookingStatus(booking.bookingStatus)
               // Handle both PascalCase and camelCase from backend
               const pickupDate = formatDateTime(
