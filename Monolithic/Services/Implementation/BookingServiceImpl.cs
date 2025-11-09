@@ -775,6 +775,21 @@ namespace Monolithic.Services.Implementation
             }
         }
 
+        public async Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryByUserIdAsync(string userId)
+        {
+            try
+            {
+                var bookings = await _bookingRepository.GetUserBookingsAsync(userId);
+                var history = _mapper.Map<List<BookingHistoryDto>>(bookings);
+
+                return ResponseDto<List<BookingHistoryDto>>.Success(history);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<List<BookingHistoryDto>>.Failure($"Error getting booking history for user: {ex.Message}");
+            }
+        }
+
         public async Task<ResponseDto<List<BookingDto>>> GetUpcomingBookingsAsync()
         {
             try
