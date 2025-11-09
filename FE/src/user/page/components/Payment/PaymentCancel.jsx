@@ -26,40 +26,34 @@ export default function PaymentCancel() {
         if (cancel === 'true' && status === 'CANCELLED') {
           // Get booking ID from localStorage
           const bookingId = localStorage.getItem('currentBookingId')
-          const userId = localStorage.getItem('userId')
 
-          if (bookingId && userId) {
-            console.log('🚫 Cancelling booking:', bookingId)
+          if (bookingId) {
+            console.log('🚫 Payment cancelled for booking:', bookingId)
             
-            try {
-              // Call cancel booking API
-              await API.cancelBooking(bookingId, userId)
-              console.log('✅ Booking cancelled successfully')
-              
-              // Clear booking data from localStorage
-              localStorage.removeItem('currentBookingId')
-              localStorage.removeItem('depositAmount')
-              
-              // Show success message
-              showToast('Payment cancelled. Your booking has been cancelled.', 'info', 3000)
-            } catch (error) {
-              console.error('❌ Error cancelling booking:', error)
-              showToast('Payment cancelled but failed to cancel booking. Please contact support.', 'error', 5000)
-            }
+            // DO NOT cancel the booking - just clear the payment session
+            // User can retry payment later
+            console.log('✅ Payment session cleared - booking status unchanged')
+            
+            // Clear payment data from localStorage
+            localStorage.removeItem('currentBookingId')
+            localStorage.removeItem('depositAmount')
+            
+            // Show message and redirect to booking history
+            showToast('Payment cancelled. You can retry payment from your booking history.', 'info', 3000)
           } else {
             console.warn('⚠️ No booking ID found in localStorage')
             showToast('Payment cancelled.', 'info', 3000)
           }
 
-          // Redirect to home page after 2 seconds
+          // Redirect to booking history page after 2 seconds
           setTimeout(() => {
-            navigate('/')
+            navigate('/booking-history')
           }, 2000)
         } else {
           // Invalid parameters, redirect immediately
           showToast('Invalid payment cancellation.', 'error', 3000)
           setTimeout(() => {
-            navigate('/')
+            navigate('/booking-history')
           }, 1500)
         }
       } catch (error) {
@@ -101,7 +95,7 @@ export default function PaymentCancel() {
               ⏳
             </div>
             <h2 style={{ marginBottom: '1rem' }}>Processing Cancellation...</h2>
-            <p style={{ color: '#000' }}>Please wait while we cancel your booking.</p>
+            <p style={{ color: '#000' }}>Clearing payment session. You can retry payment later.</p>
           </>
         ) : (
           <>
@@ -114,10 +108,10 @@ export default function PaymentCancel() {
             </div>
             <h2 style={{ marginBottom: '1rem' }}>Payment Cancelled</h2>
             <p style={{ color: '#000', marginBottom: '1rem' }}>
-              Your payment has been cancelled and your booking has been removed.
+              Your payment has been cancelled. Your booking is still active and you can retry payment anytime.
             </p>
             <p style={{ color: '#000', fontSize: '0.9rem' }}>
-              Redirecting to home page...
+              Redirecting to booking history...
             </p>
           </>
         )}
