@@ -211,7 +211,7 @@ export default function PaymentPage(){
         isOpen: true,
         type: 'success',
         title: 'Booking Created Successfully! 🎉',
-        message: 'Contract sent to your email. Deposit payment initiated. You can view details in your booking history.'
+        message: 'The contract has been sent to your email. You have 10 minutes to sign the contract and complete the deposit payment before the reservation expires. You can view details in your Booking History.'
       })
 
       setTimeout(() => {

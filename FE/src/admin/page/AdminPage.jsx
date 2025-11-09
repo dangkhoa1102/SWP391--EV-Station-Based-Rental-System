@@ -109,28 +109,37 @@ export default function AdminPage() {
         setError('Please select a station before creating a vehicle.')
         return
       }
-      // Normalize payload keys to match varied backends
-      const normalized = { ...payload }
-      // Station assignment: include multiple key variants
-      normalized.currentStationId = stationId
-      normalized.stationId = stationId
-      normalized.StationId = stationId
-      // Rental price naming variants
-      if (normalized.rentalPricePerDate != null && normalized.rentalPricePerDay == null) {
-        normalized.rentalPricePerDay = normalized.rentalPricePerDate
+      
+      // Check if payload is FormData (for file uploads)
+      if (payload instanceof FormData) {
+        console.log('✅ Received FormData payload for vehicle creation')
+        // Add station ID to FormData
+        payload.append('CurrentStationId', stationId)
+      } else {
+        // Normalize payload keys to match varied backends
+        const normalized = payload
+        // Station assignment: include multiple key variants
+        normalized.currentStationId = stationId
+        normalized.stationId = stationId
+        normalized.StationId = stationId
+        // Rental price naming variants
+        if (normalized.rentalPricePerDate != null && normalized.rentalPricePerDay == null) {
+          normalized.rentalPricePerDay = normalized.rentalPricePerDate
+        }
+        if (normalized.rentalPricePerDay != null && normalized.rentalPricePerDate == null) {
+          normalized.rentalPricePerDate = normalized.rentalPricePerDay
+        }
+        // Battery capacity naming variants
+        if (normalized.batteryCapacity != null && normalized.BatteryCapacity == null) {
+          normalized.BatteryCapacity = normalized.batteryCapacity
+        }
+        // Current battery naming variants
+        if (normalized.currentBatteryLevel != null && normalized.CurrentBatteryLevel == null) {
+          normalized.CurrentBatteryLevel = normalized.currentBatteryLevel
+        }
       }
-      if (normalized.rentalPricePerDay != null && normalized.rentalPricePerDate == null) {
-        normalized.rentalPricePerDate = normalized.rentalPricePerDay
-      }
-      // Battery capacity naming variants
-      if (normalized.batteryCapacity != null && normalized.BatteryCapacity == null) {
-        normalized.BatteryCapacity = normalized.batteryCapacity
-      }
-      // Current battery naming variants
-      if (normalized.currentBatteryLevel != null && normalized.CurrentBatteryLevel == null) {
-        normalized.CurrentBatteryLevel = normalized.currentBatteryLevel
-      }
-      const created = await AdminAPI.createCar(normalized)
+      
+      const created = await AdminAPI.createCar(payload)
       // Map created car to view model
       const c = created || {}
       const map = (c) => ({
@@ -644,28 +653,29 @@ export default function AdminPage() {
           const email = b.user?.email || b.customerEmail || b.email || b.userEmail || ''
           const address = b.user?.address || b.customerAddress || b.address || ''
           // Status mapping: prefer numeric codes, fall back to string patterns
+          // Status codes: 0=Pending, 1=Active, 2=Waiting for check-in, 3=Checked-in, 4=Check-out pending, 5=Completed, 6=Cancelled pending refund, 7=Cancelled
           const rawStatus = b.statusCode ?? b.StatusCode ?? b.bookingStatus ?? b.BookingStatus ?? b.status ?? b.Status
           let status = 'booked'
+          let statusLabel = 'Booked'
           if (rawStatus != null && (typeof rawStatus === 'number' || /^\d+$/.test(String(rawStatus)))) {
             const code = Number(rawStatus)
-            if (code === 0) status = 'pending'
-            else if (code === 1) status = 'booked'
-            else if (code === 2) status = 'checked-in'
-            else if (code === 3) status = 'completed'
-            else if (code === 4) status = 'denied'
+            if (code === 0) { status = 'pending'; statusLabel = 'Pending' }
+            else if (code === 1) { status = 'booked'; statusLabel = 'Active' }
+            else if (code === 2) { status = 'waiting-checkin'; statusLabel = 'Waiting for check-in' }
+            else if (code === 3) { status = 'checked-in'; statusLabel = 'Checked-in' }
+            else if (code === 4) { status = 'checkout-pending'; statusLabel = 'Check-out pending' }
+            else if (code === 5) { status = 'completed'; statusLabel = 'Completed' }
+            else if (code === 6) { status = 'cancelled-refund'; statusLabel = 'Cancelled pending refund' }
+            else if (code === 7) { status = 'cancelled'; statusLabel = 'Cancelled' }
           } else {
             const s = String(rawStatus || '').toLowerCase()
-            if (s.includes('pending') || s.includes('wait')) status = 'pending'
-            else if (s.includes('check') && s.includes('in')) status = 'checked-in'
-            else if (s.includes('complete') || s.includes('finish')) status = 'completed'
-            else if (s.includes('deny') || s.includes('reject') || s.includes('cancel')) status = 'denied'
-            else status = 'booked'
+            if (s.includes('pending') || s.includes('wait')) { status = 'pending'; statusLabel = 'Pending' }
+            else if (s.includes('active')) { status = 'booked'; statusLabel = 'Active' }
+            else if (s.includes('check') && s.includes('in')) { status = 'checked-in'; statusLabel = 'Checked-in' }
+            else if (s.includes('complete') || s.includes('finish')) { status = 'completed'; statusLabel = 'Completed' }
+            else if (s.includes('cancel')) { status = 'cancelled'; statusLabel = 'Cancelled' }
+            else { status = 'booked'; statusLabel = 'Booked' }
           }
-          const statusLabel = status === 'pending' ? 'Pending'
-                             : status === 'booked' ? 'Booked'
-                             : status === 'checked-in' ? 'Check-in Pending'
-                             : status === 'completed' ? 'Completed'
-                             : status === 'denied' ? 'Denied' : (String(rawStatus || '') || 'Booked')
           // Derive a UI stage hint without changing the canonical status
           const s = String(rawStatus || '').toLowerCase()
           const uiStage = (Number(rawStatus) === 0 || s.includes('pending') || s.includes('wait'))
