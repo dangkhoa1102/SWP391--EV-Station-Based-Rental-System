@@ -415,9 +415,26 @@ const API = {
   },
   getCarsByStation: async (stationId) => {
     const id = encodeURIComponent(stationId)
-    const res = await apiClient.get(`/Cars/Get-Available-By-Station/${id}`)
-    const body = res.data
-    return body && typeof body === 'object' && 'data' in body ? body.data : body
+    const attempts = [
+      `/car/station/${id}`,
+      `/cars/station/${id}`,
+      `/Car/Station/${id}`,
+      `/Cars/Station/${id}`,
+      `/vehicle/station/${id}`,
+      `/vehicles/station/${id}`,
+      `/Vehicle/Station/${id}`,
+      `/Vehicles/Station/${id}`
+    ]
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.get(url)
+        const body = res.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        if (e?.response?.status !== 404) throw e
+      }
+    }
+    return []
   },
   getAvailableCars: async (stationId) => {
     if (stationId) return API.getCarsByStation(stationId)
@@ -729,30 +746,44 @@ const API = {
   },
 
   // Bookings
-  getBookingsByStation: async (stationId, page = 1, pageSize = 100) => {
+  // Station-scoped bookings with multiple backend fallbacks
+  getBookingsByStation: async (stationId) => {
     if (!stationId) return []
-    try {
-      console.log(`📅 Fetching active bookings for station: ${stationId}`)
-      const res = await apiClient.get(`/Bookings/Get-Active-By-Station/${stationId}`, {
-        params: { page, pageSize }
-      })
-      const body = res.data
-      console.log('✅ Active bookings for station response:', body)
-      
-      // Handle various response shapes
-      if (Array.isArray(body)) return body
-      if (Array.isArray(body?.data?.data)) return body.data.data
-      if (Array.isArray(body?.data?.items)) return body.data.items
-      if (Array.isArray(body?.data)) return body.data
-      if (Array.isArray(body?.items)) return body.items
-      if (Array.isArray(body?.bookings)) return body.bookings
-      if (Array.isArray(body?.results)) return body.results
-      
-      return []
-    } catch (e) {
-      console.error(`❌ Failed to fetch active bookings for station ${stationId}:`, e.response?.data || e.message)
-      return []
+    const id = encodeURIComponent(stationId)
+    const attempts = [
+      // Legacy
+      { url: `/Bookings/Get-By-Station/${id}` },
+      { url: '/Bookings/Get-By-Station', opts: { params: { stationId } } },
+      { url: '/Bookings/Get-By-Station', opts: { params: { StationId: stationId } } },
+      { url: '/Bookings/Get-By-Station', opts: { params: { stationID: stationId } } },
+      { url: '/Bookings/Get-All-By-Station', opts: { params: { stationId } } },
+      { url: `/Bookings/Get-All-By-Station/${id}` },
+      { url: '/Bookings/Get-All', opts: { params: { stationId } } },
+      { url: `/Stations/${id}/Bookings` },
+      // REST style
+      { url: `/booking/station/${id}` },
+      { url: '/booking', opts: { params: { stationId } } },
+      { url: '/booking', opts: { params: { station: stationId } } }
+    ]
+    for (const a of attempts) {
+      try {
+        const res = await apiClient.get(a.url, a.opts)
+        const body = res.data
+        if (Array.isArray(body)) return body
+        if (Array.isArray(body?.data?.data)) return body.data.data
+        if (Array.isArray(body?.data?.items)) return body.data.items
+        if (Array.isArray(body?.data)) return body.data
+        if (Array.isArray(body?.items)) return body.items
+        if (Array.isArray(body?.bookings)) return body.bookings
+        if (Array.isArray(body?.results)) return body.results
+        if (body && (body.id || body.bookingId || body.BookingId)) return [body]
+      } catch (e) {
+        const code = e?.response?.status
+        // Continue on 400 as well (often validation on route shape)
+        if (code && code !== 404 && code !== 405 && code !== 400) throw e
+      }
     }
+    return []
   },
 
   listBookings: async (opts = { page: 1, pageSize: 100 }) => {
@@ -1435,28 +1466,76 @@ API.checkInWithContract = async (payload) => {
   throw lastErr || new Error('Check-In-With-Contract endpoint not found')
 }
 
+// Check-Out with Payment (Bước 5)
+// Expected payload shape:
+// { bookingId: GUID, staffId: GUID, actualReturnDateTime?: DateTime, checkOutNotes?: string, checkOutPhotoUrl?: string, damageFee?: number }
+API.checkOutBooking = async (payload) => {
+  if (!payload || !payload.bookingId || !payload.staffId) {
+    throw new Error('Missing required fields: bookingId, staffId')
+  }
+  
+  // Normalize field names to match backend DTO (both PascalCase and camelCase)
+  const body = {
+    BookingId: payload.bookingId,
+    StaffId: payload.staffId,
+    ActualReturnDateTime: payload.actualReturnDateTime || null,
+    CheckOutNotes: payload.checkOutNotes || '',
+    CheckOutPhotoUrl: payload.checkOutPhotoUrl || '',
+    DamageFee: payload.damageFee || 0
+  }
+  
+  const attempts = [
+    '/Bookings/Check-Out-With-Payment',
+    '/bookings/Check-Out-With-Payment',
+    '/Bookings/checkout',
+  ]
+  let lastErr
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.post(url, body)
+      const respBody = res?.data
+      if (respBody && typeof respBody === 'object' && 'data' in respBody) {
+        if (respBody.isSuccess === false) {
+          const msg = respBody.message || (Array.isArray(respBody.errors) ? respBody.errors.join('; ') : 'Request failed')
+          const err = new Error(msg)
+          err.body = respBody
+          throw err
+        }
+        return respBody.data
+      }
+      return respBody
+    } catch (e) {
+      lastErr = e
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw lastErr || new Error('Check-Out-With-Payment endpoint not found')
+}
+
 // =============================================================================
 // FLEET MANAGEMENT (Staff can also use these for station management)
 // =============================================================================
 
 /**
- * Get detailed car status report for staff
- * Staff can only see available cars at their assigned station
- * @param {string} stationId - Filter by station (required for staff)
- * @param {string} status - Filter by status (optional, unused for staff)
+ * Get detailed car status report
+ * @param {string} stationId - Filter by station (optional)
+ * @param {string} status - Filter by status (optional)
  */
 API.getCarStatusReport = async (stationId = null, status = null) => {
-  if (!stationId) return null
-  try {
-    const cars = await API.getCarsByStation(stationId)
-    if (Array.isArray(cars)) {
-      return {
-        totalCars: cars.length,
-        availableCars: cars.filter(c => c.Status === 0 || c.Status === 'Available').length
-      }
+  const params = {}
+  if (stationId) params.stationId = stationId
+  if (status) params.status = status
+  const attempts = ['/Admin/Fleet/Car-Status', '/Fleet/Car-Status', '/Staff/Fleet/Car-Status']
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url, { params })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
     }
-  } catch (e) {
-    console.error('Failed to get car status report:', e)
   }
   return null
 }

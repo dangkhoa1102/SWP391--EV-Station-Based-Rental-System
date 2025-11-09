@@ -62,35 +62,122 @@ export default function PaymentSuccess(){
         
         console.log('✅ Payment status synced successfully')
         
-        // Fetch the updated booking to check status
-        console.log('📋 Fetching booking details to check status...')
-        const bookingDetails = await API.getBookingById(bookingId)
-        const bookingStatus = Number(bookingDetails?.bookingStatus || bookingDetails?.BookingStatus)
+        // ========================================
+        // CONTRACT FEATURE - TEMPORARILY DISABLED
+        // Uncomment when backend contract API is fixed
+        // ========================================
+        /*
+        // Step 2: Fetch booking details to prepare contract data
+        console.log('📋 Fetching booking details for contract...')
+        const bookings = await API.get('/Bookings/My-Bookings')
+        const booking = Array.isArray(bookings) ? bookings.find(b => (b.id || b.bookingId) === bookingId) : null
         
-        console.log('📊 Booking status after payment:', bookingStatus)
+        if (!booking) {
+          throw new Error('Booking not found after sync')
+        }
+
+        console.log('📋 Booking details:', booking)
+        
+        // Get user info from localStorage
+        const userId = localStorage.getItem('userId')
+        const userEmail = localStorage.getItem('userEmail')
+        const user = JSON.parse(localStorage.getItem('user') || '{}')
+        
+        if (!userEmail) {
+          throw new Error('User email not found')
+        }
+        
+        // Prepare contract data from booking
+        const pickupDate = new Date(booking.startTime || booking.pickupDateTime)
+        const ngayKy = String(pickupDate.getDate()).padStart(2, '0')
+        const thangKy = String(pickupDate.getMonth() + 1).padStart(2, '0')
+        const namKy = String(pickupDate.getFullYear())
+        
+        // Get car details
+        const carBrand = booking.carInfo?.split(' ')[0] || booking.car?.brand || 'N/A'
+        const carModel = booking.car?.model || 'N/A'
+        const licensePlate = booking.car?.licensePlate || 'N/A'
+        const carColor = booking.car?.color || 'N/A'
+        const yearManufactured = booking.car?.year || '2024'
+        
+        // Calculate rental duration
+        const startDate = new Date(booking.startTime || booking.pickupDateTime)
+        const endDate = new Date(booking.endTime || booking.expectedReturnDateTime)
+        const thoiHanThueSo = Math.ceil((endDate - startDate) / (1000 * 60 * 60))
+        const donViThoiHan = 'giờ'
+        const thoiHanThueChu = numberToVietnameseWords(thoiHanThueSo)
+        
+        // Format rental price
+        const giaThueSo = String(Math.round(booking.totalAmount || 0))
+        const giaThueChu = numberToVietnameseWords(Math.round(booking.totalAmount || 0))
+        
+        // User full name - use firstName from user data
+        const hoTen = user.firstName || user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A'
+        
+        const contractData = {
+          ngayKy: ngayKy,
+          thangKy: thangKy,
+          namKy: namKy,
+          benA: {
+            hoTen: hoTen
+          },
+          xe: {
+            nhanHieu: carBrand,
+            bienSo: licensePlate,
+            loaiXe: carModel,
+            mauSon: carColor,
+            xeDangKiHan: yearManufactured
+          },
+          giaThue: {
+            giaThueSo: giaThueSo,
+            giaThueChu: giaThueChu
+          },
+          thoiHanThueSo: String(thoiHanThueSo),
+          thoiHanThueChu: thoiHanThueChu,
+          thoiHanThue: thoiHanThueSo,
+          donViThoiHan: donViThoiHan
+        }
+        
+        console.log('📋 Contract data prepared:', contractData)
+        
+        // Step 3: Create contract
+        console.log('📝 Creating contract...')
+        const contractResponse = await API.createContract(bookingId, contractData)
+        const contractId = contractResponse.id || contractResponse.contractId || contractResponse
+        
+        console.log('✅ Contract created with ID:', contractId)
+        
+        // Step 4: Send email with contract
+        console.log('📧 Sending contract email to:', userEmail)
+        await API.sendContractEmail(contractId, userEmail)
+        
+        console.log('✅ Contract email sent successfully')
+        */
+        // ========================================
+        // END CONTRACT FEATURE
+        // ========================================
         
         setSyncing(false)
-        
+
         // Wait a moment before redirecting
         setTimeout(() => {
           // Clear related localStorage items
           try {
             localStorage.removeItem('currentBookingId')
             localStorage.removeItem('depositAmount')
+            // Check if a caller stored a desired return location (e.g., staff flow)
+            const returnTo = localStorage.getItem('postPaymentReturn') || '/booking-history'
+            // Remove the helper key
+            localStorage.removeItem('postPaymentReturn')
+            // Navigate back to the appropriate page (staff or booking history)
+            navigate(returnTo)
+            return
           } catch (e) {
-            console.warn('Failed to clear storage:', e)
+            console.warn('Failed to clear storage or compute return path:', e)
           }
-          
-          // Determine redirect destination based on booking status
-          // Status 1 (Active) = Deposit paid, go back to booking history
-          // Status 3 (Checked-in) = Final payment done, go to staff page
-          if (bookingStatus === 3) {
-            console.log('🎯 Final payment complete (Status 3), redirecting to staff page...')
-            navigate('/staff')
-          } else {
-            console.log('💳 Deposit payment complete (Status 1), redirecting to booking history...')
-            navigate('/booking-history')
-          }
+
+          // Fallback: booking history
+          navigate('/booking-history')
         }, 1500)
         
       } catch (err) {

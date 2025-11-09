@@ -13,13 +13,9 @@ export default function AddVehicleModal({ open, onClose, onSubmit, stationId }) 
   const [currentBatteryLevel, setCurrentBatteryLevel] = useState('');
   const [rentalPricePerHour, setRentalPricePerHour] = useState('');
   const [rentalPricePerDate, setRentalPricePerDate] = useState('');
-  const [seats, setSeats] = useState('');
-  const [carImage, setCarImage] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
+  const [description, setDescription] = useState('');
   const [error, setError] = useState('');
-
-  // File upload constraints
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
 
   if (!open) return null;
 
@@ -30,8 +26,8 @@ export default function AddVehicleModal({ open, onClose, onSubmit, stationId }) 
       return
     }
     // Required fields per API contract
-    if (!brand.trim() || !model.trim() || !color.trim() || !licensePlate.trim() || !year || !batteryCapacity || !currentBatteryLevel || !rentalPricePerHour || !rentalPricePerDate || !seats) {
-      setError('Please fill all required fields: Brand, Model, Color, Year, License Plate, Battery Capacity, Current Battery, Seats, Price/hour, Price/day.')
+    if (!brand.trim() || !model.trim() || !licensePlate.trim() || !year || !batteryCapacity || !currentBatteryLevel || !rentalPricePerHour || !rentalPricePerDate) {
+      setError('Please fill all required fields: Brand, Model, Year, License Plate, Battery Capacity, Current Battery, Price/hour, Price/day.')
       return
     }
     // Constraints
@@ -40,14 +36,12 @@ export default function AddVehicleModal({ open, onClose, onSubmit, stationId }) 
     const battNum = Number(currentBatteryLevel)
     const priceHour = Number(rentalPricePerHour)
     const priceDay = Number(rentalPricePerDate)
-    const seatsNum = Number(seats)
-    
     if (!Number.isFinite(yearNum) || yearNum < 1900 || yearNum > 2100) {
       setError('Year must be between 1900 and 2100.')
       return
     }
-    if (!Number.isFinite(capNum) || capNum < 0 || capNum > 10000) {
-      setError('Battery Capacity must be a positive number (kWh).')
+    if (!Number.isFinite(capNum) || capNum < 0 || capNum > 100) {
+      setError('Battery Capacity must be between 0 and 100 (kWh).')
       return
     }
     if (!Number.isFinite(battNum) || battNum < 0 || battNum > 100) {
@@ -58,46 +52,26 @@ export default function AddVehicleModal({ open, onClose, onSubmit, stationId }) 
       setError('Rental prices must be positive numbers.')
       return
     }
-    if (!Number.isFinite(seatsNum) || seatsNum <= 0) {
-      setError('Seats must be a positive number.')
-      return
+    const payload = {
+      brand: brand.trim(),
+      model: model.trim(),
+      year: yearNum,
+      color: color || undefined,
+      licensePlate: licensePlate.trim(),
+      batteryCapacity: capNum,
+      currentBatteryLevel: battNum,
+      rentalPricePerHour: priceHour,
+      rentalPricePerDate: priceDay,
+      currentStationId: stationId,
+      imageUrl: imageUrl || undefined,
+      description: description || undefined
     }
-
-    // Validate file if provided
-    if (carImage) {
-      if (!ALLOWED_TYPES.includes(carImage.type)) {
-        setError(`Invalid file type. Allowed: ${ALLOWED_TYPES.join(', ')}`)
-        return
-      }
-      if (carImage.size > MAX_FILE_SIZE) {
-        setError(`File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB. Current: ${(carImage.size / 1024 / 1024).toFixed(2)}MB`)
-        return
-      }
-    }
-    const formData = new FormData()
-    formData.append('Brand', brand.trim())
-    formData.append('Model', model.trim())
-    formData.append('Year', yearNum)
-    formData.append('Color', color.trim())
-    formData.append('LicensePlate', licensePlate.trim())
-    formData.append('BatteryCapacity', capNum)
-    formData.append('CurrentBatteryLevel', battNum)
-    formData.append('RentalPricePerHour', priceHour)
-    formData.append('RentalPricePerDay', priceDay)
-    formData.append('Seats', seatsNum)
-    formData.append('CurrentStationId', stationId)
-    if (carImage) {
-      // Append file with filename (3 parameters like user API does it)
-      formData.append('CarImage', carImage, carImage.name)
-      console.log('📸 Added CarImage:', carImage.name, 'size:', carImage.size, 'type:', carImage.type)
-    }
-
     try {
-      await onSubmit(formData)
+      await onSubmit(payload)
       // Reset and close on success
       setBrand(''); setModel(''); setYear(''); setColor(''); setLicensePlate('');
       setBatteryCapacity(''); setCurrentBatteryLevel(''); setRentalPricePerHour(''); setRentalPricePerDate('');
-      setSeats(''); setCarImage(null);
+      setImageUrl(''); setDescription('');
       onClose()
     } catch (e) {
       setError(e?.message || 'Failed to create vehicle')
@@ -119,38 +93,14 @@ export default function AddVehicleModal({ open, onClose, onSubmit, stationId }) 
           <input value={brand} onChange={e=>setBrand(e.target.value)} placeholder="Brand *" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
           <input value={model} onChange={e=>setModel(e.target.value)} placeholder="Model *" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
           <input value={year} onChange={e=>setYear(e.target.value)} placeholder="Year *" type="number" min={1900} max={2100} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
-          <input value={color} onChange={e=>setColor(e.target.value)} placeholder="Color *" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={color} onChange={e=>setColor(e.target.value)} placeholder="Color" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
           <input value={licensePlate} onChange={e=>setLicensePlate(e.target.value)} placeholder="License Plate *" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
-          <input value={batteryCapacity} onChange={e=>setBatteryCapacity(e.target.value)} placeholder="Battery Capacity (kWh) *" type="number" min={0} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
+          <input value={batteryCapacity} onChange={e=>setBatteryCapacity(e.target.value)} placeholder="Battery Capacity (kWh) *" type="number" min={0} max={100} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
           <input value={currentBatteryLevel} onChange={e=>setCurrentBatteryLevel(e.target.value)} placeholder="Current Battery (%) *" type="number" min={0} max={100} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
           <input value={rentalPricePerHour} onChange={e=>setRentalPricePerHour(e.target.value)} placeholder="Price / hour *" type="number" step="0.01" min={0} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
           <input value={rentalPricePerDate} onChange={e=>setRentalPricePerDate(e.target.value)} placeholder="Price / day *" type="number" step="0.01" min={0} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
-          <input value={seats} onChange={e=>setSeats(e.target.value)} placeholder="Seats *" type="number" min={1} style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px'}} />
-          <input 
-            type="file" 
-            accept="image/*" 
-            onChange={e => {
-              const file = e.target.files?.[0] || null
-              if (file) {
-                if (!ALLOWED_TYPES.includes(file.type)) {
-                  setError(`Invalid file type. Allowed: ${ALLOWED_TYPES.join(', ')}`)
-                  setCarImage(null)
-                  return
-                }
-                if (file.size > MAX_FILE_SIZE) {
-                  setError(`File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB. Current: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
-                  setCarImage(null)
-                  return
-                }
-                setError('')
-                setCarImage(file)
-              } else {
-                setCarImage(null)
-              }
-            }} 
-            placeholder="Car Image" 
-            style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px', gridColumn: '1 / -1'}} 
-          />
+          <input value={imageUrl} onChange={e=>setImageUrl(e.target.value)} placeholder="Image URL" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px', gridColumn: '1 / -1'}} />
+          <input value={description} onChange={e=>setDescription(e.target.value)} placeholder="Description" style={{padding:'10px', border:'1px solid #ddd', borderRadius:'6px', fontSize:'14px', gridColumn: '1 / -1'}} />
         </div>
         <div style={{display:'flex', justifyContent:'flex-end', gap: '10px'}}>
           <button onClick={onClose} style={{

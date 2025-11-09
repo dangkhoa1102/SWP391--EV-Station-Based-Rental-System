@@ -473,37 +473,29 @@ export default function StaffPage() {
           const userName = b.user?.userName || b.user?.UserName || b.user?.username || b.userName || b.UserName || b.username || null
           const email = b.user?.email || b.customerEmail || b.email || b.userEmail || ''
           const address = b.user?.address || b.customerAddress || b.address || ''
-          // Status mapping: Backend status codes 0-7
-          // 0=Pending, 1=Active, 2=Waiting for check-in, 3=Checked-in, 4=Check-out pending, 5=Completed, 6=Cancelled pending refund, 7=Cancelled
+          // Status mapping: prefer numeric codes, fall back to string patterns
           const rawStatus = b.statusCode ?? b.StatusCode ?? b.bookingStatus ?? b.BookingStatus ?? b.status ?? b.Status
           let status = 'booked'
           if (rawStatus != null && (typeof rawStatus === 'number' || /^\d+$/.test(String(rawStatus)))) {
             const code = Number(rawStatus)
-            if (code === 0) status = 'pending' // Pending
-            else if (code === 1) status = 'booked' // Active (ongoing rental)
-            else if (code === 2) status = 'waiting-checkin' // Waiting for check-in
-            else if (code === 3) status = 'checked-in' // Checked-in (can check out)
-            else if (code === 4) status = 'checkout-pending' // Check-out pending (staff processing)
-            else if (code === 5) status = 'completed' // Completed
-            else if (code === 6) status = 'cancelled-pending' // Cancelled pending refund
-            else if (code === 7) status = 'cancelled' // Cancelled
+            if (code === 0) status = 'pending'
+            else if (code === 1) status = 'booked'
+            else if (code === 2) status = 'checked-in'
+            else if (code === 3) status = 'completed'
+            else if (code === 4) status = 'denied'
           } else {
             const s = String(rawStatus || '').toLowerCase()
             if (s.includes('pending') || s.includes('wait')) status = 'pending'
             else if (s.includes('check') && s.includes('in')) status = 'checked-in'
             else if (s.includes('complete') || s.includes('finish')) status = 'completed'
-            else if (s.includes('cancel')) status = 'cancelled'
+            else if (s.includes('deny') || s.includes('reject') || s.includes('cancel')) status = 'denied'
             else status = 'booked'
           }
           const statusLabel = status === 'pending' ? 'Pending'
-                             : status === 'booked' ? 'Active Rental'
-                             : status === 'waiting-checkin' ? 'Waiting Check-in'
-                             : status === 'checked-in' ? 'Checked-in'
-                             : status === 'checkout-pending' ? 'Check-out Pending'
+                             : status === 'booked' ? 'Booked'
+                             : status === 'checked-in' ? 'Check-in Pending'
                              : status === 'completed' ? 'Completed'
-                             : status === 'cancelled-pending' ? 'Cancelled (Pending Refund)'
-                             : status === 'cancelled' ? 'Cancelled'
-                             : (String(rawStatus || '') || 'Booked')
+                             : status === 'denied' ? 'Denied' : (String(rawStatus || '') || 'Booked')
           // Derive a UI stage hint without changing the canonical status
           const s = String(rawStatus || '').toLowerCase()
           const uiStage = (Number(rawStatus) === 0 || s.includes('pending') || s.includes('wait'))

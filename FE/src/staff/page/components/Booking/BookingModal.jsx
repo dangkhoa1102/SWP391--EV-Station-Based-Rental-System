@@ -17,6 +17,10 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
   const [errorMsg, setErrorMsg] = useState('')
   const [checkoutUrl, setCheckoutUrl] = useState('')
   const [qrCode, setQrCode] = useState('')
+  const [showCheckOutModal, setShowCheckOutModal] = useState(false)
+  const [checkOutNotes, setCheckOutNotes] = useState('')
+  const [damageFee, setDamageFee] = useState(0)
+  const [checkOutResult, setCheckOutResult] = useState(null)
 
   useEffect(() => {
     if (!booking) return
@@ -83,10 +87,11 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setErrorMsg('')
     setActionLoading(true)
     try {
-      // 1) Create payment (PaymentType = 'Rental')
-      const p = await StaffAPI.createPayment(booking.id, 'Rental', 'Rental payment at check-in')
-      // Persist booking id for success page to sync
+      // 1) Create payment (use numeric enum 1 for Rental per backend)
+      // Also persist booking id and a return path so the payment success page can redirect back to staff
       try { localStorage.setItem('currentBookingId', booking.id) } catch {}
+      try { localStorage.setItem('postPaymentReturn', '/staff') } catch {}
+      const p = await StaffAPI.createPayment(booking.id, 1, 'Rental payment at check-in')
       // Extract checkoutUrl and qrCode if present
       const url = p?.checkoutUrl || p?.data?.checkoutUrl || p?.url || ''
       const qr = p?.qrCode || p?.data?.qrCode || ''
@@ -95,7 +100,12 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
       setPaymentInfo(p)
       // Try to open checkoutUrl in a new tab for the user to pay
       if (url) {
-        try { window.open(url, '_blank', 'noopener,noreferrer') } catch {}
+        try {
+          // Redirect current tab so that PayOS can callback to our app and we can continue flow
+          window.location.href = url
+        } catch (err) {
+          try { window.open(url, '_blank', 'noopener,noreferrer') } catch {}
+        }
       }
     } catch (e) {
       // If already exists, some backends may return 409 or validation error — continue to sync
@@ -144,6 +154,41 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
       setErrorMsg(e?.response?.data?.message || e?.message || 'Unable to load payment info')
     } finally {
       setPaymentLoading(false)
+    }
+  }
+
+  const handleCheckOut = async () => {
+    if (!booking?.id) return
+    setErrorMsg('')
+    setActionLoading(true)
+    try {
+      // Get current staffId from localStorage or resolve it
+      let staffId = localStorage.getItem('staffId')
+      if (!staffId) {
+        staffId = await StaffAPI.resolveStaffId()
+      }
+      
+      const payload = {
+        bookingId: booking.id,
+        staffId: staffId,
+        actualReturnDateTime: new Date().toISOString(),
+        checkOutNotes: checkOutNotes,
+        checkOutPhotoUrl: '', // Can be extended for photo upload
+        damageFee: Number(damageFee) || 0
+      }
+      
+      const result = await StaffAPI.checkOutBooking(payload)
+      setCheckOutResult(result)
+      
+      // Close checkout modal and update booking
+      setShowCheckOutModal(false)
+      if (onStatusUpdated) {
+        onStatusUpdated(booking.id, 'checked-out-pending-payment')
+      }
+    } catch (e) {
+      setErrorMsg(e?.message || 'Check-out failed')
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -286,6 +331,13 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
                   </button>
                 </>
               )}
+              {booking.status === 'completed' && (
+                <>
+                  <button onClick={() => setShowCheckOutModal(true)} disabled={actionLoading} style={{background:'#d32f2f', color:'#fff', padding:'8px 16px', borderRadius:14}}>
+                    Check Out
+                  </button>
+                </>
+              )}
               {/* For pending or other statuses, hide actions per requirements */}
             </div>
             {errorMsg && (
@@ -324,22 +376,86 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
             )}
           </div>
         </div>
-
-  <div id="modalTransactionInfo" style={{marginTop:24, width:'100%', display: booking.status === 'completed' ? 'block' : 'none'}}>
-          <h4>Transaction Details</h4>
-          <ul style={{fontSize:'1rem'}}>
-            <li>Find rental location on map</li>
-            <li>View available vehicles (type, battery, price)</li>
-            <li>Book in advance or on-site</li>
-            <li>Check-in at counter/app</li>
-            <li>Sign electronic contract</li>
-            <li>Confirm handover with staff (vehicle check, photo)</li>
-            <li>Return vehicle at rental location</li>
-            <li>Staff checks and confirms vehicle condition</li>
-            <li>Pay any additional fees</li>
-          </ul>
-        </div>
       </div>
+
+      {/* Check-Out Modal (Bước 5) */}
+      {showCheckOutModal && (
+        <div className="modal-overlay" style={{display: 'flex'}}>
+          <div className="modal-content" style={{display:'flex', flexDirection:'column', width:'min(600px,95vw)', maxHeight:'90vh', overflow:'auto', margin:'0 auto'}}>
+            <span className="close-btn" onClick={() => setShowCheckOutModal(false)}>&times;</span>
+            <h2 style={{marginTop:0}}>Check Out Vehicle</h2>
+            
+            <div style={{flex:1, display:'flex', flexDirection:'column', gap:12}}>
+              {/* Booking Info */}
+              <div style={{padding:12, background:'#f5f5f5', borderRadius:8}}>
+                <div><strong>Booking:</strong> {booking?.title || booking?.carName || 'Vehicle'}</div>
+                <div><strong>Customer:</strong> {resolvedFullName || booking?.fullName || '—'}</div>
+                <div><strong>Expected Return:</strong> {booking?.expectedReturnDateTime || booking?.date || '—'}</div>
+              </div>
+
+              {/* Check-Out Notes */}
+              <div>
+                <label style={{display:'block', marginBottom:6, fontWeight:600}}>Check-Out Notes (optional)</label>
+                <textarea 
+                  value={checkOutNotes} 
+                  onChange={e => setCheckOutNotes(e.target.value)}
+                  style={{width:'100%', height:80, padding:8, borderRadius:6, border:'1px solid #ddd', fontFamily:'inherit'}}
+                  placeholder="E.g., Vehicle condition, scratches, maintenance notes..."
+                />
+              </div>
+
+              {/* Damage Fee */}
+              <div>
+                <label style={{display:'block', marginBottom:6, fontWeight:600}}>Damage Fee (VND)</label>
+                <input 
+                  type="number" 
+                  value={damageFee} 
+                  onChange={e => setDamageFee(e.target.value)}
+                  style={{width:'100%', padding:10, borderRadius:6, border:'1px solid #ddd', fontSize:14}}
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+
+              {/* Error */}
+              {errorMsg && (
+                <div style={{padding:10, background:'#ffebee', color:'#b00020', borderRadius:6}}>
+                  {errorMsg}
+                </div>
+              )}
+
+              {/* Check-Out Result Info */}
+              {checkOutResult && (
+                <div style={{padding:12, background:'#e8f5e9', borderRadius:8, border:'1px solid #4caf50'}}>
+                  <div style={{fontWeight:600, marginBottom:8}}>Check-Out Complete</div>
+                  <div><strong>Rental Amount:</strong> {checkOutResult?.rentalAmount || checkOutResult?.RentalAmount || '—'} VND</div>
+                  <div><strong>Late Fee:</strong> {checkOutResult?.lateFee || checkOutResult?.LateFee || 0} VND</div>
+                  <div><strong>Damage Fee:</strong> {checkOutResult?.damageFee || checkOutResult?.DamageFee || 0} VND</div>
+                  <div><strong>Extra Payment:</strong> {checkOutResult?.extraAmount || checkOutResult?.ExtraAmount || 0} VND</div>
+                  <div><strong>Refund:</strong> {checkOutResult?.refundAmount || checkOutResult?.RefundAmount || 0} VND</div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{display:'flex', gap:10, justifyContent:'center', marginTop:16}}>
+              <button 
+                onClick={handleCheckOut} 
+                disabled={actionLoading} 
+                style={{background:'#43a047', color:'#fff', padding:'10px 20px', borderRadius:10, border:'none', cursor:actionLoading?'not-allowed':'pointer'}}
+              >
+                {actionLoading ? 'Processing...' : 'Complete Check Out'}
+              </button>
+              <button 
+                onClick={() => setShowCheckOutModal(false)} 
+                style={{background:'#f5f5f5', color:'#333', padding:'10px 20px', borderRadius:10, border:'1px solid #ddd', cursor:'pointer'}}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
