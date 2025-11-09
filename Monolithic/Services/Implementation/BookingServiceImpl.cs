@@ -587,7 +587,7 @@ namespace Monolithic.Services.Implementation
             try
             {
                 Expression<Func<Booking, bool>> predicate = b => b.IsActive;
-
+                
                 var (items, total) = await _bookingRepository.GetPagedAsync(
                     request.Page,
                     request.PageSize,
