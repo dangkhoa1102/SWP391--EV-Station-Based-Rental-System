@@ -21,11 +21,14 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
         <input type="text" id="searchBooking" placeholder="Search by customer or car..." value={search} onChange={e => setSearch(e.target.value)} />
         <select id="statusFilter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="booked">Booked</option>
-          <option value="checked-in">Check-in Pending</option>
-          <option value="denied">Denied</option>
+          <option value="pending">Pending (Awaiting Payment)</option>
+          <option value="booked">Active Rental</option>
+          <option value="waiting-checkin">Waiting Check-in</option>
+          <option value="checked-in">Checked-in</option>
+          <option value="checkout-pending">Check-out Pending</option>
           <option value="completed">Completed</option>
+          <option value="cancelled-pending">Cancelled (Pending Refund)</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
