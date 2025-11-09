@@ -33,6 +33,18 @@ apiClient.interceptors.request.use(cfg => {
       cfg.headers.Authorization = `Bearer ${t}`
     }
   } catch (e) {}
+  
+  // If payload is FormData, let axios handle Content-Type automatically
+  if (cfg.data instanceof FormData) {
+    console.log('📤 FormData detected - letting axios set Content-Type automatically')
+    console.log('📋 FormData contents:')
+    for (let pair of cfg.data.entries()) {
+      console.log(`  ${pair[0]}:`, pair[1])
+    }
+    // Set Content-Type to undefined to let axios calculate it with boundary
+    cfg.headers['Content-Type'] = undefined
+  }
+  
   try {
     cfg.metadata = cfg.metadata || {}
     cfg.metadata.start = Date.now()
@@ -414,27 +426,17 @@ const API = {
     return body && typeof body === 'object' && 'data' in body ? body.data : body
   },
   getCarsByStation: async (stationId) => {
-    const id = encodeURIComponent(stationId)
-    const attempts = [
-      `/car/station/${id}`,
-      `/cars/station/${id}`,
-      `/Car/Station/${id}`,
-      `/Cars/Station/${id}`,
-      `/vehicle/station/${id}`,
-      `/vehicles/station/${id}`,
-      `/Vehicle/Station/${id}`,
-      `/Vehicles/Station/${id}`
-    ]
-    for (const url of attempts) {
-      try {
-        const res = await apiClient.get(url)
-        const body = res.data
-        return body && typeof body === 'object' && 'data' in body ? body.data : body
-      } catch (e) {
-        if (e?.response?.status !== 404) throw e
-      }
+    if (!stationId) return []
+    try {
+      console.log(`🚗 Fetching cars for station: ${stationId}`)
+      const res = await apiClient.get(`/Cars/Get-Available-By-Station/${stationId}`)
+      const body = res.data
+      console.log('✅ Cars for station response:', body)
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      console.error(`❌ Failed to fetch cars for station ${stationId}:`, e.response?.data || e.message)
+      return []
     }
-    return []
   },
   getAvailableCars: async (stationId) => {
     if (stationId) return API.getCarsByStation(stationId)
@@ -443,31 +445,16 @@ const API = {
     return body && typeof body === 'object' && 'data' in body ? body.data : body
   },
   createCar: async (payload) => {
-    // Try a wide range of common endpoints used across variants
-    const attempts = [
-      // REST base resources
-      '/car', '/cars', '/Car', '/Cars',
-      // Action-style endpoints
-      '/Car/Create', '/Cars/Create', '/Car/Add', '/Cars/Add',
-      '/Car/Create-Car', '/Cars/Create-Car',
-      // Alternate resource name
-      '/vehicle', '/vehicles', '/Vehicle', '/Vehicles',
-      '/Vehicle/Create', '/Vehicles/Create', '/Vehicle/Add', '/Vehicles/Add'
-    ]
-    const tried = []
-    for (const url of attempts) {
-      try {
-        tried.push(url)
-        const res = await apiClient.post(url, payload)
-        const body = res.data
-        return body && typeof body === 'object' && 'data' in body ? body.data : body
-      } catch (e) {
-        const code = e?.response?.status
-        if (code !== 404 && code !== 405) throw e
-        // else continue
-      }
+    try {
+      console.log('🚗 Creating car via POST /Cars/Create')
+      const res = await apiClient.post('/Cars/Create', payload)
+      const body = res.data
+      console.log('✅ Vehicle created successfully:', body)
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      console.error('❌ Failed to create car:', e.response?.data || e.message)
+      throw e
     }
-    throw new Error(`Create car endpoint not found (tried ${tried.join(', ')})`)
   },
   updateCar: async (carId, updatePayload) => {
     const id = encodeURIComponent(carId)
@@ -892,7 +879,7 @@ const API = {
   getUserBookings: async (userId) => {
     try {
       console.log('📋 Fetching bookings for user:', userId)
-      const res = await apiClient.get(`/Bookings/Get-By-User/${encodeURIComponent(userId)}`)
+      const res = await apiClient.get(`/Bookings/User-Booking-History/${encodeURIComponent(userId)}`)
       console.log('✅ User bookings response:', res.data)
       const responseData = res.data
       

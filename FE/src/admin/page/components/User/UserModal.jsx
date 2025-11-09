@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import UserBookingHistory from './UserBookingHistory';
 
 export default function UserModal({ user, onClose, onAssignStaff, onDelete }) {
   const [loading, setLoading] = useState(false);
+  const [showBookingHistory, setShowBookingHistory] = useState(false);
 
   if (!user) return null;
 
@@ -9,8 +11,11 @@ export default function UserModal({ user, onClose, onAssignStaff, onDelete }) {
   const email = user.email || user.Email || '—';
   const phone = user.phoneNumber || user.PhoneNumber || user.phone || '—';
   const role = user.role || user.Role || user.userRole || 'Customer';
-  const avatar = user.avatarUrl || user.AvatarUrl || `https://via.placeholder.com/150x150?text=${encodeURIComponent(fullName.charAt(0))}`;
   const userId = user.id || user.Id || user.userId || user.UserId;
+
+  if (showBookingHistory) {
+    return <UserBookingHistory userId={userId} userName={fullName} onClose={() => setShowBookingHistory(false)} />;
+  }
 
   const handleAssignStaff = async () => {
     const reason = window.prompt('Enter reason for promoting to staff (optional):') || '';
@@ -43,12 +48,40 @@ export default function UserModal({ user, onClose, onAssignStaff, onDelete }) {
   };
 
   return (
-    <div className="modal-overlay" style={{display: 'flex'}}>
+    <div
+      className="modal-overlay"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        padding: '20px'
+      }}
+    >
       <div className="modal-content" style={{maxWidth: '500px', width: '90%'}}>
         <span className="close-btn" onClick={onClose}>&times;</span>
         
-        <div style={{textAlign: 'center', padding: '20px'}}>
-          <img src={avatar} alt={fullName} style={{width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '15px'}} />
+  <div style={{textAlign: 'center', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+          {/* Avatar placeholder: no user images here, show an icon-only placeholder */}
+          <div
+            aria-hidden
+            style={{
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              background: '#eceff1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '15px',
+              color: '#607d8b'
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
           <h2 style={{margin: '10px 0'}}>{fullName}</h2>
           <div style={{color: '#666', marginBottom: '20px'}}>{role}</div>
         </div>
@@ -68,7 +101,22 @@ export default function UserModal({ user, onClose, onAssignStaff, onDelete }) {
           </div>
         </div>
 
-        <div style={{padding: '20px', borderTop: '1px solid #eee', display: 'flex', gap: '10px', justifyContent: 'center'}}>
+        <div style={{padding: '20px', borderTop: '1px solid #eee', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap'}}>
+          <button 
+            onClick={() => setShowBookingHistory(true)}
+            style={{
+              background: '#1976d2',
+              color: 'white',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              opacity: loading ? 0.6 : 1
+            }}
+          >
+            <i className="fas fa-history" style={{marginRight: '6px'}}></i>
+            Booking History
+          </button>
           <button 
             onClick={handleAssignStaff} 
             disabled={loading}
