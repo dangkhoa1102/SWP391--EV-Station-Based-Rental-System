@@ -77,7 +77,18 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
       if (isSelected) classes.push('selected')
       
       cells.push(
-        <div key={dateStr} className={classes.join(' ')} onClick={()=>{ if(!isPast) { setReturnDate(dateStr); setCalendarMode(null) } }}>
+        <div 
+          key={dateStr} 
+          className={classes.join(' ')} 
+          onClick={(e)=>{ 
+            e.stopPropagation()
+            if(!isPast) { 
+              setReturnDate(dateStr)
+              setCalendarMode(null) 
+            } 
+          }}
+          style={{cursor: isPast ? 'not-allowed' : 'pointer'}}
+        >
           {day}
         </div>
       )
@@ -225,7 +236,7 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
                   <label style={{display:'flex', flexDirection:'column', gap:6}}>
                     <span>Return Date</span>
                     <div 
-                      onClick={()=>setCalendarMode(calendarMode === 'return' ? null : 'return')}
+                      onClick={(e) => { e.stopPropagation(); setCalendarMode(calendarMode === 'return' ? null : 'return') }}
                       style={{
                         padding:'8px 12px', 
                         border:'1px solid #ccc', 
@@ -236,8 +247,11 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
                     >
                       {returnDate ? new Date(returnDate).toLocaleDateString() : 'Select date'}
                     </div>
-                    {calendarMode === 'return' && (
-                      <div style={{
+                  </label>
+                  {calendarMode === 'return' && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
                         position:'absolute', 
                         top:'100%', 
                         left:0, 
@@ -250,20 +264,19 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
                         minWidth:280,
                         boxShadow:'0 2px 8px rgba(0,0,0,0.15)'
                       }}>
-                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
-                          <button type="button" onClick={()=>changeMonth(-1)} style={{background:'none', border:'none', cursor:'pointer', fontSize:16}}>◀</button>
-                          <span style={{fontWeight:600}}>{new Date(currentYear, currentMonth).toLocaleString('default', {month:'long', year:'numeric'})}</span>
-                          <button type="button" onClick={()=>changeMonth(1)} style={{background:'none', border:'none', cursor:'pointer', fontSize:16}}>▶</button>
-                        </div>
-                        <div style={{display:'grid', gridTemplateColumns:'repeat(7, 1fr)', gap:4, marginBottom:8}}>
-                          {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} style={{textAlign:'center', fontSize:12, fontWeight:600}}>{d}</div>)}
-                        </div>
-                        <div style={{display:'grid', gridTemplateColumns:'repeat(7, 1fr)', gap:4}}>
-                          {renderCalendar()}
-                        </div>
+                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); changeMonth(-1) }} style={{background:'none', border:'none', cursor:'pointer', fontSize:16}}>◀</button>
+                        <span style={{fontWeight:600}}>{new Date(currentYear, currentMonth).toLocaleString('default', {month:'long', year:'numeric'})}</span>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); changeMonth(1) }} style={{background:'none', border:'none', cursor:'pointer', fontSize:16}}>▶</button>
                       </div>
-                    )}
-                  </label>
+                      <div style={{display:'grid', gridTemplateColumns:'repeat(7, 1fr)', gap:4, marginBottom:8}}>
+                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} style={{textAlign:'center', fontSize:12, fontWeight:600}}>{d}</div>)}
+                      </div>
+                      <div style={{display:'grid', gridTemplateColumns:'repeat(7, 1fr)', gap:4}}>
+                        {renderCalendar()}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div style={{flex:1, position:'relative'}}>
@@ -281,8 +294,11 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
                     >
                       {returnTime}
                     </div>
-                    {calendarMode === 'return-time' && (
-                      <div style={{
+                  </label>
+                  {calendarMode === 'return-time' && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
                         position:'absolute', 
                         top:'100%', 
                         left:0, 
@@ -297,26 +313,25 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
                         overflow:'auto',
                         boxShadow:'0 2px 8px rgba(0,0,0,0.15)'
                       }}>
-                        {timeOptions.map(t=>(
-                          <div 
-                            key={t} 
-                            onClick={(e) => { e.stopPropagation(); setReturnTime(t); setCalendarMode(null) }}
-                            style={{
-                              padding:'8px 12px',
-                              cursor:'pointer',
-                              background: t === returnTime ? '#e3f2fd' : '#fff',
-                              color: t === returnTime ? '#1976d2' : '#333',
-                              fontWeight: t === returnTime ? '600' : '400',
-                              borderRadius:4,
-                              marginBottom:4
-                            }}
-                          >
-                            {t}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </label>
+                      {timeOptions.map(t=>(
+                        <div 
+                          key={t} 
+                          onClick={(e) => { e.stopPropagation(); setReturnTime(t); setCalendarMode(null) }}
+                          style={{
+                            padding:'8px 12px',
+                            cursor:'pointer',
+                            background: t === returnTime ? '#e3f2fd' : '#fff',
+                            color: t === returnTime ? '#1976d2' : '#333',
+                            fontWeight: t === returnTime ? '600' : '400',
+                            borderRadius:4,
+                            marginBottom:4
+                          }}
+                        >
+                          {t}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
