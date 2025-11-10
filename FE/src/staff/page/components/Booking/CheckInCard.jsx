@@ -38,20 +38,24 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
         throw new Error('You are not signed in. Please sign in as Staff and try again (401).')
       }
 
-      // Resolve Staff entity Id (not just userId)
-      let staffId = ''
-      try {
-        staffId = await StaffAPI.resolveStaffId()
-      } catch (ridErr) {
-        // Fallback: try userId if staff mapping is not available
-        try { staffId = localStorage.getItem('userId') || '' } catch {}
-        if (!staffId) throw ridErr
+      // Get userId from localStorage or token
+      let userId = ''
+      try { userId = localStorage.getItem('userId') || '' } catch {}
+      if (!userId) {
+        try {
+          const t = localStorage.getItem('token')
+          if (t) {
+            const decoded = StaffAPI.decodeJwt(t)
+            userId = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || decoded.sub || decoded.userId || decoded.UserId || decoded.id || decoded.Id || ''
+          }
+        } catch {}
       }
+      if (!userId) throw new Error('Unable to determine userId. Please sign in again.')
 
       // Build payload; omit optional fields if blank and validate URL shape
       const payload = {
         bookingId: booking.id,
-        staffId,
+        staffId: userId,
         staffSignature,
         customerSignature,
       }
@@ -67,7 +71,14 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
           }
         } catch {}
       }
-      await StaffAPI.checkInWithContract(payload)
+      // Call check-in API and get response with totalAmount
+      const response = await StaffAPI.checkInWithContract(payload)
+      console.log('✅ Check-in response:', response)
+
+      // Save bookingId to localStorage for payment tracking
+      localStorage.setItem('activeCheckInBookingId', booking.id)
+      console.log('💾 Saved activeCheckInBookingId to localStorage:', booking.id)
+
       if (typeof onCheckedIn === 'function') onCheckedIn(booking.id, payload)
       onClose?.()
     } catch (e) {

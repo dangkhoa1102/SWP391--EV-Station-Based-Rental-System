@@ -274,53 +274,14 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
                 </>
               )}
               {booking.status === 'checked-in' && (
-                <>
-                  <button onClick={handleConfirmCheckIn} disabled={actionLoading} style={{background:'#43a047', color:'#fff', padding:'8px 16px', borderRadius:14}}>
-                    {actionLoading ? 'Processing…' : 'Confirm Check In'}
-                  </button>
-                  <button onClick={handleRetrySync} disabled={actionLoading} style={{background:'#1565c0', color:'#fff', padding:'8px 16px', borderRadius:14}}>
-                    Retry Sync
-                  </button>
-                  <button onClick={handleViewPayment} disabled={paymentLoading} style={{background:'#455a64', color:'#fff', padding:'8px 16px', borderRadius:14}}>
-                    {paymentLoading ? 'Loading…' : 'View Payment Status'}
-                  </button>
-                </>
+                <button onClick={() => onProceed?.(booking, 'checkout')} style={{background:'#d32f2f', color:'#fff', width:'100%', padding:'12px', borderRadius:6, border:'none', cursor:'pointer', fontWeight:600, fontSize:14}}>
+                  Check Out
+                </button>
               )}
               {/* For pending or other statuses, hide actions per requirements */}
             </div>
             {errorMsg && (
               <div style={{marginTop:8, color:'#b00020'}}>{errorMsg}</div>
-            )}
-            {lastSyncAt && (
-              <div style={{marginTop:4, color:'#555', fontSize:12}}>Last sync: {lastSyncAt.toLocaleTimeString()}</div>
-            )}
-            {(qrCode || checkoutUrl) && (
-              <div style={{marginTop:12, padding:12, border:'1px solid #e0e0e0', borderRadius:8}}>
-                <div style={{fontWeight:600, marginBottom:6}}>Complete Payment</div>
-                {qrCode ? (
-                  <div style={{display:'flex', alignItems:'center', gap:16, flexWrap:'wrap'}}>
-                    <img alt="Pay QR" src={qrCode} style={{width:160, height:160, objectFit:'contain', border:'1px solid #eee', borderRadius:6}} />
-                    <div style={{color:'#555'}}>Scan the QR to pay. After payment completes, use "Retry Sync" to update the booking.</div>
-                  </div>
-                ) : (
-                  <div style={{color:'#555'}}>Open the checkout to complete your payment, then return and press "Retry Sync".</div>
-                )}
-                {checkoutUrl && (
-                  <div style={{marginTop:10}}>
-                    <a href={checkoutUrl} target="_blank" rel="noreferrer" style={{background:'#1565c0', color:'#fff', padding:'8px 14px', borderRadius:10, textDecoration:'none'}}>Open Checkout</a>
-                  </div>
-                )}
-              </div>
-            )}
-            {paymentInfo && (
-              <div style={{marginTop:12, padding:12, border:'1px solid #eee', borderRadius:8}}>
-                <div style={{fontWeight:600, marginBottom:6}}>Payment</div>
-                <div>Status: {String(paymentInfo.status || paymentInfo.Status || paymentInfo.paymentStatus || '—')}</div>
-                <div>Gateway: {String(paymentInfo.gatewayStatus || paymentInfo.GatewayStatus || paymentInfo.providerStatus || '—')}</div>
-                <div>Amount: {paymentInfo.amount ?? paymentInfo.Amount ?? '—'}</div>
-                <div>Transaction: {paymentInfo.transactionId || paymentInfo.TransactionId || paymentInfo.txnId || '—'}</div>
-                <div>Updated: {paymentInfo.updatedAt || paymentInfo.UpdatedAt || paymentInfo.lastUpdated || '—'}</div>
-              </div>
             )}
           </div>
         </div>

@@ -1515,4 +1515,275 @@ API.createIncident = async (bookingId, description, images = []) => {
   throw lastErr || new Error('Create incident endpoint not found')
 }
 
+// =============================================================================
+// CHECK-OUT WITH PAYMENT
+// =============================================================================
+
+/**
+ * Check out with payment calculation
+ * @param {Object} payload - Check-out data
+ * @returns {Object} Check-out response with fees
+ */
+API.checkOutWithPayment = async (payload) => {
+  if (!payload || !payload.bookingId || !payload.staffId) {
+    throw new Error('Missing required fields: bookingId, staffId')
+  }
+  
+  const attempts = [
+    '/bookings/Check-Out-With-Payment',
+    '/Bookings/Check-Out-With-Payment',
+    '/Bookings/CheckOutWithPayment',
+  ]
+  let lastErr
+  
+  for (const url of attempts) {
+    // Try with FormData first (multipart/form-data)
+    if (payload.checkOutPhotoFile && payload.checkOutPhotoFile instanceof File) {
+      try {
+        const formData = new FormData()
+        formData.append('bookingId', payload.bookingId)
+        formData.append('staffId', payload.staffId)
+        
+        // Add timestamp fields
+        if (payload.actualReturnDateTime) {
+          formData.append('actualReturnDateTime', payload.actualReturnDateTime)
+        }
+        
+        // Add damage fee
+        if (payload.damageFee !== undefined && payload.damageFee !== null) {
+          formData.append('damageFee', String(payload.damageFee))
+        }
+        
+        // Add optional notes
+        if (payload.checkOutNotes) {
+          formData.append('checkOutNotes', payload.checkOutNotes)
+        }
+        
+        // Add photo URL if provided
+        if (payload.checkOutPhotoUrl && !payload.checkOutPhotoUrl.startsWith('blob:')) {
+          formData.append('checkOutPhotoUrl', payload.checkOutPhotoUrl)
+        }
+        
+        // Add photo file
+        formData.append('checkOutPhotoFile', payload.checkOutPhotoFile)
+        
+        const res = await apiClient.post(url, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        const body = res?.data
+        if (body && typeof body === 'object' && 'data' in body) {
+          if (body.isSuccess === false) {
+            const msg = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : 'Request failed')
+            const err = new Error(msg)
+            err.body = body
+            throw err
+          }
+          return body.data
+        }
+        return body
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    
+    // Try with JSON payload
+    try {
+      const { checkOutPhotoFile, ...jsonPayload } = payload
+      const res = await apiClient.post(url, jsonPayload, {
+        headers: { 'Content-Type': 'application/json' }
+      })
+      const body = res?.data
+      if (body && typeof body === 'object' && 'data' in body) {
+        if (body.isSuccess === false) {
+          const msg = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : 'Request failed')
+          const err = new Error(msg)
+          err.body = body
+          throw err
+        }
+        return body.data
+      }
+      return body
+    } catch (e) {
+      lastErr = e
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw lastErr || new Error('Check-Out-With-Payment endpoint not found')
+}
+
+// =============================================================================
+// GET INCIDENTS BY BOOKING
+// =============================================================================
+
+/**
+ * Fetch incidents for a specific booking
+ * @param {string} bookingId - Booking ID
+ * @param {number} page - Page number (default 1)
+ * @param {number} pageSize - Items per page (default 20)
+ * @returns {Array} List of incidents
+ */
+API.getIncidentsByBooking = async (bookingId, page = 1, pageSize = 20) => {
+  if (!bookingId) return []
+  const id = encodeURIComponent(bookingId)
+  
+  const attempts = [
+    { url: `/Incidents/GetByBooking/${id}`, opts: { params: { page, pageSize } } },
+    { url: `/Incident/GetByBooking/${id}`, opts: { params: { page, pageSize } } },
+    { url: `/incidents/get-by-booking/${id}`, opts: { params: { page, pageSize } } },
+  ]
+  
+  for (const a of attempts) {
+    try {
+      const res = await apiClient.get(a.url, a.opts)
+      const body = res?.data
+      const unwrapped = body && typeof body === 'object' && 'data' in body ? body.data : body
+      
+      if (!unwrapped) continue
+      if (Array.isArray(unwrapped)) return unwrapped
+      if (Array.isArray(unwrapped?.items)) return unwrapped.items
+      if (Array.isArray(unwrapped?.data)) return unwrapped.data
+      
+      console.warn('⚠️ Unexpected incidents response format:', unwrapped)
+      return Array.isArray(unwrapped) ? unwrapped : []
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) {
+        console.error('❌ Error fetching incidents:', e?.message)
+        return []
+      }
+    }
+  }
+  return []
+}
+
+// =============================================================================
+// UPDATE CHECKIN WITH CONTRACT - FORMDATA SUPPORT
+// =============================================================================
+
+/**
+ * Update checkInWithContract to support FormData with photo file
+ * This replaces the old JSON-only version
+ */
+API.checkInWithContract = async (payload) => {
+  if (!payload || !payload.bookingId || !payload.staffId) {
+    throw new Error('Missing required fields: bookingId, staffId')
+  }
+  
+  const attempts = [
+    '/bookings/Check-In-With-Contract',
+    '/Bookings/Check-In-With-Contract',
+    '/Bookings/CheckInWithContract',
+  ]
+  let lastErr
+  
+  for (const url of attempts) {
+    // Try with FormData first (multipart/form-data)
+    if (payload.checkInPhotoFile && payload.checkInPhotoFile instanceof File) {
+      try {
+        const formData = new FormData()
+        formData.append('bookingId', payload.bookingId)
+        formData.append('staffId', payload.staffId)
+        if (payload.checkInNotes) {
+          formData.append('checkInNotes', payload.checkInNotes)
+        }
+        if (payload.checkInPhotoUrl && !payload.checkInPhotoUrl.startsWith('blob:')) {
+          formData.append('checkInPhotoUrl', payload.checkInPhotoUrl)
+        }
+        formData.append('checkInPhotoFile', payload.checkInPhotoFile)
+        
+        const res = await apiClient.post(url, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        const body = res?.data
+        if (body && typeof body === 'object' && 'data' in body) {
+          if (body.isSuccess === false) {
+            const msg = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : 'Request failed')
+            const err = new Error(msg)
+            err.body = body
+            throw err
+          }
+          return body.data
+        }
+        return body
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    
+    // Try with JSON payload
+    try {
+      const { checkInPhotoFile, ...jsonPayload } = payload
+      const res = await apiClient.post(url, jsonPayload, {
+        headers: { 'Content-Type': 'application/json' }
+      })
+      const body = res?.data
+      if (body && typeof body === 'object' && 'data' in body) {
+        if (body.isSuccess === false) {
+          const msg = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : 'Request failed')
+          const err = new Error(msg)
+          err.body = body
+          throw err
+        }
+        return body.data
+      }
+      return body
+    } catch (e) {
+      lastErr = e
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw lastErr || new Error('Check-In-With-Contract endpoint not found')
+}
+
+// =============================================================================
+// UPDATE CREATEPAYMENT - SUPPORT EXTRAAMOUNT
+// =============================================================================
+
+/**
+ * Update createPayment to support extraAmount parameter
+ * This replaces the old version without extraAmount support
+ */
+API.createPayment = async (bookingId, paymentType = 1, description = 'Rental payment at check-in', extraAmount = 0) => {
+  if (!bookingId) throw new Error('bookingId is required')
+  
+  // Ensure paymentType is numeric (convert string to number if needed)
+  let numericPaymentType = paymentType
+  if (typeof paymentType === 'string') {
+    // Map string types to numeric: 'Rental' = 1, 'Deposit' = 0, etc.
+    const typeMap = { 'Rental': 1, 'Deposit': 0, 'Penalty': 2, 'Damage': 3 }
+    numericPaymentType = typeMap[paymentType] !== undefined ? typeMap[paymentType] : 1
+  }
+  
+  const payloads = [
+    // Primary: numeric paymentType with lowercase keys (matches user API)
+    { bookingId, paymentType: numericPaymentType, description, extraAmount: Number(extraAmount) || 0 },
+    // Fallback: PascalCase keys
+    { BookingId: bookingId, PaymentType: numericPaymentType, Description: description, ExtraAmount: Number(extraAmount) || 0 },
+  ]
+  const endpoints = [
+    '/Payment/create', '/Payments/create', '/Payment/Create', '/Payments/Create',
+  ]
+  let lastErr
+  for (const url of endpoints) {
+    for (const body of payloads) {
+      try {
+        const res = await apiClient.post(url, body)
+        const data = res?.data
+        return data && typeof data === 'object' && 'data' in data ? data.data : data
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+  }
+  throw lastErr || new Error('Create payment endpoint not found')
+}
+
 export default API
