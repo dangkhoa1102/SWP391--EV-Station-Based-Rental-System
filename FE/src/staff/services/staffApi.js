@@ -1227,7 +1227,8 @@ API.createPayment = async (bookingId, paymentType = 'Rental', description = 'Ren
     { BookingId: bookingId, PaymentType: 1, Description: description },
   ]
   const endpoints = [
-    '/Payment/Create', '/Payments/Create', '/payment/create', '/payments/create',
+    '/Payment/create', '/payment/create',
+    '/Payment/Create', '/Payments/Create', '/payment/Create', '/payments/create',
   ]
   let lastErr
   for (const url of endpoints) {
@@ -1383,20 +1384,38 @@ API.resolveStaffId = async (userId = null) => {
 
 // Check-In with Contract (specific canonical endpoint)
 // Expected payload shape:
-// { bookingId: GUID, staffId: GUID, staffSignature: string, customerSignature: string, checkInNotes?: string, checkInPhotoUrl?: string }
+// { bookingId: GUID, staffId: GUID, checkInNotes?: string, checkInPhoto?: File }
 API.checkInWithContract = async (payload) => {
-  if (!payload || !payload.bookingId || !payload.staffId || !payload.staffSignature || !payload.customerSignature) {
-    throw new Error('Missing required fields: bookingId, staffId, staffSignature, customerSignature')
+  if (!payload || !payload.bookingId || !payload.staffId) {
+    throw new Error('Missing required fields: bookingId, staffId')
   }
+  
+  // Create FormData for multipart/form-data
+  const formData = new FormData()
+  formData.append('BookingId', payload.bookingId)
+  formData.append('StaffId', payload.staffId)
+  
+  if (payload.checkInNotes) {
+    formData.append('CheckInNotes', payload.checkInNotes)
+  }
+  
+  if (payload.checkInPhoto && payload.checkInPhoto instanceof File) {
+    formData.append('CheckInPhoto', payload.checkInPhoto)
+  }
+  
   const attempts = [
-    '/bookings/Check-In-With-Contract',
     '/Bookings/Check-In-With-Contract',
-    '/Bookings/CheckInWithContract',
+    '/bookings/Check-In-With-Contract',
+    '/api/Bookings/Check-In-With-Contract',
   ]
   let lastErr
   for (const url of attempts) {
     try {
-      const res = await apiClient.post(url, payload)
+      const res = await apiClient.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
       const body = res?.data
       if (body && typeof body === 'object' && 'data' in body) {
         if (body.isSuccess === false) {
@@ -1417,28 +1436,76 @@ API.checkInWithContract = async (payload) => {
   throw lastErr || new Error('Check-In-With-Contract endpoint not found')
 }
 
+// Check-Out with Payment (Bước 5)
+// Expected payload shape:
+// { bookingId: GUID, staffId: GUID, actualReturnDateTime?: DateTime, checkOutNotes?: string, checkOutPhotoUrl?: string, damageFee?: number }
+API.checkOutBooking = async (payload) => {
+  if (!payload || !payload.bookingId || !payload.staffId) {
+    throw new Error('Missing required fields: bookingId, staffId')
+  }
+  
+  // Normalize field names to match backend DTO (both PascalCase and camelCase)
+  const body = {
+    BookingId: payload.bookingId,
+    StaffId: payload.staffId,
+    ActualReturnDateTime: payload.actualReturnDateTime || null,
+    CheckOutNotes: payload.checkOutNotes || '',
+    CheckOutPhotoUrl: payload.checkOutPhotoUrl || '',
+    DamageFee: payload.damageFee || 0
+  }
+  
+  const attempts = [
+    '/Bookings/Check-Out-With-Payment',
+    '/bookings/Check-Out-With-Payment',
+    '/Bookings/checkout',
+  ]
+  let lastErr
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.post(url, body)
+      const respBody = res?.data
+      if (respBody && typeof respBody === 'object' && 'data' in respBody) {
+        if (respBody.isSuccess === false) {
+          const msg = respBody.message || (Array.isArray(respBody.errors) ? respBody.errors.join('; ') : 'Request failed')
+          const err = new Error(msg)
+          err.body = respBody
+          throw err
+        }
+        return respBody.data
+      }
+      return respBody
+    } catch (e) {
+      lastErr = e
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw lastErr || new Error('Check-Out-With-Payment endpoint not found')
+}
+
 // =============================================================================
 // FLEET MANAGEMENT (Staff can also use these for station management)
 // =============================================================================
 
 /**
- * Get detailed car status report for staff
- * Staff can only see available cars at their assigned station
- * @param {string} stationId - Filter by station (required for staff)
- * @param {string} status - Filter by status (optional, unused for staff)
+ * Get detailed car status report
+ * @param {string} stationId - Filter by station (optional)
+ * @param {string} status - Filter by status (optional)
  */
 API.getCarStatusReport = async (stationId = null, status = null) => {
-  if (!stationId) return null
-  try {
-    const cars = await API.getCarsByStation(stationId)
-    if (Array.isArray(cars)) {
-      return {
-        totalCars: cars.length,
-        availableCars: cars.filter(c => c.Status === 0 || c.Status === 'Available').length
-      }
+  const params = {}
+  if (stationId) params.stationId = stationId
+  if (status) params.status = status
+  const attempts = ['/Admin/Fleet/Car-Status', '/Fleet/Car-Status', '/Staff/Fleet/Car-Status']
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url, { params })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
     }
-  } catch (e) {
-    console.error('Failed to get car status report:', e)
   }
   return null
 }
@@ -1657,6 +1724,154 @@ API.getIncidentsByBooking = async (bookingId, page = 1, pageSize = 20) => {
     }
   }
   return []
+}
+
+// =============================================================================
+// INCIDENTS - Station / Admin / Staff operations
+// =============================================================================
+
+/**
+ * Fetch incidents across a station (paginated)
+ * @param {string} stationId
+ * @param {string|null} status
+ * @param {string|null} dateFrom
+ * @param {string|null} dateTo
+ * @param {number} page
+ * @param {number} pageSize
+ */
+API.getAllIncidents = async (stationId = null, status = null, dateFrom = null, dateTo = null, page = 1, pageSize = 100) => {
+  try {
+    const params = {}
+    if (stationId) params.stationId = stationId
+    if (status) params.status = status
+    if (dateFrom) params.dateFrom = dateFrom
+    if (dateTo) params.dateTo = dateTo
+    params.page = page
+    params.pageSize = pageSize
+
+    const res = await apiClient.get('/Incidents/Get-All', { params })
+    const body = res?.data
+    // Expecting { incidents: [...], totalCount, page, pageSize }
+    const unwrapped = body && typeof body === 'object' && 'data' in body ? body.data : body
+    if (!unwrapped) return { incidents: [], totalCount: 0, page, pageSize }
+    // If the contract returns { incidents: [...] }
+    if (Array.isArray(unwrapped)) return { incidents: unwrapped, totalCount: unwrapped.length, page, pageSize }
+    const incidents = unwrapped.incidents || unwrapped.items || unwrapped.data || []
+    const total = unwrapped.totalCount || unwrapped.total || (Array.isArray(incidents) ? incidents.length : 0)
+    return { incidents: Array.isArray(incidents) ? incidents : [], totalCount: total || 0, page: unwrapped.page || page, pageSize: unwrapped.pageSize || pageSize }
+  } catch (e) {
+    console.error('❌ Error fetching incidents for station:', e?.response?.data || e?.message)
+    return { incidents: [], totalCount: 0, page, pageSize }
+  }
+}
+
+/**
+ * Get single incident by id
+ */
+API.getIncidentById = async (incidentId) => {
+  if (!incidentId) return null
+  const id = encodeURIComponent(incidentId)
+  const attempts = [
+    `/Incidents/Get-By-${id}`,
+    `/Incidents/Get-By-Id/${id}`,
+    `/Incidents/${id}`,
+    `/incident/${id}`
+  ]
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.get(url)
+      const body = res?.data
+      const unwrapped = body && typeof body === 'object' && 'data' in body ? body.data : body
+      if (!unwrapped) continue
+      return unwrapped
+    } catch (e) {
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  return null
+}
+
+/**
+ * Update incident by id using FormData (supports images additions/removals)
+ * Expected form fields per backend: Status, ResolutionNotes, CostIncurred, ResolvedBy, ImagesToRemove[], NewImages[]
+ */
+API.updateIncident = async (incidentId, formData /* FormData */) => {
+  if (!incidentId) throw new Error('incidentId is required')
+  const id = encodeURIComponent(incidentId)
+  const attempts = [
+    `/Incidents/Update-By-${id}`,
+    `/Incidents/Update-By-Id/${id}`,
+    `/Incidents/Update/${id}`,
+    `/Incidents/${id}`
+  ]
+  let lastErr = null
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.put(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      const body = res?.data
+      const unwrapped = body && typeof body === 'object' && 'data' in body ? body.data : body
+      return unwrapped || body
+    } catch (e) {
+      lastErr = e
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw lastErr || new Error('Update incident endpoint not found')
+}
+
+/**
+ * Resolve an incident (PATCH) with JSON body { resolutionNotes, costIncurred }
+ */
+API.resolveIncident = async (incidentId, resolutionNotes = '', costIncurred = 0) => {
+  if (!incidentId) throw new Error('incidentId is required')
+  const id = encodeURIComponent(incidentId)
+  const attempts = [
+    `/Incidents/Resolve-By-${id}`,
+    `/Incidents/Resolve-By-Id/${id}`,
+    `/Incidents/Resolve/${id}`
+  ]
+  let lastErr = null
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.patch(url, { resolutionNotes, costIncurred })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      lastErr = e
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw lastErr || new Error('Resolve incident endpoint not found')
+}
+
+/**
+ * Delete incident by id
+ */
+API.deleteIncident = async (incidentId) => {
+  if (!incidentId) throw new Error('incidentId is required')
+  const id = encodeURIComponent(incidentId)
+  const attempts = [
+    `/Incidents/Delete-By-${id}`,
+    `/Incidents/Delete-By-Id/${id}`,
+    `/Incidents/Delete/${id}`,
+    `/Incidents/${id}`
+  ]
+  let lastErr = null
+  for (const url of attempts) {
+    try {
+      const res = await apiClient.delete(url)
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      lastErr = e
+      const code = e?.response?.status
+      if (code && code !== 404 && code !== 405) throw e
+    }
+  }
+  throw lastErr || new Error('Delete incident endpoint not found')
 }
 
 // =============================================================================

@@ -21,6 +21,8 @@ export default function StaffPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [stations, setStations] = useState([]);
+  const [incidents, setIncidents] = useState([]);
+  const [loadingIncidents, setLoadingIncidents] = useState(false);
   const [stationId, setStationId] = useState('');
   const [loadingVehicles, setLoadingVehicles] = useState(false);
   const [loadingStations, setLoadingStations] = useState(false);
@@ -103,10 +105,76 @@ export default function StaffPage() {
       let images = [];
       try { images = formData.getAll ? formData.getAll('images') : []; } catch (e) { images = [] }
       const created = await StaffAPI.createIncident(bookingId, description, images);
+      // refresh incidents for current station
+      try { await loadIncidentsForStation(stationId) } catch {}
       return created;
     } catch (e) {
       console.error('❌ create incident failed', e?.response?.data || e?.message || e);
       throw e;
+    }
+  }
+
+  // Load incidents for station
+  const loadIncidentsForStation = async (sid) => {
+    if (!sid) {
+      setIncidents([])
+      return
+    }
+    setLoadingIncidents(true)
+    try {
+      const resp = await StaffAPI.getAllIncidents(sid, null, null, null, 1, 200)
+      const items = resp?.incidents || []
+      // normalize ids and fields similar to UI expectations
+      const mapped = (items || []).map(it => ({
+        id: it.id || it.Id || it.incidentId || it.IncidentId || (it._id && String(it._id)),
+        description: it.description || it.Description || it.details || '',
+        bookingId: it.bookingId || it.BookingId || it.booking || null,
+        images: it.images || it.Images || [],
+        status: it.status || it.Status || 'Pending',
+        reportedAt: it.reportedAt || it.ReportedAt || it.createdAt || it.CreatedAt || it.date || null,
+        costIncurred: it.costIncurred ?? it.CostIncurred ?? it.cost ?? null,
+        stationId: it.stationId || it.StationId || null,
+        raw: it
+      }))
+      setIncidents(mapped)
+    } catch (e) {
+      console.error('❌ failed to load incidents for station', e)
+      setIncidents([])
+    } finally {
+      setLoadingIncidents(false)
+    }
+  }
+
+  // Update an incident by id (FormData expected)
+  const handleUpdateIncident = async (incidentId, formData) => {
+    try {
+      await StaffAPI.updateIncident(incidentId, formData)
+      await loadIncidentsForStation(stationId)
+    } catch (e) {
+      console.error('❌ update incident failed', e)
+      throw e
+    }
+  }
+
+  // Resolve incident
+  const handleResolveIncident = async (incidentId, resolutionNotes, costIncurred) => {
+    try {
+      await StaffAPI.resolveIncident(incidentId, resolutionNotes, Number(costIncurred) || 0)
+      await loadIncidentsForStation(stationId)
+    } catch (e) {
+      console.error('❌ resolve incident failed', e)
+      throw e
+    }
+  }
+
+  // Delete incident
+  const handleDeleteIncident = async (incidentId) => {
+    try {
+      await StaffAPI.deleteIncident(incidentId)
+      await loadIncidentsForStation(stationId)
+    } catch (e) {
+      console.error('❌ delete incident failed', e)
+      throw e
     }
   }
 
@@ -656,6 +724,12 @@ export default function StaffPage() {
     return () => { mounted = false }
   }, [stationId])
 
+  // Load incidents for the selected station whenever it changes
+  useEffect(() => {
+    // stationId may be null/empty initially
+    loadIncidentsForStation(stationId)
+  }, [stationId])
+
   return (
     <div className="app-layout">
       <Header />
@@ -731,10 +805,15 @@ export default function StaffPage() {
         )}
         {section === 'incident' && (
           <IncidentSection
-            incidents={[]}
+            incidents={incidents}
             bookings={bookings}
             onCreateIncident={handleCreateIncident}
-            onRefresh={async () => { /* optional: refresh incidents from server */ }}
+            onUpdateIncident={handleUpdateIncident}
+            onResolveIncident={handleResolveIncident}
+            onDeleteIncident={handleDeleteIncident}
+            onRefresh={async () => { await loadIncidentsForStation(stationId) }}
+            canDelete={true}
+            stationFilter={stationId}
           />
         )}
         {section === 'profile' && <ProfileSection />}
