@@ -432,17 +432,28 @@ const API = {
       console.log('📝 Creating booking for user:', userId)
       console.log('📝 Booking data:', bookingData)
       
-      // Use the Create-With-Deposit endpoint which accepts deposit amount in request body
-      const res = await apiClient.post(`/Bookings/Create-With-Deposit?userId=${encodeURIComponent(userId)}`, {
-        ...bookingData,
-        userId: userId, // Also include userId in body
-        paymentMethod: 'PayOS', // Payment method is required
-        transactionId: '' // Transaction ID (empty until payment is processed)
-      })
+      // Backend expects only these fields according to Swagger
+      // Field name is 'stationId' not 'pickupStationId' or 'returnStationId'
+      const payload = {
+        carId: bookingData.carId,
+        stationId: bookingData.pickupStationId || bookingData.returnStationId || bookingData.stationId,
+        pickupDateTime: bookingData.pickupDateTime,
+        expectedReturnDateTime: bookingData.expectedReturnDateTime
+      }
+      
+      console.log('📤 Sending payload:', payload)
+      
+      const res = await apiClient.post(`/Bookings/Create-With-Deposit?userId=${encodeURIComponent(userId)}`, payload)
       console.log('✅ Booking created:', res.data)
       return res.data?.data || res.data || {}
     } catch (e) {
       console.error('❌ Error creating booking:', e.response?.data || e.message)
+      
+      // Log detailed validation errors if available
+      if (e.response?.data?.errors) {
+        console.error('📋 Validation errors:', e.response.data.errors)
+      }
+      
       throw e
     }
   },
@@ -704,6 +715,118 @@ const API = {
       console.error(`❌ Error uploading ${type}:`, e)
       console.error(`❌ Response data:`, e.response?.data)
       console.error(`❌ Response status:`, e.response?.status)
+      throw e
+    }
+  },
+
+  // ==================== PAYMENT APIs ====================
+  
+  // Create payment for deposit, rental, or checkout
+  // PaymentType: 0 = Deposit, 1 = Rental, 2 = Checkout (penalty/damage)
+  createPayment: async (bookingId, paymentType = 0, description = 'Payment', extraAmount = 0) => {
+    try {
+      console.log('💳 Creating payment for booking:', bookingId, '| Type:', paymentType, '| Extra amount:', extraAmount)
+      
+      const payload = {
+        bookingId: bookingId,
+        paymentType: paymentType,
+        description: description
+      }
+      
+      // Add extraAmount only if it's provided (for checkout with damage fees)
+      if (extraAmount > 0) {
+        payload.extraAmount = extraAmount
+      }
+      
+      const res = await apiClient.post('/Payment/create', payload)
+      console.log('✅ Payment created:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error creating payment:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Sync payment status after PayOS redirect
+  syncPayment: async (bookingId) => {
+    try {
+      console.log('🔄 Syncing payment for booking:', bookingId)
+      const res = await apiClient.post(`/Payment/sync/${encodeURIComponent(bookingId)}`)
+      console.log('✅ Payment synced:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error syncing payment:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Get booking details by ID (used to check status after payment)
+  getBookingById: async (bookingId) => {
+    try {
+      console.log('📋 Fetching booking details for ID:', bookingId)
+      const res = await apiClient.get(`/Bookings/Get-By-${encodeURIComponent(bookingId)}`)
+      console.log('✅ Booking details:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error fetching booking details:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Check if contract is confirmed (used before creating payment for rental/checkout)
+  isContractConfirmed: async (bookingId) => {
+    try {
+      console.log('📄 Checking if contract is confirmed for booking:', bookingId)
+      const res = await apiClient.get(`/Contracts/Get-By-Booking/${encodeURIComponent(bookingId)}`)
+      const contract = res.data?.data || res.data || {}
+      const isConfirmed = contract.isConfirmed === true || contract.IsConfirmed === true
+      console.log('📄 Contract confirmed status:', isConfirmed)
+      return isConfirmed
+    } catch (e) {
+      console.error('❌ Error checking contract:', e.response?.data || e.message)
+      return false
+    }
+  },
+
+  // ==================== CONTRACT APIs ====================
+  
+  // Create contract for booking with full DTO
+  // Send complete TaoHopDongDto with all required fields from user profile, booking, and car data
+  createContract: async (bookingId, userId, contractDto) => {
+    try {
+      console.log('📄 Creating contract for booking:', bookingId)
+      console.log('  Sending full contract DTO:', contractDto)
+      
+      const res = await apiClient.post(
+        `/Contracts/hopdong/tao?bookingId=${encodeURIComponent(bookingId)}&renterId=${encodeURIComponent(userId)}`,
+        contractDto
+      )
+      
+      console.log('✅ Contract created:', res.data)
+      // Return full response so contractId can be extracted from .data field
+      return res.data
+    } catch (e) {
+      console.error('❌ Error creating contract:', e.response?.data || e.message)
+      throw e
+    }
+  },
+
+  // Send contract email to user
+  sendContractEmail: async (contractId, email) => {
+    try {
+      console.log('📧 Sending contract email')
+      console.log('   Contract ID:', contractId)
+      console.log('   Email:', email)
+      
+      const res = await apiClient.post(
+        `/Contracts/hopdong/${encodeURIComponent(contractId)}/gui-email`,
+        { email: email }
+      )
+      
+      console.log('✅ Email sent successfully:', res.data)
+      return res.data?.data || res.data || {}
+    } catch (e) {
+      console.error('❌ Error sending email:', e.response?.data || e.message)
       throw e
     }
   }

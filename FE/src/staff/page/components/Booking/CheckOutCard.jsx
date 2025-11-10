@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import StaffAPI from '../../../services/staffApi'
+import API from '../../../../services/api' // Add central API for payment
 
 function formatVND(n) {
   try {
@@ -26,6 +27,8 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
   const [checkOutResponse, setCheckOutResponse] = useState(null)
   const [checkoutUrl, setCheckoutUrl] = useState('')
   const [paymentLoading, setPaymentLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncSuccess, setSyncSuccess] = useState(false)
 
   // Time options (6:00 - 23:00)
   const timeOptions = Array.from({ length: 18 }, (_,i)=> `${(6+i).toString().padStart(2,'0')}:00`)
@@ -162,6 +165,43 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
         setCheckOutResponse(prev => ({...prev, ...updatedBooking}))
       }
       
+      // Auto-create payment if there's damage fee OR extraAmount from backend
+      const damageAmount = Number(damageFee) || 0
+      const backendExtraAmount = Number(updatedBooking?.extraAmount || 0)
+      const totalExtraAmount = damageAmount + backendExtraAmount
+      
+      console.log('💰 Payment amounts - Damage:', damageAmount, 'Backend Extra:', backendExtraAmount, 'Total:', totalExtraAmount)
+      
+      if (totalExtraAmount > 0) {
+        setPaymentLoading(true)
+        try {
+          // Create payment session with paymentType = 2 (checkout payment)
+          // Use totalExtraAmount to include both damage fee and backend calculated fees
+          const paymentRes = await API.createPayment(booking.id, 2, 'Rental payment at check-out', totalExtraAmount)
+          console.log('✅ Payment created:', paymentRes)
+          
+          // Extract checkout URL from response
+          const data = paymentRes || {}
+          const checkoutUrlValue = data.checkoutUrl || data.url || data.payUrl || ''
+          
+          if (checkoutUrlValue) {
+            console.log('🔄 Opening Payos checkout in new tab:', checkoutUrlValue)
+            setCheckoutUrl(checkoutUrlValue)
+            // Open PayOS in new tab instead of redirecting
+            window.open(checkoutUrlValue, '_blank')
+          } else {
+            console.warn('⚠️ No checkout URL in payment response:', data)
+            setCheckoutUrl('')
+            setError('Payment session created but no checkout URL received. Please try again.')
+          }
+        } catch (payErr) {
+          console.error('❌ Payment creation failed:', payErr?.message)
+          setError(`Check-out succeeded but payment setup failed: ${payErr?.message}. Please try again.`)
+        } finally {
+          setPaymentLoading(false)
+        }
+      }
+      
       if (typeof onCheckedOut === 'function') onCheckedOut(booking.id, payload)
     } catch (e) {
       const body = e?.body || e?.response?.data
@@ -182,8 +222,16 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
       // Save bookingId for payment tracking
       localStorage.setItem('activeCheckOutBookingId', booking.id)
       
+      // Get amount to pay from checkOutResponse
+      const extraAmount = Number(checkOutResponse?.extraAmount || 0)
+      const damageAmount = Number(damageFee) || 0
+      const totalAmount = Math.max(extraAmount, damageAmount) // Use whichever is larger
+      
+      console.log('💰 Creating payment - ExtraAmount:', extraAmount, 'DamageFee:', damageAmount, 'Using:', totalAmount)
+      
       // Create payment session with paymentType = 2 (checkout payment)
-      const paymentRes = await StaffAPI.createPayment(booking.id, 2, 'Rental payment at check-out')
+      // Use central API instead of StaffAPI
+      const paymentRes = await API.createPayment(booking.id, 2, 'Rental payment at check-out', totalAmount)
       console.log('✅ Payment created:', paymentRes)
       
       // Extract checkout URL from response
@@ -204,6 +252,36 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
       setError(`Payment setup failed: ${payErr?.message}`)
     } finally {
       setPaymentLoading(false)
+    }
+  }
+
+  async function handleSyncPayment() {
+    if (!booking?.id) return
+    setSyncing(true)
+    setError('')
+    try {
+      console.log('🔄 Syncing payment for booking:', booking.id)
+      await API.syncPayment(booking.id)
+      console.log('✅ Payment synced successfully')
+      
+      // Fetch updated booking to check status
+      const updatedBooking = await API.getBookingById(booking.id)
+      console.log('📊 Updated booking status:', updatedBooking.bookingStatus)
+      
+      setSyncSuccess(true)
+      setError('')
+      
+      // Notify parent and close after short delay
+      setTimeout(() => {
+        if (typeof onCheckedOut === 'function') onCheckedOut(booking.id)
+        onClose()
+      }, 1500)
+    } catch (err) {
+      console.error('❌ Payment sync failed:', err)
+      setError(`Payment sync failed: ${err.message}`)
+      setSyncSuccess(false)
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -366,6 +444,12 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
             
             {error && <div style={{background:'#ffebee', color:'#d32f2f', padding:'12px', borderRadius:6, marginBottom:12}}>{error}</div>}
             
+            {syncSuccess && (
+              <div style={{background:'#e8f5e9', color:'#2e7d32', padding:'12px', borderRadius:6, marginBottom:12, textAlign:'center'}}>
+                ✅ Payment synced successfully! Closing...
+              </div>
+            )}
+            
             <div style={{display:'flex', gap:16, flexWrap:'wrap', marginBottom:16}}>
               {/* Left: Booking & Amount info */}
               <div style={{flex:'1 1 300px', minWidth:260}}>
@@ -404,23 +488,49 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
                       <div style={{fontSize:13, color:'#666', marginBottom:16, lineHeight:1.5}}>
                         Amount to pay: <strong>{formatVND(checkOutResponse?.extraAmount || 0)}</strong>
                       </div>
-                      <button 
-                        onClick={handleGoToPayment}
-                        disabled={paymentLoading}
-                        style={{
-                          background:'#4CAF50', 
-                          color:'#fff', 
-                          border:'none', 
-                          padding:'10px 20px', 
-                          borderRadius:6, 
-                          cursor:paymentLoading ? 'not-allowed' : 'pointer',
-                          fontSize:14, 
-                          fontWeight:600,
-                          width:'100%'
-                        }}
-                      >
-                        {paymentLoading ? '⏳ Opening Payment...' : '💳 Go to Payment'}
-                      </button>
+                      {!checkoutUrl ? (
+                        <button 
+                          onClick={handleGoToPayment}
+                          disabled={paymentLoading}
+                          style={{
+                            background:'#4CAF50', 
+                            color:'#fff', 
+                            border:'none', 
+                            padding:'10px 20px', 
+                            borderRadius:6, 
+                            cursor:paymentLoading ? 'not-allowed' : 'pointer',
+                            fontSize:14, 
+                            fontWeight:600,
+                            width:'100%',
+                            marginBottom:8
+                          }}
+                        >
+                          {paymentLoading ? '⏳ Opening Payment...' : '💳 Go to Payment'}
+                        </button>
+                      ) : (
+                        <>
+                          <div style={{fontSize:12, color:'#666', marginBottom:12}}>
+                            ✅ Payment link opened in new tab
+                          </div>
+                          <button 
+                            onClick={handleSyncPayment}
+                            disabled={syncing || syncSuccess}
+                            style={{
+                              background: syncSuccess ? '#2e7d32' : '#1976d2',
+                              color:'#fff',
+                              border:'none',
+                              borderRadius:8,
+                              padding:'10px 20px',
+                              cursor: syncing || syncSuccess ? 'not-allowed' : 'pointer',
+                              fontSize:14,
+                              fontWeight:600,
+                              width:'100%'
+                            }}
+                          >
+                            {syncing ? '🔄 Syncing...' : syncSuccess ? '✅ Synced!' : '🔄 Sync Payment Status'}
+                          </button>
+                        </>
+                      )}
                     </>
                   ) : (
                     <div style={{fontSize:13, color:'#2e7d32', padding:'12px', background:'#e8f5e9', borderRadius:6}}>
@@ -432,7 +542,7 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
             </div>
             
             <div style={{background:'#fff9c4', padding:12, borderRadius:6, marginBottom:16, fontSize:13, color:'#f57f17', lineHeight:1.5}}>
-              ℹ️ <strong>Note:</strong> Click "Go to Payment" to complete payment on Payos. After payment, the booking will be automatically updated.
+              ℹ️ <strong>Note:</strong> Click "Go to Payment" to open Payos in new tab. After customer completes payment, click "Sync Payment Status" to update booking.
             </div>
             
             <div style={{display:'flex', gap:12, justifyContent:'center'}}>

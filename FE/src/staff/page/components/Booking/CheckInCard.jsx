@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import StaffAPI from '../../../services/staffApi'
+import API from '../../../../services/api' // Add central API for payment
 
 function formatVND(n) {
   try {
@@ -23,6 +24,8 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
   const [qrImageUrl, setQrImageUrl] = useState('')
   const [qrText, setQrText] = useState('')
   const [paymentLoading, setPaymentLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncSuccess, setSyncSuccess] = useState(false)
 
   React.useEffect(() => {
     let mounted = true
@@ -96,7 +99,8 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
         setPaymentLoading(true)
         try {
           // Create payment session with numeric paymentType (1 = Rental)
-          const paymentRes = await StaffAPI.createPayment(booking.id, 1, 'Rental payment at check-in')
+          // Use central API instead of StaffAPI
+          const paymentRes = await API.createPayment(booking.id, 1, 'Rental payment at check-in')
           console.log('✅ Payment created:', paymentRes)
           
           // Extract checkout URL from response
@@ -104,12 +108,10 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
           const checkoutUrlValue = data.checkoutUrl || data.url || data.payUrl || ''
           
           if (checkoutUrlValue) {
-            console.log('🔄 Redirecting to Payos checkout:', checkoutUrlValue)
+            console.log('🔄 Opening Payos checkout in new tab:', checkoutUrlValue)
             setCheckoutUrl(checkoutUrlValue)
-            // Auto-redirect to Payos after a short delay so user can see the success message
-            setTimeout(() => {
-              window.location.href = checkoutUrlValue
-            }, 1500)
+            // Open PayOS in new tab instead of redirecting
+            window.open(checkoutUrlValue, '_blank')
           } else {
             console.warn('⚠️ No checkout URL in payment response:', data)
             setCheckoutUrl('')
@@ -132,6 +134,36 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
       try { console.error('❌ Check-in failed:', { error: e?.message, status: e?.status || e?.response?.status, body }) } catch {}
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleSyncPayment() {
+    if (!booking?.id) return
+    setSyncing(true)
+    setError('')
+    try {
+      console.log('🔄 Syncing payment for booking:', booking.id)
+      await API.syncPayment(booking.id)
+      console.log('✅ Payment synced successfully')
+      
+      // Fetch updated booking to check status
+      const updatedBooking = await API.getBookingById(booking.id)
+      console.log('📊 Updated booking status:', updatedBooking.bookingStatus)
+      
+      setSyncSuccess(true)
+      setError('')
+      
+      // Notify parent and close after short delay
+      setTimeout(() => {
+        if (typeof onCheckedIn === 'function') onCheckedIn(booking.id)
+        onClose()
+      }, 1500)
+    } catch (err) {
+      console.error('❌ Payment sync failed:', err)
+      setError(`Payment sync failed: ${err.message}`)
+      setSyncSuccess(false)
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -202,7 +234,13 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
             
             {checkoutUrl && !paymentLoading && (
               <div style={{background:'#f3e5f5', color:'#7b1fa2', padding:'12px', borderRadius:6, marginBottom:12, textAlign:'center'}}>
-                ✅ Payment session created. Redirecting to Payos...
+                ✅ Payment session created. Payos opened in new tab.
+              </div>
+            )}
+            
+            {syncSuccess && (
+              <div style={{background:'#e8f5e9', color:'#2e7d32', padding:'12px', borderRadius:6, marginBottom:12, textAlign:'center'}}>
+                ✅ Payment synced successfully! Closing...
               </div>
             )}
             
@@ -247,11 +285,28 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
                   ) : checkoutUrl ? (
                     <>
                       <div style={{fontSize:13, color:'#666', marginBottom:12, lineHeight:1.5}}>
-                        ✅ Payment link ready
+                        ✅ Payment link opened in new tab
                       </div>
-                      <div style={{fontSize:12, color:'#999'}}>
-                        Redirecting to Payos...
+                      <div style={{fontSize:12, color:'#999', marginBottom:16}}>
+                        After customer completes payment, click the button below to sync
                       </div>
+                      <button 
+                        onClick={handleSyncPayment}
+                        disabled={syncing || syncSuccess}
+                        style={{
+                          background: syncSuccess ? '#2e7d32' : '#1976d2',
+                          color:'#fff',
+                          border:'none',
+                          borderRadius:8,
+                          padding:'10px 20px',
+                          cursor: syncing || syncSuccess ? 'not-allowed' : 'pointer',
+                          fontSize:14,
+                          fontWeight:600,
+                          width:'100%'
+                        }}
+                      >
+                        {syncing ? '🔄 Syncing...' : syncSuccess ? '✅ Synced!' : '🔄 Sync Payment Status'}
+                      </button>
                     </>
                   ) : (
                     <div style={{fontSize:13, color:'#d32f2f', padding:'12px', background:'#ffebee', borderRadius:6}}>

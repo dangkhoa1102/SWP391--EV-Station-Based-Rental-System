@@ -11,6 +11,11 @@ export default function BookingCard({ booking, onClick }) {
   else if (booking.status === 'completed') cls += 'booking-status-completed';
   else if (booking.status === 'cancelled-pending') cls += 'booking-status-cancelled-pending';
   else if (booking.status === 'cancelled') cls += 'booking-status-cancelled';
+  else {
+    // Fallback for unknown status - add grey background
+    cls += 'booking-status-unknown'
+    console.warn('⚠️ BookingCard: Unknown status value:', booking.status, 'Full booking:', booking)
+  }
 
   return (
     <div className="booking-card" onClick={onClick}>
@@ -19,7 +24,7 @@ export default function BookingCard({ booking, onClick }) {
     <div className="booking-title">{booking.title}</div>
     <div className="booking-customer">Customer: {booking.fullName || [booking.firstName, booking.lastName].filter(Boolean).join(' ') || booking.customer || '—'}</div>
       </div>
-      <div className={cls}>{booking.statusLabel || (booking.status ? booking.status.toUpperCase() : '')}</div>
+      <div className={cls}>{booking.statusLabel || (booking.status ? booking.status.toUpperCase() : 'UNKNOWN')}</div>
     </div>
   );
 }
