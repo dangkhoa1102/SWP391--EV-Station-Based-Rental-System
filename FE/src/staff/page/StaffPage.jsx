@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import BookingSection from './components/Booking/BookingSection';
 import VehicleSection from './components/Vehicle/VehicleSection';
 import ProfileSection from './components/Profile/ProfileSection';
+import IncidentSection from './components/Incident/IncidentSection';
 import StaffAPI from '../services/staffApi';
 
 // Start with empty lists; we will load from API
@@ -20,6 +21,8 @@ export default function StaffPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [stations, setStations] = useState([]);
+  const [incidents, setIncidents] = useState([]);
+  const [loadingIncidents, setLoadingIncidents] = useState(false);
   const [stationId, setStationId] = useState('');
   const [loadingVehicles, setLoadingVehicles] = useState(false);
   const [loadingStations, setLoadingStations] = useState(false);
@@ -86,12 +89,96 @@ export default function StaffPage() {
   // Update a booking's status in local state (used by modal after payment sync)
   const handleStatusUpdated = (bookingId, nextStatus) => {
     const label = nextStatus === 'pending' ? 'Pending'
-                : nextStatus === 'booked' ? 'Booked'
-                : nextStatus === 'checked-in' ? 'Check-in Pending'
+                : nextStatus === 'booked' ? 'Active Rental'
+                : nextStatus === 'waiting-checkin' ? 'Waiting Check-in'
+                : nextStatus === 'checked-in' ? 'Checked-in'
+                : nextStatus === 'checkout-pending' ? 'Check-out Pending'
                 : nextStatus === 'completed' ? 'Completed'
-                : nextStatus === 'denied' ? 'Denied'
+                : nextStatus === 'cancelled-pending' ? 'Cancelled (Pending Refund)'
+                : nextStatus === 'cancelled' ? 'Cancelled'
                 : nextStatus
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: nextStatus, statusLabel: label } : b))
+  }
+
+  // Handle FormData from CreateIncidentModal and call StaffAPI.createIncident
+  const handleCreateIncident = async (formData) => {
+    try {
+      const bookingId = formData.get('bookingId') || '';
+      const description = formData.get('description') || '';
+      let images = [];
+      try { images = formData.getAll ? formData.getAll('images') : []; } catch (e) { images = [] }
+      const created = await StaffAPI.createIncident(bookingId, description, images);
+      // refresh incidents for current station
+      try { await loadIncidentsForStation(stationId) } catch {}
+      return created;
+    } catch (e) {
+      console.error('❌ create incident failed', e?.response?.data || e?.message || e);
+      throw e;
+    }
+  }
+
+  // Load incidents for station
+  const loadIncidentsForStation = async (sid) => {
+    if (!sid) {
+      setIncidents([])
+      return
+    }
+    setLoadingIncidents(true)
+    try {
+      const resp = await StaffAPI.getAllIncidents(sid, null, null, null, 1, 200)
+      const items = resp?.incidents || []
+      // normalize ids and fields similar to UI expectations
+      const mapped = (items || []).map(it => ({
+        id: it.id || it.Id || it.incidentId || it.IncidentId || (it._id && String(it._id)),
+        description: it.description || it.Description || it.details || '',
+        bookingId: it.bookingId || it.BookingId || it.booking || null,
+        images: it.images || it.Images || [],
+        status: it.status || it.Status || 'Pending',
+        reportedAt: it.reportedAt || it.ReportedAt || it.createdAt || it.CreatedAt || it.date || null,
+        costIncurred: it.costIncurred ?? it.CostIncurred ?? it.cost ?? null,
+        stationId: it.stationId || it.StationId || null,
+        raw: it
+      }))
+      setIncidents(mapped)
+    } catch (e) {
+      console.error('❌ failed to load incidents for station', e)
+      setIncidents([])
+    } finally {
+      setLoadingIncidents(false)
+    }
+  }
+
+  // Update an incident by id (FormData expected)
+  const handleUpdateIncident = async (incidentId, formData) => {
+    try {
+      await StaffAPI.updateIncident(incidentId, formData)
+      await loadIncidentsForStation(stationId)
+    } catch (e) {
+      console.error('❌ update incident failed', e)
+      throw e
+    }
+  }
+
+  // Resolve incident
+  const handleResolveIncident = async (incidentId, resolutionNotes, costIncurred) => {
+    try {
+      await StaffAPI.resolveIncident(incidentId, resolutionNotes, Number(costIncurred) || 0)
+      await loadIncidentsForStation(stationId)
+    } catch (e) {
+      console.error('❌ resolve incident failed', e)
+      throw e
+    }
+  }
+
+  // Delete incident
+  const handleDeleteIncident = async (incidentId) => {
+    try {
+      await StaffAPI.deleteIncident(incidentId)
+      await loadIncidentsForStation(stationId)
+    } catch (e) {
+      console.error('❌ delete incident failed', e)
+      throw e
+    }
   }
 
 
@@ -507,8 +594,38 @@ export default function StaffPage() {
           const uiStage = (Number(rawStatus) === 0 || s.includes('pending') || s.includes('wait'))
             ? 'waiting-payment'
             : ((s.includes('check') && s.includes('in') && (s.includes('pay') || s.includes('payment'))) ? 'checkin-payment' : null)
-          const date = b.date || b.createdAt || b.bookingDate || ''
+          
+          // Format date properly - convert to readable format
+          let dateStr = b.date || b.createdAt || b.bookingDate || ''
+          if (dateStr) {
+            try {
+              const dateObj = new Date(dateStr)
+              if (!isNaN(dateObj.getTime())) {
+                // Format as YYYY-MM-DD HH:mm (Vietnamese format)
+                dateStr = dateObj.toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: undefined }).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+)/, '$3-$2-$1 $4:$5')
+              }
+            } catch (e) {
+              // Keep original if parsing fails
+            }
+          }
+          
           const img = b.carImageUrl || b.car?.imageUrl || b.vehicle?.imageUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(carName)}`
+          
+          // Format pickup and return dates
+          const formatRentalDate = (dateInput) => {
+            if (!dateInput) return null
+            try {
+              const dateObj = new Date(dateInput)
+              if (!isNaN(dateObj.getTime())) {
+                return dateObj.toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+)/, '$3-$2-$1 $4:$5')
+              }
+            } catch (e) {}
+            return dateInput
+          }
+          
+          const pickupDate = formatRentalDate(b.pickupDate || b.rentalStartDate || b.startDateTime || b.startDate)
+          const returnDate = formatRentalDate(b.returnDate || b.rentalEndDate || b.endDateTime || b.endDate)
+          
           return {
             id,
             title: carName,
@@ -525,7 +642,9 @@ export default function StaffPage() {
             status,
             statusLabel,
             uiStage,
-            date,
+            date: dateStr,
+            pickupDate,
+            returnDate,
             img,
             // identity images (CCCD/CMND front/back)
             cccdFrontUrl: b.cccdFrontUrl || b.identityFrontUrl || b.idFrontUrl || b.frontImageUrl || b.frontIdUrl || b.cccdFrontImageUrl || b.customer?.cccdFrontUrl || b.user?.cccdFrontUrl,
@@ -640,6 +759,12 @@ export default function StaffPage() {
     return () => { mounted = false }
   }, [stationId])
 
+  // Load incidents for the selected station whenever it changes
+  useEffect(() => {
+    // stationId may be null/empty initially
+    loadIncidentsForStation(stationId)
+  }, [stationId])
+
   return (
     <div className="app-layout">
       <Header />
@@ -712,6 +837,19 @@ export default function StaffPage() {
               stationSlots={stationSlots}
             />
           </>
+        )}
+        {section === 'incident' && (
+          <IncidentSection
+            incidents={incidents}
+            bookings={bookings}
+            onCreateIncident={handleCreateIncident}
+            onUpdateIncident={handleUpdateIncident}
+            onResolveIncident={handleResolveIncident}
+            onDeleteIncident={handleDeleteIncident}
+            onRefresh={async () => { await loadIncidentsForStation(stationId) }}
+            canDelete={true}
+            stationFilter={stationId}
+          />
         )}
         {section === 'profile' && <ProfileSection />}
       </main>

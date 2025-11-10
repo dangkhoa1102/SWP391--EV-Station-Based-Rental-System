@@ -27,6 +27,9 @@ export default function Sidebar({ onSelect, isOpen, toggleSidebar }) {
         <button onClick={() => onSelect('vehicle')}>
           <i className="fas fa-car"></i> Vehicle
         </button>
+        <button onClick={() => onSelect('incident')}>
+          <i className="fas fa-exclamation-triangle"></i> Incident
+        </button>
         <button onClick={() => onSelect('profile')}>
           <i className="fas fa-user-circle"></i> Profile
         </button>
