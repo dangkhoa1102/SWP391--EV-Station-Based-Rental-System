@@ -96,6 +96,7 @@
 .booking-status-cancelled-pending { background: #d32f2f; }
 .booking-status-cancelled { background: #c62828; }
 .booking-status-denied { background: #e53935; }
+.booking-status-unknown { background: #757575; }
 
 /* Inline loading indicator for pending and other wait states */
 .loading-row {

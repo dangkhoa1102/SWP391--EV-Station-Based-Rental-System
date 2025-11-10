@@ -87,10 +87,13 @@ export default function StaffPage() {
   // Update a booking's status in local state (used by modal after payment sync)
   const handleStatusUpdated = (bookingId, nextStatus) => {
     const label = nextStatus === 'pending' ? 'Pending'
-                : nextStatus === 'booked' ? 'Booked'
-                : nextStatus === 'checked-in' ? 'Check-in Pending'
+                : nextStatus === 'booked' ? 'Active Rental'
+                : nextStatus === 'waiting-checkin' ? 'Waiting Check-in'
+                : nextStatus === 'checked-in' ? 'Checked-in'
+                : nextStatus === 'checkout-pending' ? 'Check-out Pending'
                 : nextStatus === 'completed' ? 'Completed'
-                : nextStatus === 'denied' ? 'Denied'
+                : nextStatus === 'cancelled-pending' ? 'Cancelled (Pending Refund)'
+                : nextStatus === 'cancelled' ? 'Cancelled'
                 : nextStatus
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: nextStatus, statusLabel: label } : b))
   }
@@ -523,8 +526,38 @@ export default function StaffPage() {
           const uiStage = (Number(rawStatus) === 0 || s.includes('pending') || s.includes('wait'))
             ? 'waiting-payment'
             : ((s.includes('check') && s.includes('in') && (s.includes('pay') || s.includes('payment'))) ? 'checkin-payment' : null)
-          const date = b.date || b.createdAt || b.bookingDate || ''
+          
+          // Format date properly - convert to readable format
+          let dateStr = b.date || b.createdAt || b.bookingDate || ''
+          if (dateStr) {
+            try {
+              const dateObj = new Date(dateStr)
+              if (!isNaN(dateObj.getTime())) {
+                // Format as YYYY-MM-DD HH:mm (Vietnamese format)
+                dateStr = dateObj.toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: undefined }).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+)/, '$3-$2-$1 $4:$5')
+              }
+            } catch (e) {
+              // Keep original if parsing fails
+            }
+          }
+          
           const img = b.carImageUrl || b.car?.imageUrl || b.vehicle?.imageUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(carName)}`
+          
+          // Format pickup and return dates
+          const formatRentalDate = (dateInput) => {
+            if (!dateInput) return null
+            try {
+              const dateObj = new Date(dateInput)
+              if (!isNaN(dateObj.getTime())) {
+                return dateObj.toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+)/, '$3-$2-$1 $4:$5')
+              }
+            } catch (e) {}
+            return dateInput
+          }
+          
+          const pickupDate = formatRentalDate(b.pickupDate || b.rentalStartDate || b.startDateTime || b.startDate)
+          const returnDate = formatRentalDate(b.returnDate || b.rentalEndDate || b.endDateTime || b.endDate)
+          
           return {
             id,
             title: carName,
@@ -541,7 +574,9 @@ export default function StaffPage() {
             status,
             statusLabel,
             uiStage,
-            date,
+            date: dateStr,
+            pickupDate,
+            returnDate,
             img,
             // identity images (CCCD/CMND front/back)
             cccdFrontUrl: b.cccdFrontUrl || b.identityFrontUrl || b.idFrontUrl || b.frontImageUrl || b.frontIdUrl || b.cccdFrontImageUrl || b.customer?.cccdFrontUrl || b.user?.cccdFrontUrl,

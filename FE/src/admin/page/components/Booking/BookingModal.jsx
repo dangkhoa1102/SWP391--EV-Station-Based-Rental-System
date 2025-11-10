@@ -62,17 +62,21 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     let status = 'booked'
     if (raw != null && (typeof raw === 'number' || /^\d+$/.test(String(raw)))) {
       const code = Number(raw)
+      // 0=Pending, 1=Active, 2=Waiting for check-in, 3=Checked-in, 4=Check-out pending, 5=Completed, 6=Cancelled pending refund, 7=Cancelled
       if (code === 0) status = 'pending'
-      else if (code === 1) status = 'booked'
-      else if (code === 2) status = 'checked-in'
-      else if (code === 3) status = 'completed'
-      else if (code === 4) status = 'denied'
+      else if (code === 1) status = 'booked' // Active
+      else if (code === 2) status = 'waiting-checkin' // Waiting for check-in
+      else if (code === 3) status = 'checked-in' // Checked-in
+      else if (code === 4) status = 'checkout-pending' // Check-out pending
+      else if (code === 5) status = 'completed' // Completed
+      else if (code === 6) status = 'cancelled-pending' // Cancelled pending refund
+      else if (code === 7) status = 'cancelled' // Cancelled
     } else {
       const s = String(raw || '').toLowerCase()
       if (s.includes('pending') || s.includes('wait')) status = 'pending'
       else if (s.includes('check') && s.includes('in')) status = 'checked-in'
       else if (s.includes('complete') || s.includes('finish')) status = 'completed'
-      else if (s.includes('deny') || s.includes('reject') || s.includes('cancel')) status = 'denied'
+      else if (s.includes('deny') || s.includes('reject') || s.includes('cancel')) status = 'cancelled'
       else status = 'booked'
     }
     return status

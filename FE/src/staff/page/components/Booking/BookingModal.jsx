@@ -17,6 +17,8 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
   const [errorMsg, setErrorMsg] = useState('')
   const [checkoutUrl, setCheckoutUrl] = useState('')
   const [qrCode, setQrCode] = useState('')
+  const [userDetails, setUserDetails] = useState(null)
+  const [loadingUserDetails, setLoadingUserDetails] = useState(false)
 
   useEffect(() => {
     if (!booking) return
@@ -26,13 +28,17 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setVerifiedLicenseFront(false)
     setVerifiedLicenseBack(false)
     setResolvedFullName('')
+    setUserDetails(null)
+    
     // Resolve Customer name via bookingId -> userId -> User table (FirstName + LastName)
     const compose = (f, l) => [f, l].filter(Boolean).join(' ')
-  const quick = booking.fullName || compose(booking.firstName, booking.lastName)
-  const isPlaceholder = !quick || /^customer$/i.test(quick) || quick === '—'
-  if (!isPlaceholder) { setResolvedFullName(quick); return }
+    const quick = booking.fullName || compose(booking.firstName, booking.lastName)
+    const isPlaceholder = !quick || /^customer$/i.test(quick) || quick === '—'
+    if (!isPlaceholder) { setResolvedFullName(quick) }
+    
     if (!booking.id) return
     let cancelled = false
+    
     async function resolveName() {
       setLoadingName(true)
       try {
@@ -44,7 +50,50 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
         if (!cancelled) setLoadingName(false)
       }
     }
+    
+    // Fetch user details including CCCD/GPLX images
+    async function fetchUserDetails() {
+      if (!booking.userId) {
+        console.warn('⚠️ No userId in booking')
+        return
+      }
+      setLoadingUserDetails(true)
+      try {
+        console.log('🔍 Fetching user details for userId:', booking.userId)
+        const user = await StaffAPI.getUserById(booking.userId)
+        if (!cancelled) {
+          setUserDetails(user)
+          console.log('✅ Fetched user details:', user)
+          console.log('📷 CCCD Images:', {
+            cccdFrontUrl: user?.cccdFrontUrl,
+            identityFrontUrl: user?.identityFrontUrl,
+            idFrontUrl: user?.idFrontUrl,
+            cccdImageUrl_Front: user?.cccdImageUrl_Front,
+            cccdBackUrl: user?.cccdBackUrl,
+            identityBackUrl: user?.identityBackUrl,
+            idBackUrl: user?.idBackUrl,
+            cccdImageUrl_Back: user?.cccdImageUrl_Back,
+          })
+          console.log('🎓 GPLX Images:', {
+            gplxFrontUrl: user?.gplxFrontUrl,
+            driverLicenseFrontUrl: user?.driverLicenseFrontUrl,
+            gplxImageUrl_Front: user?.gplxImageUrl_Front,
+            gplxBackUrl: user?.gplxBackUrl,
+            driverLicenseBackUrl: user?.driverLicenseBackUrl,
+            gplxImageUrl_Back: user?.gplxImageUrl_Back,
+          })
+        }
+      } catch (e) {
+        console.warn('⚠️ Failed to fetch user details:', e?.message || e)
+        console.error('Full error:', e)
+        if (!cancelled) setUserDetails(null)
+      } finally {
+        if (!cancelled) setLoadingUserDetails(false)
+      }
+    }
+    
     resolveName()
+    fetchUserDetails()
     return () => { cancelled = true }
   }, [booking])
 
@@ -62,17 +111,21 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     let status = 'booked'
     if (raw != null && (typeof raw === 'number' || /^\d+$/.test(String(raw)))) {
       const code = Number(raw)
+      // 0=Pending, 1=Active, 2=Waiting for check-in, 3=Checked-in, 4=Check-out pending, 5=Completed, 6=Cancelled pending refund, 7=Cancelled
       if (code === 0) status = 'pending'
-      else if (code === 1) status = 'booked'
-      else if (code === 2) status = 'checked-in'
-      else if (code === 3) status = 'completed'
-      else if (code === 4) status = 'denied'
+      else if (code === 1) status = 'booked' // Active
+      else if (code === 2) status = 'waiting-checkin' // Waiting for check-in
+      else if (code === 3) status = 'checked-in' // Checked-in
+      else if (code === 4) status = 'checkout-pending' // Check-out pending
+      else if (code === 5) status = 'completed' // Completed
+      else if (code === 6) status = 'cancelled-pending' // Cancelled pending refund
+      else if (code === 7) status = 'cancelled' // Cancelled
     } else {
       const s = String(raw || '').toLowerCase()
       if (s.includes('pending') || s.includes('wait')) status = 'pending'
       else if (s.includes('check') && s.includes('in')) status = 'checked-in'
       else if (s.includes('complete') || s.includes('finish')) status = 'completed'
-      else if (s.includes('deny') || s.includes('reject') || s.includes('cancel')) status = 'denied'
+      else if (s.includes('deny') || s.includes('reject') || s.includes('cancel')) status = 'cancelled'
       else status = 'booked'
     }
     return status
@@ -164,32 +217,52 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
           </div>
 
           <div style={{flex:'1 1 380px', display:'flex', flexDirection:'column', gap:14}}>
-            {/* CCCD/ID Number Display */}
+            {/* Pickup Date */}
             <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between'}}>
-              <span style={{fontWeight:600}}>ID Number (CMND/CCCD):</span>
+              <span style={{fontWeight:600}}>Pickup Date:</span>
               <div style={{display:'flex', alignItems:'center', gap:12}}>
-                <span id="modalIDValue" style={{fontWeight:600}}>{booking.idString || '—'}</span>
+                <span id="pickupDate" style={{fontWeight:600}}>{booking.pickupDate || booking.startDate || booking.date || '—'}</span>
               </div>
             </div>
 
-            {/* Address Display (from user table) */}
+            {/* Return Date */}
+            <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between'}}>
+              <span style={{fontWeight:600}}>Return Date:</span>
+              <div style={{display:'flex', alignItems:'center', gap:12}}>
+                <span id="returnDate" style={{fontWeight:600}}>{booking.returnDate || booking.endDate || '—'}</span>
+              </div>
+            </div>
+
+            {/* CCCD/ID Number Display - from User API */}
+            <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between'}}>
+              <span style={{fontWeight:600}}>ID Number (CMND/CCCD):</span>
+              <div style={{display:'flex', alignItems:'center', gap:12}}>
+                <span id="modalIDValue" style={{fontWeight:600}}>
+                  {loadingUserDetails ? 'Loading...' : (userDetails?.identityNumber || userDetails?.idNumber || userDetails?.cmnd || booking.idString || '—')}
+                </span>
+              </div>
+            </div>
+
+            {/* Address Display - from User API */}
             <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between'}}>
               <span style={{fontWeight:600}}>Address:</span>
               <div style={{display:'flex', alignItems:'center', gap:12}}>
-                <span id="modalAddressValue" style={{fontWeight:600}}>{booking.address || '—'}</span>
+                <span id="modalAddressValue" style={{fontWeight:600}}>
+                  {loadingUserDetails ? 'Loading...' : (userDetails?.address || booking.address || '—')}
+                </span>
               </div>
             </div>
 
             {/* CCCD Front/Back Images with verification checkboxes - only when status is Booked (1) */}
             {booking.status === 'booked' && (
               <div className="bg-gray-100" style={{padding:14, borderRadius:10}}>
-                <div style={{fontWeight:600, marginBottom:8}}>CCCD Images:</div>
+                <div style={{fontWeight:600, marginBottom:8}}>CCCD Images: {loadingUserDetails && '(Loading...)'}</div>
                 <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
                   <div style={{flex:'1 1 180px', minWidth:160}}>
                     <div style={{marginBottom:6}}>Front</div>
-                    {booking.cccdFrontUrl ? (
-                      <a href={booking.cccdFrontUrl} target="_blank" rel="noreferrer">
-                        <img src={booking.cccdFrontUrl} alt="CCCD Front" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
+                    {(userDetails?.cccdFrontUrl || userDetails?.identityFrontUrl || userDetails?.idFrontUrl || userDetails?.cccdImageUrl_Front || booking.cccdFrontUrl) ? (
+                      <a href={userDetails?.cccdFrontUrl || userDetails?.identityFrontUrl || userDetails?.idFrontUrl || userDetails?.cccdImageUrl_Front || booking.cccdFrontUrl} target="_blank" rel="noreferrer">
+                        <img src={userDetails?.cccdFrontUrl || userDetails?.identityFrontUrl || userDetails?.idFrontUrl || userDetails?.cccdImageUrl_Front || booking.cccdFrontUrl} alt="CCCD Front" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
                       </a>
                     ) : (
                       <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
@@ -200,9 +273,9 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
                   </div>
                   <div style={{flex:'1 1 180px', minWidth:160}}>
                     <div style={{marginBottom:6}}>Back</div>
-                    {booking.cccdBackUrl ? (
-                      <a href={booking.cccdBackUrl} target="_blank" rel="noreferrer">
-                        <img src={booking.cccdBackUrl} alt="CCCD Back" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
+                    {(userDetails?.cccdBackUrl || userDetails?.identityBackUrl || userDetails?.idBackUrl || userDetails?.cccdImageUrl_Back || booking.cccdBackUrl) ? (
+                      <a href={userDetails?.cccdBackUrl || userDetails?.identityBackUrl || userDetails?.idBackUrl || userDetails?.cccdImageUrl_Back || booking.cccdBackUrl} target="_blank" rel="noreferrer">
+                        <img src={userDetails?.cccdBackUrl || userDetails?.identityBackUrl || userDetails?.idBackUrl || userDetails?.cccdImageUrl_Back || booking.cccdBackUrl} alt="CCCD Back" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
                       </a>
                     ) : (
                       <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
@@ -218,13 +291,13 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
             {/* Driver License (GPLX) Images with verification checkboxes - only when status is Booked (1) */}
             {booking.status === 'booked' && (
               <div className="bg-gray-100" style={{padding:14, borderRadius:10}}>
-                <div style={{fontWeight:600, marginBottom:8}}>Driver License (GPLX) Images:</div>
+                <div style={{fontWeight:600, marginBottom:8}}>Driver License (GPLX) Images: {loadingUserDetails && '(Loading...)'}</div>
                 <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
                   <div style={{flex:'1 1 180px', minWidth:160}}>
                     <div style={{marginBottom:6}}>Front</div>
-                    {booking.gplxFrontUrl ? (
-                      <a href={booking.gplxFrontUrl} target="_blank" rel="noreferrer">
-                        <img src={booking.gplxFrontUrl} alt="GPLX Front" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
+                    {(userDetails?.gplxFrontUrl || userDetails?.driverLicenseFrontUrl || userDetails?.gplxImageUrl_Front || booking.gplxFrontUrl) ? (
+                      <a href={userDetails?.gplxFrontUrl || userDetails?.driverLicenseFrontUrl || userDetails?.gplxImageUrl_Front || booking.gplxFrontUrl} target="_blank" rel="noreferrer">
+                        <img src={userDetails?.gplxFrontUrl || userDetails?.driverLicenseFrontUrl || userDetails?.gplxImageUrl_Front || booking.gplxFrontUrl} alt="GPLX Front" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
                       </a>
                     ) : (
                       <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
@@ -235,9 +308,9 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
                   </div>
                   <div style={{flex:'1 1 180px', minWidth:160}}>
                     <div style={{marginBottom:6}}>Back</div>
-                    {booking.gplxBackUrl ? (
-                      <a href={booking.gplxBackUrl} target="_blank" rel="noreferrer">
-                        <img src={booking.gplxBackUrl} alt="GPLX Back" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
+                    {(userDetails?.gplxBackUrl || userDetails?.driverLicenseBackUrl || userDetails?.gplxImageUrl_Back || booking.gplxBackUrl) ? (
+                      <a href={userDetails?.gplxBackUrl || userDetails?.driverLicenseBackUrl || userDetails?.gplxImageUrl_Back || booking.gplxBackUrl} target="_blank" rel="noreferrer">
+                        <img src={userDetails?.gplxBackUrl || userDetails?.driverLicenseBackUrl || userDetails?.gplxImageUrl_Back || booking.gplxBackUrl} alt="GPLX Back" style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, border:'1px solid #eee'}} />
                       </a>
                     ) : (
                       <div style={{height:120, display:'flex', alignItems:'center', justifyContent:'center', background:'#fafafa', border:'1px dashed #ddd', borderRadius:8, color:'#999'}}>No image</div>
@@ -250,13 +323,15 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
               </div>
             )}
 
-            {/* Phone - no checkbox, with call link */}
+            {/* Phone - no checkbox, with call link - from User API */}
             <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
               <span style={{fontWeight:600}}>Phone Number:</span>
               <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <span id="customerPhone" style={{padding:6}}>{booking.phone || '—'}</span>
-                {booking.phone && (
-                  <a href={`tel:${booking.phone}`} style={{background:'#1565c0', color:'#fff', padding:'6px 10px', borderRadius:6, textDecoration:'none'}}>Call</a>
+                <span id="customerPhone" style={{padding:6}}>
+                  {loadingUserDetails ? 'Loading...' : (userDetails?.phoneNumber || userDetails?.phone || booking.phone || '—')}
+                </span>
+                {(userDetails?.phoneNumber || userDetails?.phone || booking.phone) && (
+                  <a href={`tel:${userDetails?.phoneNumber || userDetails?.phone || booking.phone}`} style={{background:'#1565c0', color:'#fff', padding:'6px 10px', borderRadius:6, textDecoration:'none'}}>Call</a>
                 )}
               </div>
             </div>

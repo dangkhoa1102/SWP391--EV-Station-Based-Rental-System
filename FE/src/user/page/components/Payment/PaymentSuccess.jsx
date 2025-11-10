@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import API from '../../../services/userApi'
+import API from '../../../../services/api' // Changed to central api.js
 
 // Helper function to convert numbers to Vietnamese words
 const numberToVietnameseWords = (num) => {
@@ -39,12 +39,44 @@ export default function PaymentSuccess(){
 
   useEffect(() => {
     // This page is loaded when PayOS redirects to /payment-success after successful payment
-    console.log('✅ Payment successful! Syncing payment status...')
+    console.log('✅ Payment successful! Checking payment type...')
     
     const syncPayment = async () => {
       try {
-        // Get bookingId from localStorage
-        const bookingId = localStorage.getItem('currentBookingId')
+        // Get bookingId from localStorage - check multiple sources
+        // 1. currentBookingId - user deposit payment (auto-sync)
+        // 2. activeCheckInBookingId - staff check-in payment (skip auto-sync, manual sync only)
+        // 3. activeCheckOutBookingId - staff check-out payment (skip auto-sync, manual sync only)
+        let bookingId = localStorage.getItem('currentBookingId')
+        let paymentType = 'user-deposit' // Default
+        
+        if (!bookingId) {
+          bookingId = localStorage.getItem('activeCheckInBookingId')
+          if (bookingId) {
+            paymentType = 'staff-checkin'
+            console.log('📋 Found check-in booking ID (staff payment):', bookingId)
+            // For staff check-in: Don't auto-sync, redirect back to staff page
+            console.log('⏭️ Staff check-in payment: Skipping auto-sync (manual sync button will be used)')
+            setSyncing(false)
+            localStorage.removeItem('activeCheckInBookingId')
+            setTimeout(() => navigate('/staff'), 1000)
+            return
+          }
+        }
+        
+        if (!bookingId) {
+          bookingId = localStorage.getItem('activeCheckOutBookingId')
+          if (bookingId) {
+            paymentType = 'staff-checkout'
+            console.log('📋 Found check-out booking ID (staff payment):', bookingId)
+            // For staff check-out: Don't auto-sync, redirect back to staff page
+            console.log('⏭️ Staff check-out payment: Skipping auto-sync (manual sync button will be used)')
+            setSyncing(false)
+            localStorage.removeItem('activeCheckOutBookingId')
+            setTimeout(() => navigate('/staff'), 1000)
+            return
+          }
+        }
         
         if (!bookingId) {
           console.warn('⚠️ No booking ID found in localStorage')
@@ -55,10 +87,10 @@ export default function PaymentSuccess(){
           return
         }
         
-        console.log('🔄 Syncing payment for booking:', bookingId)
+        console.log('🔄 User deposit payment: Auto-syncing payment for booking:', bookingId)
         
         // Call /api/Payment/sync/{bookingId} to update payment status
-        await API.post(`/Payment/sync/${bookingId}`)
+        await API.syncPayment(bookingId)
         
         console.log('✅ Payment status synced successfully')
         
@@ -81,20 +113,9 @@ export default function PaymentSuccess(){
             console.warn('Failed to clear storage:', e)
           }
           
-          // Determine redirect destination based on booking status
-          // Status 1 (Active) = Deposit paid → booking-history (user view rental)
-          // Status 3 (Checked-in) = Final payment done → staff page (staff check-in/checkout)
-          if (bookingStatus === 3) {
-            console.log('🎯 Final payment complete (Status 3: Checked-in), redirecting to staff page...')
-            navigate('/staff')
-          } else if (bookingStatus === 1) {
-            console.log('💳 Deposit payment complete (Status 1: Active), redirecting to booking history...')
-            navigate('/booking-history')
-          } else {
-            // For other statuses, go to booking history
-            console.log('ℹ️ Booking status:', bookingStatus, '- redirecting to booking history as default')
-            navigate('/booking-history')
-          }
+          // User deposit always goes to booking history
+          console.log('💳 User deposit payment complete, redirecting to booking history...')
+          navigate('/booking-history')
         }, 1500)
         
       } catch (err) {

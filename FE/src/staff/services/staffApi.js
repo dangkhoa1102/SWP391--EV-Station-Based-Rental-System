@@ -881,6 +881,8 @@ const API = {
   getUserById: async (userId) => {
     const id = encodeURIComponent(userId)
     const attempts = [
+      `/Auth/user/${id}`,
+      `/api/Auth/user/${id}`,
       `/Users/Get-By-${id}`,
       `/Users/Get-By-Id/${id}`,
       `/Users/${id}`,

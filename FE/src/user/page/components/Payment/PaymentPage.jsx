@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import API from '../../../services/userApi'
+import API from '../../../../services/api' // Changed to central api.js
 import { formatVND } from '../../../../utils/currency'
 import { useToast } from '../../../../components/ToastProvider'
 import NotificationModal from '../../../../components/NotificationModal'
@@ -150,17 +150,24 @@ export default function PaymentPage(){
       const pickupDateTime = new Date(`${rentalContext.pickupDate}T${rentalContext.pickupTime}`).toISOString()
       const returnDateTime = new Date(`${rentalContext.returnDate}T${rentalContext.returnTime}`).toISOString()
       
+      // Use station ID from rental context (user's selection)
+      // User already chose this station in the search form, so respect their choice
+      const finalStationId = rentalContext.stationId
+      
+      console.log('🔍 Using station from rental context:', rentalContext.stationName, '- ID:', finalStationId)
+      
       const bookingData = {
         carId: car.id || car.Id,
         userId: userId,
-        pickupStationId: rentalContext.stationId,
-        returnStationId: rentalContext.stationId,
+        pickupStationId: finalStationId,
+        returnStationId: finalStationId,
         pickupDateTime: pickupDateTime,
         expectedReturnDateTime: returnDateTime,
         totalAmount: calculateTotalPrice()
       }
 
-      console.log('📝 Creating booking...')
+      console.log('📝 Creating booking with user-selected station...')
+      console.log('📝 Booking data:', bookingData)
       const bookingResponse = await API.createBooking(bookingData, userId)
       
       const newBookingId = bookingResponse.id || bookingResponse.Id || bookingResponse.bookingId
