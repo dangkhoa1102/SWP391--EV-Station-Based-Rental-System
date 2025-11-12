@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import API from '../../../services/adminApi';
+import bookingApi from '../../../../services/bookingApi';
 import { formatVND } from '../../../../utils/currency';
 
 export default function UserBookingHistory({ userId, userName, onClose }) {
@@ -18,7 +18,7 @@ export default function UserBookingHistory({ userId, userName, onClose }) {
       setLoading(true);
       setError('');
       console.log('📋 Fetching bookings for user:', userId);
-      const res = await API.getUserBookings(userId);
+      const res = await bookingApi.getUserBookings(userId);
       console.log('✅ Bookings loaded:', res);
       setBookings(res || []);
     } catch (e) {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import API from '../user/services/userApi'
+import userApi from '../services/userApi'
+import authApi from '../services/authApi'
 import './UpdateProfileModal.css'
 
 /**
@@ -45,7 +46,7 @@ export default function UpdateProfileModal({ isOpen, userEmail, onClose, onSucce
       setIsLoadingProfile(true)
       console.log('📥 Loading profile data from API...')
       
-      const profile = await API.getMe()
+  const profile = await authApi.getMyProfile()
       
       console.log('✅ Profile data loaded:', profile)
       
@@ -139,7 +140,7 @@ export default function UpdateProfileModal({ isOpen, userEmail, onClose, onSucce
       }
 
       // Use generic update endpoint or create specific one
-      const res = await API.post(`/Users/${encodeURIComponent(userId)}/profile`, updatePayload)
+      const res = await userApi.updateMyProfile(updatePayload)
       
       console.log('✅ Profile updated successfully:', res)
       

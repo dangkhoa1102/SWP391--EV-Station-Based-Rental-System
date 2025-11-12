@@ -7,7 +7,8 @@ import BookingSection from './components/Booking/BookingSection';
 import VehicleSection from './components/Vehicle/VehicleSection';
 import UserSection from './components/User/UserSection';
 import StaffSection from './components/Staff/StaffSection';
-import AdminAPI from '../services/adminApi';
+import ProfileSection from './components/Profile/ProfileSection';
+import adminApi from '../../services/adminApi';
 
 // Start with empty lists; we will load from API
 const initialBookings = [];
@@ -40,26 +41,26 @@ export default function AdminPage() {
   const confirmBooking = async (id) => {
     try {
       // Try minimal payload first
-      await AdminAPI.post('/Bookings/Confirm', { bookingId: id })
+      await adminApi.post('/Bookings/Confirm', { bookingId: id })
     } catch {
       // Fallback to user API's method signature with default payment method
-      try { await AdminAPI.post('/Bookings/Confirm', { bookingId: id, paymentMethod: 'Cash', paymentTransactionId: '' }) } catch {}
+      try { await adminApi.post('/Bookings/Confirm', { bookingId: id, paymentMethod: 'Cash', paymentTransactionId: '' }) } catch {}
     }
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'booked' } : b))
   };
   const completeBooking = async (id) => {
     try {
-      await AdminAPI.post(`/Bookings/Complete-By-${encodeURIComponent(id)}`)
+      await adminApi.post(`/Bookings/Complete-By-${encodeURIComponent(id)}`)
     } catch {
-      try { await AdminAPI.post('/Bookings/Complete', { bookingId: id }) } catch {}
+      try { await adminApi.post('/Bookings/Complete', { bookingId: id }) } catch {}
     }
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'completed' } : b))
   };
   const denyBooking = async (id) => {
     try {
-      await AdminAPI.post('/Bookings/Deny', { bookingId: id })
+      await adminApi.post('/Bookings/Deny', { bookingId: id })
     } catch {
-      try { await AdminAPI.post('/Bookings/Reject', { bookingId: id }) } catch {}
+      try { await adminApi.post('/Bookings/Reject', { bookingId: id }) } catch {}
     }
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'denied' } : b))
   };
@@ -68,7 +69,7 @@ export default function AdminPage() {
   const continueToPayment = async (booking) => {
     try {
       // Default to Cash unless a payment UI is integrated later
-      await AdminAPI.confirmBooking(booking.id, 'Cash', '')
+      await adminApi.confirmBooking(booking.id, 'Cash', '')
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'booked' } : b))
     } catch (e) {
       setError(e?.message || 'Failed to proceed to payment')
@@ -78,7 +79,7 @@ export default function AdminPage() {
   // Cancel booking (soft cancel)
   const cancelBooking = async (booking, reason = '') => {
     try {
-      await AdminAPI.cancelBooking(booking.id, reason || '')
+      await adminApi.cancelBooking(booking.id, reason || '')
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'denied' } : b))
     } catch (e) {
       const code = e?.response?.status
@@ -139,7 +140,7 @@ export default function AdminPage() {
         }
       }
       
-      const created = await AdminAPI.createCar(payload)
+      const created = await adminApi.createCar(payload)
       // Map created car to view model
       const c = created || {}
       const map = (c) => ({
@@ -148,7 +149,7 @@ export default function AdminPage() {
         model: c.model || c.Model || null,
         brand: c.brand || c.Brand || null,
         licensePlate: c.licensePlate || c.LicensePlate || null,
-        img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || c.model || 'Car')}`,
+        img: c.imageUrl || c.image || c.thumbnailUrl || null,
         battery: Number.isFinite(c.currentBatteryLevel) ? Math.round(c.currentBatteryLevel) : undefined,
         tech: c.condition ?? c.status ?? c.Status ?? null,
         issue: c.issue ?? c.issueDescription ?? null,
@@ -165,7 +166,7 @@ export default function AdminPage() {
   }
   const removeVehicle = async (id) => {
     try {
-      await AdminAPI.deleteCar(id)
+      await adminApi.deleteCar(id)
       setVehicles(prev => prev.filter(v => v.id !== id))
       // Update slot info after removing
       await updateStationSlots(stationId)
@@ -182,7 +183,7 @@ export default function AdminPage() {
         let success = false
         for (const status of candidates) {
           try {
-            await AdminAPI.updateStatus(id, status)
+            await adminApi.updateStatus(id, status)
             success = true
             break
           } catch {}
@@ -201,15 +202,15 @@ export default function AdminPage() {
         let val = Number(payload.battery)
         if (!Number.isNaN(val)) {
           val = Math.max(0, Math.min(100, Math.round(val)))
-          await AdminAPI.updateBatteryLevel(id, val)
+          await adminApi.updateBatteryLevel(id, val)
         }
       }
       if (payload.tech) {
-        await AdminAPI.updateStatus(id, payload.tech)
+        await adminApi.updateStatus(id, payload.tech)
       }
       if (payload.issue) {
-        try { await AdminAPI.updateCarDescription(id, payload.issue) }
-        catch { await AdminAPI.updateCar(id, { description: payload.issue }) }
+        try { await adminApi.updateCarDescription(id, payload.issue) }
+        catch { await adminApi.updateCar(id, { description: payload.issue }) }
       }
     } catch (e) {
       setError(e?.message || 'Failed to update vehicle')
@@ -221,7 +222,7 @@ export default function AdminPage() {
   const loadUsers = async () => {
     setLoadingUsers(true);
     try {
-      const allUsers = await AdminAPI.getAllUsers(1, 1000);
+      const allUsers = await adminApi.getAllUsers(1, 1000);
       // Filter out inactive/deleted users (only show active users)
       const activeUsers = (allUsers || []).filter(u => {
         const isActive = u.isActive !== false && u.IsActive !== false;
@@ -238,7 +239,7 @@ export default function AdminPage() {
   const loadDeletedUsers = async () => {
     setLoadingDeletedUsers(true);
     try {
-      const deleted = await AdminAPI.getDeletedAccounts(1, 1000);
+      const deleted = await adminApi.getDeletedAccounts(1, 1000);
       setDeletedUsers(deleted || []);
     } catch (e) {
       setError(e?.message || 'Failed to load deleted users');
@@ -254,7 +255,7 @@ export default function AdminPage() {
     }
     setLoadingStaff(true);
     try {
-      const staff = await AdminAPI.getStaffByStation(stationId);
+      const staff = await adminApi.getStaffByStation(stationId);
       setStaffByStation(staff || []);
     } catch (e) {
       setError(e?.message || 'Failed to load staff by station');
@@ -266,7 +267,7 @@ export default function AdminPage() {
 
   const handleAssignStaff = async (user, reason) => {
     try {
-      await AdminAPI.assignStaffRole(user.id || user.Id || user.userId, reason);
+      await adminApi.assignStaffRole(user.id || user.Id || user.userId, reason);
       await loadUsers(); // Reload to update role
       if (stationId) {
         await loadStaffByStation(stationId); // Reload station staff
@@ -279,7 +280,7 @@ export default function AdminPage() {
 
   const handleRemoveStaff = async (staff, reason) => {
     try {
-      await AdminAPI.removeStaffRole(staff.id || staff.Id || staff.userId, reason);
+      await adminApi.removeStaffRole(staff.id || staff.Id || staff.userId, reason);
       await loadUsers(); // Reload to update role
       if (stationId) {
         await loadStaffByStation(stationId); // Reload station staff
@@ -297,9 +298,9 @@ export default function AdminPage() {
       
       // Use reassign if already has a station, otherwise use assign
       if (currentStationId) {
-        await AdminAPI.reassignStaff(staffId, newStationId);
+        await adminApi.reassignStaff(staffId, newStationId);
       } else {
-        await AdminAPI.assignStaffToStation(newStationId, staffId);
+        await adminApi.assignStaffToStation(newStationId, staffId);
       }
       
       await loadUsers(); // Reload to update station
@@ -315,7 +316,7 @@ export default function AdminPage() {
   const handleUnassignStaff = async (staff) => {
     try {
       const staffId = staff.id || staff.Id || staff.userId;
-      await AdminAPI.unassignStaffFromStation(staffId);
+      await adminApi.unassignStaffFromStation(staffId);
       await loadUsers(); // Reload to update station
       if (stationId) {
         await loadStaffByStation(stationId); // Reload station staff
@@ -329,7 +330,7 @@ export default function AdminPage() {
   const handleDeleteUser = async (user, reason) => {
     try {
       const userId = user.id || user.Id || user.userId;
-      await AdminAPI.softDeleteUser(userId, reason);
+      await adminApi.softDeleteUser(userId, reason);
       
       // Remove from active users list immediately
       setUsers(prev => prev.filter(u => 
@@ -347,7 +348,7 @@ export default function AdminPage() {
   const handleRestoreUser = async (user) => {
     try {
       const userId = user.userId || user.id || user.Id;
-      await AdminAPI.restoreUser(userId);
+      await adminApi.restoreUser(userId);
       
       // Remove from deleted users list
       setDeletedUsers(prev => prev.filter(u => 
@@ -366,7 +367,7 @@ export default function AdminPage() {
   // Vehicle transfer functionality
   const handleTransferCar = async (vehicle, targetStationId, reason) => {
     try {
-      await AdminAPI.transferCar(vehicle.id, targetStationId, reason || '');
+      await adminApi.transferCar(vehicle.id, targetStationId, reason || '');
       const targetStation = stations.find(s => (s.id || s.Id) === targetStationId);
       alert(`Vehicle transferred successfully to ${targetStation?.name || targetStation?.Name || 'target station'}`);
       // Reload vehicles for current station
@@ -386,7 +387,7 @@ export default function AdminPage() {
       return;
     }
     try {
-      const report = await AdminAPI.getCarStatusReport(sid, null);
+      const report = await adminApi.getCarStatusReport(sid, null);
       if (report) {
         setStationSlots({
           totalCars: report.totalCars || 0,
@@ -407,8 +408,8 @@ export default function AdminPage() {
         // Show ALL vehicles for the station, regardless of availability
         let byStation = [];
         let available = [];
-        try { byStation = await AdminAPI.getCarsByStation(sid); } catch {}
-        try { available = await AdminAPI.getAvailableCarsByStation(sid); } catch {}
+        try { byStation = await adminApi.getCarsByStation(sid); } catch {}
+        try { available = await adminApi.getAvailableCarsByStation(sid); } catch {}
         const toArray = (x) => Array.isArray(x) ? x : (x ? [x] : []);
         const A = toArray(byStation), B = toArray(available);
         // Merge unique by id (fallback to licensePlate)
@@ -421,7 +422,7 @@ export default function AdminPage() {
 
         // Always supplement with client-side filtered All Cars to catch backends that only return "available" by station
         try {
-          const all = await AdminAPI.getAllCars(1, 1000);
+          const all = await adminApi.getAllCars(1, 1000);
           const norm = (v) => (v == null ? '' : String(v).replace(/[{}]/g, '').toLowerCase());
           const sidNorm = norm(sid);
           const clientFiltered = (all || []).filter(c => {
@@ -443,8 +444,8 @@ export default function AdminPage() {
         } catch {}
       } else {
         // When no station is selected (All stations), fetch all cars with larger page size
-        try { cars = await AdminAPI.getAllCars(1, 1000); }
-        catch { try { cars = await AdminAPI.listCars({ page: 1, pageSize: 1000 }); } catch { cars = []; } }
+        try { cars = await adminApi.getAllCars(1, 1000); }
+        catch { try { cars = await adminApi.listCars({ page: 1, pageSize: 1000 }); } catch { cars = []; } }
       }
       // Ensure we always have an array
       if (!Array.isArray(cars)) cars = cars ? [cars] : [];
@@ -469,7 +470,7 @@ export default function AdminPage() {
           model: c.model || c.Model || null,
           brand: c.brand || c.Brand || null,
           licensePlate: c.licensePlate || c.LicensePlate || null,
-          img: c.imageUrl || c.image || c.thumbnailUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(c.name || c.Name || 'Car')}`,
+          img: c.imageUrl || c.image || c.thumbnailUrl || null,
           battery: normalizePercent(c.currentBatteryLevel ?? c.CurrentBatteryLevel ?? c.batteryPercent ?? c.battery),
           tech: c.condition ?? c.status ?? c.Status ?? null,
           issue: c.issue ?? c.issueDescription ?? null,
@@ -487,7 +488,7 @@ export default function AdminPage() {
         try {
           const updates = await Promise.all(needBattery.map(async v => {
             try {
-              const b = await AdminAPI.getCarBattery(v.id);
+              const b = await adminApi.getCarBattery(v.id);
               return { id: v.id, battery: normalizePercent(b) };
             } catch { return { id: v.id, battery: null }; }
           }));
@@ -501,7 +502,7 @@ export default function AdminPage() {
         try {
           const updatesCap = await Promise.all(needCapacity.map(async v => {
             try {
-              const cap = await AdminAPI.getCarCapacity(v.id);
+              const cap = await adminApi.getCarCapacity(v.id);
               return { id: v.id, capacity: cap };
             } catch { return { id: v.id, capacity: null }; }
           }));
@@ -532,7 +533,7 @@ export default function AdminPage() {
     let mounted = true
     async function loadRole() {
       try {
-        const me = await AdminAPI.getMe()
+        const me = await adminApi.getMe()
         const r = me?.role || me?.Role || me?.roleName || me?.userRole || (Array.isArray(me?.roles) ? me.roles[0] : '')
         if (mounted) setRole(r || '')
       } catch {
@@ -540,7 +541,7 @@ export default function AdminPage() {
         try {
           const t = localStorage.getItem('token')
           if (t) {
-            const decoded = AdminAPI.decodeJwt(t)
+            const decoded = adminApi.decodeJwt(t)
             const r = decoded?.role || decoded?.Role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
             if (mounted) setRole(r || '')
           }
@@ -550,7 +551,7 @@ export default function AdminPage() {
     async function loadStations() {
       try {
         setLoadingStations(true)
-        const s = await AdminAPI.getAllStations(1, 100)
+        const s = await adminApi.getAllStations(1, 100)
         if (!mounted) return
         setStations(s || [])
         const firstId = (s && s[0] && (s[0].id || s[0].Id)) || ''
@@ -589,14 +590,14 @@ export default function AdminPage() {
         let items = []
         if (stationId) {
           try {
-            items = await AdminAPI.getBookingsByStation(stationId)
+            items = await adminApi.getBookingsByStation(stationId)
           } catch {
             items = []
           }
           // Fallback: if nothing returned, fetch all and client-filter by station
           if (!items || items.length === 0) {
             try {
-              const all = await AdminAPI.listBookings({ page: 1, pageSize: 200 })
+              const all = await adminApi.listBookings({ page: 1, pageSize: 200 })
               const sid = String(stationId)
               items = (all || []).filter(b => {
                 const st = b.stationId || b.StationId || b.station?.id || b.station?.Id || b.pickupStationId || b.PickupStationId
@@ -620,7 +621,7 @@ export default function AdminPage() {
             })
           }
         } else {
-          items = await AdminAPI.listBookings({ page: 1, pageSize: 100 })
+          items = await adminApi.listBookings({ page: 1, pageSize: 100 })
         }
         if (!mounted) return
         const mapped = (items || []).map(b => {
@@ -682,7 +683,7 @@ export default function AdminPage() {
             ? 'waiting-payment'
             : ((s.includes('check') && s.includes('in') && (s.includes('pay') || s.includes('payment'))) ? 'checkin-payment' : null)
           const date = b.date || b.createdAt || b.bookingDate || ''
-          const img = b.carImageUrl || b.car?.imageUrl || b.vehicle?.imageUrl || `https://via.placeholder.com/440x280?text=${encodeURIComponent(carName)}`
+          const img = b.carImageUrl || b.car?.imageUrl || b.vehicle?.imageUrl || null
           return {
             id,
             title: carName,
@@ -720,7 +721,7 @@ export default function AdminPage() {
             const uniqueIds = Array.from(new Set(needUser.map(x => x.userId)))
             const results = await Promise.all(uniqueIds.map(async uid => {
               try {
-                const u = await AdminAPI.getUserById(uid)
+                const u = await adminApi.getUserById(uid)
                 const first = u?.firstName || u?.FirstName || u?.givenName || u?.GivenName || null
                 const last  = u?.lastName  || u?.LastName  || u?.surname  || u?.Surname  || null
                 const full  = (u?.fullName || u?.FullName) || [first, last].filter(Boolean).join(' ') || null
@@ -759,9 +760,9 @@ export default function AdminPage() {
             const uniqueCarIds = Array.from(new Set(needCar.map(getCarId).filter(Boolean)))
             const cars = await Promise.all(uniqueCarIds.map(async cid => {
               try {
-                let car = await AdminAPI.getCarById(cid)
+                let car = await adminApi.getCarById(cid)
                 if (!car || (!car.id && !car.Id)) {
-                  try { car = await AdminAPI.getCarByIdRest(cid) } catch {}
+                  try { car = await adminApi.getCarByIdRest(cid) } catch {}
                 }
                 const name = car?.name || car?.Name || [car?.brand, car?.model].filter(Boolean).join(' ') || null
                 const img = car?.imageUrl || car?.thumbnailUrl || null
@@ -787,14 +788,14 @@ export default function AdminPage() {
           } catch {}
         }
 
-        // Final fallback: for any booking still lacking a proper title, resolve via AdminAPI.getVehicleModelFromBooking
+        // Final fallback: for any booking still lacking a proper title, resolve via adminApi.getVehicleModelFromBooking
         const stillMissing = (prevList) => prevList.filter(x => !x.title || x.title === 'Booking')
         const missingNow = stillMissing(mapped)
         if (missingNow.length > 0) {
           try {
             const results = await Promise.all(missingNow.map(async b => {
               try {
-                const m = await AdminAPI.getVehicleModelFromBooking(b.id)
+                const m = await adminApi.getVehicleModelFromBooking(b.id)
                 const label = m?.name || [m?.brand, m?.model].filter(Boolean).join(' ') || null
                 return { id: b.id, title: label }
               } catch { return { id: b.id, title: null } }
@@ -935,6 +936,14 @@ export default function AdminPage() {
             />
           </>
         )}
+        {section === 'incident' && (
+          <>
+            <div style={{padding:'10px 12px', color:'#666'}}>
+              <p>Incident management section. Incidents are managed through booking details.</p>
+            </div>
+          </>
+        )}
+        {section === 'profile' && <ProfileSection />}
       </main>
     </div>
   );

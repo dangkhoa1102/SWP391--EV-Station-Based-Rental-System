@@ -6,7 +6,7 @@ import BookingModal from './BookingModal';
 import CheckInCard from './CheckInCard';
 import CheckOutCard from './CheckOutCard';
 import IncidentsModal from './IncidentsModal';
-import StaffAPI from '../../../services/staffApi';
+import StaffAPI from '../../../../services/staffApi';
 import './Booking.css';
 
 export default function BookingSection({ bookings, search, setSearch, statusFilter, setStatusFilter, onContinuePayment, onCancelBooking, onStatusUpdated }) {
@@ -25,7 +25,7 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
         const bookingIdFromStorage = localStorage.getItem('activeCheckOutBookingId')
         if (!bookingIdFromStorage) return
         
-        const updatedBooking = await StaffAPI.getBookingById(bookingIdFromStorage)
+        const updatedBooking = await staffApi.getBookingById(bookingIdFromStorage)
         console.log('📊 Polling booking status:', updatedBooking?.bookingStatus)
         
         // If payment completed (status = 5), close modal and refresh
@@ -53,7 +53,7 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
         const bookingIdFromStorage = localStorage.getItem('activeCheckInBookingId')
         if (!bookingIdFromStorage) return
         
-        const updatedBooking = await StaffAPI.getBookingById(bookingIdFromStorage)
+        const updatedBooking = await staffApi.getBookingById(bookingIdFromStorage)
         console.log('📊 Polling check-in booking status:', updatedBooking?.bookingStatus)
         
         // If payment completed and check-in done (status = 3 or higher), close modal

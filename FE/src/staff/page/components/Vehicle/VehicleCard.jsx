@@ -1,10 +1,16 @@
 // src/components/Vehicle/VehicleCard.jsx
 import React from 'react';
+import { getImageUrlOrIcon, applyCarIconFallback } from '../../../../utils/carIconSvg';
 
 export default function VehicleCard({ vehicle, onOpen }) {
+  const handleImageError = (e) => {
+    // Show car icon when image fails to load
+    applyCarIconFallback(e.currentTarget);
+  };
+
   return (
     <div className="vehicle-card" onClick={onOpen} style={{cursor: 'pointer'}}>
-      <img src={vehicle.img} alt={vehicle.name} />
+      <img src={getImageUrlOrIcon(vehicle.img)} alt={vehicle.name} onError={handleImageError} />
       <div className="vehicle-info">
         <div className="vehicle-title">{vehicle.name}</div>
         <div className="vehicle-station">Station: {vehicle.stationName || (vehicle.stationId ? `ID ${String(vehicle.stationId).slice(0, 8)}…` : 'Unknown')}</div>

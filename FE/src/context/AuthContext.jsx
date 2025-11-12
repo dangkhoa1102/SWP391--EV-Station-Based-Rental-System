@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import API from '../services/api'
+import authApi from '../services/authApi'
 
 const AuthContext = createContext(null)
 
@@ -25,8 +25,8 @@ export function AuthProvider({ children }){
   }, [user])
 
   async function login(email, password){
-    const res = await API.login(email, password)
-    // API.login saves token to localStorage already but we keep state
+    const res = await authApi.login(email, password)
+    // authApi.login saves token to localStorage already but we keep state
     const newToken = res.token || res.payload?.token || res.raw?.token
     if(newToken) setToken(newToken)
     const payloadUser = res.payload?.user || res.raw?.user || (res.payload && res.payload.user) || JSON.parse(localStorage.getItem('user'))
@@ -36,7 +36,7 @@ export function AuthProvider({ children }){
   }
 
   async function register(fullName, email, phoneNumber, password){
-    const res = await API.register(fullName, email, phoneNumber, password)
+    const res = await authApi.register({ fullName, email, phoneNumber, password })
     return res
   }
 

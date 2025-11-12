@@ -1,7 +1,7 @@
 // src/components/Booking/BookingModal.jsx
 import React, { useEffect, useState } from 'react';
 import '../../styles/modals.css';
-import AdminAPI from '../../../services/adminApi';
+import AdminAPI from '../../../../services/adminApi';
 
 export default function BookingModal({ booking, onClose, onProceed, onCancel, onStatusUpdated }) {
   const [verifiedFront, setVerifiedFront] = useState(false)
@@ -36,7 +36,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     async function resolveName() {
       setLoadingName(true)
       try {
-        const { firstName, lastName } = await AdminAPI.getUserNameByBookingId(booking.id)
+        const { firstName, lastName } = await adminApi.getUserNameByBookingId(booking.id)
         if (!cancelled) setResolvedFullName(compose(firstName, lastName))
       } catch (e) {
         // ignore, fall back to provided booking fields
@@ -88,7 +88,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setActionLoading(true)
     try {
       // 1) Create payment (PaymentType = 'Rental')
-      const p = await AdminAPI.createPayment(booking.id, 'Rental', 'Rental payment at check-in')
+      const p = await adminApi.createPayment(booking.id, 'Rental', 'Rental payment at check-in')
       // Persist booking id for success page to sync
       try { localStorage.setItem('currentBookingId', booking.id) } catch {}
       // Extract checkoutUrl and qrCode if present
@@ -119,9 +119,9 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setErrorMsg('')
     setActionLoading(true)
     try {
-      await AdminAPI.syncPaymentStatus(booking.id)
+      await adminApi.syncPaymentStatus(booking.id)
       setLastSyncAt(new Date())
-      const fresh = await AdminAPI.getBookingById(booking.id)
+      const fresh = await adminApi.getBookingById(booking.id)
       const rawStatus = fresh?.statusCode ?? fresh?.StatusCode ?? fresh?.bookingStatus ?? fresh?.BookingStatus ?? fresh?.status ?? fresh?.Status
       const mapped = mapStatusFromRaw(rawStatus)
       if (mapped && mapped !== booking.status) {
@@ -142,7 +142,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setPaymentLoading(true)
     setErrorMsg('')
     try {
-      const p = await AdminAPI.getPaymentByBooking(booking.id)
+      const p = await adminApi.getPaymentByBooking(booking.id)
       setPaymentInfo(p)
     } catch (e) {
       setErrorMsg(e?.response?.data?.message || e?.message || 'Unable to load payment info')

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import StaffAPI from '../../../services/staffApi'
+import StaffAPI from '../../../../services/staffApi'
 
 export default function IncidentsModal({ bookingId, onClose }) {
   const [incidents, setIncidents] = useState([])
@@ -15,7 +15,7 @@ export default function IncidentsModal({ bookingId, onClose }) {
       try {
         setLoading(true)
         setError('')
-        const data = await StaffAPI.getIncidentsByBooking(bookingId, page, pageSize)
+        const data = await staffApi.getIncidentsByBooking(bookingId, page, pageSize)
         setIncidents(Array.isArray(data) ? data : [])
         console.log('✅ Incidents loaded:', data)
       } catch (err) {

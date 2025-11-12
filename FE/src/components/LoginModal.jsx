@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import NotificationModal from './NotificationModal'
-import API from '../services/api'
+import authApi from '../services/authApi'
 
 export default function LoginModal(){
   const { showLogin, setShowLogin, login, setShowRegister } = useAuth()
@@ -17,7 +17,7 @@ export default function LoginModal(){
   const checkProfileCompleteness = async (userId) => {
     try {
       console.log('📋 Checking profile completeness for user:', userId)
-      const profile = await API.getMyProfile()
+      const profile = await authApi.getMyProfile()
       
       console.log('👤 Profile data from /Users/Get-My-Profile:', profile)
       

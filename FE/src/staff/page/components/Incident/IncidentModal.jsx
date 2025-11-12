@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import StaffAPI from '../../../services/staffApi'
+import StaffAPI from '../../../../services/staffApi'
 import './Incident.css'
 
 export default function IncidentModal({ open, onClose, onCreated }){
@@ -16,7 +16,7 @@ export default function IncidentModal({ open, onClose, onCreated }){
     setSubmitting(true)
     setError('')
     try {
-      const res = await StaffAPI.createIncident(bookingId, description, files)
+      const res = await staffApi.createIncident(bookingId, description, files)
       console.log('Incident created:', res)
       onCreated && onCreated(res)
       onClose && onClose()

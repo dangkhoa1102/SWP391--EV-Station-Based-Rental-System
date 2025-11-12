@@ -7,7 +7,7 @@ import BookingSection from './components/Booking/BookingSection';
 import VehicleSection from './components/Vehicle/VehicleSection';
 import ProfileSection from './components/Profile/ProfileSection';
 import IncidentSection from './components/Incident/IncidentSection';
-import StaffAPI from '../services/staffApi';
+import staffApi from '../../services/staffApi';
 
 // Start with empty lists; we will load from API
 const initialBookings = [];
@@ -36,26 +36,26 @@ export default function StaffPage() {
   const confirmBooking = async (id) => {
     try {
       // Try minimal payload first
-      await StaffAPI.post('/Bookings/Confirm', { bookingId: id })
+      await staffApi.post('/Bookings/Confirm', { bookingId: id })
     } catch {
       // Fallback to user API's method signature with default payment method
-      try { await StaffAPI.post('/Bookings/Confirm', { bookingId: id, paymentMethod: 'Cash', paymentTransactionId: '' }) } catch {}
+      try { await staffApi.post('/Bookings/Confirm', { bookingId: id, paymentMethod: 'Cash', paymentTransactionId: '' }) } catch {}
     }
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'booked' } : b))
   };
   const completeBooking = async (id) => {
     try {
-      await StaffAPI.post(`/Bookings/Complete-By-${encodeURIComponent(id)}`)
+      await staffApi.post(`/Bookings/Complete-By-${encodeURIComponent(id)}`)
     } catch {
-      try { await StaffAPI.post('/Bookings/Complete', { bookingId: id }) } catch {}
+      try { await staffApi.post('/Bookings/Complete', { bookingId: id }) } catch {}
     }
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'completed' } : b))
   };
   const denyBooking = async (id) => {
     try {
-      await StaffAPI.post('/Bookings/Deny', { bookingId: id })
+      await staffApi.post('/Bookings/Deny', { bookingId: id })
     } catch {
-      try { await StaffAPI.post('/Bookings/Reject', { bookingId: id }) } catch {}
+      try { await staffApi.post('/Bookings/Reject', { bookingId: id }) } catch {}
     }
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'denied' } : b))
   };
@@ -64,7 +64,7 @@ export default function StaffPage() {
   const continueToPayment = async (booking) => {
     try {
       // Default to Cash unless a payment UI is integrated later
-      await StaffAPI.confirmBooking(booking.id, 'Cash', '')
+      await staffApi.confirmBooking(booking.id, 'Cash', '')
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'booked' } : b))
     } catch (e) {
       setError(e?.message || 'Failed to proceed to payment')
@@ -74,7 +74,7 @@ export default function StaffPage() {
   // Cancel booking (soft cancel)
   const cancelBooking = async (booking, reason = '') => {
     try {
-      await StaffAPI.cancelBooking(booking.id, reason || '')
+      await staffApi.cancelBooking(booking.id, reason || '')
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'denied' } : b))
     } catch (e) {
       const code = e?.response?.status
@@ -100,14 +100,14 @@ export default function StaffPage() {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: nextStatus, statusLabel: label } : b))
   }
 
-  // Handle FormData from CreateIncidentModal and call StaffAPI.createIncident
+  // Handle FormData from CreateIncidentModal and call staffApi.createIncident
   const handleCreateIncident = async (formData) => {
     try {
       const bookingId = formData.get('bookingId') || '';
       const description = formData.get('description') || '';
       let images = [];
       try { images = formData.getAll ? formData.getAll('images') : []; } catch (e) { images = [] }
-      const created = await StaffAPI.createIncident(bookingId, description, images);
+      const created = await staffApi.createIncident(bookingId, description, images);
       // refresh incidents for current station
       try { await loadIncidentsForStation(stationId) } catch {}
       return created;
@@ -125,7 +125,7 @@ export default function StaffPage() {
     }
     setLoadingIncidents(true)
     try {
-      const resp = await StaffAPI.getAllIncidents(sid, null, null, null, 1, 200)
+      const resp = await staffApi.getAllIncidents(sid, null, null, null, 1, 200)
       const items = resp?.incidents || []
       // normalize ids and fields similar to UI expectations
       const mapped = (items || []).map(it => ({
@@ -151,7 +151,7 @@ export default function StaffPage() {
   // Update an incident by id (FormData expected)
   const handleUpdateIncident = async (incidentId, formData) => {
     try {
-      await StaffAPI.updateIncident(incidentId, formData)
+      await staffApi.updateIncident(incidentId, formData)
       await loadIncidentsForStation(stationId)
     } catch (e) {
       console.error('❌ update incident failed', e)
@@ -162,7 +162,7 @@ export default function StaffPage() {
   // Resolve incident
   const handleResolveIncident = async (incidentId, resolutionNotes, costIncurred) => {
     try {
-      await StaffAPI.resolveIncident(incidentId, resolutionNotes, Number(costIncurred) || 0)
+      await staffApi.resolveIncident(incidentId, resolutionNotes, Number(costIncurred) || 0)
       await loadIncidentsForStation(stationId)
     } catch (e) {
       console.error('❌ resolve incident failed', e)
@@ -173,7 +173,7 @@ export default function StaffPage() {
   // Delete incident
   const handleDeleteIncident = async (incidentId) => {
     try {
-      await StaffAPI.deleteIncident(incidentId)
+      await staffApi.deleteIncident(incidentId)
       await loadIncidentsForStation(stationId)
     } catch (e) {
       console.error('❌ delete incident failed', e)
@@ -210,7 +210,7 @@ export default function StaffPage() {
       if (normalized.currentBatteryLevel != null && normalized.CurrentBatteryLevel == null) {
         normalized.CurrentBatteryLevel = normalized.currentBatteryLevel
       }
-      const created = await StaffAPI.createCar(normalized)
+      const created = await staffApi.createCar(normalized)
       // Map created car to view model
       const c = created || {}
       const map = (c) => ({
@@ -236,7 +236,7 @@ export default function StaffPage() {
   }
   const removeVehicle = async (id) => {
     try {
-      await StaffAPI.deleteCar(id)
+      await staffApi.deleteCar(id)
       setVehicles(prev => prev.filter(v => v.id !== id))
       // Update slot info after removing
       await updateStationSlots(stationId)
@@ -253,7 +253,7 @@ export default function StaffPage() {
         let success = false
         for (const status of candidates) {
           try {
-            await StaffAPI.updateStatus(id, status)
+            await staffApi.updateStatus(id, status)
             success = true
             break
           } catch {}
@@ -272,15 +272,15 @@ export default function StaffPage() {
         let val = Number(payload.battery)
         if (!Number.isNaN(val)) {
           val = Math.max(0, Math.min(100, Math.round(val)))
-          await StaffAPI.updateBatteryLevel(id, val)
+          await staffApi.updateBatteryLevel(id, val)
         }
       }
       if (payload.tech) {
-        await StaffAPI.updateStatus(id, payload.tech)
+        await staffApi.updateStatus(id, payload.tech)
       }
       if (payload.issue) {
-        try { await StaffAPI.updateCarDescription(id, payload.issue) }
-        catch { await StaffAPI.updateCar(id, { description: payload.issue }) }
+        try { await staffApi.updateCarDescription(id, payload.issue) }
+        catch { await staffApi.updateCar(id, { description: payload.issue }) }
       }
     } catch (e) {
       setError(e?.message || 'Failed to update vehicle')
@@ -295,7 +295,7 @@ export default function StaffPage() {
       return;
     }
     try {
-      const report = await StaffAPI.getCarStatusReport(sid, null);
+      const report = await staffApi.getCarStatusReport(sid, null);
       if (report) {
         setStationSlots({
           totalCars: report.totalCars || 0,
@@ -321,7 +321,7 @@ export default function StaffPage() {
     let mounted = true
     async function loadRole() {
       try {
-        const me = await StaffAPI.getMe()
+        const me = await staffApi.getMe()
         const r = me?.role || me?.Role || me?.roleName || me?.userRole || (Array.isArray(me?.roles) ? me.roles[0] : '')
         if (mounted) setRole(r || '')
       } catch {
@@ -329,7 +329,7 @@ export default function StaffPage() {
         try {
           const t = localStorage.getItem('token')
           if (t) {
-            const decoded = StaffAPI.decodeJwt(t)
+            const decoded = staffApi.decodeJwt(t)
             const r = decoded?.role || decoded?.Role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
             if (mounted) setRole(r || '')
           }
@@ -348,7 +348,7 @@ export default function StaffPage() {
           
           // Load station name for display
           try {
-            const allStations = await StaffAPI.getAllStations(1, 100)
+            const allStations = await staffApi.getAllStations(1, 100)
             if (mounted) setStations(allStations || [])
           } catch (e) {
             console.warn('⚠️ Failed to load stations for display:', e)
@@ -358,7 +358,7 @@ export default function StaffPage() {
         
         // Fallback: if no stationId in localStorage (shouldn't happen for staff)
         console.warn('⚠️ No stationId found in localStorage for staff user')
-        const s = await StaffAPI.getAllStations(1, 100)
+        const s = await staffApi.getAllStations(1, 100)
         if (!mounted) return
         setStations(s || [])
         // Don't auto-select - staff should only see their assigned station
@@ -385,8 +385,8 @@ export default function StaffPage() {
           // Show ALL vehicles for the station, regardless of availability
           let byStation = []
           let available = []
-          try { byStation = await StaffAPI.getCarsByStation(stationId) } catch {}
-          try { available = await StaffAPI.getAvailableCarsByStation(stationId) } catch {}
+          try { byStation = await staffApi.getCarsByStation(stationId) } catch {}
+          try { available = await staffApi.getAvailableCarsByStation(stationId) } catch {}
           const toArray = (x) => Array.isArray(x) ? x : (x ? [x] : [])
           const A = toArray(byStation), B = toArray(available)
           // Merge unique by id (fallback to licensePlate)
@@ -399,7 +399,7 @@ export default function StaffPage() {
 
           // Always supplement with client-side filtered All Cars to catch backends that only return "available" by station
           try {
-            const all = await StaffAPI.getAllCars(1, 1000)
+            const all = await staffApi.getAllCars(1, 1000)
             const norm = (v) => (v == null ? '' : String(v).replace(/[{}]/g, '').toLowerCase())
             const sidNorm = norm(stationId)
             const clientFiltered = (all || []).filter(c => {
@@ -421,8 +421,8 @@ export default function StaffPage() {
           } catch {}
         } else {
           // When no station is selected (All stations), fetch all cars with larger page size
-          try { cars = await StaffAPI.getAllCars(1, 1000) }
-          catch { try { cars = await StaffAPI.listCars({ page: 1, pageSize: 1000 }) } catch { cars = [] } }
+          try { cars = await staffApi.getAllCars(1, 1000) }
+          catch { try { cars = await staffApi.listCars({ page: 1, pageSize: 1000 }) } catch { cars = [] } }
         }
         // Ensure we always have an array
         if (!Array.isArray(cars)) cars = cars ? [cars] : []
@@ -465,7 +465,7 @@ export default function StaffPage() {
           try {
             const updates = await Promise.all(needBattery.map(async v => {
               try {
-                const b = await StaffAPI.getCarBattery(v.id)
+                const b = await staffApi.getCarBattery(v.id)
                 return { id: v.id, battery: normalizePercent(b) }
               } catch { return { id: v.id, battery: null } }
             }))
@@ -480,7 +480,7 @@ export default function StaffPage() {
           try {
             const updatesCap = await Promise.all(needCapacity.map(async v => {
               try {
-                const cap = await StaffAPI.getCarCapacity(v.id)
+                const cap = await staffApi.getCarCapacity(v.id)
                 return { id: v.id, capacity: cap }
               } catch { return { id: v.id, capacity: null } }
             }))
@@ -517,7 +517,7 @@ export default function StaffPage() {
           console.log('📅 Loading active bookings for station:', stationId)
           try {
             // Load ONLY active bookings for this station (no fallback to all)
-            items = await StaffAPI.getBookingsByStation(stationId, 1, 200)
+            items = await staffApi.getBookingsByStation(stationId, 1, 200)
             console.log('✅ Loaded active bookings:', items?.length)
           } catch (e) {
             console.error('❌ Error loading bookings:', e)
@@ -665,7 +665,7 @@ export default function StaffPage() {
             const uniqueIds = Array.from(new Set(needUser.map(x => x.userId)))
             const results = await Promise.all(uniqueIds.map(async uid => {
               try {
-                const u = await StaffAPI.getUserById(uid)
+                const u = await staffApi.getUserById(uid)
                 const first = u?.firstName || u?.FirstName || u?.givenName || u?.GivenName || null
                 const last  = u?.lastName  || u?.LastName  || u?.surname  || u?.Surname  || null
                 const full  = (u?.fullName || u?.FullName) || [first, last].filter(Boolean).join(' ') || null
@@ -704,9 +704,9 @@ export default function StaffPage() {
             const uniqueCarIds = Array.from(new Set(needCar.map(getCarId).filter(Boolean)))
             const cars = await Promise.all(uniqueCarIds.map(async cid => {
               try {
-                let car = await StaffAPI.getCarById(cid)
+                let car = await staffApi.getCarById(cid)
                 if (!car || (!car.id && !car.Id)) {
-                  try { car = await StaffAPI.getCarByIdRest(cid) } catch {}
+                  try { car = await staffApi.getCarByIdRest(cid) } catch {}
                 }
                 const name = car?.name || car?.Name || [car?.brand, car?.model].filter(Boolean).join(' ') || null
                 const img = car?.imageUrl || car?.thumbnailUrl || null
@@ -739,7 +739,7 @@ export default function StaffPage() {
           try {
             const results = await Promise.all(missingNow.map(async b => {
               try {
-                const m = await StaffAPI.getVehicleModelFromBooking(b.id)
+                const m = await staffApi.getVehicleModelFromBooking(b.id)
                 const label = m?.name || [m?.brand, m?.model].filter(Boolean).join(' ') || null
                 return { id: b.id, title: label }
               } catch { return { id: b.id, title: null } }

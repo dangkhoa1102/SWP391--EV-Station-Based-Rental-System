@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import StaffAPI from '../../../services/staffApi'
-import API from '../../../../services/api' // Add central API for payment
+import StaffAPI from '../../../../services/staffApi'
+import paymentApi from '../../../../services/paymentApi'
+import bookingApi from '../../../../services/bookingApi'
 
 function formatVND(n) {
   try {
@@ -31,7 +32,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
     let mounted = true
     ;(async () => {
       try {
-        const st = await StaffAPI.getServerTime()
+        const st = await staffApi.getServerTime()
         if (mounted) setServerTime(st)
         // Log for diagnosis: compare server vs client
         try {
@@ -62,7 +63,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
         try {
           const t = localStorage.getItem('token')
           if (t) {
-            const decoded = StaffAPI.decodeJwt(t)
+            const decoded = staffApi.decodeJwt(t)
             userId = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || decoded.sub || decoded.userId || decoded.UserId || decoded.id || decoded.Id || ''
           }
         } catch {}
@@ -81,7 +82,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
       }
       
       // Call check-in API and get response with totalAmount
-      const response = await StaffAPI.checkInWithContract(payload)
+      const response = await staffApi.checkInWithContract(payload)
       console.log('✅ Check-in response:', response)
       
       // Save bookingId to localStorage for payment tracking
@@ -100,7 +101,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
         try {
           // Create payment session with numeric paymentType (1 = Rental)
           // Use central API instead of StaffAPI
-          const paymentRes = await API.createPayment(booking.id, 1, 'Rental payment at check-in')
+          const paymentRes = await paymentApi.createPayment(booking.id, 1, 'Rental payment at check-in')
           console.log('✅ Payment created:', paymentRes)
           
           // Extract checkout URL from response
@@ -143,11 +144,11 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
     setError('')
     try {
       console.log('🔄 Syncing payment for booking:', booking.id)
-      await API.syncPayment(booking.id)
+      await paymentApi.syncPayment(booking.id)
       console.log('✅ Payment synced successfully')
       
       // Fetch updated booking to check status
-      const updatedBooking = await API.getBookingById(booking.id)
+      const updatedBooking = await bookingApi.getBookingById(booking.id)
       console.log('📊 Updated booking status:', updatedBooking.bookingStatus)
       
       setSyncSuccess(true)

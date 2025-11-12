@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import StaffAPI from '../../../services/staffApi'
+import StaffAPI from '../../../../services/staffApi'
 
 function formatVND(n) {
   try {
@@ -40,14 +40,14 @@ export default function PaymentCard({ booking, onClose }) {
       try {
         // Resolve user full name regardless of totals presence
         try {
-          const { firstName, lastName } = await StaffAPI.getUserNameByBookingId(booking.id)
+          const { firstName, lastName } = await staffApi.getUserNameByBookingId(booking.id)
           if (mounted) setResolvedFullName([firstName, lastName].filter(Boolean).join(' '))
         } catch {}
 
         // Load full booking details for accurate totals if not present
         if (!booking.totalAmount && !booking.TotalAmount) {
           try {
-            const b = await StaffAPI.getBookingById(booking.id)
+            const b = await staffApi.getBookingById(booking.id)
             if (!mounted) return
             setExpandedBooking(prev => ({ ...prev, ...b }))
           } catch (e) {
@@ -59,7 +59,7 @@ export default function PaymentCard({ booking, onClose }) {
 
         // Create a payment session
         try {
-          const res = await StaffAPI.post('/Payment/create', {
+          const res = await staffApi.post('/Payment/create', {
             bookingId: booking.id,
             amount: Math.max(1, depositAmt || 0)
           })

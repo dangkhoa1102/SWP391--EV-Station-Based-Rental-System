@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import AdminAPI from '../../../services/adminApi'
+import AdminAPI from '../../../../services/adminApi'
 
 export default function CheckInCard({ booking, onClose, onCheckedIn }){
   const [checkInNotes, setCheckInNotes] = useState('')
@@ -14,7 +14,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
     let mounted = true
     ;(async () => {
       try {
-        const st = await AdminAPI.getServerTime()
+        const st = await adminApi.getServerTime()
         if (mounted) setServerTime(st)
         // Log for diagnosis: compare server vs client
         try {
@@ -41,7 +41,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
       // Resolve Admin/Staff entity Id (not just userId)
       let adminId = ''
       try {
-        adminId = await AdminAPI.resolveStaffId()
+        adminId = await adminApi.resolveStaffId()
       } catch (ridErr) {
         // Fallback: try userId if staff mapping is not available
         try { adminId = localStorage.getItem('userId') || '' } catch {}
@@ -67,7 +67,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
           }
         } catch {}
       }
-      await AdminAPI.checkInWithContract(payload)
+      await adminApi.checkInWithContract(payload)
       if (typeof onCheckedIn === 'function') onCheckedIn(booking.id, payload)
       onClose?.()
     } catch (e) {

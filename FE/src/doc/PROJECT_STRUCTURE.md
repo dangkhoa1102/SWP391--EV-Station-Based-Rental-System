@@ -39,7 +39,7 @@ Examples:
 
 **Note**: Image uploads are handled by the Backend API. Frontend does not need Cloudinary configuration.
 
-### `/src/user/page/components/[Feature]`
+### `/src/renter/page/components/[Feature]`
 **Feature-Specific Components**
 
 Each feature folder should contain:
@@ -63,7 +63,7 @@ Centralized API calls and data fetching logic.
 
 Examples:
 - `api.js` - Base API configuration
-- `userApi.js` - User-related API calls
+- `renterApi.js` - Renter-related API calls
 - `staffApi.js` - Staff-related API calls
 
 ### `/src/utils`
@@ -101,7 +101,7 @@ import SearchModal from '../../../../components/SearchModal.jsx'
 import { useToast } from '../../../../components/ToastProvider.jsx'
 
 // Services
-import API from '../../../services/userApi.js'
+import API from '../../../services/renterApi.js'
 
 // Utils
 import { formatVND } from '../../../../utils/currency.js'

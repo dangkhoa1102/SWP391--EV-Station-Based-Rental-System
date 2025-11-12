@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import AdminAPI from '../../../services/adminApi';
+import AdminAPI from '../../../../services/adminApi';
 
 export default function AddUserModal({ open, onClose, onSuccess }) {
   const [fullName, setFullName] = useState('');
@@ -16,7 +16,7 @@ export default function AddUserModal({ open, onClose, onSuccess }) {
 
     try {
       // Register new user via API
-      await AdminAPI.post('/Auth/Register', {
+      await adminApi.post('/Auth/Register', {
         fullName,
         email,
         phoneNumber: phone,
