@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import '../styles/MapModal.css'
+import { getGeocodingCacheStats, getCoordinateFromCache } from '../utils/geocodingService'
 
 // Fix for default marker icons in Leaflet
 delete L.Icon.Default.prototype._getIconUrl
@@ -67,66 +68,15 @@ function MapController({ stations, userLocation }) {
   return null
 }
 
-// Fallback coordinates for known stations
-function getStationCoordinates(station) {
-  const stationCoordinates = {
-    // Original stations
-    'District 1 - Nguyen Hue': { lat: 10.7743, lng: 106.7012 },
-    'District 4 - Khanh Hoi': { lat: 10.7593, lng: 106.7058 },
-    'Binh Thanh - Pearl Plaza': { lat: 10.7990, lng: 106.7095 },
-    'District 7 - Phu My Hung': { lat: 10.7308, lng: 106.7193 },
-    'Go Vap - Emart': { lat: 10.8376, lng: 106.6758 },
-    'Tan Binh - Airport': { lat: 10.8184, lng: 106.6589 },
-    
-    // New stations from database
-    'Hải Phòng - Lê Lợi': { lat: 20.8445, lng: 106.6839 },
-    'Huế - Huyền Trân Công Chúa': { lat: 16.4637, lng: 107.5909 },
-    'District 1 - Nguyễn Huệ': { lat: 10.7743, lng: 106.7012 },
-    'District 3 - Võ Văn Tần': { lat: 10.7866, lng: 106.6774 },
-    'Quy Nhơn - Nguyễn Tất Thành': { lat: 13.7769, lng: 109.2233 },
-    'Vinh - Lê Duẩn': { lat: 18.6799, lng: 105.6936 },
-    'Thanh Hóa - Lê Lợi': { lat: 19.8096, lng: 105.7756 },
-    'Bắc Ninh - Lý Thái Tổ': { lat: 21.1856, lng: 105.9804 },
-    'Hải Dương - Thành Công': { lat: 20.9480, lng: 106.3178 },
-    'Thái Nguyên - Lê Hồng Phong': { lat: 21.5931, lng: 105.8473 },
-    'Nam Định - Hùng Vương': { lat: 20.4281, lng: 105.9424 },
-    'Phú Quốc - Trần Hưng Đạo': { lat: 10.1886, lng: 103.9847 },
-    'Buôn Ma Thuột - Lê Duẩn': { lat: 12.6655, lng: 108.0404 },
-    'Long Xuyên - Nguyễn Văn Cừ': { lat: 10.3872, lng: 105.4329 },
-    'Rạch Giá - Trần Hưng Đạo': { lat: 10.0131, lng: 104.9756 },
-    'District 7 - Nguyễn Thị Thập': { lat: 10.7308, lng: 106.7193 },
-    'Bình Thạnh - Xô Viết Nghệ Tĩnh': { lat: 10.8201, lng: 106.7355 },
-    'Hoàn Kiếm - Hàng Bài': { lat: 21.0290, lng: 105.8548 },
-    'Ba Đình - Điện Biên Phủ': { lat: 21.0459, lng: 105.8186 },
-    'Phú Nhuận - Phan Đình Phùng': { lat: 10.8134, lng: 106.7401 },
-    'Cầu Giấy - Cầu Giấy': { lat: 21.0479, lng: 105.7888 },
-    'Tây Hồ - Trích Sài': { lat: 21.1060, lng: 105.8208 },
-    'Nha Trang - Trần Phú': { lat: 12.2389, lng: 109.1968 },
-    'Đà Nẵng - Bạch Đằng': { lat: 16.0743, lng: 108.2158 },
-    'Đà Lạt - Phan Đình Phùng': { lat: 11.9404, lng: 108.4453 },
-    'Cần Thơ - Lê Lợi': { lat: 10.0379, lng: 105.7869 },
-    'Bến Tre - Hàm Luông': { lat: 10.2384, lng: 106.3721 },
-    'Vĩnh Long - Đồng Khởi': { lat: 10.2558, lng: 105.9597 },
-    'Vũng Tàu - Trương Công Định': { lat: 10.3455, lng: 107.0628 }
-  }
-
-  const name = station.stationName || station.name || station.Name
-  const lat = station.latitude || station.Latitude
-  const lng = station.longitude || station.Longitude
-
-  if (lat && lng) {
-    return { lat: parseFloat(lat), lng: parseFloat(lng) }
-  }
-
-  if (stationCoordinates[name]) {
-    return stationCoordinates[name]
-  }
-
-  return null
-}
+// Note: Station geocoding is now handled on page load in HomePage
+// using geocodeAddressesBatch() which populates the geocoding cache
+// MapModal simply uses the cached coordinates without re-geocoding
 
 export default function MapModal({ isOpen, onClose, stations, onSelectStation, selectedStationId, userLocation }) {
   const [mapKey, setMapKey] = useState(0)
+  const [stationCoords, setStationCoords] = useState(new Map())
+  const [cacheStats, setCacheStats] = useState(null)
+  const [isLoadingNewCoords, setIsLoadingNewCoords] = useState(false)
 
   // Force re-render map when modal opens
   useEffect(() => {
@@ -134,6 +84,50 @@ export default function MapModal({ isOpen, onClose, stations, onSelectStation, s
       setMapKey(prev => prev + 1)
     }
   }, [isOpen])
+
+  // Get geocoded coordinates from cache when modal opens
+  useEffect(() => {
+    if (!isOpen || !stations || stations.length === 0) return
+
+    // Get cache stats to see what's been geocoded
+    const stats = getGeocodingCacheStats()
+    setCacheStats(stats)
+    console.log(`📊 Geocoding cache stats:`, stats)
+
+    // Build coordinate map from cache
+    const coords = new Map()
+    let availableCount = 0
+    let missingCount = 0
+
+    for (const station of stations) {
+      const stationId = station.id || station.Id || station.stationId
+      const address = station.address || station.Address || ''
+
+      // Get from cache
+      const coord = getCoordinateFromCache(address, 'Vietnam')
+      if (coord) {
+        availableCount++
+      } else if (coord === null) {
+        // Was already attempted but failed - don't retry
+      } else {
+        // undefined - never attempted, might need to geocode
+        missingCount++
+      }
+      coords.set(stationId, coord)
+    }
+
+    // Show immediately if we have cached coordinates (even if not all)
+    console.log(`✅ Using ${availableCount}/${stations.length} cached coordinates (${missingCount} never attempted)`)
+    setStationCoords(coords)
+
+    // Only show loading if there are actually NEW stations to geocode
+    // Don't show it if all stations either succeeded or failed before
+    if (missingCount > 0) {
+      setIsLoadingNewCoords(true)
+    } else {
+      setIsLoadingNewCoords(false)
+    }
+  }, [isOpen, stations])
 
   if (!isOpen) return null
 
@@ -177,12 +171,14 @@ export default function MapModal({ isOpen, onClose, stations, onSelectStation, s
 
           {/* Station markers */}
           {stations.map((station) => {
-            const coords = getStationCoordinates(station)
+            const stationId = station.id || station.Id || station.stationId
+            const coords = stationCoords.get(stationId)
+            
+            // Skip if coordinates not available
             if (!coords) return null
 
             const name = station.stationName || station.name || station.Name || 'Unknown Station'
             const address = station.address || station.Address || ''
-            const stationId = station.id || station.Id || station.stationId
             const isSelected = stationId === selectedStationId
 
             return (

@@ -1,6 +1,7 @@
 import { apiClient } from './api'
 import bookingApi from './bookingApi'
 import incidentApi from './incidentApi'
+import carApi from './carApi'
 
 // ============================================================================
 // STAFF-SPECIFIC ENDPOINTS & API AGGREGATION
@@ -34,65 +35,13 @@ const staffApi = {
   delete: (url) => apiClient.delete(url).then(res => res.data),
 
   // ===== CAR MANAGEMENT METHODS (delegated to raw API calls) =====
-  createCar: async (carData) => {
-    try {
-      const res = await apiClient.post('/Cars/Create', carData)
-      return res.data?.data || res.data
-    } catch (e) {
-      console.error('Error creating car:', e)
-      throw e
-    }
-  },
-
-  deleteCar: async (carId) => {
-    try {
-      const res = await apiClient.delete(`/Cars/Delete-By-${encodeURIComponent(carId)}`)
-      return res.data?.data || res.data
-    } catch (e) {
-      console.error('Error deleting car:', e)
-      throw e
-    }
-  },
-
-  updateCar: async (carId, carData) => {
-    try {
-      const res = await apiClient.put(`/Cars/Update-By-${encodeURIComponent(carId)}`, carData)
-      return res.data?.data || res.data
-    } catch (e) {
-      console.error('Error updating car:', e)
-      throw e
-    }
-  },
-
-  updateStatus: async (carId, status) => {
-    try {
-      const res = await apiClient.patch(`/Cars/${encodeURIComponent(carId)}/status`, { status })
-      return res.data?.data || res.data
-    } catch (e) {
-      console.error('Error updating car status:', e)
-      throw e
-    }
-  },
-
-  updateBatteryLevel: async (carId, batteryLevel) => {
-    try {
-      const res = await apiClient.patch(`/Cars/${encodeURIComponent(carId)}/battery`, { batteryLevel })
-      return res.data?.data || res.data
-    } catch (e) {
-      console.error('Error updating battery level:', e)
-      throw e
-    }
-  },
-
-  updateCarDescription: async (carId, description) => {
-    try {
-      const res = await apiClient.patch(`/Cars/${encodeURIComponent(carId)}/description`, { description })
-      return res.data?.data || res.data
-    } catch (e) {
-      console.error('Error updating car description:', e)
-      throw e
-    }
-  },
+  // ===== CAR MANAGEMENT (delegated to carApi) =====
+  createCar: carApi.createCar,
+  deleteCar: carApi.deleteCar,
+  updateCar: carApi.updateCar,
+  updateStatus: carApi.updateStatus,
+  updateBatteryLevel: carApi.updateBatteryLevel,
+  updateCarDescription: carApi.updateCarDescription,
 
   getCarsByStation: async (stationId) => {
     try {

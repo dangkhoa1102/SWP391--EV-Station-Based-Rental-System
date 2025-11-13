@@ -35,6 +35,8 @@ export default function Header(){
   // Check if user is Staff (role check)
   const isStaff = user && (user.userRole === 'Station Staff')
 
+  const isAdmin = user && (user.userRole === 'Admin')
+
   return (
     <>
       <header className="header">
@@ -45,6 +47,11 @@ export default function Header(){
               {isStaff && (
                 <a href="/staff" className="staff-portal-btn">
                   <i className="fas fa-user-shield"></i> Staff Portal
+                </a>
+              )}
+              {isAdmin && (
+                <a href="/admin" className="admin-portal-btn">
+                  <i className="fas fa-user-shield"></i> Admin Portal
                 </a>
               )}
             </div>

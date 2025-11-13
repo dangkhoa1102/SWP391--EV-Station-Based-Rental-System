@@ -52,22 +52,22 @@ const adminApi = {
   },
 
   // ---------------------------------------------------------------------------
-  // CAR OPERATIONS (delegated from staffApi)
+  // CAR OPERATIONS (delegated from carApi)
   // ---------------------------------------------------------------------------
 
-  createCar: staffApi.createCar,
-  deleteCar: staffApi.deleteCar,
-  updateCar: staffApi.updateCar,
-  updateStatus: staffApi.updateStatus,
-  updateBatteryLevel: staffApi.updateBatteryLevel,
-  updateCarDescription: staffApi.updateCarDescription,
-  getCarStatusReport: staffApi.getCarStatusReport,
-  getCarsByStation: staffApi.getCarsByStation,
-
-  // CAR READ OPERATIONS (delegated from carApi)
+  createCar: carApi.createCar,
+  deleteCar: carApi.deleteCar,
+  updateCar: carApi.updateCar,
+  updateStatus: carApi.updateStatus,
+  updateBatteryLevel: carApi.updateBatteryLevel,
+  updateCarDescription: carApi.updateCarDescription,
   getAllCars: carApi.getAllCars,
   getCarById: carApi.getCarById,
   getAvailableCarsByStation: carApi.getAvailableCarsByStation,
+
+  // Car status report and station cars (delegated from staffApi)
+  getCarStatusReport: staffApi.getCarStatusReport,
+  getCarsByStation: staffApi.getCarsByStation,
 
   // STATION & BOOKING OPERATIONS (delegated from staffApi)
   getAllStations: staffApi.getAllStations,

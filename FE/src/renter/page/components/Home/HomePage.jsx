@@ -4,6 +4,7 @@ import carApi from '../../../../services/carApi'
 import { formatVND } from '../../../../utils/currency.js'
 import { useToast } from '../../../../components/ToastProvider.jsx'
 import SearchModal from '../../../../components/SearchModal.jsx'
+import { geocodeAddressesBatch } from '../../../../utils/geocodingService.js'
 import './home_page.css'
 
 export default function HomePage(){
@@ -68,6 +69,12 @@ export default function HomePage(){
         const list = await stationApi.getAllStations(1, 500)
         console.log('🏢 Loaded stations in HomePage:', list.length, 'items')
         setStations(list || [])
+        
+        // Geocode all stations immediately
+        if(list && list.length > 0) {
+          console.log('🔍 Geocoding all stations in background...')
+          geocodeAddressesBatch(list, 300) // 300ms delay between requests
+        }
       }catch(e){ console.error('Failed to load stations', e) }
     }
 

@@ -112,6 +112,80 @@ const carApi = {
       console.error('❌ Error fetching available cars:', e.response?.data || e.message)
       throw e
     }
+  },
+
+  // Create car (supports FormData for image upload)
+  createCar: async (carData) => {
+    try {
+      // Check if payload is FormData (file upload)
+      if (carData instanceof FormData) {
+        // Let browser set Content-Type with proper multipart/form-data boundary
+        const res = await apiClient.post('/Cars/Create', carData, { headers: { 'Content-Type': undefined } })
+        return res.data?.data || res.data
+      } else {
+        // Regular JSON payload
+        const res = await apiClient.post('/Cars/Create', carData)
+        return res.data?.data || res.data
+      }
+    } catch (e) {
+      console.error('Error creating car:', e)
+      throw e
+    }
+  },
+
+  // Delete car by ID
+  deleteCar: async (carId) => {
+    try {
+      const res = await apiClient.delete(`/Cars/Delete-By-${encodeURIComponent(carId)}`)
+      return res.data?.data || res.data
+    } catch (e) {
+      console.error('Error deleting car:', e)
+      throw e
+    }
+  },
+
+  // Update car
+  updateCar: async (carId, carData) => {
+    try {
+      const res = await apiClient.put(`/Cars/Update-By-${encodeURIComponent(carId)}`, carData)
+      return res.data?.data || res.data
+    } catch (e) {
+      console.error('Error updating car:', e)
+      throw e
+    }
+  },
+
+  // Update car status
+  updateStatus: async (carId, status) => {
+    try {
+      const res = await apiClient.patch(`/Cars/${encodeURIComponent(carId)}/status`, { status })
+      return res.data?.data || res.data
+    } catch (e) {
+      console.error('Error updating car status:', e)
+      throw e
+    }
+  },
+
+  // Update battery level
+  updateBatteryLevel: async (carId, batteryLevel) => {
+    try {
+      const res = await apiClient.patch(`/Cars/${encodeURIComponent(carId)}/battery`, { batteryLevel })
+      return res.data?.data || res.data
+    } catch (e) {
+      console.error('Error updating battery level:', e)
+      throw e
+    }
+  },
+
+  // Update car description
+  updateCarDescription: async (carId, description) => {
+    try {
+      const res = await apiClient.patch(`/Cars/${encodeURIComponent(carId)}/description`, { description })
+      return res.data?.data || res.data
+    } catch (e) {
+      console.error('Error updating car description:', e)
+      throw e
+    }
   }
 }
 
