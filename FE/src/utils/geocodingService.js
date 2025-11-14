@@ -72,11 +72,15 @@ export async function geocodeAddress(address, city = 'Vietnam') {
   }
 
   try {
-    // Try multiple query formats - Nominatim is sensitive to address format
+    // Try multiple query formats - Nominatim for Vietnam needs simple format
+    const addressParts = address.split(',').map(s => s.trim())
+    const streetName = addressParts[0] || address
+    
     const queries = [
-      `${address}, ${city}`,           // Full address with country
-      `${address}`,                     // Just the address
-      `${city}, Vietnam`,               // Just the city (fallback)
+      `${address}, Vietnam`,                    // Full address with country
+      `${streetName}, ${city}, Vietnam`,        // Street + city + country  
+      `${streetName} ${city} Vietnam`,          // Without commas (sometimes works better)
+      address,                                   // Just the address
     ]
 
     console.log(`🔍 Geocoding address: "${address}" (city: "${city}")`)
@@ -88,7 +92,7 @@ export async function geocodeAddress(address, city = 'Vietnam') {
       lastQuery = query
       
       const response = await fetch(
-        `${NOMINATIM_URL}?q=${encodeURIComponent(query)}&format=json&limit=5&timeout=10&accept-language=vi`,
+        `${NOMINATIM_URL}?q=${encodeURIComponent(query)}&format=json&limit=10&timeout=10&accept-language=vi&countrycodes=vn`,
         {
           headers: {
             'Accept': 'application/json',
@@ -105,12 +109,24 @@ export async function geocodeAddress(address, city = 'Vietnam') {
 
       // If we got results, try to find the best match
       if (Array.isArray(results) && results.length > 0) {
-        // Prefer results that match the city/province
-        const bestResult = results.find(r => {
-          const addressLower = r.address?.toLowerCase() || ''
+        // Prefer results that are specific locations (roads, buildings, etc) over administrative areas
+        // But don't reject everything - we need to be more lenient
+        const preferredResults = results.filter(r => {
+          const type = (r.type || r.class || '').toLowerCase()
+          const addressType = (r.addresstype || '').toLowerCase()
+          // Accept roads, buildings, amenities, tourism spots, etc - reject only pure administrative
+          return !['state', 'province', 'country'].includes(type) && 
+                 !['state', 'province', 'country'].includes(addressType)
+        })
+
+        const resultsToCheck = preferredResults.length > 0 ? preferredResults : results
+        
+        // Prefer results that match the city/province in display name
+        const bestResult = resultsToCheck.find(r => {
+          const displayName = r.display_name?.toLowerCase() || ''
           const cityLower = city?.toLowerCase() || ''
-          return addressLower.includes(cityLower)
-        }) || results[0]
+          return cityLower && displayName.includes(cityLower)
+        }) || resultsToCheck[0]
 
         const coords = {
           lat: parseFloat(bestResult.lat),
