@@ -13,6 +13,8 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
   const [selected, setSelected] = useState(null);
   const [checkInFor, setCheckInFor] = useState(null);
   const [checkOutFor, setCheckOutFor] = useState(null);
+  const [incidentsRefreshKey, setIncidentsRefreshKey] = useState(0);
+  const [incidentsInitial, setIncidentsInitial] = useState([])
 
   // Poll for checkout payment completion
   React.useEffect(() => {
@@ -25,7 +27,7 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
         const bookingIdFromStorage = localStorage.getItem('activeCheckOutBookingId')
         if (!bookingIdFromStorage) return
         
-        const updatedBooking = await staffApi.getBookingById(bookingIdFromStorage)
+        const updatedBooking = await StaffAPI.getBookingById(bookingIdFromStorage)
         console.log('📊 Polling booking status:', updatedBooking?.bookingStatus)
         
         // If payment completed (status = 5), close modal and refresh
@@ -53,7 +55,7 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
         const bookingIdFromStorage = localStorage.getItem('activeCheckInBookingId')
         if (!bookingIdFromStorage) return
         
-        const updatedBooking = await staffApi.getBookingById(bookingIdFromStorage)
+        const updatedBooking = await StaffAPI.getBookingById(bookingIdFromStorage)
         console.log('📊 Polling check-in booking status:', updatedBooking?.bookingStatus)
         
         // If payment completed and check-in done (status = 3 or higher), close modal
@@ -150,7 +152,14 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
           <div style={{flex:'0 0 auto', width:'720px', maxWidth:'45vw', maxHeight:'90vh', overflow:'auto', flexShrink:0}}>
             <CheckOutCard
               booking={checkOutFor}
-              onClose={() => setCheckOutFor(null)}
+                onClose={() => setCheckOutFor(null)}
+                onCheckedOut={(bookingId, incidents = []) => {
+                  // bump refreshKey to force IncidentsModal to reload incidents
+                  setIncidentsRefreshKey(k => k + 1)
+                  // store immediate incidents (if any) to show in the modal
+                  setIncidentsInitial(Array.isArray(incidents) ? incidents : [])
+                  if (typeof onStatusUpdated === 'function') onStatusUpdated(bookingId)
+                }}
             />
           </div>
 
@@ -158,7 +167,9 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
           <div style={{flex:'0 0 auto', width:'420px', maxWidth:'45vw', maxHeight:'90vh', overflow:'auto', flexShrink:0}}>
             <IncidentsModal 
               bookingId={checkOutFor?.id}
-              onClose={() => setCheckOutFor(null)}
+              refreshKey={incidentsRefreshKey}
+              initialIncidents={incidentsInitial}
+              onClose={() => { setCheckOutFor(null); setIncidentsInitial([]) }}
             />
           </div>
         </div>

@@ -17,7 +17,7 @@ export default function AddStaffModal({ open, onClose, stations, onSuccess }) {
 
     try {
       // Step 1: Register new user as normal user first
-      const response = await adminApi.post('/Auth/Register', {
+      const response = await AdminAPI.post('/Auth/Register', {
         fullName,
         email,
         phoneNumber: phone,
@@ -32,7 +32,7 @@ export default function AddStaffModal({ open, onClose, stations, onSuccess }) {
 
       // Step 2: Assign Station Staff role to the user
       try {
-        await adminApi.assignStaffRole(userId, `Assigned to station staff role during creation`);
+        await AdminAPI.assignStaffRole(userId, `Assigned to station staff role during creation`);
       } catch (roleErr) {
         console.warn('Failed to assign staff role:', roleErr);
         throw new Error('User created but failed to assign staff role');
@@ -41,7 +41,7 @@ export default function AddStaffModal({ open, onClose, stations, onSuccess }) {
       // Step 3: If station is selected, assign staff to station
       if (stationId) {
         try {
-          await adminApi.assignStaffToStation(stationId, userId);
+          await AdminAPI.assignStaffToStation(stationId, userId);
         } catch (assignErr) {
           console.warn('Staff role assigned but station assignment failed:', assignErr);
           // Don't throw - user and role are created, just station assignment failed

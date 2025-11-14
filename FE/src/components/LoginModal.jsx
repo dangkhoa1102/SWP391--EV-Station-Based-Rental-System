@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import NotificationModal from './NotificationModal'
+import UpdateProfileModal from './UpdateProfileModal'
 import authApi from '../services/authApi'
 
 export default function LoginModal(){
@@ -10,7 +11,7 @@ export default function LoginModal(){
   const [error, setError] = useState('')
   const [notification, setNotification] = useState({ isOpen: false, type: 'info', title: '', message: '' })
   const [isLoading, setIsLoading] = useState(false)
-  const [showUpdateProfilePrompt, setShowUpdateProfilePrompt] = useState(false)
+  const [showUpdateProfileModal, setShowUpdateProfileModal] = useState(false)
 
   if(!showLogin && !notification.isOpen) return null
 
@@ -30,13 +31,7 @@ export default function LoginModal(){
       
       if (incompletFields.length > 0) {
         console.log('⚠️ Incomplete profile fields:', incompletFields)
-        setNotification({
-          isOpen: true,
-          type: 'warning',
-          title: 'Complete Your Profile ⚠️',
-          message: `Your profile is incomplete. Please update: ${incompletFields.join(', ')}`
-        })
-        setShowUpdateProfilePrompt(true)
+        // Don't show notification here, UpdateProfileModal will show directly
         return true // Profile is incomplete
       }
       
@@ -61,12 +56,17 @@ export default function LoginModal(){
       const userRole = localStorage.getItem('userRole') || loginResult?.role
       console.log('👥 User role:', userRole)
       
-      if (userRole === 'Renter' || userRole === 'Customer') {
+      // Check if user is a renter (role contains 'Renter' or 'Customer')
+      const isRenter = userRole && (userRole.includes('Renter') || userRole.includes('Customer'))
+      console.log('🎯 Is renter?', isRenter)
+      
+      if (isRenter) {
         const isIncomplete = await checkProfileCompleteness(localStorage.getItem('userId'))
         
         if (isIncomplete) {
-          // Show notification and don't close modal yet
-          // User will see the notification and can click "Update Profile" or close
+          // Show update profile modal directly instead of using events
+          console.log('🎯 Opening UpdateProfileModal directly')
+          setShowUpdateProfileModal(true)
           setShowLogin(false)
           setIsLoading(false)
           return
@@ -136,19 +136,37 @@ export default function LoginModal(){
         </div>
       )}
 
-      {/* Notification Modal */}
+      // Notification Modal
       <NotificationModal
         isOpen={notification.isOpen}
         type={notification.type}
         title={notification.title}
         message={notification.message}
         onClose={() => setNotification({ ...notification, isOpen: false })}
-        actionLabel={showUpdateProfilePrompt ? "Update Profile" : undefined}
-        onAction={showUpdateProfilePrompt ? () => {
-          // Trigger update profile modal somehow
-          window.dispatchEvent(new CustomEvent('openUpdateProfile'))
-          setShowUpdateProfilePrompt(false)
-        } : undefined}
+      />
+
+      {/* Update Profile Modal - shown directly when profile is incomplete */}
+      <UpdateProfileModal
+        isOpen={showUpdateProfileModal}
+        userEmail={localStorage.getItem('userEmail') || email}
+        onClose={() => {
+          setShowUpdateProfileModal(false)
+          // After closing profile modal, show success message
+          setNotification({
+            isOpen: true,
+            type: 'success',
+            title: 'Login Successful! ✅',
+            message: 'Your profile has been updated. Welcome!'
+          })
+          setTimeout(() => {
+            setShowLogin(false)
+            setNotification({ ...notification, isOpen: false })
+          }, 1500)
+        }}
+        onSuccess={() => {
+          console.log('✅ Profile updated successfully after login')
+          setShowUpdateProfileModal(false)
+        }}
       />
     </>
   )

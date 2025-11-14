@@ -16,7 +16,7 @@ export default function AddUserModal({ open, onClose, onSuccess }) {
 
     try {
       // Register new user via API
-      await adminApi.post('/Auth/Register', {
+      await AdminAPI.post('/Auth/Register', {
         fullName,
         email,
         phoneNumber: phone,

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import '../../styles/modals.css';
 import StaffAPI from '../../../../services/staffApi';
+import authApi from '../../../../services/authApi';
 
 export default function BookingModal({ booking, onClose, onProceed, onCancel, onStatusUpdated }) {
   const [verifiedFront, setVerifiedFront] = useState(false)
@@ -42,7 +43,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     async function resolveName() {
       setLoadingName(true)
       try {
-        const { firstName, lastName } = await staffApi.getUserNameByBookingId(booking.id)
+        const { firstName, lastName } = await StaffAPI.getUserNameByBookingId(booking.id)
         if (!cancelled) setResolvedFullName(compose(firstName, lastName))
       } catch (e) {
         // ignore, fall back to provided booking fields
@@ -60,7 +61,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
       setLoadingUserDetails(true)
       try {
         console.log('🔍 Fetching user details for userId:', booking.userId)
-        const user = await staffApi.getUserById(booking.userId)
+        const user = await authApi.getUserById(booking.userId)
         if (!cancelled) {
           setUserDetails(user)
           console.log('✅ Fetched user details:', user)
@@ -137,7 +138,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setActionLoading(true)
     try {
       // 1) Create payment (PaymentType = 'Rental')
-      const p = await staffApi.createPayment(booking.id, 'Rental', 'Rental payment at check-in')
+      const p = await StaffAPI.createPayment(booking.id, 'Rental', 'Rental payment at check-in')
       // Persist booking id for success page to sync
       try { localStorage.setItem('currentBookingId', booking.id) } catch {}
       // Extract checkoutUrl and qrCode if present
@@ -168,9 +169,9 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setErrorMsg('')
     setActionLoading(true)
     try {
-      await staffApi.syncPaymentStatus(booking.id)
+      await StaffAPI.syncPaymentStatus(booking.id)
       setLastSyncAt(new Date())
-      const fresh = await staffApi.getBookingById(booking.id)
+      const fresh = await StaffAPI.getBookingById(booking.id)
       const rawStatus = fresh?.statusCode ?? fresh?.StatusCode ?? fresh?.bookingStatus ?? fresh?.BookingStatus ?? fresh?.status ?? fresh?.Status
       const mapped = mapStatusFromRaw(rawStatus)
       if (mapped && mapped !== booking.status) {
@@ -191,7 +192,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setPaymentLoading(true)
     setErrorMsg('')
     try {
-      const p = await staffApi.getPaymentByBooking(booking.id)
+      const p = await StaffAPI.getPaymentByBooking(booking.id)
       setPaymentInfo(p)
     } catch (e) {
       setErrorMsg(e?.response?.data?.message || e?.message || 'Unable to load payment info')

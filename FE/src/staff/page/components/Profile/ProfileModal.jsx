@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import './Profile.css';
 import './StaffProfile.css';
 import StaffAPI from '../../../../services/staffApi';
+import authApi from '../../../../services/authApi';
+import { decodeJwt } from '../../../../services/api';
 
 export default function ProfileModal({ open, onClose, inline = false }) {
   const [loading, setLoading] = useState(false)
@@ -21,14 +23,14 @@ export default function ProfileModal({ open, onClose, inline = false }) {
         let p = {}
         let a = {}
         try {
-          p = await staffApi.getMyProfile()
+          p = await authApi.getMyProfile()
         } catch (e1) {
           if (e1?.response?.status === 401) {
             console.warn('Get-My-Profile unauthorized (401)')
           }
         }
         try {
-          a = await staffApi.getMe()
+          a = await authApi.getMe()
         } catch (e2) {
           if (e2?.response?.status === 401) {
             console.warn('/Auth/Me unauthorized (401)')
@@ -44,7 +46,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
           if (!userId) {
             const t = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
             if (t) {
-              const claims = staffApi.decodeJwt(t)
+                const claims = decodeJwt(t)
               userId = claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || claims.nameidentifier || claims.sub || claims.userId || claims.UserId || claims.id || claims.Id
             }
           }
@@ -54,7 +56,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
             try {
               const t = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
               if (t) {
-                const claims = staffApi.decodeJwt(t)
+                const claims = decodeJwt(t)
                 const roleClaim = claims?.role || claims?.Role || claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
                 if (roleClaim) a = { ...a, role: roleClaim }
               }
@@ -65,7 +67,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
           const needUser = !p?.userName && !a?.userName || !p?.address || !p?.stationName
           if (userId && needUser) {
             try {
-              const u = await staffApi.getUserById(userId)
+              const u = await authApi.getUserById(userId)
               if (!mounted) return
               const merged = { ...p }
               if (!merged.userName) merged.userName = u?.userName || u?.UserName || u?.username || ''
@@ -98,7 +100,7 @@ export default function ProfileModal({ open, onClose, inline = false }) {
     try {
       const t = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
       if (t) {
-        const claims = staffApi.decodeJwt(t)
+        const claims = decodeJwt(t)
         userName = claims?.preferred_username || claims?.unique_name || claims?.userName || claims?.username || claims?.name || ''
       }
     } catch {}

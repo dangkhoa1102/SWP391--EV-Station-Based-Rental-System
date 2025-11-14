@@ -14,7 +14,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
     let mounted = true
     ;(async () => {
       try {
-        const st = await adminApi.getServerTime()
+        const st = await AdminAPI.getServerTime()
         if (mounted) setServerTime(st)
         // Log for diagnosis: compare server vs client
         try {
@@ -41,7 +41,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
       // Resolve Admin/Staff entity Id (not just userId)
       let adminId = ''
       try {
-        adminId = await adminApi.resolveStaffId()
+        adminId = await AdminAPI.resolveStaffId()
       } catch (ridErr) {
         // Fallback: try userId if staff mapping is not available
         try { adminId = localStorage.getItem('userId') || '' } catch {}
@@ -67,7 +67,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
           }
         } catch {}
       }
-      await adminApi.checkInWithContract(payload)
+      await AdminAPI.checkInWithContract(payload)
       if (typeof onCheckedIn === 'function') onCheckedIn(booking.id, payload)
       onClose?.()
     } catch (e) {

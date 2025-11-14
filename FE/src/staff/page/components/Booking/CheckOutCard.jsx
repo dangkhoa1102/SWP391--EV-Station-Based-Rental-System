@@ -38,7 +38,7 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
     let mounted = true
     ;(async () => {
       try {
-        const st = await staffApi.getServerTime()
+        const st = await StaffAPI.getServerTime()
         if (mounted) {
           setServerTime(st)
           // Set initial date to today
@@ -128,7 +128,7 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
         try {
           const t = localStorage.getItem('token')
           if (t) {
-            const decoded = staffApi.decodeJwt(t)
+            const decoded = decodeJwt(t)
             userId = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || decoded.sub || decoded.userId || decoded.UserId || decoded.id || decoded.Id || ''
           }
         } catch {}
@@ -147,7 +147,7 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
       if (notes) payload.checkOutNotes = notes
       
       // Call check-out API
-      const response = await staffApi.checkOutWithPayment(payload)
+      const response = await StaffAPI.checkOutWithPayment(payload)
       console.log('✅ Check-out response:', response)
       
       // Save bookingId to localStorage for payment tracking
@@ -158,7 +158,7 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
       setCheckOutResponse(response)
       
       // Get updated booking info to fetch totalAmount and fees
-      const updatedBooking = await staffApi.getBookingById(booking.id)
+      const updatedBooking = await StaffAPI.getBookingById(booking.id)
       console.log('📚 Updated booking:', updatedBooking)
       
       // Store updated booking data in response for display
@@ -203,7 +203,16 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
         }
       }
       
-      if (typeof onCheckedOut === 'function') onCheckedOut(booking.id, payload)
+      // Try to fetch related incidents immediately after checkout so UI can show them
+      let incidentsAfter = []
+      try {
+        incidentsAfter = await StaffAPI.getIncidentsByBooking(booking.id, 1, 20)
+        console.log('🔎 Fetched incidents immediately after checkout:', incidentsAfter)
+      } catch (ie) {
+        console.warn('⚠️ Failed to fetch incidents after checkout:', ie?.message || ie)
+      }
+
+      if (typeof onCheckedOut === 'function') onCheckedOut(booking.id, incidentsAfter)
     } catch (e) {
       const body = e?.body || e?.response?.data
       const errs = (body && (body.errors || body.Errors)) || null

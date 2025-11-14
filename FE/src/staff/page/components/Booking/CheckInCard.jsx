@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import StaffAPI from '../../../../services/staffApi'
 import paymentApi from '../../../../services/paymentApi'
 import bookingApi from '../../../../services/bookingApi'
+import { decodeJwt } from '../../../../services/api'
 
 function formatVND(n) {
   try {
@@ -32,7 +33,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
     let mounted = true
     ;(async () => {
       try {
-        const st = await staffApi.getServerTime()
+        const st = await StaffAPI.getServerTime()
         if (mounted) setServerTime(st)
         // Log for diagnosis: compare server vs client
         try {
@@ -63,7 +64,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
         try {
           const t = localStorage.getItem('token')
           if (t) {
-            const decoded = staffApi.decodeJwt(t)
+            const decoded = decodeJwt(t)
             userId = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || decoded.sub || decoded.userId || decoded.UserId || decoded.id || decoded.Id || ''
           }
         } catch {}
@@ -82,7 +83,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
       }
       
       // Call check-in API and get response with totalAmount
-      const response = await staffApi.checkInWithContract(payload)
+      const response = await StaffAPI.checkInWithContract(payload)
       console.log('✅ Check-in response:', response)
       
       // Save bookingId to localStorage for payment tracking

@@ -9,6 +9,8 @@ import UserSection from './components/User/UserSection';
 import StaffSection from './components/Staff/StaffSection';
 import ProfileSection from './components/Profile/ProfileSection';
 import adminApi from '../../services/adminApi';
+import authApi from '../../services/authApi';
+import { decodeJwt } from '../../services/api';
 
 // Start with empty lists; we will load from API
 const initialBookings = [];
@@ -533,7 +535,7 @@ export default function AdminPage() {
     let mounted = true
     async function loadRole() {
       try {
-        const me = await adminApi.getMe()
+        const me = await authApi.getMe()
         const r = me?.role || me?.Role || me?.roleName || me?.userRole || (Array.isArray(me?.roles) ? me.roles[0] : '')
         if (mounted) setRole(r || '')
       } catch {
@@ -541,7 +543,7 @@ export default function AdminPage() {
         try {
           const t = localStorage.getItem('token')
           if (t) {
-            const decoded = adminApi.decodeJwt(t)
+            const decoded = decodeJwt(t)
             const r = decoded?.role || decoded?.Role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
             if (mounted) setRole(r || '')
           }

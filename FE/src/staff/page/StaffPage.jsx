@@ -321,7 +321,7 @@ export default function StaffPage() {
     let mounted = true
     async function loadRole() {
       try {
-        const me = await staffApi.getMe()
+        const me = await authApi.getMe()
         const r = me?.role || me?.Role || me?.roleName || me?.userRole || (Array.isArray(me?.roles) ? me.roles[0] : '')
         if (mounted) setRole(r || '')
       } catch {
@@ -329,7 +329,7 @@ export default function StaffPage() {
         try {
           const t = localStorage.getItem('token')
           if (t) {
-            const decoded = staffApi.decodeJwt(t)
+            const decoded = decodeJwt(t)
             const r = decoded?.role || decoded?.Role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
             if (mounted) setRole(r || '')
           }

@@ -106,13 +106,36 @@ export default function UpdateProfileModal({ isOpen, userEmail, onClose, onSucce
       setError('Phone number must be 10-11 digits')
       return false
     }
+    
+    // Check required fields for profile completion
+    if (!formData.address || formData.address.trim() === '') {
+      setError('Address is required')
+      return false
+    }
+    if (!formData.dateOfBirth || formData.dateOfBirth.trim() === '') {
+      setError('Date of Birth is required')
+      return false
+    }
+    if (!formData.driverLicenseNumber || formData.driverLicenseNumber.trim() === '') {
+      setError('Driver License Number is required')
+      return false
+    }
+    if (!formData.driverLicenseExpiry || formData.driverLicenseExpiry.trim() === '') {
+      setError('Driver License Expiry is required')
+      return false
+    }
+    
     return true
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    console.log('📋 Form submitted')
     
-    if (!validateForm()) return
+    if (!validateForm()) {
+      console.log('❌ Form validation failed')
+      return
+    }
 
     setLoading(true)
     try {
@@ -154,6 +177,7 @@ export default function UpdateProfileModal({ isOpen, userEmail, onClose, onSucce
         onSuccess(formData)
       }
 
+      console.log('✅ Closing UpdateProfileModal')
       onClose()
     } catch (err) {
       console.error('❌ Error updating profile:', err)

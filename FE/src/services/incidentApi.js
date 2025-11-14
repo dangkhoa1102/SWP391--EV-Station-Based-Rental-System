@@ -72,12 +72,13 @@ const incidentApi = {
         const res = await apiClient.get(a.url, a.opts)
         const body = res?.data
         const unwrapped = body && typeof body === 'object' && 'data' in body ? body.data : body
-        
+
         if (!unwrapped) continue
         if (Array.isArray(unwrapped)) return unwrapped
         if (Array.isArray(unwrapped?.items)) return unwrapped.items
         if (Array.isArray(unwrapped?.data)) return unwrapped.data
-        
+        if (Array.isArray(unwrapped?.incidents)) return unwrapped.incidents
+
         return Array.isArray(unwrapped) ? unwrapped : []
       } catch (e) {
         const code = e?.response?.status
