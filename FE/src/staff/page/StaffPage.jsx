@@ -3,7 +3,7 @@ import './StaffPage.css';
 import './styles/sidebar.override.css';
 
 import Header from './components/Header';
-import Sidebar from '../../components/Sidebar/Sidebar';
+import Sidebar from '../../components/Sidebar.jsx';
 import BookingSection from './components/Booking/BookingSection';
 import VehicleSection from './components/Vehicle/VehicleSection';
 import ProfileSection from './components/Profile/ProfileSection';

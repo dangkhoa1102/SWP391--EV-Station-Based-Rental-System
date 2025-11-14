@@ -1,3 +1,3 @@
 // Proxy to shared Sidebar component
-export { default } from '../../../components/Sidebar/Sidebar';
+export { default } from '../../../components/Sidebar.jsx';
 

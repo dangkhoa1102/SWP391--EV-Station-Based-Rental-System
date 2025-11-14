@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import '../../styles/sidebar.css'
+import '../styles/sidebar.css'
 
 export default function Sidebar({ title = 'Menu', menuItems = [], isOpen = false, toggleSidebar, onSelect, activeKey }) {
   const navigate = useNavigate()
