@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './AdminPage.css';
+import './styles/sidebar.override.css';
 
 import Header from './components/Header';
-import Sidebar from './components/Sidebar';
+import Sidebar from '../../components/Sidebar/Sidebar';
 import BookingSection from './components/Booking/BookingSection';
 import VehicleSection from './components/Vehicle/VehicleSection';
 import UserSection from './components/User/UserSection';
@@ -530,6 +531,16 @@ export default function AdminPage() {
     }
   }, [sidebarVisible]);
 
+  // Menu for admin sidebar (pages control which items appear and behavior)
+  const adminMenu = [
+    { key: 'booking', label: 'Booking', icon: 'fas fa-calendar-alt', onClick: () => setSection('booking') },
+    { key: 'vehicle', label: 'Vehicle', icon: 'fas fa-car', onClick: () => setSection('vehicle') },
+    { key: 'user', label: 'User', icon: 'fas fa-users', onClick: () => setSection('user') },
+    { key: 'staff', label: 'Staff', icon: 'fas fa-user-tie', onClick: () => setSection('staff') },
+    { key: 'incident', label: 'Incident', icon: 'fas fa-exclamation-triangle', onClick: () => setSection('incident') },
+    { key: 'profile', label: 'Profile', icon: 'fas fa-user-circle', onClick: () => setSection('profile') },
+  ]
+
   // Load stations on mount, then load vehicles for first station
   useEffect(() => {
     let mounted = true
@@ -839,7 +850,14 @@ export default function AdminPage() {
         className={`sidebar-wrapper ${sidebarVisible ? 'visible' : ''}`}
         onMouseLeave={() => setSidebarVisible(false)}
       >
-        <Sidebar onSelect={setSection} isOpen={true} />
+        <Sidebar
+          title="FEC Admin"
+          menuItems={adminMenu}
+          isOpen={sidebarVisible}
+          toggleSidebar={() => setSidebarVisible(v => !v)}
+          onSelect={setSection}
+          activeKey={section}
+        />
       </div>
 
       <main className={`main-content ${sidebarVisible ? 'shifted' : ''}`}>

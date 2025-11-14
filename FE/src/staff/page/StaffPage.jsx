@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './StaffPage.css';
+import './styles/sidebar.override.css';
 
 import Header from './components/Header';
-import Sidebar from './components/Sidebar';
+import Sidebar from '../../components/Sidebar/Sidebar';
 import BookingSection from './components/Booking/BookingSection';
 import VehicleSection from './components/Vehicle/VehicleSection';
 import ProfileSection from './components/Profile/ProfileSection';
@@ -315,6 +316,14 @@ export default function StaffPage() {
       document.body.classList.remove('sidebar-open');
     }
   }, [sidebarVisible]);
+
+  // Staff menu for sidebar
+  const staffMenu = [
+    { key: 'booking', label: 'Booking', icon: 'fas fa-calendar-alt', onClick: () => setSection('booking') },
+    { key: 'vehicle', label: 'Vehicle', icon: 'fas fa-car', onClick: () => setSection('vehicle') },
+    { key: 'incident', label: 'Incident', icon: 'fas fa-exclamation-triangle', onClick: () => setSection('incident') },
+    { key: 'profile', label: 'Profile', icon: 'fas fa-user-circle', onClick: () => setSection('profile') },
+  ]
 
   // Load stations on mount, then load vehicles for first station
   useEffect(() => {
@@ -780,7 +789,14 @@ export default function StaffPage() {
         className={`sidebar-wrapper ${sidebarVisible ? 'visible' : ''}`}
         onMouseLeave={() => setSidebarVisible(false)}
       >
-        <Sidebar onSelect={setSection} isOpen={true} />
+        <Sidebar
+          title="FEC Staff"
+          menuItems={staffMenu}
+          isOpen={sidebarVisible}
+          toggleSidebar={() => setSidebarVisible(v => !v)}
+          onSelect={setSection}
+          activeKey={section}
+        />
       </div>
 
       <main className={`main-content ${sidebarVisible ? 'shifted' : ''}`}>
