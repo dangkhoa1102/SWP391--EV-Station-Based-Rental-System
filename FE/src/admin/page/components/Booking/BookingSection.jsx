@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import BookingCard from './BookingCard';
+import BookingCard from '../../../../components/Booking/BookingCard';
 import WaitingPaymentCard from './WaitingPaymentCard';
 import CheckInPaymentCard from './CheckInPaymentCard';
 import BookingModal from './BookingModal';
