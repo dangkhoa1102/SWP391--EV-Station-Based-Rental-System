@@ -118,6 +118,25 @@ namespace Monolithic.Controllers
             var result = await _bookingService.GetBookingsAsync(request);
             return Ok(result);
         }
+
+        /// <summary>
+        /// Get bookings by station (Admin and Station Staff only)
+        /// </summary>
+        [HttpGet("By-Station/{stationId:guid}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<List<BookingDto>>>> GetBookingsByStation(Guid stationId)
+        {
+            if (stationId == Guid.Empty)
+                return BadRequest(ResponseDto<List<BookingDto>>.Failure("StationId is required"));
+
+            var result = await _bookingService.GetBookingsByStationIdAsync(stationId);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpGet("Get-Active")]
         public async Task<ActionResult<ResponseDto<PaginationDto<BookingDto>>>> GetActiveBookings([FromQuery] PaginationRequestDto request)
         {
@@ -284,7 +303,7 @@ namespace Monolithic.Controllers
             
             var result = await _bookingService.GetBookingHistoryAsync(userIdClaim);
             return Ok(result);
-        }
+        }      
 
         /// <summary>
         /// Get upcoming bookings

@@ -45,6 +45,11 @@ namespace Monolithic.Services.Implementation
                 throw new UnauthorizedAccessException("Chỉ nhân viên được phép tạo sự cố");
             }
 
+            if (booking.BookingStatus != BookingStatus.CheckedIn)
+            {
+                throw new InvalidOperationException("Chỉ có thể báo cáo sự cố cho các booking đang trong trạng thái 'CheckedIn'");
+            }
+
             // Tạo incident
             var incident = new Incident
             {
@@ -156,6 +161,17 @@ namespace Monolithic.Services.Implementation
                 incident.ResolvedBy = request.ResolvedBy.Value;
             }
 
+            // Allow Admin to assign/change the station for this incident
+            if (userRole == "Admin")
+            {
+                if (request is UpdateIncidentFormRequest updReq && updReq.StationId.HasValue)
+                {
+                    incident.StationId = updReq.StationId.Value;
+                }
+            }
+
+        
+
             await _context.SaveChangesAsync();
 
             return MapToResponse(incident);
@@ -222,13 +238,22 @@ namespace Monolithic.Services.Implementation
                 CostIncurred = incident.CostIncurred,
                 ResolvedBy = incident.ResolvedBy,
                 StationId = incident.StationId,
-                StaffId = incident.StaffId
+                StaffId = incident.StaffId,
+                IsDeleted = incident.IsDeleted,
+                DeletedAt = incident.DeletedAt,
+                DeletedBy = incident.DeletedBy
             };
         }
 
-        public async Task<IncidentListResponse> GetIncidentsAsync(Guid? stationId, string? status, DateTime? dateFrom, DateTime? dateTo, int page = 1, int pageSize = 20, Guid userId = default, string userRole = "")
+        public async Task<IncidentListResponse> GetIncidentsAsync(Guid? stationId, string? status, DateTime? dateFrom, DateTime? dateTo, int page = 1, int pageSize = 20, Guid userId = default, string userRole = "", bool includeDeleted = false)
         {
-            var query = _context.Incidents.AsQueryable();
+            // var query = _context.Incidents.AsQueryable();
+            IQueryable<Incident> query = _context.Incidents.AsQueryable();
+
+            if (includeDeleted)
+            {
+                query = query.IgnoreQueryFilters();
+            }
 
             // Filter by station
             if (stationId.HasValue)
@@ -310,28 +335,67 @@ namespace Monolithic.Services.Implementation
             return true;
         }
 
-        public async Task<bool> DeleteIncidentAsync(Guid id)
+        public async Task<bool> ResolveIncidentQuickAsync(Guid id, Guid userId)
         {
             var incident = await _context.Incidents.FindAsync(id);
             if (incident == null) return false;
 
-            // Xóa tất cả ảnh từ Cloudinary trước khi xóa incident
-            if (!string.IsNullOrEmpty(incident.ImagePublicIds))
-            {
-                var publicIds = incident.ImagePublicIds.Split(";", StringSplitOptions.RemoveEmptyEntries);
-                foreach (var publicId in publicIds)
-                {
-                    if (!string.IsNullOrWhiteSpace(publicId))
-                    {
-                        await _photoService.DeletePhotoAsync(publicId);
-                    }
-                }
-            }
+            incident.Status = "Resolved";
+            incident.ResolvedAt = DateTime.UtcNow;
+            incident.ResolvedBy = userId;
 
-            _context.Incidents.Remove(incident);
             await _context.SaveChangesAsync();
             return true;
         }
+
+        // Hard delete incident and associated images
+        // public async Task<bool> DeleteIncidentAsync(Guid id, Guid userId)
+        // {
+        //     var incident = await _context.Incidents.FindAsync(id);
+        //     if (incident == null) return false;
+
+        //     // Xóa tất cả ảnh từ Cloudinary trước khi xóa incident
+        //     if (!string.IsNullOrEmpty(incident.ImagePublicIds))
+        //     {
+        //         var publicIds = incident.ImagePublicIds.Split(";", StringSplitOptions.RemoveEmptyEntries);
+        //         foreach (var publicId in publicIds)
+        //         {
+        //             if (!string.IsNullOrWhiteSpace(publicId))
+        //             {
+        //                 await _photoService.DeletePhotoAsync(publicId);
+        //             }
+        //         }
+        //     }
+
+        //     _context.Incidents.Remove(incident);
+        //     await _context.SaveChangesAsync();
+        //     return true;
+        // }
+
+        public async Task<bool> DeleteIncidentAsync(Guid id, Guid userId)
+        {
+            var incident = await _context.Incidents.FindAsync(id);
+            if (incident is null) return false;
+
+            // Soft delete
+            incident.IsDeleted = true;
+            incident.DeletedAt = DateTime.UtcNow;
+            incident.DeletedBy = userId;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // public async Task<bool> HardDeleteIncidentAsync(Guid id)
+        // {
+        //     var incident = await _context.Incidents.FindAsync(id);
+        //     if (incident is null) return false;
+
+        //     // delete photos from cloudinary 
+        //     _context.Incidents.Remove(incident);
+        //     await _context.SaveChangesAsync();
+        //     return true;
+        // }
 
         public async Task<IncidentListResponse> GetRenterIncidentsAsync(string renterId, int page = 1, int pageSize = 20)
         {

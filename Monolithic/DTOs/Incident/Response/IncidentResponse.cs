@@ -24,5 +24,9 @@ namespace Monolithic.DTOs.Incident.Response
         public string? BookingInfo { get; set; }
         public string? StaffName { get; set; }
         public string? ResolverName { get; set; }
+        public bool IsDeleted { get; set; }
+        [JsonConverter(typeof(NullableDateTimeConverter))]
+        public DateTime? DeletedAt { get; set; }
+        public Guid? DeletedBy { get; set; }
     }
 }
