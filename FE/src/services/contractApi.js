@@ -300,6 +300,360 @@ const contractApi = {
       }
     }
     return null
+  },
+
+  /**
+   * Create contract (from src_hopdong)
+   * @param {object} data - Contract data
+   */
+  createContract: async (data) => {
+    const attempts = [
+      { url: '/Contracts/Create', method: 'post' },
+      { url: '/Contract/Create', method: 'post' }
+    ]
+    
+    let lastErr
+    for (const a of attempts) {
+      try {
+        const res = await apiClient[a.method](a.url, data)
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw lastErr || new Error('Create contract endpoint not found')
+  },
+
+  /**
+   * Fill contract (from src_hopdong)
+   * @param {object} data - Contract data to fill
+   */
+  fillContract: async (data) => {
+    const attempts = [
+      { url: '/Contracts/Fill', method: 'post' },
+      { url: '/Contract/Fill', method: 'post' }
+    ]
+    
+    let lastErr
+    for (const a of attempts) {
+      try {
+        const res = await apiClient[a.method](a.url, data)
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw lastErr || new Error('Fill contract endpoint not found')
+  },
+
+  /**
+   * Request confirmation (from src_hopdong)
+   * @param {string} contractId - Contract ID
+   * @param {string} email - Email address
+   */
+  requestConfirmation: async (contractId, email) => {
+    if (!contractId) throw new Error('contractId is required')
+    const id = encodeURIComponent(contractId)
+    
+    const attempts = [
+      `/Contracts/Request-Confirmation-By-${id}`,
+      `/Contracts/${id}/Request-Confirmation`,
+      `/Contract/RequestConfirmation/${id}`
+    ]
+    
+    let lastErr
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.post(url, { email })
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw lastErr || new Error('Request confirmation endpoint not found')
+  },
+
+  /**
+   * Confirm contract (from src_hopdong)
+   * @param {object} data - Confirmation data
+   */
+  confirmContract: async (data) => {
+    const attempts = [
+      { url: '/Contracts/Confirm', method: 'post' },
+      { url: '/Contract/Confirm', method: 'post' }
+    ]
+    
+    let lastErr
+    for (const a of attempts) {
+      try {
+        const res = await apiClient[a.method](a.url, data)
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw lastErr || new Error('Confirm contract endpoint not found')
+  },
+
+  /**
+   * Get contracts by renter (from src_hopdong)
+   * @param {string} renterId - Renter ID
+   */
+  getContractsByRenter: async (renterId) => {
+    if (!renterId) return null
+    const id = encodeURIComponent(renterId)
+    
+    const attempts = [
+      `/Contracts/Get-By-Renter/${id}`,
+      `/Contracts/Renter/${id}`,
+      `/Contract/Get-By-Renter/${id}`
+    ]
+    
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.get(url)
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    return null
+  },
+
+  /**
+   * Create HopDong (from src_hopdong)
+   * @param {object} data - Contract data
+   * @param {string} bookingId - Booking ID
+   * @param {string} renterId - Renter ID
+   */
+  createHopDong: async (data, bookingId, renterId) => {
+    if (!bookingId || !renterId) throw new Error('bookingId and renterId are required')
+    
+    let url = `/Contracts/hopdong/tao?bookingId=${encodeURIComponent(bookingId)}&renterId=${encodeURIComponent(renterId)}`
+    
+    const attempts = [
+      { url, method: 'post' },
+      { url: '/Contracts/Create', method: 'post' }
+    ]
+    
+    let lastErr
+    for (const a of attempts) {
+      try {
+        const res = await apiClient[a.method](a.url, data)
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw lastErr || new Error('Create HopDong endpoint not found')
+  },
+
+  /**
+   * Send confirmation email (from src_hopdong)
+   * @param {string} contractId - Contract ID
+   * @param {string} email - Email address
+   */
+  sendConfirmationEmail: async (contractId, email) => {
+    if (!contractId) throw new Error('contractId is required')
+    const id = encodeURIComponent(contractId)
+    
+    const attempts = [
+      `/Contracts/hopdong/${id}/gui-email`,
+      `/Contracts/${id}/Send-Email`,
+      `/Contract/SendEmail/${id}`
+    ]
+    
+    let lastErr
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.post(url, { email })
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw lastErr || new Error('Send confirmation email endpoint not found')
+  },
+
+  /**
+   * Get contract for confirmation (from src_hopdong)
+   * @param {string} token - Confirmation token
+   */
+  getContractForConfirmation: async (token) => {
+    if (!token) throw new Error('token is required')
+    const t = encodeURIComponent(token)
+    
+    const attempts = [
+      `/Contracts/hopdong/xac-nhan/${t}`,
+      `/Contracts/Confirmation/${t}`,
+      `/Contract/GetForConfirmation/${t}`
+    ]
+    
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.get(url)
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    return null
+  },
+
+  /**
+   * Sign contract (from src_hopdong)
+   * @param {string} token - Signing token
+   */
+  signContract: async (token) => {
+    if (!token) throw new Error('token is required')
+    
+    const attempts = [
+      { url: '/Contracts/hopdong/ky', method: 'post' },
+      { url: '/Contracts/Sign', method: 'post' },
+      { url: '/Contract/Sign', method: 'post' }
+    ]
+    
+    let lastErr
+    for (const a of attempts) {
+      try {
+        const res = await apiClient[a.method](a.url, { token })
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        lastErr = e
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw lastErr || new Error('Sign contract endpoint not found')
+  },
+
+  /**
+   * Download contract by token (from src_hopdong)
+   * @param {string} token - Download token
+   */
+  downloadContractByToken: async (token) => {
+    if (!token) throw new Error('token is required')
+    const t = encodeURIComponent(token)
+    
+    const attempts = [
+      `/Contracts/hopdong/download/${t}`,
+      `/Contracts/Download/${t}`,
+      `/Contract/Download/${t}`
+    ]
+    
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.get(url, { responseType: 'blob' })
+        return res.data
+      } catch (e) {
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw new Error('Download contract by token endpoint not found')
+  },
+
+  /**
+   * Download contract by ID (from src_hopdong)
+   * @param {string} contractId - Contract ID
+   */
+  downloadContractById: async (contractId) => {
+    if (!contractId) throw new Error('contractId is required')
+    const id = encodeURIComponent(contractId)
+    
+    const attempts = [
+      `/Contracts/${id}/download`,
+      `/Contracts/Download/${id}`,
+      `/Contract/Download/${id}`
+    ]
+    
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.get(url, { responseType: 'blob' })
+        return res.data
+      } catch (e) {
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw new Error('Download contract by ID endpoint not found')
+  },
+
+  /**
+   * Download latest contract by user ID (from src_hopdong)
+   * @param {string} userId - User ID
+   */
+  downloadLatestContractByUserId: async (userId) => {
+    if (!userId) throw new Error('userId is required')
+    
+    const attempts = [
+      { url: '/Contracts/user/download-latest-by-userId', params: { userId } },
+      { url: '/Contracts/Download-Latest', params: { userId } }
+    ]
+    
+    for (const a of attempts) {
+      try {
+        const res = await apiClient.get(a.url, { 
+          params: a.params,
+          responseType: 'blob' 
+        })
+        return res.data
+      } catch (e) {
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw new Error('Download latest contract by user ID endpoint not found')
+  },
+
+  /**
+   * Get contract by token (from src_hopdong)
+   * @param {string} token - Contract token
+   */
+  getContractByToken: async (token) => {
+    if (!token) throw new Error('token is required')
+    const t = encodeURIComponent(token)
+    
+    const attempts = [
+      `/Contracts/hopdong/token/${t}`,
+      `/Contracts/Token/${t}`,
+      `/Contract/GetByToken/${t}`
+    ]
+    
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.get(url)
+        const body = res?.data
+        return body && typeof body === 'object' && 'data' in body ? body.data : body
+      } catch (e) {
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    return null
   }
 }
 

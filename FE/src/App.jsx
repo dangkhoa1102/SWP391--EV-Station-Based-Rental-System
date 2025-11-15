@@ -15,6 +15,11 @@ import StaffPage from './staff/page/StaffPage'
 import AdminPage from './admin/page/AdminPage'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import CreateContract from './renter/page/components/Contract/CreateContract'
+import ContractList from './renter/page/components/Contract/ContractList'
+import ContractDetail from './renter/page/components/Contract/ContractDetail'
+import ConfirmContract from './renter/page/components/Contract/ConfirmContract'
+import DownloadLatestContract from './renter/page/components/Contract/DownloadLatestContract'
 
 
 function AppShell(){
@@ -35,6 +40,11 @@ function AppShell(){
           <Route path="/booking-history" element={<BookingHistory />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/update-profile" element={<UpdateProfilePage />} />
+          <Route path="/contract/new" element={<CreateContract />} />
+          <Route path="/contract/list" element={<ContractList />} />
+          <Route path="/contract/:id" element={<ContractDetail />} />
+          <Route path="/contract/download-latest" element={<DownloadLatestContract />} />
+          <Route path="/xac-nhan-hop-dong" element={<ConfirmContract />} />
           <Route path="/staff" element={<StaffPage />} />
           <Route path="/admin" element={<AdminPage />} />
         </Routes>

@@ -89,47 +89,31 @@ function MapController({ stations, userLocation, stationCoords }) {
         // If we have station markers, fit bounds to show them all
         if (stationMarkers.length > 0) {
           try {
-            // Filter stations within 300km radius of user for better zoom level
-            const nearbyStations = []
-            
+            // Priority: Zoom to user location first if available
             if (userLocation) {
-              const maxDistanceKm = 300
+              console.log(`🔄 Zooming to user location: [${userLocation.lat}, ${userLocation.lng}]`)
+              map.setView([userLocation.lat, userLocation.lng], 14, { 
+                animate: true,
+                duration: 0.5
+              })
+              console.log(`🗺️ Zoomed to user location with zoom level 14`)
+            } else {
+              // Fallback: fit all station markers if no user location
+              const stationsToFit = stationMarkers
               
-              for (const station of stations) {
-                const stationId = station.id || station.Id || station.stationId
-                const coord = stationCoords.get(stationId)
-                if (coord) {
-                  const distanceKm = getDistanceKm(userLocation.lat, userLocation.lng, coord.lat, coord.lng)
-                  if (distanceKm <= maxDistanceKm) {
-                    nearbyStations.push([coord.lat, coord.lng])
-                  }
-                }
-              }
+              console.log(`📏 Building bounds from ${stationsToFit.length} coordinates...`)
+              const bounds = L.latLngBounds(stationsToFit)
+              console.log(`📐 Bounds calculated: NE: ${bounds.getNorthEast()}, SW: ${bounds.getSouthWest()}`)
               
-              console.log(`🎯 Found ${nearbyStations.length}/${validStationsCount} stations within ${maxDistanceKm}km radius`)
+              console.log(`🔄 Calling fitBounds...`)
+              map.fitBounds(bounds, { 
+                padding: [50, 50],
+                animate: true,
+                duration: 0.5
+              })
+              console.log(`🗺️ Fitted map bounds`)
+              console.log(`🎯 Map zoom after fitBounds: ${map.getZoom()}`)
             }
-            
-            // Use all valid stations for fitting bounds to show all markers
-            const stationsToFit = stationMarkers
-            
-            // Add user location for context if available
-            if (userLocation) {
-              stationsToFit.push([userLocation.lat, userLocation.lng])
-            }
-            
-            console.log(`📏 Building bounds from ${stationsToFit.length} coordinates...`)
-            const bounds = L.latLngBounds(stationsToFit)
-            console.log(`📐 Bounds calculated: NE: ${bounds.getNorthEast()}, SW: ${bounds.getSouthWest()}`)
-            
-            // Fit bounds to show all markers with padding
-            console.log(`🔄 Calling fitBounds...`)
-            map.fitBounds(bounds, { 
-              padding: [50, 50],
-              animate: true,
-              duration: 0.5
-            })
-            console.log(`🗺️ Fitted map bounds`)
-            console.log(`🎯 Map zoom after fitBounds: ${map.getZoom()}`)
           } catch (boundsErr) {
             console.warn('⚠️ Error fitting bounds:', boundsErr.message)
             // Fallback: center on user location
@@ -273,21 +257,6 @@ export default function MapModal({ isOpen, onClose, stations, onSelectStation, s
           <i className="fas fa-map-marked-alt"></i> Select Location on Map
         </h3>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button 
-            onClick={handleClearCacheAndReload}
-            style={{
-              background: '#f44336',
-              color: 'white',
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }}
-            title="Clear geocoding cache and reload to fix duplicate coordinates"
-          >
-            🔄 Clear Cache
-          </button>
           <button className="map-modal-close" onClick={onClose}>
             <i className="fas fa-times"></i>
           </button>
