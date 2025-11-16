@@ -49,5 +49,9 @@ namespace Monolithic.Models
         public Guid? StaffId { get; set; }
         [ForeignKey("StaffId")]
         public virtual User? Staff { get; set; }
+
+        public bool IsDeleted { get; set; } = false; // Soft delete flag
+        public DateTime? DeletedAt { get; set; } // Timestamp for soft delete
+        public Guid? DeletedBy { get; set; } // UserId who performed the deletion
     }
 }

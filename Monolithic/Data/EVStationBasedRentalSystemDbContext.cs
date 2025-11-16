@@ -220,6 +220,8 @@ namespace Monolithic.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
+            builder.Entity<Incident>().HasQueryFilter(entity => !entity.IsDeleted); // Global query filter for soft delete
+
             // Incident configuration
             builder.Entity<Incident>(entity =>
             {
@@ -232,7 +234,7 @@ namespace Monolithic.Data
                 entity.HasOne<User>(e => e.Staff)
                       .WithMany()
                       .HasForeignKey(e => e.StaffId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                      .OnDelete(DeleteBehavior.SetNull);                
 
                 // Relationship with Booking
                 entity.HasOne(e => e.Booking)

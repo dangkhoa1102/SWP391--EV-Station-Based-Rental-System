@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Monolithic.Common;
+using System.Security.Claims;
 using Monolithic.DTOs.Incident.Request;
 using Monolithic.DTOs.Incident.Response;
 using Monolithic.Services.Interfaces;
@@ -17,6 +18,28 @@ public class IncidentsController : ControllerBase
     public IncidentsController(IIncidentService incidentService)
     {
         _incidentService = incidentService;
+    }
+
+    private string GetUserRole()
+    {
+        // Try common claim names for role, then normalize common variants
+        var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value
+                        ?? User.FindFirst("role")?.Value
+                        ?? User.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+        if (!string.IsNullOrEmpty(roleClaim))
+        {
+            var normalized = roleClaim.Trim().ToLowerInvariant();
+            if (normalized.Contains("admin")) return "Admin";
+            if (normalized.Contains("staff")) return "Staff";
+            // If claim contains other values, return as-is to preserve intent
+            return roleClaim;
+        }
+
+        // Fallback to IsInRole checks
+        if (User.IsInRole("Admin")) return "Admin";
+        if (User.IsInRole("Station Staff") || User.IsInRole("Staff")) return "Staff";
+        return "Renter";
     }
 
     /// <summary>
@@ -50,15 +73,16 @@ public class IncidentsController : ControllerBase
         [FromQuery] DateTime? dateFrom,
         [FromQuery] DateTime? dateTo,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 20,
+        [FromQuery] bool includeDeleted = false)
     {
         try
         {
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var userId = Guid.TryParse(userIdClaim, out var uid) ? uid : Guid.Empty;
-            var userRole = User.FindFirst("role")?.Value ?? "Staff";
+            var userRole = GetUserRole();
 
-            var incidents = await _incidentService.GetIncidentsAsync(stationId, status, dateFrom, dateTo, page, pageSize, userId, userRole);
+            var incidents = await _incidentService.GetIncidentsAsync(stationId, status, dateFrom, dateTo, page, pageSize, userId, userRole, includeDeleted);
             return Ok(incidents);
         }
         catch (Exception ex)
@@ -81,7 +105,7 @@ public class IncidentsController : ControllerBase
             {
                 return Unauthorized(new { message = "Invalid user ID" });
             }
-            var userRole = User.FindFirst("role")?.Value ?? "Renter";
+            var userRole = GetUserRole();
 
             var incident = await _incidentService.GetIncidentByIdAsync(id, userId, userRole);
 
@@ -118,7 +142,7 @@ public class IncidentsController : ControllerBase
             {
                 return Unauthorized(new { message = "Invalid user ID" });
             }
-            var userRole = User.FindFirst("role")?.Value ?? "Staff";
+            var userRole = GetUserRole();
 
             var incident = await _incidentService.UpdateIncidentAsync(id, request, userId, userRole);
 
@@ -174,14 +198,44 @@ public class IncidentsController : ControllerBase
     }
 
     /// <summary>
-    /// Xóa báo cáo sự cố
+    /// Đánh dấu sự cố đã được giải quyết (Phiên bản nhanh - chỉ cần id)
     /// </summary>
-    [HttpDelete("Delete-By-{id}")]
-    public async Task<ActionResult> DeleteIncident(Guid id)
+    [HttpPatch("Quick-Resolve-By-{id}")]
+    public async Task<ActionResult> QuickResolveIncident(Guid id)
     {
         try
         {
-            var success = await _incidentService.DeleteIncidentAsync(id);
+            // In real implementation, get user info from JWT token
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "Invalid user ID" });
+            }
+
+            var success = await _incidentService.ResolveIncidentQuickAsync(id, userId);
+
+            if (!success)
+            {
+                return NotFound(new { message = "Incident not found" });
+            }
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while resolving the incident", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Xóa báo cáo sự cố
+    /// </summary>
+    [HttpDelete("Delete-By-{id}")]
+    public async Task<ActionResult> DeleteIncident(Guid id, Guid userId)
+    {
+        try
+        {
+            var success = await _incidentService.DeleteIncidentAsync(id, userId);
 
             if (!success)
             {
