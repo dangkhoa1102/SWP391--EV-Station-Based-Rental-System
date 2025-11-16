@@ -57,7 +57,8 @@ namespace Monolithic.Services.Implementation
                 Description = request.Description,
                 ReportedAt = DateTime.UtcNow,
                 Status = "Pending",
-                StationId = booking.StationId,
+                // Do not auto-assign StationId here so admin can assign explicitly later
+                StationId = null,
                 StaffId = staffGuid
             };
 
@@ -225,6 +226,9 @@ namespace Monolithic.Services.Implementation
                 ? new List<string>() 
                 : incident.ImageUrls.Split(";").Where(u => !string.IsNullOrWhiteSpace(u)).ToList();
 
+            var renterName = incident.Booking?.User?.FullName;
+            var renterPhone = incident.Booking?.User?.PhoneNumber;
+
             return new IncidentResponse
             {
                 Id = incident.Id,
@@ -241,14 +245,20 @@ namespace Monolithic.Services.Implementation
                 StaffId = incident.StaffId,
                 IsDeleted = incident.IsDeleted,
                 DeletedAt = incident.DeletedAt,
-                DeletedBy = incident.DeletedBy
+                DeletedBy = incident.DeletedBy,
+                RenterName = renterName,
+                RenterPhone = renterPhone
             };
         }
 
         public async Task<IncidentListResponse> GetIncidentsAsync(Guid? stationId, string? status, DateTime? dateFrom, DateTime? dateTo, int page = 1, int pageSize = 20, Guid userId = default, string userRole = "", bool includeDeleted = false)
         {
             // var query = _context.Incidents.AsQueryable();
-            IQueryable<Incident> query = _context.Incidents.AsQueryable();
+            // Eager-load Booking and User so we can return renter contact info
+            IQueryable<Incident> query = _context.Incidents
+                .Include(i => i.Booking)
+                    .ThenInclude(b => b.User)
+                .AsQueryable();
 
             if (includeDeleted)
             {
@@ -299,6 +309,8 @@ namespace Monolithic.Services.Implementation
         public async Task<IncidentResponse?> GetIncidentByIdAsync(Guid id, Guid userId, string userRole)
         {
             var incident = await _context.Incidents
+                .Include(i => i.Booking)
+                    .ThenInclude(b => b.User)
                 .FirstOrDefaultAsync(i => i.Id == id);
 
             if (incident == null) return null;
@@ -413,6 +425,7 @@ namespace Monolithic.Services.Implementation
             // Lấy incidents từ bookings của renter này
             var query = _context.Incidents
                 .Include(i => i.Booking)
+                    .ThenInclude(b => b.User)
                 .Where(i => i.Booking.UserId == renterGuid);
 
             var totalCount = await query.CountAsync();
@@ -436,6 +449,8 @@ namespace Monolithic.Services.Implementation
         public async Task<IncidentListResponse> GetIncidentsByBookingAsync(Guid bookingId, int page = 1, int pageSize = 20)
         {
             var query = _context.Incidents
+                .Include(i => i.Booking)
+                    .ThenInclude(b => b.User)
                 .Where(i => i.BookingId == bookingId);
 
             var totalCount = await query.CountAsync();

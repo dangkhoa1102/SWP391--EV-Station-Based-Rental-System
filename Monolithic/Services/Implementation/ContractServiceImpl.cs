@@ -428,7 +428,8 @@ namespace Monolithic.Services.Implementation
             await _contractRepository.UpdateAsync(contract);
 
             // Lấy URL từ configuration
-            var frontendBaseUrl = _configuration["AppSettings:FrontendBaseUrl"] ?? "http://localhost:3000";
+            //var frontendBaseUrl = _configuration["AppSettings:FrontendBaseUrl"] ?? "http://localhost:3000";
+            var frontendBaseUrl = _configuration["AppSettings:FrontendBaseUrl"] ?? "http://localhost:5173";
             var backendBaseUrl = _configuration["AppSettings:BackendBaseUrl"] ?? "https://localhost:7184";
 
             // Tạo link xác nhận

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Monolithic.Common;
+using System.Security.Claims;
 using Monolithic.DTOs.Incident.Request;
 using Monolithic.DTOs.Incident.Response;
 using Monolithic.Services.Interfaces;
@@ -17,6 +18,28 @@ public class IncidentsController : ControllerBase
     public IncidentsController(IIncidentService incidentService)
     {
         _incidentService = incidentService;
+    }
+
+    private string GetUserRole()
+    {
+        // Try common claim names for role, then normalize common variants
+        var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value
+                        ?? User.FindFirst("role")?.Value
+                        ?? User.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+        if (!string.IsNullOrEmpty(roleClaim))
+        {
+            var normalized = roleClaim.Trim().ToLowerInvariant();
+            if (normalized.Contains("admin")) return "Admin";
+            if (normalized.Contains("staff")) return "Staff";
+            // If claim contains other values, return as-is to preserve intent
+            return roleClaim;
+        }
+
+        // Fallback to IsInRole checks
+        if (User.IsInRole("Admin")) return "Admin";
+        if (User.IsInRole("Station Staff") || User.IsInRole("Staff")) return "Staff";
+        return "Renter";
     }
 
     /// <summary>
@@ -57,7 +80,7 @@ public class IncidentsController : ControllerBase
         {
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var userId = Guid.TryParse(userIdClaim, out var uid) ? uid : Guid.Empty;
-            var userRole = User.FindFirst("role")?.Value ?? "Staff";
+            var userRole = GetUserRole();
 
             var incidents = await _incidentService.GetIncidentsAsync(stationId, status, dateFrom, dateTo, page, pageSize, userId, userRole, includeDeleted);
             return Ok(incidents);
@@ -82,7 +105,7 @@ public class IncidentsController : ControllerBase
             {
                 return Unauthorized(new { message = "Invalid user ID" });
             }
-            var userRole = User.FindFirst("role")?.Value ?? "Renter";
+            var userRole = GetUserRole();
 
             var incident = await _incidentService.GetIncidentByIdAsync(id, userId, userRole);
 
@@ -119,7 +142,7 @@ public class IncidentsController : ControllerBase
             {
                 return Unauthorized(new { message = "Invalid user ID" });
             }
-            var userRole = User.FindFirst("role")?.Value ?? "Staff";
+            var userRole = GetUserRole();
 
             var incident = await _incidentService.UpdateIncidentAsync(id, request, userId, userRole);
 

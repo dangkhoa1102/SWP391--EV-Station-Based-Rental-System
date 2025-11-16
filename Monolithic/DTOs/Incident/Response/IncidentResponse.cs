@@ -24,6 +24,9 @@ namespace Monolithic.DTOs.Incident.Response
         public string? BookingInfo { get; set; }
         public string? StaffName { get; set; }
         public string? ResolverName { get; set; }
+        // Renter contact info (populated when booking/user is included)
+        public string? RenterName { get; set; }
+        public string? RenterPhone { get; set; }
         public bool IsDeleted { get; set; }
         [JsonConverter(typeof(NullableDateTimeConverter))]
         public DateTime? DeletedAt { get; set; }
