@@ -9,6 +9,7 @@ import VehicleSection from './components/Vehicle/VehicleSection';
 import UserSection from './components/User/UserSection';
 import StaffSection from './components/Staff/StaffSection';
 import ProfileSection from './components/Profile/ProfileSection';
+import AdminIncidentSection from './components/Incident/AdminIncidentSection';
 import adminApi from '../../services/adminApi';
 import authApi from '../../services/authApi';
 import { decodeJwt } from '../../services/api';
@@ -958,9 +959,7 @@ export default function AdminPage() {
         )}
         {section === 'incident' && (
           <>
-            <div style={{padding:'10px 12px', color:'#666'}}>
-              <p>Incident management section. Incidents are managed through booking details.</p>
-            </div>
+            <AdminIncidentSection />
           </>
         )}
         {section === 'profile' && <ProfileSection />}
