@@ -40,14 +40,15 @@ export default function PaymentSuccess(){
 
   useEffect(() => {
     // This page is loaded when PayOS redirects to /payment-success after successful payment
-    console.log('✅ Payment successful! Checking payment type...')
+    console.log('✅ Payment successful! Checking user role and payment type...')
     
     const syncPayment = async () => {
       try {
-        // Get bookingId from localStorage - check multiple sources
-        // 1. currentBookingId - user deposit payment (auto-sync)
-        // 2. activeCheckInBookingId - staff check-in payment (skip auto-sync, manual sync only)
-        // 3. activeCheckOutBookingId - staff check-out payment (skip auto-sync, manual sync only)
+        // Get user role from localStorage
+        const userRole = localStorage.getItem('userRole')
+        console.log('👤 User role:', userRole)
+        
+        // Get bookingId from localStorage
         let bookingId = localStorage.getItem('currentBookingId')
         let paymentType = 'user-deposit' // Default
         
@@ -56,12 +57,6 @@ export default function PaymentSuccess(){
           if (bookingId) {
             paymentType = 'staff-checkin'
             console.log('📋 Found check-in booking ID (staff payment):', bookingId)
-            // For staff check-in: Don't auto-sync, redirect back to staff page
-            console.log('⏭️ Staff check-in payment: Skipping auto-sync (manual sync button will be used)')
-            setSyncing(false)
-            localStorage.removeItem('activeCheckInBookingId')
-            setTimeout(() => navigate('/staff'), 1000)
-            return
           }
         }
         
@@ -70,12 +65,6 @@ export default function PaymentSuccess(){
           if (bookingId) {
             paymentType = 'staff-checkout'
             console.log('📋 Found check-out booking ID (staff payment):', bookingId)
-            // For staff check-out: Don't auto-sync, redirect back to staff page
-            console.log('⏭️ Staff check-out payment: Skipping auto-sync (manual sync button will be used)')
-            setSyncing(false)
-            localStorage.removeItem('activeCheckOutBookingId')
-            setTimeout(() => navigate('/staff'), 1000)
-            return
           }
         }
         
@@ -83,12 +72,12 @@ export default function PaymentSuccess(){
           console.warn('⚠️ No booking ID found in localStorage')
           setError('Booking ID not found')
           setSyncing(false)
-          // Still redirect to booking history after a moment
-          setTimeout(() => navigate('/booking-history'), 2000)
+          // Redirect based on role
+          redirectByRole(userRole)
           return
         }
         
-        console.log('🔄 User deposit payment: Auto-syncing payment for booking:', bookingId)
+        console.log('🔄 Auto-syncing payment for booking:', bookingId)
         
         // Call /api/Payment/sync/{bookingId} to update payment status
         await paymentApi.syncPayment(bookingId)
@@ -110,13 +99,14 @@ export default function PaymentSuccess(){
           try {
             localStorage.removeItem('currentBookingId')
             localStorage.removeItem('depositAmount')
+            localStorage.removeItem('activeCheckInBookingId')
+            localStorage.removeItem('activeCheckOutBookingId')
           } catch (e) {
             console.warn('Failed to clear storage:', e)
           }
           
-          // User deposit always goes to booking history
-          console.log('💳 User deposit payment complete, redirecting to booking history...')
-          navigate('/booking-history')
+          // Redirect based on user role
+          redirectByRole(userRole)
         }, 1500)
         
       } catch (err) {
@@ -124,8 +114,31 @@ export default function PaymentSuccess(){
         setError('Failed to process payment or create contract')
         setSyncing(false)
         
-        // Still redirect to booking history after showing error
-        setTimeout(() => navigate('/booking-history'), 3000)
+        // Still redirect based on role after showing error
+        const userRole = localStorage.getItem('userRole')
+        setTimeout(() => redirectByRole(userRole), 3000)
+      }
+    }
+    
+    // Function to redirect based on user role
+    const redirectByRole = (role) => {
+      console.log('🔀 Redirecting based on user role:', role)
+      switch(role?.toLowerCase()) {
+        case 'admin':
+          console.log('→ Redirecting to Admin page')
+          navigate('/admin')
+          break
+        case 'stationstaff':
+          console.log('→ Redirecting to Staff page')
+          navigate('/staff')
+          break
+        case 'evrenter':
+          console.log('→ Redirecting to Booking History page')
+          navigate('/booking-history')
+          break
+        default:
+          console.log('⚠️ Unknown role, redirecting to home page')
+          navigate('/cars')
       }
     }
     

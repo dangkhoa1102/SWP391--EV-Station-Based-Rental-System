@@ -377,7 +377,7 @@ export default function MapModal({ isOpen, onClose, stations, onSelectStation, s
           <i className="fas fa-info-circle"></i> Click on a marker to select a station
           {duplicates.length > 0 && (
             <span style={{ color: '#f44336', marginLeft: '16px' }}>
-              ⚠️ {duplicates.length} duplicate coordinate(s) detected - click "Clear Cache" to fix
+              {/* ⚠️ {duplicates.length} duplicate coordinate(s) detected - click "Clear Cache" to fix */}
             </span>
           )}
         </p>
