@@ -109,8 +109,8 @@ export default function StaffPage() {
       let images = [];
       try { images = formData.getAll ? formData.getAll('images') : []; } catch (e) { images = [] }
       const created = await staffApi.createIncident(bookingId, description, images);
-      // refresh incidents for current station
-      try { await loadIncidentsForStation(stationId) } catch {}
+      // Per UX: creator should only see a success notification and NOT see the card.
+      try { alert('Incident gửi thành công. Cảm ơn bạn.'); } catch {}
       return created;
     } catch (e) {
       console.error('❌ create incident failed', e?.response?.data || e?.message || e);

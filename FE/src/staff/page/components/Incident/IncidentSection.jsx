@@ -47,8 +47,9 @@ export default function IncidentSection({
   };
 
   const handleCreate = async (formData) => {
+    // Per UX: creator should only see a success notification and should not see the new card,
+    // so do NOT call onRefresh here. onCreateIncident already handles notification.
     await onCreateIncident(formData);
-    if (onRefresh) await onRefresh();
   };
 
   const handleUpdate = async (incidentId, formData) => {

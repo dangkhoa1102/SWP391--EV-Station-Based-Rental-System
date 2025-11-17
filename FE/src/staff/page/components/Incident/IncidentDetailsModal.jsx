@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../../styles/modals.css';
 
-export default function IncidentDetailsModal({ open, incident, onClose, onUpdate, onResolve, onDelete, canDelete = false }) {
+export default function IncidentDetailsModal({ open, incident, onClose, onUpdate, onResolve, onDelete, canDelete = false, footerExtras = null }) {
   const [isEditing, setIsEditing] = useState(false);
   const [status, setStatus] = useState('');
   const [resolutionNotes, setResolutionNotes] = useState('');
@@ -159,9 +159,9 @@ export default function IncidentDetailsModal({ open, incident, onClose, onUpdate
           </div>
 
           <div>
-            <strong style={{color: '#4b5563', fontSize: '14px'}}>Booking Reference:</strong>
+            <strong style={{color: '#4b5563', fontSize: '14px'}}>{incident.creatorStation ? 'Creator Station' : 'Booking Reference'}:</strong>
             <div style={{color: '#1f2937', marginTop: '4px', fontFamily: 'monospace'}}>
-              {incident.bookingId?.slice(0, 16)}...
+              {incident.creatorStation ? (incident.creatorStation) : (incident.bookingId ? `${String(incident.bookingId).slice(0, 16)}...` : '—')}
             </div>
           </div>
 
@@ -394,7 +394,9 @@ export default function IncidentDetailsModal({ open, incident, onClose, onUpdate
           borderTop: '2px solid #e5e7eb',
           flexWrap: 'wrap'
         }}>
-          {isEditing ? (
+          {footerExtras ? (
+            footerExtras
+          ) : isEditing ? (
             <>
               <button
                 onClick={() => setIsEditing(false)}
