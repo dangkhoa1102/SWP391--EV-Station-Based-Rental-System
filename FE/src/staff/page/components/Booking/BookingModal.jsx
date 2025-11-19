@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import '../../styles/modals.css';
 import StaffAPI from '../../../../services/staffApi';
 import authApi from '../../../../services/authApi';
+import BookingModalLayout from '../../../../components/Booking/BookingModalLayout'
+import { mapStatusFromRaw, formatBookingDate } from '../../../../utils/bookingUtils'
 
 export default function BookingModal({ booking, onClose, onProceed, onCancel, onStatusUpdated }) {
   const [verifiedFront, setVerifiedFront] = useState(false)
@@ -107,30 +109,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     onCancel?.(booking, reason)
   }
 
-  // Helpers for payment flow when status === 'checked-in'
-  const mapStatusFromRaw = (raw) => {
-    let status = 'booked'
-    if (raw != null && (typeof raw === 'number' || /^\d+$/.test(String(raw)))) {
-      const code = Number(raw)
-      // 0=Pending, 1=Active, 2=Waiting for check-in, 3=Checked-in, 4=Check-out pending, 5=Completed, 6=Cancelled pending refund, 7=Cancelled
-      if (code === 0) status = 'pending'
-      else if (code === 1) status = 'booked' // Active
-      else if (code === 2) status = 'waiting-checkin' // Waiting for check-in
-      else if (code === 3) status = 'checked-in' // Checked-in
-      else if (code === 4) status = 'checkout-pending' // Check-out pending
-      else if (code === 5) status = 'completed' // Completed
-      else if (code === 6) status = 'cancelled-pending' // Cancelled pending refund
-      else if (code === 7) status = 'cancelled' // Cancelled
-    } else {
-      const s = String(raw || '').toLowerCase()
-      if (s.includes('pending') || s.includes('wait')) status = 'pending'
-      else if (s.includes('check') && s.includes('in')) status = 'checked-in'
-      else if (s.includes('complete') || s.includes('finish')) status = 'completed'
-      else if (s.includes('deny') || s.includes('reject') || s.includes('cancel')) status = 'cancelled'
-      else status = 'booked'
-    }
-    return status
-  }
+  // Helpers for payment flow when status === 'checked-in' are in utils
 
   const handleConfirmCheckIn = async () => {
     if (!booking?.id) return
@@ -204,20 +183,20 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
   return (
     <div id="bookingModal" className="modal-overlay" style={{display: 'flex'}}>
       <div className="modal-content" style={{display:'flex', flexDirection:'column', width:'min(920px,95vw)', maxHeight:'90vh', overflow:'auto', margin:'0 auto'}}>
-        <span className="close-btn" onClick={onClose}>&times;</span>
-        <div style={{display:'flex', gap:24, flexWrap:'wrap'}}>
-          <div style={{flex:'0 0 220px', textAlign:'center', margin:'0 auto', display:'flex', flexDirection:'column', alignItems:'center'}}>
-            <img id="modalImage" src={booking.facePhoto || booking.img} alt="" style={{width:'100%', borderRadius:8, objectFit:'cover', display:'block'}} />
-            <h3 id="modalTitle" style={{marginTop:12}}>{booking.title}</h3>
-            <div id="modalStatus" style={{marginTop:6}}>Status: {booking.statusLabel || booking.status}</div>
-            <div id="modalVehicle" style={{marginTop:4, color:'#555'}}>Vehicle: {booking.title || booking.carName || booking.vehicleName || booking.car?.name || booking.car?.Name || '—'}</div>
-            <div id="modalCustomer" style={{marginTop:6}}>
-              Customer: {resolvedFullName || booking.fullName || [booking.firstName, booking.lastName].filter(Boolean).join(' ') || booking.customer || (loadingName ? 'Loading…' : '—')}
+        <BookingModalLayout booking={booking} onClose={onClose} actions={null}>
+          <div style={{display:'flex', gap:24, flexWrap:'wrap'}}>
+            <div style={{flex:'0 0 220px', textAlign:'center', margin:'0 auto', display:'flex', flexDirection:'column', alignItems:'center'}}>
+              <img id="modalImage" src={booking.facePhoto || booking.img} alt="" style={{width:'100%', borderRadius:8, objectFit:'cover', display:'block'}} />
+              <h3 id="modalTitle" style={{marginTop:12}}>{booking.title}</h3>
+              <div id="modalStatus" style={{marginTop:6}}>Status: {booking.statusLabel || booking.status}</div>
+              <div id="modalVehicle" style={{marginTop:4, color:'#555'}}>Vehicle: {booking.title || booking.carName || booking.vehicleName || booking.car?.name || booking.car?.Name || '—'}</div>
+              <div id="modalCustomer" style={{marginTop:6}}>
+                Customer: {resolvedFullName || booking.fullName || [booking.firstName, booking.lastName].filter(Boolean).join(' ') || booking.customer || (loadingName ? 'Loading…' : '—')}
+              </div>
+              <div id="modalDate" style={{marginTop:2}}>Date: {formatBookingDate(booking.date)}</div>
             </div>
-            <div id="modalDate" style={{marginTop:2}}>Date: {booking.date}</div>
-          </div>
 
-          <div style={{flex:'1 1 380px', display:'flex', flexDirection:'column', gap:14}}>
+            <div style={{flex:'1 1 380px', display:'flex', flexDirection:'column', gap:14}}>
             {/* Pickup Date */}
             <div className="bg-gray-100" style={{padding:14, borderRadius:10, display:'flex', justifyContent:'space-between'}}>
               <span style={{fontWeight:600}}>Pickup Date:</span>
@@ -362,7 +341,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
           </div>
         </div>
 
-  <div id="modalTransactionInfo" style={{marginTop:24, width:'100%', display: booking.status === 'completed' ? 'block' : 'none'}}>
+            <div id="modalTransactionInfo" style={{marginTop:24, width:'100%', display: booking.status === 'completed' ? 'block' : 'none'}}>
           <h4>Transaction Details</h4>
           <ul style={{fontSize:'1rem'}}>
             <li>Find rental location on map</li>
@@ -375,7 +354,8 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
             <li>Staff checks and confirms vehicle condition</li>
             <li>Pay any additional fees</li>
           </ul>
-        </div>
+          </div>
+        </BookingModalLayout>
       </div>
     </div>
   );

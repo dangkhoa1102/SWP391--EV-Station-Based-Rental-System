@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import BookingCard from '../../../../components/Booking/BookingCard';
+import BookingModel from '../../../../components/Booking/BookingModel';
 import WaitingPaymentCard from './WaitingPaymentCard';
 import CheckInPaymentCard from './CheckInPaymentCard';
 import BookingModal from './BookingModal';
@@ -79,34 +80,26 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
     (statusFilter === '' || b.status === statusFilter)
   );
 
-  return (
-    <div id="booking" className="section">
-      <div className="filter-bar">
-        <input type="text" id="searchBooking" placeholder="Search by customer or car..." value={search} onChange={e => setSearch(e.target.value)} />
-        <select id="statusFilter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="">All Status</option>
-          <option value="pending">Pending (Awaiting Payment)</option>
-          <option value="booked">Active Rental</option>
-          <option value="waiting-checkin">Waiting Check-in</option>
-          <option value="checked-in">Checked-in</option>
-          <option value="checkout-pending">Check-out Pending</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled-pending">Cancelled (Pending Refund)</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-      </div>
+  const renderBookingCard = (b) => {
+    if (b.uiStage === 'waiting-payment') {
+      return <WaitingPaymentCard key={b.id} booking={b} onClick={() => setSelected(b)} />
+    }
+    if (b.uiStage === 'checkin-payment') {
+      return <CheckInPaymentCard key={b.id} booking={b} onClick={() => setSelected(b)} />
+    }
+    return <BookingCard key={b.id} booking={b} onClick={() => setSelected(b)} />
+  }
 
-      <div className="booking-grid" id="bookingGrid">
-        {filtered.map(b => {
-          if (b.uiStage === 'waiting-payment') {
-            return <WaitingPaymentCard key={b.id} booking={b} onClick={() => setSelected(b)} />
-          }
-          if (b.uiStage === 'checkin-payment') {
-            return <CheckInPaymentCard key={b.id} booking={b} onClick={() => setSelected(b)} />
-          }
-          return <BookingCard key={b.id} booking={b} onClick={() => setSelected(b)} />
-        })}
-      </div>
+  return (
+    <>
+      <BookingModel
+        bookings={filtered}
+        renderBookingCard={renderBookingCard}
+        search={search}
+        setSearch={setSearch}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+      />
 
       <BookingModal
         booking={selected}
@@ -174,6 +167,6 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
