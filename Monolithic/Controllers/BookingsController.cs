@@ -242,6 +242,23 @@ namespace Monolithic.Controllers
             
             return Ok(result);
         }
+        [HttpPost("Cancel-Incident/{bookingId:guid}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<IActionResult> CancelBookingDueToIncident(Guid bookingId, [FromBody] string? reason = "Cancelled due to incident")
+        {
+            if (bookingId == Guid.Empty)
+                return BadRequest(ResponseDto<BookingDto>.Failure("BookingId is required"));
+
+            // Gọi service để hủy và refund
+            var result = await _bookingService.CancelBookingDueToIncidentAsync(bookingId, reason!);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+
 
         #endregion
 

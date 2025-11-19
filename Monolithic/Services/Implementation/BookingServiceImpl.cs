@@ -495,6 +495,34 @@ namespace Monolithic.Services.Implementation
                 await _carRepository.UpdateCarStatusAsync(booking.CarId, true);
             }
         }
+       public async Task<ResponseDto<BookingDto>> CancelBookingDueToIncidentAsync(Guid bookingId, string reason)
+{
+    try
+    {
+        var booking = await _bookingRepository.GetByIdAsync(bookingId);
+        if (booking == null || !booking.IsActive)
+            return ResponseDto<BookingDto>.Failure("Booking not found.");
+
+        // Cập nhật trạng thái hủy do sự cố
+        booking.BookingStatus = BookingStatus.CancelledPendingRefund;
+        booking.IsActive = false;
+        booking.RefundAmount = booking.DepositAmount; // luôn refund full
+        booking.CheckOutNotes = reason;
+        booking.UpdatedAt = DateTime.Now;
+
+        await _bookingRepository.UpdateAsync(booking);
+
+        // Giải phóng xe
+        await _carRepository.UpdateCarStatusAsync(booking.CarId, true);
+
+        var dto = _mapper.Map<BookingDto>(booking);
+        return ResponseDto<BookingDto>.Success(dto, $"Booking cancelled due to incident, refund {booking.RefundAmount:C} pending.");
+    }
+    catch (Exception ex)
+    {
+        return ResponseDto<BookingDto>.Failure($"Error during cancel: {ex.Message}");
+    }
+}
 
         public async Task AutoCancelNoShowBookingsAsync()
         {
