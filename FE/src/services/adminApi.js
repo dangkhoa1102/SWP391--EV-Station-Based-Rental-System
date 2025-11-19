@@ -1,4 +1,4 @@
-import { apiClient } from './api'
+import { apiClient, SWAGGER_ROOT } from './api'
 import bookingApi from './bookingApi'
 import staffApi from './staffApi'
 import carApi from './carApi'
@@ -551,3 +551,35 @@ const adminApi = {
 }
 
 export default adminApi
+
+// ---------------------------------------------------------------------------
+// Token-based helpers (direct fetch)
+// ---------------------------------------------------------------------------
+
+/**
+ * Get admin dashboard using an explicit access token (bypasses apiClient/interceptors)
+ * @param {string} accessToken - JWT access token
+ * @returns {Promise<object>} Dashboard data
+ */
+export async function getAdminDashboardWithToken(accessToken) {
+  if (!accessToken) throw new Error('accessToken is required')
+
+  const url = `${SWAGGER_ROOT}/Admin/Dashboard`
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${accessToken}`
+    }
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Request failed: ${res.status} ${text}`)
+  }
+
+  return res.json()
+}
+
+// Attach to default export for convenience
+adminApi.getAdminDashboardWithToken = getAdminDashboardWithToken

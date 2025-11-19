@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import BookingCard from '../../../../components/Booking/BookingCard';
 import BookingModel from '../../../../components/Booking/BookingModel';
 import BookingModal from './BookingModal';
-import CheckInCard from './CheckInCard';
 import './Booking.css';
 
 export default function BookingSection({ bookings, search, setSearch, statusFilter, setStatusFilter, onContinuePayment, onCancelBooking, onStatusUpdated }) {
@@ -38,10 +37,12 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
       />
 
       {checkInFor && (
-        <CheckInCard
-          booking={checkInFor}
-          onClose={() => setCheckInFor(null)}
-        />
+        <div className="modal-overlay" style={{display:'flex'}}>
+          <div className="modal-content" style={{width:'min(720px,95vw)', maxHeight:'90vh', overflow:'auto'}}>
+            <span className="close-btn" onClick={() => setCheckInFor(null)}>&times;</span>
+            <BookingCard booking={checkInFor} onClick={() => setSelected(checkInFor)} />
+          </div>
+        </div>
       )}
     </>
   );

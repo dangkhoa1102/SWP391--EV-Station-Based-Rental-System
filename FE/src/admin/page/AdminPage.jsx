@@ -10,6 +10,7 @@ import UserSection from './components/User/UserSection';
 import StaffSection from './components/Staff/StaffSection';
 import ProfileSection from './components/Profile/ProfileSection';
 import AdminIncidentSection from './components/Incident/AdminIncidentSection';
+import AnalyticsSection from './components/Analytics/AnalyticsSection';
 import adminApi from '../../services/adminApi';
 import authApi from '../../services/authApi';
 import { decodeJwt } from '../../services/api';
@@ -539,6 +540,7 @@ export default function AdminPage() {
     { key: 'user', label: 'User', icon: 'fas fa-users', onClick: () => setSection('user') },
     { key: 'staff', label: 'Staff', icon: 'fas fa-user-tie', onClick: () => setSection('staff') },
     { key: 'incident', label: 'Incident', icon: 'fas fa-exclamation-triangle', onClick: () => setSection('incident') },
+    { key: 'analytics', label: 'Analytics', icon: 'fas fa-chart-line', onClick: () => setSection('analytics') },
     { key: 'profile', label: 'Profile', icon: 'fas fa-user-circle', onClick: () => setSection('profile') },
   ]
 
@@ -960,6 +962,11 @@ export default function AdminPage() {
         {section === 'incident' && (
           <>
             <AdminIncidentSection />
+          </>
+        )}
+        {section === 'analytics' && (
+          <>
+            <AnalyticsSection />
           </>
         )}
         {section === 'profile' && <ProfileSection />}
