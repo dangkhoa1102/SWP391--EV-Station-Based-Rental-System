@@ -207,5 +207,5 @@ function formatCurrency(v) {
   if (v == null) return '—'
   const n = Number(v)
   if (!Number.isFinite(n)) return String(v)
-  return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })
 }

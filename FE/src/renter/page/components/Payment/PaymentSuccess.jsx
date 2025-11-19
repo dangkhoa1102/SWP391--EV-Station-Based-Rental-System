@@ -122,24 +122,41 @@ export default function PaymentSuccess(){
     
     // Function to redirect based on user role
     const redirectByRole = (role) => {
-      console.log('🔀 Redirecting based on user role:', role)
-      switch(role?.toLowerCase()) {
-        case 'admin':
-          console.log('→ Redirecting to Admin page')
-          navigate('/admin')
-          break
-        case 'stationstaff':
-          console.log('→ Redirecting to Staff page')
-          navigate('/staff')
-          break
-        case 'evrenter':
-          console.log('→ Redirecting to Booking History page')
-          navigate('/booking-history')
-          break
-        default:
-          console.log('⚠️ Unknown role, redirecting to home page')
-          navigate('/cars')
+      console.log('🔀 Redirecting based on user role:', role, 'type:', typeof role)
+      
+      if (!role) {
+        console.warn('⚠️ No role found, redirecting to booking history as default')
+        navigate('/bookinghistory')
+        return
       }
+      
+      const normalizedRole = String(role).toLowerCase().trim()
+      console.log('📋 Normalized role:', normalizedRole)
+      
+      // Check for Admin
+      if (normalizedRole.includes('admin')) {
+        console.log('→ Redirecting to Admin page')
+        navigate('/admin')
+        return
+      }
+      
+      // Check for Station Staff
+      if (normalizedRole.includes('staff') || normalizedRole.includes('manager') || normalizedRole === 'stationstaff' || normalizedRole === 'stationmanager') {
+        console.log('→ Redirecting to Staff page')
+        navigate('/staff')
+        return
+      }
+      
+      // Check for EV Renter (default for renter users)
+      if (normalizedRole.includes('renter') || normalizedRole.includes('evrenter') || normalizedRole === 'evrenter') {
+        console.log('→ Redirecting to Booking History page')
+        navigate('/bookinghistory')
+        return
+      }
+      
+      // Default: redirect to booking history (safest for renter)
+      console.log('⚠️ Unknown role, redirecting to booking history as default')
+      navigate('/bookinghistory')
     }
     
     syncPayment()
