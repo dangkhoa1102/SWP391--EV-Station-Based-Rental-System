@@ -18,6 +18,9 @@ namespace Monolithic.DTOs.Incident.Request
         // Optional: associated car for this incident (not required)
         public Guid? CarId { get; set; }
 
+        // Optional: allow admin to assign/change station for this incident
+        public Guid? StationId { get; set; }
+
         // Để xóa ảnh cũ (nếu cần)
         public List<string>? ImagesToRemove { get; set; }
 
