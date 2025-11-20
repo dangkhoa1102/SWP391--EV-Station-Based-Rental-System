@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Monolithic.Data;
 
@@ -11,9 +12,11 @@ using Monolithic.Data;
 namespace Monolithic.Migrations
 {
     [DbContext(typeof(EVStationBasedRentalSystemDbContext))]
-    partial class EVStationBasedRentalSystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251110012227_addtodb2")]
+    partial class addtodb2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -494,12 +497,6 @@ namespace Monolithic.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -510,9 +507,6 @@ namespace Monolithic.Migrations
 
                     b.Property<string>("ImageUrls")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime>("ReportedAt")
                         .HasColumnType("datetime2");
@@ -781,7 +775,7 @@ namespace Monolithic.Migrations
                         new
                         {
                             UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 11, 19, 18, 27, 19, 168, DateTimeKind.Utc).AddTicks(1758),
+                            CreatedAt = new DateTime(2025, 11, 10, 1, 22, 26, 759, DateTimeKind.Utc).AddTicks(421),
                             DateOfBirth = new DateOnly(1, 1, 1),
                             Email = "admin@ev.com",
                             FirstName = "Admin",

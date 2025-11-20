@@ -52,7 +52,7 @@ namespace Monolithic.Services.Implementation
                     return ResponseDto<BookingDto>.Failure("Invalid user ID");
 
                 // 2. Validate dates
-                if (request.PickupDateTime <= DateTime.UtcNow)
+                if (request.PickupDateTime <= DateTime.Now)
                     return ResponseDto<BookingDto>.Failure("Pickup date must be in the future");
 
                 if (request.ExpectedReturnDateTime <= request.PickupDateTime)
@@ -102,8 +102,8 @@ namespace Monolithic.Services.Implementation
                     BookingStatus = BookingStatus.Pending, // waiting for payment
                     IsContractApproved = false,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
 
                 // 9. Save booking
@@ -132,6 +132,30 @@ namespace Monolithic.Services.Implementation
 
             if (booking.BookingStatus != BookingStatus.DepositPaid)
                 return ResponseDto<BookingDto>.Failure($"Cannot check-in booking with status: {booking.BookingStatus}");
+            // Early and late grace windows
+            int earlyGraceMinutes = 60;   // Cho check-in sớm 1 tiếng
+            int lateGraceMinutes = 60;    // Cho check-in trễ 1 tiếng
+
+            var nowLocal = DateTime.Now;  // dùng giờ local VN
+            var earliestAllowed = booking.StartTime.AddMinutes(-earlyGraceMinutes);
+            var latestAllowed = booking.StartTime.AddMinutes(lateGraceMinutes);
+
+            // Too early
+            if (nowLocal < earliestAllowed)
+            {
+                return ResponseDto<BookingDto>.Failure(
+                    $"Too early to check in. Allowed from: {earliestAllowed:yyyy-MM-dd HH:mm}."
+                );
+            }
+
+            // Too late
+            if (nowLocal > latestAllowed)
+            {
+                return ResponseDto<BookingDto>.Failure(
+                    $"Too late to check in. Allowed until: {latestAllowed:yyyy-MM-dd HH:mm}."
+                );
+            }
+
 
             // Verify caller identity from JWT
             if (string.IsNullOrEmpty(callerUserId) || !Guid.TryParse(callerUserId, out var callerGuid))
@@ -139,7 +163,7 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<BookingDto>.Failure("Unauthorized");
             }
 
-            // 2️⃣ Kiểm tra hợp đồng liên quan
+            //2️⃣ Kiểm tra hợp đồng liên quan
             var contract = await _contractRepository.GetByBookingIdAsync(request.BookingId);
             if (contract == null)
             {
@@ -151,10 +175,10 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<BookingDto>.Failure("Contract not confirmed");
             }
 
-            //if (contract.RenterId != callerGuid)
-            //{
-            //    return ResponseDto<BookingDto>.Failure("Forbidden: caller is not the renter who signed the contract");
-            //}
+            if (contract.RenterId != callerGuid)
+            {
+                return ResponseDto<BookingDto>.Failure("Forbidden: caller is not the renter who signed the contract");
+            }
 
             // 3️⃣ Handle photo upload if provided
             string? checkInPhotoUrl = null;
@@ -175,7 +199,7 @@ namespace Monolithic.Services.Implementation
                     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "check-in-photos");
                     Directory.CreateDirectory(uploadsFolder);
                     
-                    var uniqueFileName = $"{request.BookingId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}{fileExtension}";
+                    var uniqueFileName = $"{request.BookingId}_{DateTime.Now:yyyyMMdd_HHmmss}{fileExtension}";
                     var filePath = Path.Combine(uploadsFolder, uniqueFileName);
                     
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -192,17 +216,17 @@ namespace Monolithic.Services.Implementation
             }
 
             // 4️⃣ Cập nhật thông tin check-in trên booking
-            booking.CheckInAt = DateTime.UtcNow;
-            booking.UpdatedAt = DateTime.UtcNow;
+            booking.CheckInAt = DateTime.Now;
+            booking.UpdatedAt = DateTime.Now;
             booking.BookingStatus = BookingStatus.CheckedInPendingPayment;
             booking.IsContractApproved = true;
-            booking.ContractApprovedAt = DateTime.UtcNow;
+            booking.ContractApprovedAt = DateTime.Now;
             booking.CheckInPhotoUrl = checkInPhotoUrl;
 
-            // 5️⃣ Cập nhật slot trống của station (xe đã rời đi)
-            //var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
-            //if (!stationUpdateResult)
-            //    return ResponseDto<BookingDto>.Failure("Failed to update station slots")
+            //5️⃣ Cập nhật slot trống của station(xe đã rời đi)
+            var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+            if (!stationUpdateResult)
+                return ResponseDto<BookingDto>.Failure("Failed to update station slots");
 
             // 6️⃣ CẬP NHẬT DB
             var updated = await _bookingRepository.UpdateAsync(booking);
@@ -241,11 +265,11 @@ namespace Monolithic.Services.Implementation
 
               
                 // 2️⃣ Record actual return info
-                booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.UtcNow;
+                booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.Now;
                 booking.CheckOutNotes = request.CheckOutNotes;
                 booking.CheckOutPhotoUrl = request.CheckOutPhotoUrl;
                 booking.DamageFee = Math.Round(request.DamageFee, 2);
-                booking.UpdatedAt = DateTime.UtcNow;
+                booking.UpdatedAt = DateTime.Now;
 
               
                 var actualReturn = booking.ActualReturnDateTime.Value;
@@ -279,8 +303,29 @@ namespace Monolithic.Services.Implementation
                     var hoursLate = Convert.ToDecimal(delayMinutes / 60.0);
                     booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
                 }
+                if (actualReturn <= expectedReturn)
+                {
+                    booking.LateFee = 0;
+                    booking.ExtraAmount = 0;
+                    booking.RefundAmount = booking.DepositAmount;
+                    booking.FinalPaymentAmount = -booking.DepositAmount;
+                    booking.DepositRefunded = true;
 
-               
+                    // Cập nhật tổng tiền (totalAmount giống booking mẫu bạn đưa)
+                    booking.TotalAmount = booking.RentalAmount + booking.DamageFee + booking.LateFee;
+
+                    // Trả về ngay vì không cần xử lý thêm
+                    booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
+                    booking.UpdatedAt = DateTime.Now;
+
+                    await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+                    var updatedEarlyBooking = await _bookingRepository.UpdateAsync(booking);
+                    var dto = _mapper.Map<BookingDto>(updatedEarlyBooking);
+
+                    return ResponseDto<BookingDto>.Success(dto, "Early return: Deposit refunded.");
+                }
+
+
                 // 6️⃣ Compute total = rental + deposit + late + damage
                 var totalAmount = booking.RentalAmount + booking.DepositAmount + booking.LateFee + booking.DamageFee;
                 booking.TotalAmount = Math.Round(totalAmount, 2);
@@ -299,7 +344,7 @@ namespace Monolithic.Services.Implementation
                 
                 // 8️⃣ Update status
                 booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
-                booking.UpdatedAt = DateTime.UtcNow;
+                booking.UpdatedAt = DateTime.Now;
 
                 // 9️⃣ Update station slot (+1 available)
                 var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
@@ -344,9 +389,9 @@ namespace Monolithic.Services.Implementation
                     return ResponseDto<BookingDto>.Failure("No refund is due for this booking.");
 
                 // ✅ Hoàn tiền thành công
-                booking.RefundConfirmedAt = DateTime.UtcNow;
+                booking.RefundConfirmedAt = DateTime.Now;
                 booking.RefundConfirmedBy = staffId;
-                booking.UpdatedAt = DateTime.UtcNow;
+                booking.UpdatedAt = DateTime.Now;
 
                 // 🔁 Phân biệt 2 case
                 if (booking.BookingStatus == BookingStatus.CheckedOutPendingPayment)
@@ -392,7 +437,7 @@ namespace Monolithic.Services.Implementation
                     booking.BookingStatus == BookingStatus.Completed)
                     return ResponseDto<BookingDto>.Failure("Booking cannot be cancelled.");
 
-                var now = DateTime.UtcNow;
+                var now = DateTime.Now;
                 var hoursBeforeStart = (booking.StartTime - now).TotalHours;
 
                 decimal refundAmount;
@@ -434,7 +479,7 @@ namespace Monolithic.Services.Implementation
         }
         public async Task CancelBookingsAsync(IEnumerable<Booking> bookings, string reason)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
             foreach (var booking in bookings)
             {
@@ -450,10 +495,38 @@ namespace Monolithic.Services.Implementation
                 await _carRepository.UpdateCarStatusAsync(booking.CarId, true);
             }
         }
+       public async Task<ResponseDto<BookingDto>> CancelBookingDueToIncidentAsync(Guid bookingId, string reason)
+{
+    try
+    {
+        var booking = await _bookingRepository.GetByIdAsync(bookingId);
+        if (booking == null || !booking.IsActive)
+            return ResponseDto<BookingDto>.Failure("Booking not found.");
+
+        // Cập nhật trạng thái hủy do sự cố
+        booking.BookingStatus = BookingStatus.CancelledPendingRefund;
+        booking.IsActive = false;
+        booking.RefundAmount = booking.DepositAmount; // luôn refund full
+        booking.CheckOutNotes = reason;
+        booking.UpdatedAt = DateTime.Now;
+
+        await _bookingRepository.UpdateAsync(booking);
+
+        // Giải phóng xe
+        await _carRepository.UpdateCarStatusAsync(booking.CarId, true);
+
+        var dto = _mapper.Map<BookingDto>(booking);
+        return ResponseDto<BookingDto>.Success(dto, $"Booking cancelled due to incident, refund {booking.RefundAmount:C} pending.");
+    }
+    catch (Exception ex)
+    {
+        return ResponseDto<BookingDto>.Failure($"Error during cancel: {ex.Message}");
+    }
+}
 
         public async Task AutoCancelNoShowBookingsAsync()
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
             var pendingBookings = await _bookingRepository.FindAsync(b =>
                 b.IsActive &&
@@ -466,7 +539,7 @@ namespace Monolithic.Services.Implementation
 
         public async Task AutoExpirePendingBookingsAsync()
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
             var expiredBookings = await _bookingRepository.FindAsync(b =>
                 b.IsActive &&
@@ -621,7 +694,7 @@ namespace Monolithic.Services.Implementation
             try
             {
                 Expression<Func<Booking, bool>> predicate = b => b.IsActive;
-
+                
                 var (items, total) = await _bookingRepository.GetPagedAsync(
                     request.Page,
                     request.PageSize,
@@ -721,7 +794,7 @@ namespace Monolithic.Services.Implementation
                 if (request.BookingStatus.HasValue)
                     booking.BookingStatus = request.BookingStatus.Value;
 
-                booking.UpdatedAt = DateTime.UtcNow;
+                booking.UpdatedAt = DateTime.Now;
 
                 var updated = await _bookingRepository.UpdateAsync(booking);
                 return ResponseDto<BookingDto>.Success(_mapper.Map<BookingDto>(updated), "Booking updated successfully");
@@ -841,7 +914,7 @@ namespace Monolithic.Services.Implementation
                 var upcomingBookings = await _bookingRepository.FindAsync(b =>
                     b.IsActive &&
                     (b.BookingStatus == BookingStatus.DepositPaid || b.BookingStatus == BookingStatus.CheckedIn) &&
-                    b.StartTime >= DateTime.UtcNow);
+                    b.StartTime >= DateTime.Now);
 
                 var orderedBookings = upcomingBookings.OrderBy(b => b.StartTime).Take(100).ToList();
                 return ResponseDto<List<BookingDto>>.Success(_mapper.Map<List<BookingDto>>(orderedBookings));

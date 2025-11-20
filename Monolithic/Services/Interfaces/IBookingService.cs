@@ -26,6 +26,7 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<List<BookingDto>>> GetUserBookingsAsync(string userId);
         Task<ResponseDto<BookingDto>> UpdateBookingAsync(Guid id, UpdateBookingDto request);
         Task<ResponseDto<BookingDto>> CancelBookingAsync(Guid id, string userId);
+        Task<ResponseDto<BookingDto>> CancelBookingDueToIncidentAsync(Guid id, string reason);
         Task AutoCancelNoShowBookingsAsync();
         Task AutoExpirePendingBookingsAsync();
         Task<ResponseDto<List<CarDto>>> GetAvailableCarsAsync(DateTime startTime, DateTime endTime);
@@ -41,5 +42,6 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<List<BookingHistoryDto>>> GetBookingHistoryByUserIdAsync(string userId);
         Task<ResponseDto<List<BookingDto>>> GetUpcomingBookingsAsync();
         Task<ResponseDto<List<BookingDto>>> GetBookingsByStationIdAsync(Guid stationId);
+
     }
 }
