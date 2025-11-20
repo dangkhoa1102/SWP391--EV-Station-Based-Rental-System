@@ -52,6 +52,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
 
   if (!booking) return null;
 
+  // Allow check-in only when booking is explicitly 'booked' (admin modal logic)
   const canProceed = booking?.status === 'booked' ? (verifiedFront && verifiedBack) : false
   const onCancelClick = () => {
     if (!booking) return;

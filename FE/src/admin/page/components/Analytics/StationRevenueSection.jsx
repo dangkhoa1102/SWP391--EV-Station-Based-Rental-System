@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { fetchRevenueByStationReport, getRevenueForStation } from '../../../../services/revenue'
 import adminApi from '../../../../services/adminApi'
+import { getStationRevenue } from '../../../../services/paymentApi'
 
 export default function StationRevenueSection() {
   const [loading, setLoading] = useState(true)
@@ -21,83 +22,44 @@ export default function StationRevenueSection() {
     setError(null)
     try {
       const token = localStorage.getItem('token')
-      const [groups, stationList] = await Promise.all([
-        fetchRevenueByStationReport(token).catch(() => []),
-        adminApi.getAllStations(1, 200).catch(() => [])
-      ])
+      const stationList = await adminApi.getAllStations(1, 200).catch(() => [])
 
-      // Normalize groups if possible
-      let g = groups || []
-
-      // If aggregated groups empty, fallback to per-station queries
-      if ((!g || g.length === 0) && Array.isArray(stationList) && stationList.length > 0) {
-        try {
-          const chunkSize = 10
-          const perStationResults = []
-          for (let i = 0; i < stationList.length; i += chunkSize) {
-            const chunk = stationList.slice(i, i + chunkSize)
-            const promises = chunk.map(s => {
-              const sid = s.id || s.Id || s.stationId || s.StationId
-              return getRevenueForStation(token, sid).then(arr => ({ station: s, groups: arr })).catch(() => ({ station: s, groups: [] }))
-            })
-            const resChunk = await Promise.all(promises)
-            perStationResults.push(...resChunk)
-          }
-          const flattened = perStationResults.map(r => {
-            const s = r.station || {}
-            const first = Array.isArray(r.groups) && r.groups.length > 0 ? r.groups[0] : null
-            const total = first ? (first.TotalRevenue ?? first.totalRevenue ?? first.Total ?? 0) : 0
-            const month = first ? (first.ThisMonth ?? first.thisMonth ?? first.Month ?? 0) : 0
+      // Fetch per-station revenue using Payment API: /Payment/station/{stationId}/revenue
+      const chunkSize = 10
+      const results = []
+      for (let i = 0; i < stationList.length; i += chunkSize) {
+        const chunk = stationList.slice(i, i + chunkSize)
+        const promises = chunk.map(async (s) => {
+          const sid = s.id || s.Id || s.stationId || s.StationId
+          try {
+            const res = await getStationRevenue(sid, { token })
+            const body = res?.data || res || {}
+            // normalize common fields (best-effort)
+            const total = body.totalRevenue ?? body.TotalRevenue ?? body.total ?? body.Total ?? body.revenue ?? 0
+            const month = body.thisMonth ?? body.ThisMonth ?? body.month ?? body.Month ?? body.revenueThisMonth ?? 0
             return {
-              StationId: s.id || s.Id || s.stationId || s.StationId || null,
-              StationName: s.name || s.Name || s.stationName || s.station || null,
+              StationId: sid || null,
+              StationName: s.name || s.Name || s.stationName || s.station || `Station ${sid}`,
               TotalRevenue: total,
-              ThisMonth: month
+              ThisMonth: month,
+              raw: body
             }
-          })
-          g = flattened
-        } catch (e) {
-          console.warn('Per-station fallback failed', e)
-        }
+          } catch (err) {
+            return {
+              StationId: sid || null,
+              StationName: s.name || s.Name || s.stationName || s.station || `Station ${sid}`,
+              TotalRevenue: 0,
+              ThisMonth: 0,
+              raw: null
+            }
+          }
+        })
+        const resChunk = await Promise.all(promises)
+        results.push(...resChunk)
       }
 
-      // Merge station list and groups so every station appears (missing revenue = 0)
-      const groupsMap = new Map()
-      ;(g || []).forEach(item => {
-        const id = String(item.StationId || item.stationId || item.Station || '').toLowerCase()
-        groupsMap.set(id, item)
-      })
-
-      const merged = (stationList || []).map(s => {
-        const idRaw = s.id || s.Id || s.stationId || s.StationId || ''
-        const id = String(idRaw).toLowerCase()
-        const grp = groupsMap.get(id)
-        const total = grp ? (grp.TotalRevenue ?? grp.totalRevenue ?? grp.Total ?? 0) : 0
-        const month = grp ? (grp.ThisMonth ?? grp.thisMonth ?? grp.Month ?? 0) : 0
-        return {
-          StationId: idRaw || null,
-          StationName: s.name || s.Name || s.stationName || s.station || `Station ${idRaw}`,
-          TotalRevenue: total,
-          ThisMonth: month
-        }
-      })
-
-      // Include any extra groups that were not in stationList
-      const stationIdsSet = new Set((stationList || []).map(s => String(s.id || s.Id || s.stationId || s.StationId || '').toLowerCase()))
-      const extras = (g || []).filter(item => {
-        const id = String(item.StationId || item.stationId || item.Station || '').toLowerCase()
-        return id && !stationIdsSet.has(id)
-      }).map(item => ({
-        StationId: item.StationId || item.stationId || item.Station || null,
-        StationName: item.StationName || item.stationName || item.Station || `Station ${item.StationId || item.stationId || ''}`,
-        TotalRevenue: item.TotalRevenue ?? item.totalRevenue ?? item.Total ?? 0,
-        ThisMonth: item.ThisMonth ?? item.thisMonth ?? item.Month ?? 0
-      }))
-
-      const allStations = [...merged, ...extras]
-
-      // Sort alphabetically by StationName (case-insensitive)
-      allStations.sort((a, b) => {
+      // Sort alphabetically by StationName
+      results.sort((a, b) => {
         const A = String(a.StationName || '').toLowerCase()
         const B = String(b.StationName || '').toLowerCase()
         if (A < B) return -1
@@ -105,7 +67,7 @@ export default function StationRevenueSection() {
         return 0
       })
 
-      setStationRevenues(allStations)
+      setStationRevenues(results)
       setStations(stationList || [])
     } catch (e) {
       setError(e?.message || String(e))

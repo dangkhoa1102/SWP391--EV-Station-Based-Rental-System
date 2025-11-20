@@ -28,6 +28,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [syncSuccess, setSyncSuccess] = useState(false)
+  
 
   React.useEffect(() => {
     let mounted = true
@@ -213,7 +214,7 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
               </label>
               <div style={{display:'flex', gap:12, justifyContent:'flex-end'}}>
                 <button type="button" onClick={onClose} style={{background:'transparent', color:'#333', border:'1px solid #aaa', borderRadius:8, padding:'8px 14px'}}>Cancel</button>
-                <button type="submit" disabled={submitting} style={{background:'#2e7d32', color:'#fff', border:'none', borderRadius:8, padding:'8px 14px'}}>
+                <button type="submit" disabled={submitting} style={{background: submitting ? '#9e9e9e' : '#2e7d32', color:'#fff', border:'none', borderRadius:8, padding:'8px 14px', cursor: submitting ? 'not-allowed' : 'pointer'}}>
                   {submitting ? 'Processing…' : 'Confirm Check In'}
                 </button>
               </div>

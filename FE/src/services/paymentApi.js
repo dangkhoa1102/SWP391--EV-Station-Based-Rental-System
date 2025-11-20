@@ -41,3 +41,18 @@ const paymentApi = {
 }
 
 export default paymentApi
+
+// Named export: getStationRevenue
+export async function getStationRevenue(stationId, options = {}) {
+  if (!stationId) throw new Error('stationId is required')
+  const { from, to, token } = options || {}
+  const params = {}
+  if (from) params.from = from
+  if (to) params.to = to
+
+  const config = { params }
+  if (token) config.headers = { Authorization: `Bearer ${token}` }
+
+  const res = await apiClient.get(`/Payment/station/${encodeURIComponent(stationId)}/revenue`, config)
+  return res?.data || res
+}

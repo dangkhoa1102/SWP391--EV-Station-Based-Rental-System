@@ -102,7 +102,8 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
 
   if (!booking) return null;
 
-  const canProceed = booking?.status === 'booked' ? (verifiedFront && verifiedBack) : false
+  // For staff check-in, require both CCCD and Driver License front/back to be verified
+  const canProceed = booking?.status === 'booked' ? (verifiedFront && verifiedBack && verifiedLicenseFront && verifiedLicenseBack) : false
   const onCancelClick = () => {
     if (!booking) return;
     const reason = window.prompt('Enter a reason for cancellation (optional):', '') || ''
