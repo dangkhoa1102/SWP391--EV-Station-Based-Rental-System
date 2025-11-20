@@ -204,7 +204,7 @@ namespace Monolithic.Services.Implementation
             //if (!stationUpdateResult)
             //    return ResponseDto<BookingDto>.Failure("Failed to update station slots")
 
-            // 6️⃣ Cập nhật DB
+            // 6️⃣ CẬP NHẬT DB
             var updated = await _bookingRepository.UpdateAsync(booking);
 
             // 7️⃣ Đọc lại slots hiện tại của station để xác nhận
@@ -478,9 +478,9 @@ namespace Monolithic.Services.Implementation
         }
         public async Task<bool> IsCarAvailableDuringPeriodAsync(Guid carId, DateTime startTime, DateTime endTime)
         {
-            // Lấy danh sách booking đang hoạt động của xe (không bị hủy)
+            // Lấy danh sách booking đang hoạt động của xe (không bị hủy hoặc đã hoàn thành)
             var existingBookings = await _bookingRepository.FindAsync(
-                b => b.CarId == carId && b.BookingStatus != BookingStatus.Cancelled
+                b => b.CarId == carId && b.IsActive && b.BookingStatus != BookingStatus.Cancelled && b.BookingStatus != BookingStatus.Completed
             );
 
             foreach (var b in existingBookings)
@@ -884,8 +884,6 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<List<BookingDto>>.Failure($"Error getting bookings by station: {ex.Message}");
             }
         }
-
-
 
 
         #endregion
