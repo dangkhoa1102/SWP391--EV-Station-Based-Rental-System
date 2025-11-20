@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import paymentApi from '../../../../services/paymentApi'
 import bookingApi from '../../../../services/bookingApi'
+import './payment_success.css'
 
 // Helper function to convert numbers to Vietnamese words
 const numberToVietnameseWords = (num) => {
@@ -163,27 +164,27 @@ export default function PaymentSuccess(){
   }, [navigate])
 
   return (
-    <main style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-      <div style={{ textAlign: 'center' }}>
+    <main className="payment-success-main">
+      <div className="payment-success-container">
         {syncing ? (
           <>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
+            <div className="payment-success-icon processing">⏳</div>
             <h1>Processing Payment...</h1>
-            <p style={{ color: '#000', marginTop: '8px' }}>Please wait while we confirm your payment.</p>
+            <p>Please wait while we confirm your payment.</p>
           </>
         ) : error ? (
           <>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+            <div className="payment-success-icon error">⚠️</div>
             <h1>Payment Sync Issue</h1>
-            <p style={{ color: '#000', marginTop: '8px' }}>{error}</p>
-            <p style={{ color: '#000', marginTop: '8px', fontSize: '14px' }}>Redirecting to booking history...</p>
+            <p>{error}</p>
+            <p className="small">Redirecting to booking history...</p>
           </>
         ) : (
           <>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
+            <div className="payment-success-icon success">✅</div>
             <h1>Payment Successful!</h1>
-            <p style={{ color: '#000', marginTop: '8px' }}>Your payment has been processed.</p>
-            <p style={{ color: '#000', marginTop: '8px', fontSize: '14px' }}>Redirecting to booking history...</p>
+            <p>Your payment has been processed.</p>
+            <p className="small">Redirecting to booking history...</p>
           </>
         )}
       </div>

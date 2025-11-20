@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import API from '../../../../services/api'
 import { useToast } from '../../../../components/ToastProvider'
+import './payment_cancel.css'
 
 export default function PaymentCancel() {
   const navigate = useNavigate()
@@ -71,46 +72,26 @@ export default function PaymentCancel() {
   }, [searchParams, navigate, showToast])
 
   return (
-    <main style={{ 
-      minHeight: '60vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      padding: '2rem'
-    }}>
-      <div style={{ 
-        textAlign: 'center', 
-        maxWidth: '500px',
-        padding: '2rem',
-        background: '#f8f9fa',
-        borderRadius: '8px'
-      }}>
+    <main className="payment-cancel-main">
+      <div className="payment-cancel-container">
         {processing ? (
           <>
-            <div style={{ 
-              fontSize: '48px', 
-              color: '#ffc107',
-              marginBottom: '1rem'
-            }}>
+            <div className="payment-cancel-icon processing">
               ⏳
             </div>
-            <h2 style={{ marginBottom: '1rem' }}>Processing Cancellation...</h2>
-            <p style={{ color: '#000' }}>Clearing payment session. You can retry payment later.</p>
+            <h2>Processing Cancellation...</h2>
+            <p>Clearing payment session. You can retry payment later.</p>
           </>
         ) : (
           <>
-            <div style={{ 
-              fontSize: '48px', 
-              color: '#6c757d',
-              marginBottom: '1rem'
-            }}>
+            <div className="payment-cancel-icon cancelled">
               ❌
             </div>
-            <h2 style={{ marginBottom: '1rem' }}>Payment Cancelled</h2>
-            <p style={{ color: '#000', marginBottom: '1rem' }}>
+            <h2>Payment Cancelled</h2>
+            <p>
               Your payment has been cancelled. Your booking is still active and you can retry payment anytime.
             </p>
-            <p style={{ color: '#000', fontSize: '0.9rem' }}>
+            <p className="small">
               Redirecting to booking history...
             </p>
           </>

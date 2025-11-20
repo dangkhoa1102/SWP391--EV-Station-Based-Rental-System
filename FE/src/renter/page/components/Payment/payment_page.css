@@ -1,5 +1,19 @@
 /* Payment Page Styles (cleaned and simplified) */
 
+.loading-container {
+  padding: 2rem;
+}
+
+.loading-container p {
+  text-align: center;
+  font-size: 1rem;
+  color: #666;
+}
+
+.checkbox-label span {
+  margin-left: 10px;
+}
+
 .payment-page {
   /* extra top padding to avoid overlap with fixed site header */
   padding: 6.5rem 1rem 3.5rem;
@@ -363,6 +377,15 @@
 .page-actions { 
   width: 100%; 
   display: none; /* Hidden - button moved to main section */
+  max-width: 980px;
+  margin: 20px auto 60px;
+  padding: 0 1rem;
+}
+
+.page-actions-inner {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
 
 /* Payment content (QR + details) */
@@ -390,6 +413,7 @@
   line-height: 1.7; 
   font-size: 1rem !important;
   font-weight: 600;
+  text-align: left;
 }
 .modal-body h4 { 
   margin: 16px 0 10px 0; 
@@ -400,6 +424,7 @@
   letter-spacing: 0.3px;
   border-left: 4px solid #ff6a00;
   padding-left: 10px;
+  text-align: left;
 }
 .modal-body h4:first-child { margin-top: 0 }
 .modal-body p { 
@@ -408,6 +433,7 @@
   line-height: 1.7; 
   font-size: 0.97rem;
   font-weight: 500;
+  text-align: left;
 }
 
 .success-modal { max-width:420px; text-align:center; padding:20px }

@@ -249,7 +249,7 @@ export default function PaymentPage(){
   }
 
   if (!rentalContext || !car) {
-    return <div style={{ padding: '2rem' }}><p>Loading...</p></div>
+    return <div className="loading-container"><p>Loading...</p></div>
   }
 
   const totalPrice = calculateTotalPrice()
@@ -345,14 +345,14 @@ export default function PaymentPage(){
         </div>
 
         {/* Terms and Conditions */}
-        <div className="terms-section" style={{ marginTop: '18px' }}>
+        <div className="terms-section">
           <label className="checkbox-label">
             <input
               type="checkbox"
               checked={agreedToTerms}
               onChange={(e) => setAgreedToTerms(e.target.checked)}
             />
-            <span style={{ marginLeft: '10px' }}>I agree to the <button type="button" className="link-button" onClick={() => setShowTermsModal(true)}>Terms and Conditions</button> and <button type="button" className="link-button" onClick={() => setShowPolicyModal(true)}>Privacy Policy</button></span>
+            <span>I agree to the <button type="button" className="link-button" onClick={() => setShowTermsModal(true)}>Terms and Conditions</button> and <button type="button" className="link-button" onClick={() => setShowPolicyModal(true)}>Privacy Policy</button></span>
           </label>
         </div>
 
@@ -369,8 +369,8 @@ export default function PaymentPage(){
       </div>
 
       {/* Bottom action bar */}
-      <div className="page-actions" style={{ maxWidth: '980px', margin: '20px auto 60px', padding: '0 1rem' }}>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+      <div className="page-actions">
+        <div className="page-actions-inner">
           {/* Button removed from here - now in main section above */}
         </div>
       </div>
