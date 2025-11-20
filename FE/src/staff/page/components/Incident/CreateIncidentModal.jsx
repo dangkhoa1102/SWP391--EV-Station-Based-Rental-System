@@ -11,6 +11,28 @@ export default function CreateIncidentModal({ open, onClose, onSubmit, bookings 
 
   if (!open) return null;
 
+  // Only allow creating incidents for bookings that are in Checked-in state.
+  // Different backends may represent status differently; prefer normalized `status` if present.
+  const allowedBookings = (bookings || []).filter(b => {
+    const s = String(b?.status || '').toLowerCase();
+    const label = String(b?.statusLabel || '').toLowerCase();
+    const code = Number(b?.bookingStatus)
+
+    // Accept when normalized status explicitly indicates checked-in
+    const isStatusChecked = ['checked-in', 'checkedin', 'checked_in', 'checked in', 'checked'].includes(s)
+    // Accept when numeric status code equals the checked-in code (3 in our mapping)
+    const isCodeChecked = Number.isFinite(code) && code === 3
+
+    // Accept label that clearly indicates checked-in, but reject labels that say "waiting" or "pending"
+    const isLabelChecked = (
+      label.includes('checked-in') ||
+      label.includes('checked in') ||
+      (label.includes('checked') && !label.includes('wait') && !label.includes('waiting') && !label.includes('pending'))
+    )
+
+    return isStatusChecked || isCodeChecked || isLabelChecked
+  })
+
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     
@@ -116,24 +138,28 @@ export default function CreateIncidentModal({ open, onClose, onSubmit, bookings 
             <label style={{display: 'block', marginBottom: '6px', fontWeight: '500', fontSize: '14px'}}>
               Select Booking <span style={{color: '#dc2626'}}>*</span>
             </label>
-            <select
-              value={bookingId}
-              onChange={e => setBookingId(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
-            >
-              <option value="">-- Select Booking --</option>
-              {bookings.map(booking => (
-                <option key={booking.id} value={booking.id}>
-                  Booking #{booking.id.slice(0, 8)} - {booking.vehicleName || 'Vehicle'} ({booking.status})
-                </option>
-              ))}
-            </select>
+            {allowedBookings.length === 0 ? (
+              <div style={{padding: '10px', border: '1px solid #f3f4f6', borderRadius: 8, color: '#6b7280'}}>No bookings in "Checked-in" state available.</div>
+            ) : (
+              <select
+                value={bookingId}
+                onChange={e => setBookingId(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}
+              >
+                <option value="">-- Select Booking --</option>
+                {allowedBookings.map(booking => (
+                  <option key={booking.id} value={booking.id}>
+                    Booking #{String(booking.id).slice(0, 8)} - {booking.title || booking.vehicleName || 'Vehicle'} ({booking.statusLabel || booking.status})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Description */}
@@ -168,13 +194,15 @@ export default function CreateIncidentModal({ open, onClose, onSubmit, bookings 
               accept=".jpg,.jpeg,.png,.gif"
               multiple
               onChange={handleImageChange}
+              disabled={allowedBookings.length === 0}
               style={{
                 width: '100%',
                 padding: '10px',
                 border: '1px solid #d1d5db',
                 borderRadius: '8px',
                 fontSize: '14px',
-                cursor: 'pointer'
+                cursor: allowedBookings.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: allowedBookings.length === 0 ? 0.6 : 1
               }}
             />
             <p style={{fontSize: '12px', color: '#6b7280', marginTop: '4px'}}>
@@ -255,7 +283,7 @@ export default function CreateIncidentModal({ open, onClose, onSubmit, bookings 
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || allowedBookings.length === 0}
             style={{
               padding: '10px 24px',
               background: '#f59e0b',
