@@ -34,9 +34,10 @@ export default function CreateIncidentModal({ open, onClose, onSubmit, bookings 
   })
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    
-    // Validate file types and sizes
+    const files = Array.from(e.target.files || []);
+
+    // Validate file types and sizes and avoid duplicates
+    const existingKeys = new Set(images.map(f => `${f.name}_${f.size}`))
     const validFiles = files.filter(file => {
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
       const maxSize = 25 * 1024 * 1024; // 25MB
@@ -49,23 +50,31 @@ export default function CreateIncidentModal({ open, onClose, onSubmit, bookings 
         setError(`File too large: ${file.name}. Max 25MB per file.`);
         return false;
       }
+      // skip duplicates by name+size
+      const key = `${file.name}_${file.size}`
+      if (existingKeys.has(key)) return false
+      existingKeys.add(key)
       return true;
     });
 
-    setImages(validFiles);
-    
-    // Create previews
-    const previews = validFiles.map(file => URL.createObjectURL(file));
-    setImagePreviews(previews);
+    if (validFiles.length === 0) return
+
+    // Append new files to existing images
+    const newImages = [...images, ...validFiles]
+    setImages(newImages)
+
+    // Create previews for newly added files and append
+    const newPreviews = validFiles.map(file => URL.createObjectURL(file))
+    setImagePreviews(prev => [...prev, ...newPreviews])
   };
 
   const removeImage = (index) => {
     const newImages = images.filter((_, i) => i !== index);
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    
+
     // Revoke URL to free memory
-    URL.revokeObjectURL(imagePreviews[index]);
-    
+    try { URL.revokeObjectURL(imagePreviews[index]); } catch {}
+
     setImages(newImages);
     setImagePreviews(newPreviews);
   };

@@ -45,6 +45,9 @@ export default function AdminIncidentModal({ open = false, incident = null, onCl
         const fd = new FormData()
         fd.append('stationId', selectedStation)
         fd.append('StationId', selectedStation)
+        // When admin assigns, mark incident as Pending by default
+        fd.append('status', 'Pending')
+        fd.append('Status', 'Pending')
         const resFd = await incidentApi.updateIncident(incident.id, fd)
         console.log('[AdminIncidentModal] FormData assign response:', resFd)
         alert('Assigned successfully')
@@ -65,7 +68,7 @@ export default function AdminIncidentModal({ open = false, incident = null, onCl
       let lastErr = null
       for (const url of attempts) {
         try {
-          const body = { stationId: selectedStation, StationId: selectedStation }
+          const body = { stationId: selectedStation, StationId: selectedStation, status: 'Pending', Status: 'Pending' }
           console.log('[AdminIncidentModal] Trying JSON PUT', { url, body })
           const res = await apiClient.put(url, body)
           console.log('[AdminIncidentModal] JSON PUT response for', url, res?.status, res?.data)

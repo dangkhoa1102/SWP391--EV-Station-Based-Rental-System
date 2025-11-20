@@ -484,6 +484,13 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
                     <span>Total Additional Fees:</span>
                     <strong style={{color:'#d32f2f'}}>{formatVND((checkOutResponse?.damageFee || 0) + (checkOutResponse?.lateFee || 0))}</strong>
                   </div>
+                  <div style={{display:'flex', justifyContent:'space-between', marginTop:8, fontSize:14}}>
+                    <span>Refund Amount:</span>
+                    <strong style={{color:'#2e7d32'}}>{formatVND(
+                      // Try several possible property names returned from backend
+                      checkOutResponse?.refundAmount ?? checkOutResponse?.RefundAmount ?? checkOutResponse?.refund ?? 0
+                    )}</strong>
+                  </div>
                 </div>
               </div>
               

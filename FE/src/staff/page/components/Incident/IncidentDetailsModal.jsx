@@ -121,19 +121,21 @@ export default function IncidentDetailsModal({ open, incident, onClose, onUpdate
           }}>
             Official Documentation
           </p>
-          <div style={{
-            display: 'inline-block',
-            marginTop: '12px',
-            padding: '6px 16px',
-            background: incident.status === 'Resolved' ? '#d1fae5' : incident.status === 'InProgress' ? '#dbeafe' : '#fef3c7',
-            color: incident.status === 'Resolved' ? '#065f46' : incident.status === 'InProgress' ? '#1e40af' : '#92400e',
-            borderRadius: '20px',
-            fontSize: '13px',
-            fontWeight: '600',
-            border: `2px solid ${incident.status === 'Resolved' ? '#10b981' : incident.status === 'InProgress' ? '#3b82f6' : '#f59e0b'}`
-          }}>
-            STATUS: {incident.status?.toUpperCase()}
-          </div>
+          {incident.status ? (
+            <div style={{
+              display: 'inline-block',
+              marginTop: '12px',
+              padding: '6px 16px',
+              background: incident.status === 'Resolved' ? '#d1fae5' : incident.status === 'InProgress' ? '#dbeafe' : '#fef3c7',
+              color: incident.status === 'Resolved' ? '#065f46' : incident.status === 'InProgress' ? '#1e40af' : '#92400e',
+              borderRadius: '20px',
+              fontSize: '13px',
+              fontWeight: '600',
+              border: `2px solid ${incident.status === 'Resolved' ? '#10b981' : incident.status === 'InProgress' ? '#3b82f6' : '#f59e0b'}`
+            }}>
+              {incident.status?.toUpperCase()}
+            </div>
+          ) : null}
         </div>
 
         {/* Report Details */}

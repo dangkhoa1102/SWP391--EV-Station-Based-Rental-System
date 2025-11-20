@@ -25,7 +25,18 @@ export default function BookingCard({ booking, onClick }) {
         <div className="booking-title">{booking.title}</div>
         <div className="booking-customer">Customer: {booking.fullName || [booking.firstName, booking.lastName].filter(Boolean).join(' ') || booking.customer || '—'}</div>
       </div>
-      <div className={cls}>{booking.statusLabel || (booking.status ? String(booking.status).toUpperCase() : '')}</div>
+      { /* Debug-safe display: if statusLabel missing, show status (stringified) or a visible 'UNKNOWN' */ }
+      {
+        (() => {
+          const text = booking.statusLabel || (booking.status ? String(booking.status).toUpperCase() : 'UNKNOWN')
+          if (cls.endsWith('booking-status-unknown')) {
+            // Log unexpected state to help debugging during development
+            // eslint-disable-next-line no-console
+            console.warn('BookingCard: Unknown booking.status value', booking)
+          }
+          return <div className={cls}>{text}</div>
+        })()
+      }
     </div>
   )
 }
