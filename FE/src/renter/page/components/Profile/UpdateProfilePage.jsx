@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import userApi from '../../../../services/userApi'
+import authApi from '../../../../services/authApi'
 import './UpdateProfilePage.css'
 import NotificationModal from '../../../../components/NotificationModal'
 
@@ -23,6 +24,21 @@ export default function UpdateProfilePage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [missingFields, setMissingFields] = useState([])
   const [notification, setNotification] = useState({ isOpen: false, type: 'info', title: '', message: '' })
+  
+  // Document upload states
+  const [documents, setDocuments] = useState({
+    cccdFront: '',
+    cccdBack: '',
+    licenseFront: '',
+    licenseBack: ''
+  })
+  const [selectedFiles, setSelectedFiles] = useState({
+    cccdFront: null,
+    cccdBack: null,
+    licenseFront: null,
+    licenseBack: null
+  })
+  const [uploading, setUploading] = useState({})
 
   useEffect(() => {
     loadProfileData()
@@ -76,6 +92,17 @@ export default function UpdateProfilePage() {
         driverLicenseExpiry: localStorage.getItem('userDriverLicenseExpiry') || '',
         driverLicenseClass: localStorage.getItem('userDriverLicenseClass') || ''
       })
+      
+      // Load documents
+      const authRes = await authApi.getMe()
+      const authData = authRes || {}
+      
+      setDocuments({
+        cccdFront: authData.cccdImageUrl_Front || '',
+        cccdBack: authData.cccdImageUrl_Back || '',
+        licenseFront: authData.gplxImageUrl_Front || '',
+        licenseBack: authData.gplxImageUrl_Back || ''
+      })
     } catch (err) {
       console.error('❌ Error initializing profile:', err)
     } finally {
@@ -98,6 +125,138 @@ export default function UpdateProfilePage() {
     }
     
     setFormData(newData)
+  }
+
+  const handleFileUpload = async (type, file) => {
+    if(!file) return
+    if(!file.type.startsWith('image/')){ 
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Invalid File',
+        message: 'Please select an image file'
+      })
+      return 
+    }
+    if(file.size > 5*1024*1024){ 
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'File Too Large',
+        message: 'File must be less than 5MB'
+      })
+      return 
+    }
+    
+    // Store selected file
+    setSelectedFiles(prev => ({...prev, [type]: file}))
+    
+    // Show preview immediately using FileReader
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setDocuments(prev => ({...prev, [type]: e.target.result}))
+    }
+    reader.readAsDataURL(file)
+    
+    console.log(`📁 File selected for ${type}:`, file.name)
+  }
+
+  const uploadCCCD = async () => {
+    const frontFile = selectedFiles.cccdFront
+    const backFile = selectedFiles.cccdBack
+    
+    if (!frontFile && !backFile) {
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'No Files Selected',
+        message: 'Please select at least one CCCD image'
+      })
+      return
+    }
+    
+    setUploading(prev => ({...prev, cccdFront: true, cccdBack: true}))
+    try {
+      console.log('📤 Uploading CCCD documents...')
+      await authApi.uploadCCCD(frontFile, backFile)
+      
+      // Reload documents from API
+      const authRes = await authApi.getMe()
+      const authData = authRes || {}
+      
+      const cccdFront = authData.cccdImageUrl_Front || ''
+      const cccdBack = authData.cccdImageUrl_Back || ''
+      
+      setDocuments(prev => ({...prev, cccdFront, cccdBack}))
+      setSelectedFiles(prev => ({...prev, cccdFront: null, cccdBack: null}))
+      
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'Upload Successful',
+        message: '✅ CCCD uploaded successfully!',
+        autoCloseMs: 2000
+      })
+    } catch (err) {
+      console.error('❌ Error uploading CCCD:', err)
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Upload Failed',
+        message: err.response?.data?.message || 'Failed to upload CCCD. Please try again.'
+      })
+    } finally {
+      setUploading(prev => ({...prev, cccdFront: false, cccdBack: false}))
+    }
+  }
+  
+  const uploadGPLX = async () => {
+    const frontFile = selectedFiles.licenseFront
+    const backFile = selectedFiles.licenseBack
+    
+    if (!frontFile && !backFile) {
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'No Files Selected',
+        message: 'Please select at least one license image'
+      })
+      return
+    }
+    
+    setUploading(prev => ({...prev, licenseFront: true, licenseBack: true}))
+    try {
+      console.log('📤 Uploading license documents...')
+      await authApi.uploadGPLX(frontFile, backFile)
+      
+      // Reload documents from API
+      const authRes = await authApi.getMe()
+      const authData = authRes || {}
+      
+      const licenseFront = authData.gplxImageUrl_Front || ''
+      const licenseBack = authData.gplxImageUrl_Back || ''
+      
+      setDocuments(prev => ({...prev, licenseFront, licenseBack}))
+      setSelectedFiles(prev => ({...prev, licenseFront: null, licenseBack: null}))
+      
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'Upload Successful',
+        message: '✅ Driver License uploaded successfully!',
+        autoCloseMs: 2000
+      })
+    } catch (err) {
+      console.error('❌ Error uploading license:', err)
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Upload Failed',
+        message: err.response?.data?.message || 'Failed to upload license. Please try again.'
+      })
+    } finally {
+      setUploading(prev => ({...prev, licenseFront: false, licenseBack: false}))
+    }
   }
 
   const validateForm = () => {
@@ -448,6 +607,152 @@ export default function UpdateProfilePage() {
                 className={missingFields.includes('identityNumber') ? 'field-missing' : ''}
                 required
               />
+            </div>
+          </div>
+
+          {/* Document Upload Section */}
+          <div className="form-section">
+            <h2 className="section-title">📸 Upload Documents</h2>
+            <p className="section-description">Upload clear images of your ID card and driver license (both sides)</p>
+            
+            {/* CCCD Upload */}
+            <div className="documents-subsection">
+              <h3>ID Card (CCCD)</h3>
+              <div className="documents-grid">
+                {/* CCCD Front */}
+                <div className="document-upload-box">
+                  <label>ID Card (Front)</label>
+                  <div className="upload-area" onClick={() => document.getElementById('cccdFront-input').click()}>
+                    {documents.cccdFront && documents.cccdFront.trim() ? (
+                      <img 
+                        src={documents.cccdFront} 
+                        alt="CCCD Front" 
+                        className="doc-preview"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <div className="upload-placeholder">
+                        <i className="fas fa-id-card"></i>
+                        <span>Click to select</span>
+                      </div>
+                    )}
+                    {uploading.cccdFront && <div className="upload-overlay">Uploading...</div>}
+                  </div>
+                  <input 
+                    id="cccdFront-input"
+                    type="file" 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={e => handleFileUpload('cccdFront', e.target.files?.[0])} 
+                  />
+                </div>
+
+                {/* CCCD Back */}
+                <div className="document-upload-box">
+                  <label>ID Card (Back)</label>
+                  <div className="upload-area" onClick={() => document.getElementById('cccdBack-input').click()}>
+                    {documents.cccdBack && documents.cccdBack.trim() ? (
+                      <img 
+                        src={documents.cccdBack} 
+                        alt="CCCD Back" 
+                        className="doc-preview"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <div className="upload-placeholder">
+                        <i className="fas fa-id-card"></i>
+                        <span>Click to select</span>
+                      </div>
+                    )}
+                    {uploading.cccdBack && <div className="upload-overlay">Uploading...</div>}
+                  </div>
+                  <input 
+                    id="cccdBack-input"
+                    type="file" 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={e => handleFileUpload('cccdBack', e.target.files?.[0])} 
+                  />
+                </div>
+              </div>
+              <button 
+                type="button"
+                className="btn-upload-docs" 
+                onClick={uploadCCCD}
+                disabled={!selectedFiles.cccdFront && !selectedFiles.cccdBack || uploading.cccdFront || uploading.cccdBack}
+              >
+                <i className="fas fa-upload"></i> Upload ID Card
+              </button>
+            </div>
+
+            {/* GPLX Upload */}
+            <div className="documents-subsection">
+              <h3>Driver License (GPLX)</h3>
+              <div className="documents-grid">
+                {/* License Front */}
+                <div className="document-upload-box">
+                  <label>Driver License (Front)</label>
+                  <div className="upload-area" onClick={() => document.getElementById('licenseFront-input').click()}>
+                    {documents.licenseFront && documents.licenseFront.trim() ? (
+                      <img 
+                        src={documents.licenseFront} 
+                        alt="License Front" 
+                        className="doc-preview"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <div className="upload-placeholder">
+                        <i className="fas fa-id-card-alt"></i>
+                        <span>Click to select</span>
+                      </div>
+                    )}
+                    {uploading.licenseFront && <div className="upload-overlay">Uploading...</div>}
+                  </div>
+                  <input 
+                    id="licenseFront-input"
+                    type="file" 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={e => handleFileUpload('licenseFront', e.target.files?.[0])} 
+                  />
+                </div>
+
+                {/* License Back */}
+                <div className="document-upload-box">
+                  <label>Driver License (Back)</label>
+                  <div className="upload-area" onClick={() => document.getElementById('licenseBack-input').click()}>
+                    {documents.licenseBack && documents.licenseBack.trim() ? (
+                      <img 
+                        src={documents.licenseBack} 
+                        alt="License Back" 
+                        className="doc-preview"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <div className="upload-placeholder">
+                        <i className="fas fa-id-card-alt"></i>
+                        <span>Click to select</span>
+                      </div>
+                    )}
+                    {uploading.licenseBack && <div className="upload-overlay">Uploading...</div>}
+                  </div>
+                  <input 
+                    id="licenseBack-input"
+                    type="file" 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={e => handleFileUpload('licenseBack', e.target.files?.[0])} 
+                  />
+                </div>
+              </div>
+              <button 
+                type="button"
+                className="btn-upload-docs" 
+                onClick={uploadGPLX}
+                disabled={!selectedFiles.licenseFront && !selectedFiles.licenseBack || uploading.licenseFront || uploading.licenseBack}
+              >
+                <i className="fas fa-upload"></i> Upload Driver License
+              </button>
             </div>
           </div>
 

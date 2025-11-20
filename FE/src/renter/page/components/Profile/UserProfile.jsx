@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import authApi from '../../../../services/authApi'
 import './user_profile.css'
 
 export default function UserProfile(){
+  const navigate = useNavigate()
   const [profile, setProfile] = useState({})
   const [documents, setDocuments] = useState({
     cccdFront: '',
@@ -329,6 +331,16 @@ export default function UserProfile(){
             disabled={!selectedFiles.licenseFront && !selectedFiles.licenseBack}
           >
             <i className="fas fa-upload"></i> Upload Driver License
+          </button>
+        </div>
+
+        {/* Update Profile Button */}
+        <div className="profile-actions">
+          <button 
+            className="btn-update-profile"
+            onClick={() => navigate('/update-profile')}
+          >
+            <i className="fas fa-edit"></i> Update Profile Information
           </button>
         </div>
 

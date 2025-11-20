@@ -28,9 +28,9 @@ export default function CarListPage(){
       location: '',
       locationName: 'Select location',
       pickupDate: today.toISOString().split('T')[0],
-      pickupTime: '15:00',
+      pickupTime: '07:00',
       returnDate: tomorrow.toISOString().split('T')[0],
-      returnTime: '19:00'
+      returnTime: '24:00'
     }
   })
   const [searchModalOpen, setSearchModalOpen] = useState(false)

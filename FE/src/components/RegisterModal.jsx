@@ -27,8 +27,9 @@ export default function RegisterModal(){
       setNotification({
         isOpen: true,
         type: 'success',
-        title: 'Account Created! 🎉',
-        message: 'Your account has been created successfully. You can now login and complete your profile.'
+        title: 'Account Created Successfully! 🎉',
+        message: `Your account has been created.\nEmail: ${email}\n\nYou can now login and complete your profile.`,
+        autoCloseMs: 2500
       })
 
       // Clear form
@@ -37,12 +38,11 @@ export default function RegisterModal(){
       setPhone('')
       setPassword('')
       
-      // Close register modal after 2s
+      // Close register modal after 500ms to let notification show
       setTimeout(() => {
         console.log('⏱️ Registration complete - closing register modal')
         setShowRegister(false)
-        setNotification({ ...notification, isOpen: false })
-      }, 2000)
+      }, 500)
 
     }catch(err){
       console.error('❌ Registration error:', err)
@@ -51,8 +51,9 @@ export default function RegisterModal(){
       setNotification({
         isOpen: true,
         type: 'error',
-        title: 'Registration Failed',
-        message: errorMsg
+        title: 'Registration Failed ❌',
+        message: errorMsg,
+        autoCloseMs: 3000
       })
     } finally {
       setIsLoading(false)

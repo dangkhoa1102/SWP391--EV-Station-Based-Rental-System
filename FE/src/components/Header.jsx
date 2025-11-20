@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import NotificationModal from './NotificationModal'
 
 export default function Header(){
   const { user, logout, setShowLogin, setShowRegister } = useAuth()
   const navigate = useNavigate()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [notification, setNotification] = useState({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: ''
+  })
 
   function toggleUserMenu(){ setDropdownOpen(d => !d) }
   
@@ -73,7 +80,20 @@ export default function Header(){
                     <a href="/profile"> <i className="fas fa-user-cog"></i> User Profile</a>
                     <a href="/update-profile"> <i className="fas fa-edit"></i> Update Profile</a>
                     <a href="/booking-history"> <i className="fas fa-history"></i> Booking History</a>
-                    <a href="#" onClick={(e)=>{ e.preventDefault(); logout(); setDropdownOpen(false); }}> <i className="fas fa-sign-out-alt"></i> Logout</a>
+                    <a href="#" onClick={(e)=>{ 
+                      e.preventDefault()
+                      const userEmail = user?.email || 'User'
+                      logout()
+                      setDropdownOpen(false)
+                      setNotification({
+                        isOpen: true,
+                        type: 'success',
+                        title: 'Logged Out Successfully! 👋',
+                        message: `You have been logged out.\nGoodbye, ${userEmail}!`,
+                        autoCloseMs: 2000
+                      })
+                      setTimeout(() => navigate('/'), 2000)
+                    }}> <i className="fas fa-sign-out-alt"></i> Logout</a>
                   </div>
                 </div>
               )}
@@ -81,6 +101,15 @@ export default function Header(){
           </nav>
         </div>
       </header>
+      
+      <NotificationModal
+        isOpen={notification.isOpen}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        autoCloseMs={notification.autoCloseMs}
+        onClose={() => setNotification(prev => ({...prev, isOpen: false}))}
+      />
     </>
   )
 }

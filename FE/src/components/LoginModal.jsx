@@ -13,7 +13,7 @@ export default function LoginModal(){
   const [isLoading, setIsLoading] = useState(false)
   const [showUpdateProfileModal, setShowUpdateProfileModal] = useState(false)
 
-  if(!showLogin && !notification.isOpen) return null
+  if(!showLogin && !notification.isOpen && !showUpdateProfileModal) return null
 
   const checkProfileCompleteness = async (userId) => {
     try {
@@ -74,20 +74,23 @@ export default function LoginModal(){
       }
       
       // Profile is complete or not renter, proceed with normal flow
+      const userEmail = localStorage.getItem('userEmail')
       setNotification({
         isOpen: true,
         type: 'success',
         title: 'Login Successful! ✅',
-        message: 'Welcome back! You are now logged in.'
+        message: `Welcome back!\nYou are now logged in as ${userEmail}`,
+        autoCloseMs: 2000
       })
 
-      // Clear form and close
+      // Clear form
       setEmail('')
       setPassword('')
+      
+      // Close login modal after 500ms to let notification show
       setTimeout(() => {
         setShowLogin(false)
-        setNotification({ ...notification, isOpen: false })
-      }, 1500)
+      }, 500)
 
     }catch(err){
       console.error('❌ Login error:', err)
@@ -96,8 +99,9 @@ export default function LoginModal(){
       setNotification({
         isOpen: true,
         type: 'error',
-        title: 'Login Failed',
-        message: errorMsg
+        title: 'Login Failed ❌',
+        message: errorMsg,
+        autoCloseMs: 3000
       })
     } finally {
       setIsLoading(false)

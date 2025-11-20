@@ -1,14 +1,53 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import carApi from '../../../../services/carApi'
+import authApi from '../../../../services/authApi'
+import NotificationModal from '../../../../components/NotificationModal'
 import './car_detail.css'
 import { formatVND } from '../../../../utils/currency'
+import { isProfileComplete, getMissingFieldsMessage } from '../../../../utils/profileValidation'
 
 export default function CarDetail(){
   const { id } = useParams()
   const navigate = useNavigate()
   const [car, setCar] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState({})
+  const [documents, setDocuments] = useState({})
+  const [profileComplete, setProfileComplete] = useState(false)
+  const [notification, setNotification] = useState({
+    isOpen: false,
+    type: 'error',
+    title: '',
+    message: ''
+  })
+  
+  useEffect(()=>{
+    const loadProfile = async () => {
+      try {
+        const profileData = await authApi.getMyProfile()
+        setProfile(profileData || {})
+        
+        const authRes = await authApi.getMe()
+        const authData = authRes || {}
+        
+        const docs = {
+          cccdFront: authData.cccdImageUrl_Front || '',
+          cccdBack: authData.cccdImageUrl_Back || '',
+          licenseFront: authData.gplxImageUrl_Front || '',
+          licenseBack: authData.gplxImageUrl_Back || ''
+        }
+        setDocuments(docs)
+        
+        const { isComplete } = isProfileComplete(profileData, docs)
+        setProfileComplete(isComplete)
+      } catch (e) {
+        console.error('❌ Error loading profile:', e)
+        setProfileComplete(false)
+      }
+    }
+    loadProfile()
+  }, [])
   
   useEffect(()=>{
     const load = async ()=>{
@@ -48,6 +87,13 @@ export default function CarDetail(){
 
   return (
     <main className="car-detail-main">
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={() => setNotification(prev => ({...prev, isOpen: false}))}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
       <div className="container">
         <button className="back-btn" onClick={()=> navigate('/cars')}>
           <i className="fas fa-arrow-left"></i> Back to Cars
@@ -153,11 +199,24 @@ export default function CarDetail(){
               <button 
                 className="book-now-btn"
                 onClick={()=> {
+                  if (!profileComplete) {
+                    const { missingFields } = isProfileComplete(profile, documents)
+                    setNotification({
+                      isOpen: true,
+                      type: 'warning',
+                      title: '⚠️ Incomplete Profile',
+                      message: `Please complete your profile before booking.\n\nMissing fields:\n${missingFields.join(', ')}\n\nYou will be redirected to update your profile.`
+                    })
+                    setTimeout(() => {
+                      navigate('/profile')
+                    }, 2000)
+                    return
+                  }
                   localStorage.setItem('selectedCarId', car.id || car.Id)
                   navigate('/payment')
                 }}
               >
-                <i className="fas fa-check-circle"></i> Book Now
+                <i className="fas fa-check-circle"></i> {profileComplete ? 'Book Now' : 'Complete Profile First'}
               </button>
             </div>
           </div>
