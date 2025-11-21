@@ -86,12 +86,17 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
           className={classes.join(' ')} 
           onClick={(e)=>{ 
             e.stopPropagation()
+            // Only allow clicking future dates
             if(!isPast) { 
               setReturnDate(dateStr)
               setCalendarMode(null) 
             } 
           }}
-          style={{cursor: isPast ? 'not-allowed' : 'pointer'}}
+          style={{
+            cursor: isPast ? 'not-allowed' : 'pointer',
+            opacity: isPast ? 0.4 : 1,
+            pointerEvents: isPast ? 'none' : 'auto'
+          }}
         >
           {day}
         </div>
@@ -198,6 +203,25 @@ export default function CheckOutCard({ booking, onClose, onCheckedOut }){
         } catch (payErr) {
           console.error('❌ Payment creation failed:', payErr?.message)
           setError(`Check-out succeeded but payment setup failed: ${payErr?.message}. Please try again.`)
+        } finally {
+          setPaymentLoading(false)
+        }
+      } else {
+        // No extra amount - create payment with type 3 (checkout without payment)
+        console.log('💳 No extra amount - creating checkout-only payment (type 3)')
+        try {
+          setPaymentLoading(true)
+          const paymentRes = await paymentApi.createPayment(booking.id, 3, 'Checkout without payment')
+          console.log('✅ Checkout-only payment created:', paymentRes)
+          setCheckoutUrl('') // No payment URL needed
+          // Show success message
+          setTimeout(() => {
+            if (typeof onCheckedOut === 'function') onCheckedOut(booking.id, [])
+            // Don't close modal immediately - let user see success message
+          }, 500)
+        } catch (payErr) {
+          console.error('❌ Checkout-only payment creation failed:', payErr?.message)
+          setError(`Check-out succeeded but payment record creation failed: ${payErr?.message}. Please contact support.`)
         } finally {
           setPaymentLoading(false)
         }

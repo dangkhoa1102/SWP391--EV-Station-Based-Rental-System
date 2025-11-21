@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import '../../styles/modals.css';
 import StaffAPI from '../../../../services/staffApi';
+import carApi from '../../../../services/carApi';
 import authApi from '../../../../services/authApi';
 import BookingModalLayout from '../../../../components/Booking/BookingModalLayout'
 import { mapStatusFromRaw, formatBookingDate } from '../../../../utils/bookingUtils'
@@ -19,6 +20,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
   const [lastSyncAt, setLastSyncAt] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [checkoutUrl, setCheckoutUrl] = useState('')
+  const [carImage, setCarImage] = useState(null)
   const [qrCode, setQrCode] = useState('')
   const [userDetails, setUserDetails] = useState(null)
   const [loadingUserDetails, setLoadingUserDetails] = useState(false)
@@ -32,6 +34,22 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     setVerifiedLicenseBack(false)
     setResolvedFullName('')
     setUserDetails(null)
+    setCarImage(null)
+    
+    // Fetch car image
+    const carId = booking.carId || booking.CarId
+    if (carId) {
+      carApi.getCarById(carId)
+        .then(carDetails => {
+          const imageUrl = carDetails?.imageUrl || carDetails?.ImageUrl || '/Picture/E car 1.jpg'
+          setCarImage(imageUrl)
+          console.log('🖼️ Loaded car image:', imageUrl)
+        })
+        .catch(err => {
+          console.warn('⚠️ Failed to load car image:', err.message)
+          setCarImage('/Picture/E car 1.jpg')
+        })
+    }
     
     // Resolve Customer name via bookingId -> userId -> User table (FirstName + LastName)
     const compose = (f, l) => [f, l].filter(Boolean).join(' ')
@@ -187,7 +205,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
         <BookingModalLayout booking={booking} onClose={onClose} actions={null}>
           <div style={{display:'flex', gap:24, flexWrap:'wrap'}}>
             <div style={{flex:'0 0 220px', textAlign:'center', margin:'0 auto', display:'flex', flexDirection:'column', alignItems:'center'}}>
-              <img id="modalImage" src={booking.facePhoto || booking.img} alt="" style={{width:'100%', borderRadius:8, objectFit:'cover', display:'block'}} />
+              <img id="modalImage" src={carImage || '/Picture/E car 1.jpg'} alt="Vehicle" onError={e => e.currentTarget.src = '/Picture/E car 1.jpg'} style={{width:'100%', height:160, borderRadius:8, objectFit:'cover', display:'block'}} />
               <h3 id="modalTitle" style={{marginTop:12}}>{booking.title}</h3>
               <div id="modalStatus" style={{marginTop:6}}>Status: {booking.statusLabel || booking.status}</div>
               <div id="modalVehicle" style={{marginTop:4, color:'#555'}}>Vehicle: {booking.title || booking.carName || booking.vehicleName || booking.car?.name || booking.car?.Name || '—'}</div>

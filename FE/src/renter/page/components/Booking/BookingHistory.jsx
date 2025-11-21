@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import bookingApi from '../../../../services/bookingApi'
+import carApi from '../../../../services/carApi'
 import paymentApi from '../../../../services/paymentApi'
 import feedbackApi from '../../../../services/feedbackApi'
 import { formatVND } from '../../../../utils/currency'
@@ -14,6 +15,7 @@ export default function BookingHistory(){
   const [filteredBookings, setFilteredBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState('')
+  const [carImagesCache, setCarImagesCache] = useState({})
   const [statusFilter, setStatusFilter] = useState('')
   const [sortFilter, setSortFilter] = useState('newest')
   const [selectedBooking, setSelectedBooking] = useState(null)
@@ -50,6 +52,24 @@ export default function BookingHistory(){
       console.log('📦 Bookings loaded - count:', res?.length)
       console.log('📦 First booking sample:', res?.[0])
       console.log('📦 All bookings:', res)
+      
+      // Fetch car images for all bookings
+      const cache = {}
+      for (const booking of res || []) {
+        const carId = booking.carId || booking.CarId
+        if (carId) {
+          try {
+            const carDetails = await carApi.getCarById(carId)
+            const imageUrl = carDetails?.imageUrl || carDetails?.ImageUrl || '/Picture/E car 1.jpg'
+            cache[carId] = imageUrl
+            console.log('🖼️ Loaded image for car', carId, ':', imageUrl)
+          } catch (e) {
+            console.warn('⚠️ Failed to load car image for', carId, ':', e.message)
+            cache[carId] = '/Picture/E car 1.jpg'
+          }
+        }
+      }
+      setCarImagesCache(cache)
       setAllBookings(res || [])
     }catch(e){ 
       console.error('Error loading bookings:', e)
@@ -428,13 +448,21 @@ export default function BookingHistory(){
                                  (booking.station?.name || booking.Station?.Name) ||
                                  'N/A'
               
-              // Get car image
-              const carImage = booking.carImage || booking.CarImage ||
-                              booking.car?.imageUrl || booking.Car?.ImageUrl ||
-                              '/Picture/E car 1.jpg'
+              // Get car image from cache (loaded during booking fetch)
+              const carId = booking.carId || booking.CarId
+              const carImage = carImagesCache[carId] || '/Picture/E car 1.jpg'
               
               // Get booking ID
               const bookingId = booking.id || booking.bookingId || booking.bookingIdString || 'N/A'
+              
+              // Debug logging
+              if (idx === 0) {
+                console.log('🖼️ First booking car image sources:')
+                console.log('   - carId:', carId)
+                console.log('   - carImagesCache[carId]:', carImagesCache[carId])
+                console.log('   - Final carImage:', carImage)
+                console.log('   - Full booking object:', booking)
+              }
 
               return (
                 <div key={idx} className={`booking-card-shopee ${status.class}`}>

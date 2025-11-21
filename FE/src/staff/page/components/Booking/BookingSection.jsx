@@ -21,28 +21,22 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
   React.useEffect(() => {
     if (!checkOutFor?.id) return
     
-    // Poll for payment completion (status = 5) every 3 seconds
+    // Just wait for payment success page redirect, then close modal after a short delay
     const pollInterval = setInterval(async () => {
       try {
-        // Get bookingId from localStorage
         const bookingIdFromStorage = localStorage.getItem('activeCheckOutBookingId')
-        if (!bookingIdFromStorage) return
-        
-        const updatedBooking = await StaffAPI.getBookingById(bookingIdFromStorage)
-        console.log('📊 Polling booking status:', updatedBooking?.bookingStatus)
-        
-        // If payment completed (status = 5), close modal and refresh
-        if (updatedBooking?.bookingStatus === 5 || updatedBooking?.status === 5 || updatedBooking?.bookingStatus === 'completed' || updatedBooking?.status === 'completed') {
-          console.log('✅ Payment completed! Booking status = 5')
-          localStorage.removeItem('activeCheckOutBookingId')
+        if (!bookingIdFromStorage) {
+          // Payment was successful and redirected, close the modal
+          console.log('✅ Checkout payment completed (user redirected)')
           clearInterval(pollInterval)
           setCheckOutFor(null)
-          onStatusUpdated?.(bookingIdFromStorage)
+          onStatusUpdated?.(checkOutFor?.id)
+          return
         }
       } catch (err) {
         console.warn('⏱️ Polling error:', err?.message)
       }
-    }, 3000)
+    }, 2000)
     
     return () => clearInterval(pollInterval)
   }, [checkOutFor?.id, onStatusUpdated])
@@ -54,23 +48,18 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
     const pollInterval = setInterval(async () => {
       try {
         const bookingIdFromStorage = localStorage.getItem('activeCheckInBookingId')
-        if (!bookingIdFromStorage) return
-        
-        const updatedBooking = await StaffAPI.getBookingById(bookingIdFromStorage)
-        console.log('📊 Polling check-in booking status:', updatedBooking?.bookingStatus)
-        
-        // If payment completed and check-in done (status = 3 or higher), close modal
-        if (updatedBooking?.bookingStatus === 3 || updatedBooking?.status === 3 || updatedBooking?.bookingStatus >= 3) {
-          console.log('✅ Check-in payment completed! Booking status = 3+')
-          localStorage.removeItem('activeCheckInBookingId')
+        if (!bookingIdFromStorage) {
+          // Payment was successful and redirected, close the modal
+          console.log('✅ Check-in payment completed (user redirected)')
           clearInterval(pollInterval)
           setCheckInFor(null)
-          onStatusUpdated?.(bookingIdFromStorage)
+          onStatusUpdated?.(checkInFor?.id)
+          return
         }
       } catch (err) {
         console.warn('⏱️ Polling error (check-in):', err?.message)
       }
-    }, 3000)
+    }, 2000)
     
     return () => clearInterval(pollInterval)
   }, [checkInFor?.id, onStatusUpdated])
@@ -157,7 +146,7 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
           </div>
 
           {/* Right: Incidents Modal */}
-          <div style={{flex:'0 0 auto', width:'420px', maxWidth:'45vw', maxHeight:'90vh', overflow:'auto', flexShrink:0}}>
+          <div style={{flex:'0 0 auto', width:'600px', maxWidth:'45vw', maxHeight:'90vh', overflow:'auto', flexShrink:0}}>
             <IncidentsModal 
               bookingId={checkOutFor?.id}
               refreshKey={incidentsRefreshKey}

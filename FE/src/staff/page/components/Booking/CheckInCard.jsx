@@ -75,13 +75,21 @@ export default function CheckInCard({ booking, onClose, onCheckedIn }){
       // Build payload for multipart/form-data
       const payload = {
         bookingId: booking.id,
-        staffId: userId,
+        staffId: userId,  // Staff's userId from localStorage
+        renterId: booking.userId,  // Renter's ID for authorization context
       }
       const notes = (checkInNotes || '').trim()
       if (notes) payload.checkInNotes = notes
       if (checkInPhoto) {
         payload.checkInPhotoFile = checkInPhoto
       }
+      
+      console.log('📋 Check-in payload:', payload)
+      console.log('👤 Staff check-in info:', { 
+        bookingId: booking.id, 
+        staffId: userId,
+        renterId: booking.userId
+      })
       
       // Call check-in API and get response with totalAmount
       const response = await StaffAPI.checkInWithContract(payload)

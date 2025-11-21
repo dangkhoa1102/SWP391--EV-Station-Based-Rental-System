@@ -724,6 +724,8 @@ export default function AdminPage() {
             uiStage,
             date,
             img,
+            // Add carId for image fetching in BookingCard
+            carId: b.carId || b.CarId || b.car?.id || b.car?.Id || b.vehicle?.id || b.vehicle?.Id || null,
             // identity images (CCCD/CMND front/back)
             cccdFrontUrl: b.cccdFrontUrl || b.identityFrontUrl || b.idFrontUrl || b.frontImageUrl || b.frontIdUrl || b.cccdFrontImageUrl || b.customer?.cccdFrontUrl || b.user?.cccdFrontUrl,
             cccdBackUrl: b.cccdBackUrl || b.identityBackUrl || b.idBackUrl || b.backImageUrl || b.backIdUrl || b.cccdBackImageUrl || b.customer?.cccdBackUrl || b.user?.cccdBackUrl,
@@ -938,26 +940,125 @@ export default function AdminPage() {
         )}
         {section === 'station' && (
           <>
-            <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:12}}>
-              <label style={{fontWeight:600}}>Stations</label>
+            <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:24}}>
+              <h2 style={{fontWeight:700, fontSize:24, margin:0}}>Stations Management</h2>
               <div style={{flex:1}} />
-              <button onClick={() => setAddStationOpen(true)} style={{padding:'8px 12px'}}>Add Station</button>
+              <button 
+                onClick={() => setAddStationOpen(true)} 
+                style={{
+                  padding:'10px 16px',
+                  backgroundColor:'#2ecc71',
+                  color:'white',
+                  border:'none',
+                  borderRadius:6,
+                  fontWeight:600,
+                  cursor:'pointer',
+                  fontSize:14,
+                  transition:'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor='#27ae60'}
+                onMouseOut={(e) => e.target.style.backgroundColor='#2ecc71'}
+              >
+                + Add Station
+              </button>
             </div>
 
-            <div>
-              <h4 style={{margin:'6px 0'}}>Existing Stations</h4>
+            <div style={{maxWidth:'1200px'}}>
               {!stations || stations.length === 0 ? (
-                <div style={{padding:'10px 12px', color:'#555'}}>No stations found.</div>
+                <div style={{
+                  padding:'40px 20px',
+                  textAlign:'center',
+                  backgroundColor:'#f8f9fa',
+                  borderRadius:8,
+                  color:'#666'
+                }}>
+                  <p style={{fontSize:16, margin:0}}>No stations found. Create one to get started.</p>
+                </div>
               ) : (
-                <div style={{display:'grid', gap:8}}>
+                <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:16}}>
                   {stations.map(st => (
-                    <div key={st.id || st.Id} style={{padding:8, border:'1px solid #eee', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                      <div>
-                        <div style={{fontWeight:600}}>{st.name || st.Name || `Station ${(st.id||st.Id)}`}</div>
-                        <div style={{fontSize:12, color:'#555'}}>{st.address || st.Address || ''}</div>
+                    <div 
+                      key={st.id || st.Id} 
+                      style={{
+                        padding:16,
+                        border:'1px solid #ddd',
+                        borderRadius:8,
+                        backgroundColor:'#fff',
+                        boxShadow:'0 2px 4px rgba(0,0,0,0.05)',
+                        transition:'box-shadow 0.2s, transform 0.2s',
+                        cursor:'pointer'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'
+                        e.currentTarget.style.transform = 'translateY(-2px)'
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)'
+                        e.currentTarget.style.transform = 'translateY(0)'
+                      }}
+                    >
+                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'start', marginBottom:12}}>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:700, fontSize:16, marginBottom:4}}>
+                            📍 {st.name || st.Name || `Station ${(st.id||st.Id)}`}
+                          </div>
+                          <div style={{fontSize:13, color:'#666', marginBottom:8}}>
+                            {st.address || st.Address || 'No address provided'}
+                          </div>
+                        </div>
                       </div>
-                      <div style={{display:'flex', gap:8}}>
-                        <button onClick={() => { setSelectedStation(st); setStationDetailsOpen(true) }}>Details</button>
+                      
+                      {st.phoneNumber && (
+                        <div style={{fontSize:12, color:'#555', marginBottom:4}}>
+                          📞 {st.phoneNumber}
+                        </div>
+                      )}
+                      
+                      {st.capacity && (
+                        <div style={{fontSize:12, color:'#555', marginBottom:8}}>
+                          🚗 Capacity: {st.capacity} vehicles
+                        </div>
+                      )}
+                      
+                      <div style={{display:'flex', gap:8, marginTop:12, paddingTop:12, borderTop:'1px solid #eee'}}>
+                        <button 
+                          onClick={() => { setSelectedStation(st); setStationDetailsOpen(true) }}
+                          style={{
+                            flex:1,
+                            padding:'8px 12px',
+                            backgroundColor:'#3498db',
+                            color:'white',
+                            border:'none',
+                            borderRadius:4,
+                            cursor:'pointer',
+                            fontSize:13,
+                            fontWeight:600,
+                            transition:'background-color 0.2s'
+                          }}
+                          onMouseOver={(e) => e.target.style.backgroundColor='#2980b9'}
+                          onMouseOut={(e) => e.target.style.backgroundColor='#3498db'}
+                        >
+                          Details
+                        </button>
+                        <button 
+                          onClick={() => { setStationId(st.id || st.Id); setSection('booking') }}
+                          style={{
+                            flex:1,
+                            padding:'8px 12px',
+                            backgroundColor:'#9b59b6',
+                            color:'white',
+                            border:'none',
+                            borderRadius:4,
+                            cursor:'pointer',
+                            fontSize:13,
+                            fontWeight:600,
+                            transition:'background-color 0.2s'
+                          }}
+                          onMouseOver={(e) => e.target.style.backgroundColor='#8e44ad'}
+                          onMouseOut={(e) => e.target.style.backgroundColor='#9b59b6'}
+                        >
+                          Bookings
+                        </button>
                       </div>
                     </div>
                   ))}

@@ -71,9 +71,9 @@ export default function IncidentsModal({ bookingId, onClose, refreshKey, initial
   }
 
   return (
-    <div className="modal-content" style={{width:'min(420px,95vw)', maxHeight:'90vh', overflow:'auto', background:'#fff', borderRadius:8, boxShadow:'0 4px 6px rgba(0,0,0,0.1)'}}>
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16}}>
-        <h3 style={{margin:0}}>Related Incidents</h3>
+    <div className="modal-content" style={{width:'min(900px,95vw)', maxHeight:'90vh', overflow:'auto', background:'#fff', borderRadius:8, boxShadow:'0 4px 6px rgba(0,0,0,0.1)'}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, padding:'16px 16px 0 0'}}>
+        <h3 style={{margin:0, fontSize:20, fontWeight:700}}>Related Incidents</h3>
         <span className="close-btn" onClick={onClose} style={{cursor:'pointer', fontSize:24}}>&times;</span>
       </div>
 
@@ -82,7 +82,14 @@ export default function IncidentsModal({ bookingId, onClose, refreshKey, initial
       ) : error ? (
         <div style={{background:'#ffebee', color:'#d32f2f', padding:'12px', borderRadius:6}}>❌ {error}</div>
       ) : incidents.length === 0 ? (
-        <div style={{textAlign:'center', padding:'20px', color:'#999'}}>📋 No incidents reported for this booking</div>
+        <>
+          <div style={{textAlign:'center', padding:'20px', color:'#999'}}>📋 No incidents reported for this booking</div>
+          {page > 1 && !loading && (
+            <div style={{display:'flex', gap:8, justifyContent:'center', marginTop:16}}>
+              <button onClick={()=>setPage(1)} style={{padding:'6px 12px', border:'1px solid #ccc', borderRadius:4, cursor:'pointer'}}>Reset to Page 1</button>
+            </div>
+          )}
+        </>
       ) : (
         <div style={{display:'flex', flexDirection:'column', gap:12}}>
           {incidents.map((incident, idx) => {
@@ -98,35 +105,35 @@ export default function IncidentsModal({ bookingId, onClose, refreshKey, initial
             const images = Array.isArray(incident.images) ? incident.images : []
 
             return (
-              <div key={id || idx} style={{border:'1px solid #eee', padding:12, borderRadius:6, display:'flex', gap:12}}>
-                <div style={{flex:'0 0 84px'}}>
+              <div key={id || idx} style={{border:'1px solid #eee', padding:16, borderRadius:6, display:'flex', gap:16}}>
+                <div style={{flex:'0 0 120px'}}>
                   {images.length > 0 ? (
-                    <img src={images[0]} alt="incident" style={{width:84, height:64, objectFit:'cover', borderRadius:6}} />
+                    <img src={images[0]} alt="incident" style={{width:120, height:90, objectFit:'cover', borderRadius:6}} />
                   ) : (
-                    <div style={{width:84, height:64, background:'#fafafa', border:'1px dashed #eee', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', color:'#bbb'}}>No image</div>
+                    <div style={{width:120, height:90, background:'#fafafa', border:'1px dashed #eee', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', color:'#bbb', fontSize:12}}>No image</div>
                   )}
                 </div>
                 <div style={{flex:1}}>
                   <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8}}>
                     <div>
-                      <h4 style={{margin:'0 0 6px', fontSize:14, fontWeight:700}}>{short || `Incident ${id?.slice?.(0,8) || (idx+1)}`}</h4>
+                      <h4 style={{margin:'0 0 6px', fontSize:15, fontWeight:700}}>{short || `Incident ${id?.slice?.(0,8) || (idx+1)}`}</h4>
                       <div style={{fontSize:12, color:'#666'}}>ID: {id || 'N/A'}</div>
                     </div>
                     <div style={{textAlign:'right'}}>
-                      <div style={{background:getSeverityColor(statusLabel), color:'#fff', padding:'4px 8px', borderRadius:6, fontSize:12, fontWeight:700}}>
+                      <div style={{background:getSeverityColor(statusLabel), color:'#fff', padding:'6px 12px', borderRadius:6, fontSize:13, fontWeight:700}}>
                         {statusLabel}
                       </div>
                     </div>
                   </div>
 
-                  <p style={{margin:'0 0 8px', fontSize:13, color:'#555', lineHeight:1.4}}>{desc || 'No description'}</p>
+                  <p style={{margin:'0 0 10px', fontSize:14, color:'#555', lineHeight:1.5}}>{desc || 'No description'}</p>
 
-                  <div style={{display:'flex', gap:12, flexWrap:'wrap', fontSize:12, color:'#666'}}>
-                    <div>Est. Cost: <strong style={{color:'#d32f2f'}}>{cost !== null ? `${Number(cost).toLocaleString()} VND` : 'N/A'}</strong></div>
-                    <div>Reported: <strong>{reported ? new Date(reported).toLocaleString() : 'N/A'}</strong></div>
-                    <div>Resolved: <strong>{resolved ? new Date(resolved).toLocaleString() : 'N/A'}</strong></div>
-                    <div>Staff: <strong>{staff || 'N/A'}</strong></div>
-                    {resolver && <div>Resolver: <strong>{resolver}</strong></div>}
+                  <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12, fontSize:13, color:'#666'}}>
+                    <div>💰 Est. Cost: <strong style={{color:'#d32f2f'}}>{cost !== null ? `${Number(cost).toLocaleString()} VND` : 'N/A'}</strong></div>
+                    <div>📅 Reported: <strong>{reported ? new Date(reported).toLocaleString() : 'N/A'}</strong></div>
+                    <div>✅ Resolved: <strong>{resolved ? new Date(resolved).toLocaleString() : 'N/A'}</strong></div>
+                    <div>👤 Staff: <strong>{staff || 'N/A'}</strong></div>
+                    {resolver && <div>🔧 Resolver: <strong>{resolver}</strong></div>}
                   </div>
                 </div>
               </div>

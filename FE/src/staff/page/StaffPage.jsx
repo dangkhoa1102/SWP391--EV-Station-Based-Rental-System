@@ -655,6 +655,8 @@ export default function StaffPage() {
             pickupDate,
             returnDate,
             img,
+            // Add carId for image fetching in BookingCard
+            carId: b.carId || b.CarId || b.car?.id || b.car?.Id || b.vehicle?.id || b.vehicle?.Id || null,
             // identity images (CCCD/CMND front/back)
             cccdFrontUrl: b.cccdFrontUrl || b.identityFrontUrl || b.idFrontUrl || b.frontImageUrl || b.frontIdUrl || b.cccdFrontImageUrl || b.customer?.cccdFrontUrl || b.user?.cccdFrontUrl,
             cccdBackUrl: b.cccdBackUrl || b.identityBackUrl || b.idBackUrl || b.backImageUrl || b.backIdUrl || b.cccdBackImageUrl || b.customer?.cccdBackUrl || b.user?.cccdBackUrl,

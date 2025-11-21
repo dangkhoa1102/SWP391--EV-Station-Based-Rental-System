@@ -127,7 +127,7 @@ export default function PaymentSuccess(){
       
       if (!role) {
         console.warn('⚠️ No role found, redirecting to booking history as default')
-        navigate('/bookinghistory')
+        navigate('/booking-history')
         return
       }
       
@@ -151,13 +151,13 @@ export default function PaymentSuccess(){
       // Check for EV Renter (default for renter users)
       if (normalizedRole.includes('renter') || normalizedRole.includes('evrenter') || normalizedRole === 'evrenter') {
         console.log('→ Redirecting to Booking History page')
-        navigate('/bookinghistory')
+        navigate('/booking-history')
         return
       }
       
       // Default: redirect to booking history (safest for renter)
       console.log('⚠️ Unknown role, redirecting to booking history as default')
-      navigate('/bookinghistory')
+      navigate('/booking-history')
     }
     
     syncPayment()

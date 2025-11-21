@@ -69,6 +69,8 @@ const staffApi = {
       throw new Error('Missing required fields: bookingId, staffId')
     }
     
+    console.log('📤 checkInWithContract payload before FormData:', payload)
+    
     const attempts = [
       '/Bookings/Check-In-With-Contract',
       '/Bookings/CheckInWithContract',
@@ -83,6 +85,10 @@ const staffApi = {
           const formData = new FormData()
           formData.append('bookingId', payload.bookingId)
           formData.append('staffId', payload.staffId)
+          if (payload.renterId) {
+            formData.append('renterId', payload.renterId)
+            console.log('📤 Added renterId to FormData:', payload.renterId)
+          }
           if (payload.checkInNotes) {
             formData.append('checkInNotes', payload.checkInNotes)
           }
@@ -91,9 +97,16 @@ const staffApi = {
           }
           formData.append('checkInPhotoFile', payload.checkInPhotoFile)
           
-          const res = await apiClient.post(url, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          })
+          console.log('📤 Sending FormData to:', url, 'with file:', payload.checkInPhotoFile.name)
+          
+          // Include custom header with renter ID if provided
+          const headers = { 'Content-Type': 'multipart/form-data' }
+          if (payload.renterId) {
+            headers['X-Renter-Id'] = payload.renterId
+            console.log('📤 Added X-Renter-Id header:', payload.renterId)
+          }
+          
+          const res = await apiClient.post(url, formData, { headers })
           const body = res?.data
           if (body && typeof body === 'object' && 'data' in body) {
             if (body.isSuccess === false) {
@@ -107,6 +120,11 @@ const staffApi = {
           return body
         } catch (e) {
           lastErr = e
+          console.error('❌ FormData check-in attempt failed on', url)
+          console.error('   Status:', e?.response?.status)
+          console.error('   Full Error Response:', e?.response?.data)
+          console.error('   Error Message:', e?.message)
+          console.error('   Payload sent:', payload)
           const code = e?.response?.status
           if (code && code !== 404 && code !== 405) throw e
         }
@@ -115,6 +133,7 @@ const staffApi = {
       // Try with JSON payload
       try {
         const { checkInPhotoFile, ...jsonPayload } = payload
+        console.log('📤 Sending JSON to:', url, '- Payload:', jsonPayload)
         const res = await apiClient.post(url, jsonPayload, {
           headers: { 'Content-Type': 'application/json' }
         })
@@ -131,6 +150,10 @@ const staffApi = {
         return body
       } catch (e) {
         lastErr = e
+        console.error('❌ JSON check-in attempt failed on', url)
+        console.error('   Status:', e?.response?.status)
+        console.error('   Full Error Response:', e?.response?.data)
+        console.error('   Error Message:', e?.message)
         const code = e?.response?.status
         if (code && code !== 404 && code !== 405) throw e
       }
