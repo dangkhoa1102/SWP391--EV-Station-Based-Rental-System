@@ -36,10 +36,6 @@ export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate, st
   return (
     <div id="vehicle" className="section">
       <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px', flexWrap:'wrap'}}>
-        <button className="vehicle-add-btn" onClick={() => setAddOpen(true)}>
-          <i className="fas fa-plus"></i> Add Vehicle
-        </button>
-        
         <input 
           type="text" 
           placeholder="Search by name, model, brand, or plate..." 

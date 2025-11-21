@@ -103,12 +103,27 @@ export default function IncidentsModal({ bookingId, onClose, refreshKey, initial
             const staff = incident.staffName || incident.staff || incident.reportedBy || null
             const resolver = incident.resolverName || incident.resolvedBy || null
             const images = Array.isArray(incident.images) ? incident.images : []
+            
+            // Process image URL - handle filepath, URL, or null
+            const getImageUrl = (imgPath) => {
+              if (!imgPath) return null
+              // If already a full URL (http/https)
+              if (typeof imgPath === 'string' && (imgPath.startsWith('http://') || imgPath.startsWith('https://'))) {
+                return imgPath
+              }
+              // If it's a filepath or relative path, prepend API endpoint
+              if (typeof imgPath === 'string' && imgPath.trim()) {
+                const baseUrl = process.env.REACT_APP_API_URL || window.location.origin
+                return `${baseUrl}/${imgPath.replace(/^\//,'')}` // Remove leading slash if any
+              }
+              return null
+            }
 
             return (
               <div key={id || idx} style={{border:'1px solid #eee', padding:16, borderRadius:6, display:'flex', gap:16}}>
                 <div style={{flex:'0 0 120px'}}>
-                  {images.length > 0 ? (
-                    <img src={images[0]} alt="incident" style={{width:120, height:90, objectFit:'cover', borderRadius:6}} />
+                  {images.length > 0 && getImageUrl(images[0]) ? (
+                    <img src={getImageUrl(images[0])} alt="incident" style={{width:120, height:90, objectFit:'cover', borderRadius:6}} onError={(e) => {e.target.style.display='none'}} />
                   ) : (
                     <div style={{width:120, height:90, background:'#fafafa', border:'1px dashed #eee', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', color:'#bbb', fontSize:12}}>No image</div>
                   )}

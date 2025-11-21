@@ -72,14 +72,14 @@ export default function PaymentCancel() {
   }, [searchParams, navigate, showToast])
 
   return (
-    <main className="payment-cancel-main">
-      <div className="payment-cancel-container">
+    <main className="payment-cancel-container">
+      <div className="payment-cancel-card">
         {processing ? (
           <>
             <div className="payment-cancel-icon processing">
               ⏳
             </div>
-            <h2>Processing Cancellation...</h2>
+            <h1>Processing Cancellation...</h1>
             <p>Clearing payment session. You can retry payment later.</p>
           </>
         ) : (
@@ -87,11 +87,11 @@ export default function PaymentCancel() {
             <div className="payment-cancel-icon cancelled">
               ❌
             </div>
-            <h2>Payment Cancelled</h2>
+            <h1>Payment Cancelled</h1>
             <p>
               Your payment has been cancelled. Your booking is still active and you can retry payment anytime.
             </p>
-            <p className="small">
+            <p className="small" style={{fontSize: '13px', color: '#999', marginTop: '20px'}}>
               Redirecting to booking history...
             </p>
           </>

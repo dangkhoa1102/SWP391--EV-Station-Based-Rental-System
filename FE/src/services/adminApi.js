@@ -78,8 +78,25 @@ const adminApi = {
   createStation: stationApi.createStation,
   updateStation: stationApi.updateStation,
   deleteStation: stationApi.deleteStation,
-  // Feedbacks
-  getFeedbacks: feedbackApi.getFeedbacks,
+  
+  // Feedbacks - with defensive fallback
+  getFeedbacks: feedbackApi?.getFeedbacks || (async (params) => {
+    try {
+      const res = await apiClient.get('/Feedback/Get-All', { 
+        params: { 
+          pageNumber: params?.page ?? 1, 
+          pageSize: params?.pageSize ?? 10,
+          search: params?.search || ''
+        } 
+      })
+      const body = res?.data
+      if (body && typeof body === 'object' && 'data' in body) return body.data
+      return body || { items: [], totalCount: 0 }
+    } catch (e) {
+      console.warn('⚠️ Failed to load feedbacks:', e.message)
+      return { items: [], totalCount: 0 }
+    }
+  }),
 
   // ---------------------------------------------------------------------------
   // USER & STAFF MANAGEMENT

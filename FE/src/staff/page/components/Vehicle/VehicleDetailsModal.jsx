@@ -6,6 +6,7 @@ export default function VehicleDetailsModal({ open, vehicle, onClose, onEdit, on
   const [editedBattery, setEditedBattery] = useState('');
   const [editedTech, setEditedTech] = useState('');
   const [editedIssue, setEditedIssue] = useState('');
+  const [editedIsAvailable, setEditedIsAvailable] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   if (!open || !vehicle) return null;
@@ -17,6 +18,7 @@ export default function VehicleDetailsModal({ open, vehicle, onClose, onEdit, on
     setEditedBattery(vehicle.battery ?? '');
     setEditedTech(vehicle.tech ?? '');
     setEditedIssue(vehicle.issue ?? '');
+    setEditedIsAvailable(vehicle.isAvailable !== false && vehicle.isAvailable !== 0);
     setIsEditing(true);
   };
 
@@ -28,7 +30,8 @@ export default function VehicleDetailsModal({ open, vehicle, onClose, onEdit, on
       await onUpdate(vehicle.id, {
         battery: editedBattery,
         tech: editedTech,
-        issue: editedIssue
+        issue: editedIssue,
+        isAvailable: editedIsAvailable
       });
       setIsEditing(false);
     } catch (error) {
@@ -43,6 +46,7 @@ export default function VehicleDetailsModal({ open, vehicle, onClose, onEdit, on
     setEditedBattery('');
     setEditedTech('');
     setEditedIssue('');
+    setEditedIsAvailable(true);
   };
 
   return (
@@ -141,6 +145,28 @@ export default function VehicleDetailsModal({ open, vehicle, onClose, onEdit, on
                 />
               ) : (
                 <span> {vehicle.tech ?? 'N/A'}</span>
+              )}
+            </div>
+
+            {/* Active Status - Toggle */}
+            <div style={{ background: 'rgba(255,255,255,0.85)', padding: 12, borderRadius: 10, marginBottom: 10 }}>
+              <strong>Active Status:</strong>
+              {isEditing ? (
+                <label style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={editedIsAvailable}
+                    onChange={e => setEditedIsAvailable(e.target.checked)}
+                    style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                  />
+                  <span style={{ fontSize: '14px' }}>
+                    {editedIsAvailable ? '✅ Available' : '❌ Unavailable'}
+                  </span>
+                </label>
+              ) : (
+                <span style={{ marginLeft: '8px', fontWeight: '600', color: vehicle.isAvailable !== false && vehicle.isAvailable !== 0 ? '#10b981' : '#ef4444' }}>
+                  {vehicle.isAvailable !== false && vehicle.isAvailable !== 0 ? '✅ Available' : '❌ Unavailable'}
+                </span>
               )}
             </div>
 

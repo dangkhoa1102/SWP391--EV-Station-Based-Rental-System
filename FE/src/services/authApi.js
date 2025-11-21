@@ -36,6 +36,20 @@ const authApi = {
 
     // Also store user object if present
     if (payload.user) localStorage.setItem('user', JSON.stringify(payload.user))
+    
+    // Store email for display (either from payload.user.email or from login input email parameter)
+    if (payload.user?.email) {
+      localStorage.setItem('userEmail', payload.user.email)
+    } else if (email) {
+      localStorage.setItem('userEmail', email)
+    }
+    
+    // Store email for display (either from payload.user.email or from login input)
+    if (payload.user?.email) {
+      localStorage.setItem('userEmail', payload.user.email)
+    } else if (email) {
+      localStorage.setItem('userEmail', email)
+    }
 
     // For staff users, attempt to fetch profile (stationId) - best-effort
     try {

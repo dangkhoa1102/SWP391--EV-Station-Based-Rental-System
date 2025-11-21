@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import BookingCard from '../../../../components/Booking/BookingCard';
 import BookingModel from '../../../../components/Booking/BookingModel';
 import WaitingPaymentCard from './WaitingPaymentCard';
@@ -16,6 +16,13 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
   const [checkOutFor, setCheckOutFor] = useState(null);
   const [incidentsRefreshKey, setIncidentsRefreshKey] = useState(0);
   const [incidentsInitial, setIncidentsInitial] = useState([])
+  
+  // Memoize onStatusUpdated to prevent dependency changes
+  const memoStatusUpdated = useCallback((bookingId) => {
+    if (typeof onStatusUpdated === 'function') {
+      onStatusUpdated(bookingId)
+    }
+  }, [onStatusUpdated])
 
   // Poll for checkout payment completion
   React.useEffect(() => {
@@ -30,7 +37,7 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
           console.log('✅ Checkout payment completed (user redirected)')
           clearInterval(pollInterval)
           setCheckOutFor(null)
-          onStatusUpdated?.(checkOutFor?.id)
+          memoStatusUpdated(checkOutFor?.id)
           return
         }
       } catch (err) {
@@ -39,7 +46,7 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
     }, 2000)
     
     return () => clearInterval(pollInterval)
-  }, [checkOutFor?.id, onStatusUpdated])
+  }, [checkOutFor?.id, memoStatusUpdated])
 
   // Poll for check-in payment success
   React.useEffect(() => {
@@ -53,7 +60,7 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
           console.log('✅ Check-in payment completed (user redirected)')
           clearInterval(pollInterval)
           setCheckInFor(null)
-          onStatusUpdated?.(checkInFor?.id)
+          memoStatusUpdated(checkInFor?.id)
           return
         }
       } catch (err) {
@@ -62,7 +69,7 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
     }, 2000)
     
     return () => clearInterval(pollInterval)
-  }, [checkInFor?.id, onStatusUpdated])
+  }, [checkInFor?.id, memoStatusUpdated])
 
   const filtered = bookings.filter(b =>
     (b.title.toLowerCase().includes(search.toLowerCase()) || (b.customer || '').toLowerCase().includes(search.toLowerCase()) || (b.userName || '').toLowerCase().includes(search.toLowerCase()) || (b.email || '').toLowerCase().includes(search.toLowerCase())) &&

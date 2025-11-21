@@ -122,40 +122,6 @@ export default function AdminPage() {
   // Vehicle actions
   const addVehicle = async (payload) => {
     try {
-      if (!stationId) {
-        setError('Please select a station before creating a vehicle.')
-        return
-      }
-      
-      // Check if payload is FormData (for file uploads)
-      if (payload instanceof FormData) {
-        console.log('✅ Received FormData payload for vehicle creation')
-        // Add station ID to FormData
-        payload.append('CurrentStationId', stationId)
-      } else {
-        // Normalize payload keys to match varied backends
-        const normalized = payload
-        // Station assignment: include multiple key variants
-        normalized.currentStationId = stationId
-        normalized.stationId = stationId
-        normalized.StationId = stationId
-        // Rental price naming variants
-        if (normalized.rentalPricePerDate != null && normalized.rentalPricePerDay == null) {
-          normalized.rentalPricePerDay = normalized.rentalPricePerDate
-        }
-        if (normalized.rentalPricePerDay != null && normalized.rentalPricePerDate == null) {
-          normalized.rentalPricePerDate = normalized.rentalPricePerDay
-        }
-        // Battery capacity naming variants
-        if (normalized.batteryCapacity != null && normalized.BatteryCapacity == null) {
-          normalized.BatteryCapacity = normalized.batteryCapacity
-        }
-        // Current battery naming variants
-        if (normalized.currentBatteryLevel != null && normalized.CurrentBatteryLevel == null) {
-          normalized.CurrentBatteryLevel = normalized.currentBatteryLevel
-        }
-      }
-      
       const created = await adminApi.createCar(payload)
       // Map created car to view model
       const c = created || {}
@@ -173,13 +139,16 @@ export default function AdminPage() {
       })
       setVehicles(prev => [...prev, map(c)])
       // Update slot info after adding
-      await updateStationSlots(stationId)
+      if (stationId) {
+        await updateStationSlots(stationId)
+      }
       return created
     } catch (e) {
       setError(e?.message || 'Failed to create vehicle')
       throw e
     }
   }
+  
   const removeVehicle = async (id) => {
     try {
       await adminApi.deleteCar(id)
@@ -227,6 +196,11 @@ export default function AdminPage() {
       if (payload.issue) {
         try { await adminApi.updateCarDescription(id, payload.issue) }
         catch { await adminApi.updateCar(id, { description: payload.issue }) }
+      }
+      if (payload.isAvailable !== undefined) {
+        // Update availability status (1 = available, 0 = unavailable)
+        const carApi = (await import('../../services/carApi')).default
+        await carApi.updateCarAvailability(id, payload.isAvailable ? 1 : 0)
       }
     } catch (e) {
       setError(e?.message || 'Failed to update vehicle')
@@ -990,7 +964,7 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div style={{maxWidth:'1200px'}}>
+            <div style={{width:'100%'}}>
               {!stations || stations.length === 0 ? (
                 <div style={{
                   padding:'40px 20px',

@@ -77,42 +77,62 @@ const carApi = {
   getAvailableCarsByStation: async (stationId, startTime, endTime) => {
     try {
       console.log('🚗 Fetching available cars for station:', stationId, 'startTime:', startTime, 'endTime:', endTime)
-      const res = await apiClient.get('/Bookings/available-cars-by-station', {
-        params: { stationId, startTime, endTime }
-      })
-      console.log('✅ Available cars response:', res.data)
-      const responseData = res.data
       
-      if (Array.isArray(responseData)) {
-        console.log('✅ Returning available cars array:', responseData.length, 'items')
-        return responseData
-      }
-      
-      if (responseData.data && responseData.data.data && Array.isArray(responseData.data.data)) {
-        console.log('✅ Returning available cars from data.data.data:', responseData.data.data.length, 'items')
-        return responseData.data.data
-      }
-      
-      if (responseData.data && responseData.data.items && Array.isArray(responseData.data.items)) {
-        console.log('✅ Returning available cars from data.data.items:', responseData.data.items.length, 'items')
-        return responseData.data.items
-      }
-      
-      if (responseData.data && Array.isArray(responseData.data)) {
-        console.log('✅ Returning available cars from data.data:', responseData.data.length, 'items')
-        return responseData.data
-      }
-      
-      if (responseData.items && Array.isArray(responseData.items)) {
-        console.log('✅ Returning available cars from data.items:', responseData.items.length, 'items')
-        return responseData.items
+      // Try primary endpoint first
+      try {
+        const res = await apiClient.get('/Bookings/available-cars-by-station', {
+          params: { stationId, startTime, endTime }
+        })
+        console.log('✅ Available cars response:', res.data)
+        const responseData = res.data
+        
+        if (Array.isArray(responseData)) {
+          console.log('✅ Returning available cars array:', responseData.length, 'items')
+          return responseData
+        }
+        
+        if (responseData.data && responseData.data.data && Array.isArray(responseData.data.data)) {
+          console.log('✅ Returning available cars from data.data.data:', responseData.data.data.length, 'items')
+          return responseData.data.data
+        }
+        
+        if (responseData.data && responseData.data.items && Array.isArray(responseData.data.items)) {
+          console.log('✅ Returning available cars from data.data.items:', responseData.data.items.length, 'items')
+          return responseData.data.items
+        }
+        
+        if (responseData.data && Array.isArray(responseData.data)) {
+          console.log('✅ Returning available cars from data.data:', responseData.data.length, 'items')
+          return responseData.data
+        }
+        
+        if (responseData.items && Array.isArray(responseData.items)) {
+          console.log('✅ Returning available cars from data.items:', responseData.items.length, 'items')
+          return responseData.items
+        }
+      } catch (e1) {
+        console.warn('⚠️ Primary endpoint failed, trying fallback - getting all cars and filtering:', e1.message)
+        
+        // Fallback: Get all cars and filter by station client-side
+        try {
+          const allCars = await carApi.getAllCars()
+          const filtered = (allCars || []).filter(car => {
+            const carStationId = car.currentStationId || car.stationId || car.station?.id || car.station?.Id
+            return carStationId === stationId
+          })
+          console.log(`✅ Filtered ${filtered.length} cars for station ${stationId} from ${allCars.length} total cars`)
+          return filtered
+        } catch (e2) {
+          console.warn('⚠️ Failed to get all cars for filtering:', e2.message)
+          return []
+        }
       }
       
       console.warn('⚠️ No available cars found in response')
       return []
     } catch (e) {
       console.error('❌ Error fetching available cars:', e.response?.data || e.message)
-      throw e
+      return []
     }
   },
 
@@ -121,8 +141,15 @@ const carApi = {
     try {
       // Check if payload is FormData (file upload)
       if (carData instanceof FormData) {
-        // Let browser set Content-Type with proper multipart/form-data boundary
-        const res = await apiClient.post('/Cars/Create', carData, { headers: { 'Content-Type': undefined } })
+        // For FormData with image, set Content-Type to undefined so axios auto-detects multipart/form-data
+        // The request interceptor will preserve this (won't override with application/json)
+        const config = {
+          headers: {
+            'Content-Type': undefined
+          }
+        }
+        console.log('📤 Sending FormData with image for car creation')
+        const res = await apiClient.post('/Cars/Create', carData, config)
         return res.data?.data || res.data
       } else {
         // Regular JSON payload
@@ -160,7 +187,8 @@ const carApi = {
   // Update car status
   updateStatus: async (carId, status) => {
     try {
-      const res = await apiClient.patch(`/Cars/${encodeURIComponent(carId)}/status`, { status })
+      // Use updateCar PUT endpoint since PATCH endpoints don't exist
+      const res = await apiClient.put(`/Cars/Update-By-${encodeURIComponent(carId)}`, { tech: status })
       return res.data?.data || res.data
     } catch (e) {
       console.error('Error updating car status:', e)
@@ -171,7 +199,8 @@ const carApi = {
   // Update battery level
   updateBatteryLevel: async (carId, batteryLevel) => {
     try {
-      const res = await apiClient.patch(`/Cars/${encodeURIComponent(carId)}/battery`, { batteryLevel })
+      // Use updateCar PUT endpoint since PATCH endpoints don't exist
+      const res = await apiClient.put(`/Cars/Update-By-${encodeURIComponent(carId)}`, { battery: batteryLevel })
       return res.data?.data || res.data
     } catch (e) {
       console.error('Error updating battery level:', e)
@@ -182,10 +211,23 @@ const carApi = {
   // Update car description
   updateCarDescription: async (carId, description) => {
     try {
-      const res = await apiClient.patch(`/Cars/${encodeURIComponent(carId)}/description`, { description })
+      // Use updateCar PUT endpoint since PATCH endpoints don't exist
+      const res = await apiClient.put(`/Cars/Update-By-${encodeURIComponent(carId)}`, { issue: description })
       return res.data?.data || res.data
     } catch (e) {
       console.error('Error updating car description:', e)
+      throw e
+    }
+  },
+
+  // Update car availability
+  updateCarAvailability: async (carId, isAvailable) => {
+    try {
+      // Use updateCar PUT endpoint since PATCH endpoints don't exist
+      const res = await apiClient.put(`/Cars/Update-By-${encodeURIComponent(carId)}`, { isAvailable: isAvailable === 1 || isAvailable === true })
+      return res.data?.data || res.data
+    } catch (e) {
+      console.error('Error updating car availability:', e)
       throw e
     }
   }

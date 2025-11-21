@@ -74,12 +74,11 @@ export default function LoginModal(){
       }
       
       // Profile is complete or not renter, proceed with normal flow
-      const userEmail = localStorage.getItem('userEmail')
       setNotification({
         isOpen: true,
         type: 'success',
         title: 'Login Successful! ✅',
-        message: `Welcome back!\nYou are now logged in as ${userEmail}`,
+        message: 'Welcome back!',
         autoCloseMs: 2000
       })
 
