@@ -2,6 +2,7 @@ import { apiClient, SWAGGER_ROOT } from './api'
 import bookingApi from './bookingApi'
 import staffApi from './staffApi'
 import carApi from './carApi'
+import stationApi from './Station'
 
 // ============================================================================
 // ADMIN-SPECIFIC ENDPOINTS
@@ -72,6 +73,10 @@ const adminApi = {
   // STATION & BOOKING OPERATIONS (delegated from staffApi)
   getAllStations: staffApi.getAllStations,
   getBookingsByStation: staffApi.getBookingsByStation,
+  // Admin station management
+  createStation: stationApi.createStation,
+  updateStation: stationApi.updateStation,
+  deleteStation: stationApi.deleteStation,
 
   // ---------------------------------------------------------------------------
   // USER & STAFF MANAGEMENT

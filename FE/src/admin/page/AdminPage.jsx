@@ -11,6 +11,8 @@ import StaffSection from './components/Staff/StaffSection';
 import ProfileSection from './components/Profile/ProfileSection';
 import AdminIncidentSection from './components/Incident/AdminIncidentSection';
 import AnalyticsSection from './components/Analytics/AnalyticsSection';
+import AddStationModal from './components/Station/AddStationModal';
+import StationDetailsModal from './components/Station/StationDetailsModal';
 import adminApi from '../../services/adminApi';
 import authApi from '../../services/authApi';
 import { decodeJwt } from '../../services/api';
@@ -41,6 +43,9 @@ export default function AdminPage() {
   const [warning, setWarning] = useState('');
   const [role, setRole] = useState('');
   const [stationSlots, setStationSlots] = useState(null);
+  const [addStationOpen, setAddStationOpen] = useState(false)
+  const [stationDetailsOpen, setStationDetailsOpen] = useState(false)
+  const [selectedStation, setSelectedStation] = useState(null)
 
   // Booking actions (call API then update locally)
   const confirmBooking = async (id) => {
@@ -539,6 +544,7 @@ export default function AdminPage() {
     { key: 'vehicle', label: 'Vehicle', icon: 'fas fa-car', onClick: () => setSection('vehicle') },
     { key: 'user', label: 'User', icon: 'fas fa-users', onClick: () => setSection('user') },
     { key: 'staff', label: 'Staff', icon: 'fas fa-user-tie', onClick: () => setSection('staff') },
+    { key: 'station', label: 'Stations', icon: 'fas fa-map-marker-alt', onClick: () => setSection('station') },
     { key: 'incident', label: 'Incident', icon: 'fas fa-exclamation-triangle', onClick: () => setSection('incident') },
     { key: 'analytics', label: 'Analytics', icon: 'fas fa-chart-line', onClick: () => setSection('analytics') },
     { key: 'profile', label: 'Profile', icon: 'fas fa-user-circle', onClick: () => setSection('profile') },
@@ -930,6 +936,44 @@ export default function AdminPage() {
             />
           </>
         )}
+        {section === 'station' && (
+          <>
+            <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:12}}>
+              <label style={{fontWeight:600}}>Stations</label>
+              <div style={{flex:1}} />
+              <button onClick={() => setAddStationOpen(true)} style={{padding:'8px 12px'}}>Add Station</button>
+            </div>
+
+            <div>
+              <h4 style={{margin:'6px 0'}}>Existing Stations</h4>
+              {!stations || stations.length === 0 ? (
+                <div style={{padding:'10px 12px', color:'#555'}}>No stations found.</div>
+              ) : (
+                <div style={{display:'grid', gap:8}}>
+                  {stations.map(st => (
+                    <div key={st.id || st.Id} style={{padding:8, border:'1px solid #eee', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                      <div>
+                        <div style={{fontWeight:600}}>{st.name || st.Name || `Station ${(st.id||st.Id)}`}</div>
+                        <div style={{fontSize:12, color:'#555'}}>{st.address || st.Address || ''}</div>
+                      </div>
+                      <div style={{display:'flex', gap:8}}>
+                        <button onClick={() => { setSelectedStation(st); setStationDetailsOpen(true) }}>Details</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <AddStationModal open={addStationOpen} onClose={() => setAddStationOpen(false)} onSubmit={async (payload) => {
+              const created = await adminApi.createStation(payload)
+              setStations(prev => [created, ...(prev || [])])
+              setAddStationOpen(false)
+            }} />
+
+            <StationDetailsModal open={stationDetailsOpen} onClose={() => { setStationDetailsOpen(false); setSelectedStation(null) }} station={selectedStation} onUpdated={(u) => setStations(prev => prev.map(x => ((x.id||x.Id) === (u.id||u.Id) ? u : x)))} onDeleted={(id) => setStations(prev => prev.filter(x => (x.id||x.Id) !== id))} />
+          </>
+        )}
         {section === 'user' && (
           <>
             {loadingUsers && <div style={{padding:'10px 12px'}}>Loading users...</div>}
@@ -974,3 +1018,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+
