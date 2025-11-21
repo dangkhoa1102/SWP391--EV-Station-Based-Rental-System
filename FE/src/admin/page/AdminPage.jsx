@@ -13,6 +13,7 @@ import AdminIncidentSection from './components/Incident/AdminIncidentSection';
 import AnalyticsSection from './components/Analytics/AnalyticsSection';
 import AddStationModal from './components/Station/AddStationModal';
 import StationDetailsModal from './components/Station/StationDetailsModal';
+import FeedbackSection from './components/Feedback/FeedbackSection';
 import adminApi from '../../services/adminApi';
 import authApi from '../../services/authApi';
 import { decodeJwt } from '../../services/api';
@@ -46,6 +47,11 @@ export default function AdminPage() {
   const [addStationOpen, setAddStationOpen] = useState(false)
   const [stationDetailsOpen, setStationDetailsOpen] = useState(false)
   const [selectedStation, setSelectedStation] = useState(null)
+  const [feedbacks, setFeedbacks] = useState([])
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState(false)
+  const [feedbackSearch, setFeedbackSearch] = useState('')
+  const [feedbackPage, setFeedbackPage] = useState(1)
+  const [feedbackPageSize, setFeedbackPageSize] = useState(10)
 
   // Booking actions (call API then update locally)
   const confirmBooking = async (id) => {
@@ -545,6 +551,7 @@ export default function AdminPage() {
     { key: 'user', label: 'User', icon: 'fas fa-users', onClick: () => setSection('user') },
     { key: 'staff', label: 'Staff', icon: 'fas fa-user-tie', onClick: () => setSection('staff') },
     { key: 'station', label: 'Stations', icon: 'fas fa-map-marker-alt', onClick: () => setSection('station') },
+    { key: 'feedback', label: 'Feedback', icon: 'fas fa-comment-dots', onClick: () => setSection('feedback') },
     { key: 'incident', label: 'Incident', icon: 'fas fa-exclamation-triangle', onClick: () => setSection('incident') },
     { key: 'analytics', label: 'Analytics', icon: 'fas fa-chart-line', onClick: () => setSection('analytics') },
     { key: 'profile', label: 'Profile', icon: 'fas fa-user-circle', onClick: () => setSection('profile') },
@@ -844,7 +851,27 @@ export default function AdminPage() {
     if (section === 'staff' && stationId) {
       loadStaffByStation(stationId);
     }
+    if (section === 'feedback') {
+      loadFeedbacks();
+    }
   }, [section, stationId]);
+
+  const loadFeedbacks = async (page = feedbackPage, pageSize = feedbackPageSize, search = feedbackSearch) => {
+    setLoadingFeedbacks(true)
+    try {
+      const res = await adminApi.getFeedbacks({ page, pageSize, search })
+      // res expected: pagination dto { items: [], totalCount }
+      const items = res?.items || res?.data || []
+      setFeedbacks(items)
+      setFeedbackPage(page)
+      setFeedbackPageSize(pageSize)
+    } catch (e) {
+      setError(e?.message || 'Failed to load feedbacks')
+      setFeedbacks([])
+    } finally {
+      setLoadingFeedbacks(false)
+    }
+  }
 
   return (
     <div className="app-layout">
@@ -1073,6 +1100,11 @@ export default function AdminPage() {
             }} />
 
             <StationDetailsModal open={stationDetailsOpen} onClose={() => { setStationDetailsOpen(false); setSelectedStation(null) }} station={selectedStation} onUpdated={(u) => setStations(prev => prev.map(x => ((x.id||x.Id) === (u.id||u.Id) ? u : x)))} onDeleted={(id) => setStations(prev => prev.filter(x => (x.id||x.Id) !== id))} />
+          </>
+        )}
+        {section === 'feedback' && (
+          <>
+            <FeedbackSection />
           </>
         )}
         {section === 'user' && (

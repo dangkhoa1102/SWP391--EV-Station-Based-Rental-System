@@ -3,6 +3,7 @@ import bookingApi from './bookingApi'
 import staffApi from './staffApi'
 import carApi from './carApi'
 import stationApi from './Station'
+import feedbackApi from './Feedback'
 
 // ============================================================================
 // ADMIN-SPECIFIC ENDPOINTS
@@ -77,6 +78,8 @@ const adminApi = {
   createStation: stationApi.createStation,
   updateStation: stationApi.updateStation,
   deleteStation: stationApi.deleteStation,
+  // Feedbacks
+  getFeedbacks: feedbackApi.getFeedbacks,
 
   // ---------------------------------------------------------------------------
   // USER & STAFF MANAGEMENT

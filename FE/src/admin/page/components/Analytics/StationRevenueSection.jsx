@@ -36,7 +36,7 @@ export default function StationRevenueSection() {
             const body = res?.data || res || {}
             // normalize common fields (best-effort)
             const total = body.totalRevenue ?? body.TotalRevenue ?? body.total ?? body.Total ?? body.revenue ?? 0
-            const month = body.thisMonth ?? body.ThisMonth ?? body.month ?? body.Month ?? body.revenueThisMonth ?? 0
+            const month = body.revenue ?? body.thisMonth ?? body.ThisMonth ?? body.month ?? body.Month ?? body.revenueThisMonth ?? 0
             return {
               StationId: sid || null,
               StationName: s.name || s.Name || s.stationName || s.station || `Station ${sid}`,
@@ -152,10 +152,8 @@ export default function StationRevenueSection() {
                 <div style={{color:'#666', fontSize:12}}>{s.StationId || s.stationId ? String(s.StationId || s.stationId) : ''}</div>
               </div>
               <div style={{textAlign:'right'}}>
-                <div style={{color:'#666', fontSize:12}}>Total</div>
-                <div style={{fontSize:20, fontWeight:700}}>{formatCurrency(s.TotalRevenue ?? s.totalRevenue ?? s.Total ?? 0)}</div>
-                <div style={{color:'#666', fontSize:12, marginTop:8}}>This Month</div>
-                <div style={{fontSize:16, fontWeight:700}}>{formatCurrency(s.ThisMonth ?? s.thisMonth ?? s.Month ?? 0)}</div>
+                <div style={{color:'#666', fontSize:12}}>This Month</div>
+                <div style={{fontSize:20, fontWeight:700}}>{formatCurrency(s.ThisMonth ?? s.thisMonth ?? s.Month ?? s.month ?? 0)}</div>
               </div>
             </div>
           </div>
