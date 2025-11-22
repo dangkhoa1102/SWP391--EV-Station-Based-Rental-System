@@ -4,6 +4,7 @@ import NotificationModal from './NotificationModal'
 
 export default function RegisterModal(){
   const { showRegister, setShowRegister, register } = useAuth()
+  const { user, logout, setShowLogin} = useAuth()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -67,7 +68,7 @@ export default function RegisterModal(){
         <div className="modal-overlay" style={{ display: 'flex' }}>
           <div className="modal-content">
             <span className="close-btn" onClick={()=> setShowRegister(false)}>&times;</span>
-            <h2>Register</h2>
+            <h2>Create a new account</h2>
             <form onSubmit={handleSubmit}>
               <div className="input-group">
                 <input value={username} onChange={e=> setUsername(e.target.value)} placeholder="Full Name" required disabled={isLoading} />
@@ -86,9 +87,12 @@ export default function RegisterModal(){
                 <i className="fas fa-lock"></i>
               </div>
               {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
-              <button type="submit" disabled={isLoading}>{isLoading ? 'Creating Account...' : 'Create Account'}</button>
+              <button type="submit" disabled={isLoading}>{isLoading ? 'Creating Account...' : 'Sign Up'}</button>
+              {/* <p className="modal-footer-text">
+                Already have an account? <a href="#" onClick={(e)=>{ e.preventDefault(); setShowRegister(false); }}>Log in here</a>
+              </p> */}
               <p className="modal-footer-text">
-                Already have an account? <a href="#" onClick={(e)=>{ e.preventDefault(); setShowRegister(false); }}>Login here</a>
+                <a href="#" onClick={(e)=>{ e.preventDefault(); setShowLogin(true); setShowRegister(false); }}>Already have an account?</a>
               </p>
             </form>
           </div>

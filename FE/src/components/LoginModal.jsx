@@ -77,7 +77,7 @@ export default function LoginModal(){
       setNotification({
         isOpen: true,
         type: 'success',
-        title: 'Login Successful! ✅',
+        title: 'Log in Successful! ✅',
         message: 'Welcome back!',
         autoCloseMs: 2000
       })
@@ -118,21 +118,21 @@ export default function LoginModal(){
       {showLogin && (
         <div className="modal-overlay" style={{ display: 'flex' }}>
           <div className="modal-content">
-            <span className="close-btn" onClick={()=> setShowLogin(false)}>&times;</span>
-            <h2>LOGIN</h2>
+            <span className="close-btn" onClick={()=> setShowLogin(false)}>&times;</span> <br />
+            {/* <h2>LOG IN</h2> */}
             <form onSubmit={handleSubmit}>
               <div className="input-group">
-                <input type="email" value={email} onChange={e=> setEmail(e.target.value)} placeholder="Enter Email" required disabled={isLoading} />
+                <input type="email" value={email} onChange={e=> setEmail(e.target.value)} placeholder="Email" required disabled={isLoading} />
                 <i className="fas fa-envelope"></i>
               </div>
               <div className="input-group">
-                <input type="password" value={password} onChange={e=> setPassword(e.target.value)} placeholder="Enter Password" required disabled={isLoading} />
+                <input type="password" value={password} onChange={e=> setPassword(e.target.value)} placeholder="Password" required disabled={isLoading} />
                 <i className="fas fa-lock"></i>
               </div>
               {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
-              <button type="submit" disabled={isLoading}>{isLoading ? 'Logging in...' : 'Login'}</button>
+              <button type="submit" disabled={isLoading}>{isLoading ? 'Logging in...' : 'Log in'}</button>
               <p className="modal-footer-text">
-                Don't have an account? <a href="#" onClick={(e)=>{ e.preventDefault(); switchToRegister(); }}>Register here</a>
+                <a href="#" onClick={(e)=>{ e.preventDefault(); switchToRegister(); }}>Create new account</a>
               </p>
             </form>
           </div>
