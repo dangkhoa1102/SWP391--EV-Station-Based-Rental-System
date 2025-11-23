@@ -24,6 +24,47 @@ export function AuthProvider({ children }){
     else { localStorage.removeItem('user'); localStorage.removeItem('userEmail') }
   }, [user])
 
+  // Keep auth state in sync across multiple tabs/windows. When another tab
+  // updates localStorage (login/logout or role change), update this context's
+  // `user` and `token` so components will re-render and honor new permissions.
+  useEffect(()=>{
+    function handleStorageEvent(e){
+      try{
+        if(!e){
+          // Fallback: resync both values
+          setToken(localStorage.getItem('token') || null)
+          const raw = localStorage.getItem('user')
+          setUser(raw ? JSON.parse(raw) : null)
+          return
+        }
+
+        if(e.key === 'token'){
+          setToken(localStorage.getItem('token') || null)
+          return
+        }
+
+        if(e.key === 'user'){
+          const raw = localStorage.getItem('user')
+          try{ setUser(raw ? JSON.parse(raw) : null) }catch(_){ setUser(null) }
+          return
+        }
+
+        // If userRole or stationId changed, resync user as a fallback so role checks
+        // that read from `user` or `localStorage.userRole` will see the latest value.
+        if(e.key === 'userRole' || e.key === 'stationId'){
+          const raw = localStorage.getItem('user')
+          try{ setUser(raw ? JSON.parse(raw) : null) }catch(_){ /* ignore */ }
+          return
+        }
+      }catch(err){
+        console.warn('Error handling storage event in AuthContext:', err)
+      }
+    }
+
+    window.addEventListener('storage', handleStorageEvent)
+    return ()=> window.removeEventListener('storage', handleStorageEvent)
+  }, [])
+
   async function login(email, password){
     const res = await authApi.login(email, password)
     // authApi.login saves token to localStorage already but we keep state

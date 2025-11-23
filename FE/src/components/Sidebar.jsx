@@ -19,7 +19,6 @@ export default function Sidebar({ title = 'Menu', menuItems = [], isOpen = false
       console.warn('Sidebar navigation error', e)
     }
     if (typeof onSelect === 'function') onSelect(item.key)
-    if (typeof toggleSidebar === 'function') toggleSidebar()
   }
 
   return (

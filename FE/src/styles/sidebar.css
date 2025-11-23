@@ -15,57 +15,87 @@
 
 .sidebar-wrapper {
   position: fixed;
-  top: 60px;
-  left: 0;
-  width: 240px;
-  height: calc(100vh - 60px);
+  top: 64px;
+  left: 16px;
+  width: 260px;
+  height: calc(100vh - 80px);
   z-index: 2100;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  /* hidden by default: move fully left outside viewport */
+  transform: translateX(-120%);
+  transition: transform 0.36s cubic-bezier(.2,.8,.2,1), left 0.36s;
 }
 .sidebar-wrapper.visible { transform: translateX(0); }
 
+/* Click-catcher overlay that appears when sidebar is open */
+.sidebar-collider {
+  position: fixed;
+  top: 64px;
+  /* start collider to the right of the sidebar (left offset 16px + width 260px + 16px gap = 292px)
+     so the clickable overlay does not sit above the sidebar itself */
+  left: 292px;
+  right: 0;
+  bottom: 0;
+  z-index: 2095;
+  background: transparent;
+}
+
+/* On small screens the sidebar becomes overlaying the whole left area, so collider should start at 0 */
+@media (max-width: 720px) {
+  .sidebar-collider { left: 0; }
+}
+
 .sidebar {
-  width: 240px;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  color: white;
+  width: 260px;
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.85) 100%);
+  color: #0b1720;
   display: flex;
   flex-direction: column;
-  padding-top: 20px;
+  padding-top: 12px;
   height: 100%;
-  transition: left 0.3s;
+  transition: box-shadow 0.3s;
   z-index: 2100;
+  border-radius: 12px;
+  /* keep sidebar corners rounded but remove top rounding so it sits flush under header */
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.08);
+  border: 1px solid rgba(10,16,20,0.04);
 }
 .sidebar h2 {
   text-align: left;
-  margin-left: 20px;
-  margin-top: 20px;
-  font-size: 1.5rem;
+  margin-left: 18px;
+  margin-top: 18px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0b1720;
 }
 .sidebar button,
 .sidebar .sidebar-item {
-  background: none;
+  background: transparent;
   border: none;
-  color: white;
-  padding: 15px 20px;
+  color: #0b1720;
+  padding: 12px 16px;
   text-align: left;
-  font-size: 1rem;
+  font-size: 0.98rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: all 0.3s;
+  gap: 12px;
+  transition: all 0.28s cubic-bezier(.2,.8,.2,1);
+  border-radius: 10px;
+  margin: 4px 8px;
 }
 .sidebar button:hover,
 .sidebar .sidebar-item:hover {
-  background: rgba(255,255,255,0.15);
-  transform: translateX(5px);
+  background: linear-gradient(90deg, rgba(87,180,255,0.12), rgba(111,211,199,0.08));
+  transform: translateX(3px);
 }
 .sidebar button i,
-.sidebar .sidebar-item i { min-width: 20px; }
+.sidebar .sidebar-item i { min-width: 20px; color: #1b2430 }
 
 /* Optional active state */
 .sidebar-item.active {
-  background: rgba(255,255,255,0.12);
+  background: linear-gradient(90deg, rgba(87,180,255,0.12), rgba(111,211,199,0.06));
   font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }

@@ -18,7 +18,12 @@ export default function StaffPage() {
   const [section, setSection] = useState('booking');
   const [bookings, setBookings] = useState(initialBookings);
   const [vehicles, setVehicles] = useState(initialVehicles);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(() => {
+    try {
+      const saved = localStorage.getItem('staff_sidebar_visible')
+      return saved == null ? true : saved === '1'
+    } catch (e) { return true }
+  });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [stations, setStations] = useState([]);
@@ -352,6 +357,11 @@ export default function StaffPage() {
     } else {
       document.body.classList.remove('sidebar-open');
     }
+  }, [sidebarVisible]);
+
+  // persist preference so navigation/re-mounts keep the same state
+  useEffect(() => {
+    try { localStorage.setItem('staff_sidebar_visible', sidebarVisible ? '1' : '0') } catch (e) {}
   }, [sidebarVisible]);
 
   // Staff menu for sidebar
@@ -815,19 +825,10 @@ export default function StaffPage() {
 
   return (
     <div className="app-layout">
-      <Header />
+      <Header toggleSidebar={() => setSidebarVisible(v => !v)} sidebarVisible={sidebarVisible} />
 
-      {/* Hover trigger zone */}
-      <div
-        className="sidebar-hover-zone"
-        onMouseEnter={() => setSidebarVisible(true)}
-      />
-
-      {/* Sidebar that slides and affects content */}
-      <div
-        className={`sidebar-wrapper ${sidebarVisible ? 'visible' : ''}`}
-        onMouseLeave={() => setSidebarVisible(false)}
-      >
+      {/* Sidebar that slides and affects content (toggle via header button) */}
+      <div className={`sidebar-wrapper ${sidebarVisible ? 'visible' : ''}`}>
         <Sidebar
           title="FEC Staff"
           menuItems={staffMenu}
