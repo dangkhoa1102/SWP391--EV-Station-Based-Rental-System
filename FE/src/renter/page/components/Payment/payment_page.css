@@ -436,6 +436,11 @@
   text-align: left;
 }
 
+.modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
 .success-modal { max-width:420px; text-align:center; padding:20px }
 .success-icon { font-size:48px; color:#16a34a; margin-bottom:8px }
 

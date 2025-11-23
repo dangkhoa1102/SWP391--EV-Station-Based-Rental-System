@@ -27,7 +27,7 @@ const ConfirmContract = () => {
       try {
         const response = await contractApi.getContractForConfirmation(token)
         if (response) {
-          setContractInfo(response)
+          // setContractInfo(response)
           setContractHtml(response.noiDungHtml || response.htmlContent || '')
         } else {
           setError('Failed to fetch contract for confirmation.')
