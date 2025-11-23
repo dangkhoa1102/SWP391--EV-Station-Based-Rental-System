@@ -175,10 +175,10 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<BookingDto>.Failure("Contract not confirmed");
             }
 
-            if (contract.RenterId != callerGuid)
-            {
-                return ResponseDto<BookingDto>.Failure("Forbidden: caller is not the renter who signed the contract");
-            }
+            // if (contract.RenterId != callerGuid)
+            // {
+            //     return ResponseDto<BookingDto>.Failure("Forbidden: caller is not the renter who signed the contract");
+            // }
 
             // 3️⃣ Handle photo upload if provided
             string? checkInPhotoUrl = null;

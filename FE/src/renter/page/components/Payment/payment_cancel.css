@@ -1,0 +1,224 @@
+/* Payment Cancel Page Styles */
+
+.payment-cancel-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.payment-cancel-card {
+  background: white;
+  border-radius: 12px;
+  padding: 60px 40px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.payment-cancel-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  display: block;
+  animation: bounce 0.6s ease-in-out;
+}
+
+.payment-cancel-icon.processing {
+  animation: spin 1.5s linear infinite;
+}
+
+.payment-cancel-icon.cancelled {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.payment-cancel-card h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 15px 0;
+  letter-spacing: -0.5px;
+}
+
+.payment-cancel-card p {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.6;
+  margin: 12px 0;
+}
+
+.payment-cancel-card .error-message {
+  background: linear-gradient(135deg, #FFE8E8 0%, #FFD4D4 100%);
+  border-left: 4px solid #FF6B35;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 0;
+  color: #C41C3B;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* Action Buttons */
+.payment-cancel-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.payment-cancel-btn {
+  flex: 1;
+  min-width: 150px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.payment-cancel-btn-primary {
+  background: linear-gradient(135deg, #FF6B35 0%, #FF4081 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.payment-cancel-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 107, 53, 0.4);
+}
+
+.payment-cancel-btn-secondary {
+  background: #f0f0f0;
+  color: #666;
+  border: 1.5px solid #e0e0e0;
+}
+
+.payment-cancel-btn-secondary:hover {
+  background: #e8e8e8;
+  border-color: #d0d0d0;
+}
+
+/* Info Section */
+.payment-cancel-info {
+  background: #F0F7FF;
+  border-left: 4px solid #2196F3;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 0;
+  text-align: left;
+  font-size: 13px;
+  color: #1565C0;
+}
+
+.payment-cancel-info strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #0D47A1;
+}
+
+.payment-cancel-info ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #1565C0;
+}
+
+.payment-cancel-info li {
+  margin-bottom: 6px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .payment-cancel-card {
+    padding: 40px 25px;
+  }
+
+  .payment-cancel-card h1 {
+    font-size: 26px;
+  }
+
+  .payment-cancel-card p {
+    font-size: 14px;
+  }
+
+  .payment-cancel-actions {
+    flex-direction: column;
+  }
+
+  .payment-cancel-btn {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .payment-cancel-container {
+    padding: 15px;
+  }
+
+  .payment-cancel-card {
+    padding: 30px 20px;
+    border-radius: 10px;
+  }
+
+  .payment-cancel-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+  }
+
+  .payment-cancel-card h1 {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  .payment-cancel-card p {
+    font-size: 13px;
+    margin: 10px 0;
+  }
+
+  .payment-cancel-btn {
+    padding: 12px 20px;
+    font-size: 12px;
+  }
+
+  .payment-cancel-info {
+    font-size: 12px;
+    padding: 12px;
+  }
+}

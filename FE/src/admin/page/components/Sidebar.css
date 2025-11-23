@@ -1,0 +1,9 @@
+/* Reuse the centralized shared sidebar styles. Page-specific overrides can go here. */
+@import '../../../styles/sidebar.css';
+
+/* Example override:
+.sidebar {
+	/* background: #333; */
+}
+*/
+

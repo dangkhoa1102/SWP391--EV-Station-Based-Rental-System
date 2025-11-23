@@ -26,11 +26,11 @@ namespace Monolithic.Services
                 throw new Exception("Booking not found");
 
             // Require contract to be created and confirmed for this booking
-            //var contract = await _dbContext.Contracts
-            //    .FirstOrDefaultAsync(c => c.BookingId == dto.BookingId && !c.IsDeleted);
+            var contract = await _dbContext.Contracts
+                .FirstOrDefaultAsync(c => c.BookingId == dto.BookingId && !c.IsDeleted);
 
-            //if (contract == null || !contract.IsConfirmed)
-            //    throw new InvalidOperationException("Contract not found or not confirmed for this booking");                
+            if (contract == null || !contract.IsConfirmed)
+                throw new InvalidOperationException("Contract not found or not confirmed for this booking");
 
             // prevent duplicate same-type payment
             var existing = await _dbContext.Payments
