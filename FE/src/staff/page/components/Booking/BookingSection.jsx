@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import BookingCard from '../../../../components/Booking/BookingCard';
 import BookingModel from '../../../../components/Booking/BookingModel';
 import WaitingPaymentCard from './WaitingPaymentCard';
@@ -51,23 +51,44 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
   // Poll for check-in payment success
   React.useEffect(() => {
     if (!checkInFor?.id) return
-    
-    const pollInterval = setInterval(async () => {
+
+    // Track whether we've seen the active key for this booking.
+    // Only treat the key being removed as completion if it was previously present.
+    const seenCheckInKey = { current: false }
+
+    const pollInterval = setInterval(() => {
       try {
         const bookingIdFromStorage = localStorage.getItem('activeCheckInBookingId')
-        if (!bookingIdFromStorage) {
-          // Payment was successful and redirected, close the modal
-          console.log('✅ Check-in payment completed (user redirected)')
-          clearInterval(pollInterval)
-          setCheckInFor(null)
-          memoStatusUpdated(checkInFor?.id)
-          return
+
+        if (!seenCheckInKey.current) {
+          // Not yet seen the key for this booking. Mark as seen only when it equals this booking id.
+          if (bookingIdFromStorage === String(checkInFor.id)) {
+            seenCheckInKey.current = true
+            console.log('⏱️ Detected active check-in payment flow for', checkInFor.id)
+          } else {
+            // Payment not started for this booking; do nothing.
+            return
+          }
+        } else {
+          // Previously saw the key for this booking. Now if it's gone, consider it completed.
+          if (!bookingIdFromStorage) {
+            console.log('✅ Check-in payment completed (user redirected)')
+            clearInterval(pollInterval)
+            setCheckInFor(null)
+            memoStatusUpdated(checkInFor?.id)
+            return
+          }
+
+          // If storage contains a different booking id, reset seen flag
+          if (bookingIdFromStorage && bookingIdFromStorage !== String(checkInFor.id)) {
+            seenCheckInKey.current = false
+          }
         }
       } catch (err) {
         console.warn('⏱️ Polling error (check-in):', err?.message)
       }
     }, 2000)
-    
+
     return () => clearInterval(pollInterval)
   }, [checkInFor?.id, memoStatusUpdated])
 

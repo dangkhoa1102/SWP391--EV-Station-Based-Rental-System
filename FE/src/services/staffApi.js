@@ -1,4 +1,5 @@
-import { apiClient } from './api'
+import { apiClient, SWAGGER_ROOT } from './api'
+import axios from 'axios'
 import bookingApi from './bookingApi'
 import incidentApi from './incidentApi'
 import carApi from './carApi'
@@ -68,97 +69,34 @@ const staffApi = {
     if (!payload || !payload.bookingId || !payload.staffId) {
       throw new Error('Missing required fields: bookingId, staffId')
     }
-    
-    console.log('📤 checkInWithContract payload before FormData:', payload)
-    
-    const attempts = [
-      '/Bookings/Check-In-With-Contract',
-      '/Bookings/CheckInWithContract',
-      '/bookings/check-in-with-contract',
-    ]
-    let lastErr
-    
-    for (const url of attempts) {
-      // Try with FormData first (multipart/form-data)
+
+    try {
+      // Build FormData using field names expected by your Swagger
+      const form = new FormData()
+      form.append('BookingId', payload.bookingId)
+      form.append('StaffId', payload.staffId)
+      if (payload.checkInNotes) form.append('CheckInNotes', payload.checkInNotes)
+
       if (payload.checkInPhotoFile && payload.checkInPhotoFile instanceof File) {
-        try {
-          const formData = new FormData()
-          formData.append('bookingId', payload.bookingId)
-          formData.append('staffId', payload.staffId)
-          if (payload.renterId) {
-            formData.append('renterId', payload.renterId)
-            console.log('📤 Added renterId to FormData:', payload.renterId)
-          }
-          if (payload.checkInNotes) {
-            formData.append('checkInNotes', payload.checkInNotes)
-          }
-          if (payload.checkInPhotoUrl && !payload.checkInPhotoUrl.startsWith('blob:')) {
-            formData.append('checkInPhotoUrl', payload.checkInPhotoUrl)
-          }
-          formData.append('checkInPhotoFile', payload.checkInPhotoFile)
-          
-          console.log('📤 Sending FormData to:', url, 'with file:', payload.checkInPhotoFile.name)
-          
-          // Include custom header with renter ID if provided
-          const headers = { 'Content-Type': 'multipart/form-data' }
-          if (payload.renterId) {
-            headers['X-Renter-Id'] = payload.renterId
-            console.log('📤 Added X-Renter-Id header:', payload.renterId)
-          }
-          
-          const res = await apiClient.post(url, formData, { headers })
-          const body = res?.data
-          if (body && typeof body === 'object' && 'data' in body) {
-            if (body.isSuccess === false) {
-              const msg = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : 'Request failed')
-              const err = new Error(msg)
-              err.body = body
-              throw err
-            }
-            return body.data
-          }
-          return body
-        } catch (e) {
-          lastErr = e
-          console.error('❌ FormData check-in attempt failed on', url)
-          console.error('   Status:', e?.response?.status)
-          console.error('   Full Error Response:', e?.response?.data)
-          console.error('   Error Message:', e?.message)
-          console.error('   Payload sent:', payload)
-          const code = e?.response?.status
-          if (code && code !== 404 && code !== 405) throw e
-        }
+        form.append('CheckInPhoto', payload.checkInPhotoFile, payload.checkInPhotoFile.name)
+      } else {
+        // Swagger allows "Send empty value" — include empty field so server sees it
+        form.append('CheckInPhoto', '')
       }
-      
-      // Try with JSON payload
-      try {
-        const { checkInPhotoFile, ...jsonPayload } = payload
-        console.log('📤 Sending JSON to:', url, '- Payload:', jsonPayload)
-        const res = await apiClient.post(url, jsonPayload, {
-          headers: { 'Content-Type': 'application/json' }
-        })
-        const body = res?.data
-        if (body && typeof body === 'object' && 'data' in body) {
-          if (body.isSuccess === false) {
-            const msg = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : 'Request failed')
-            const err = new Error(msg)
-            err.body = body
-            throw err
-          }
-          return body.data
-        }
-        return body
-      } catch (e) {
-        lastErr = e
-        console.error('❌ JSON check-in attempt failed on', url)
-        console.error('   Status:', e?.response?.status)
-        console.error('   Full Error Response:', e?.response?.data)
-        console.error('   Error Message:', e?.message)
-        const code = e?.response?.status
-        if (code && code !== 404 && code !== 405) throw e
-      }
+
+      // Send directly to the specific endpoint using axios so default apiClient JSON header
+      // does not interfere. Do not set Content-Type so the browser/axios adds boundary.
+      const token = (() => { try { return localStorage.getItem('token') } catch { return null } })()
+      const headers = {}
+      if (token && token !== 'null') headers['Authorization'] = `Bearer ${token}`
+
+      const res = await axios.post(`${SWAGGER_ROOT}/Bookings/Check-In-With-Contract`, form, { headers })
+      const body = res?.data
+      return body && typeof body === 'object' && 'data' in body ? body.data : body
+    } catch (e) {
+      console.error('❌ checkInWithContract failed:', e?.response?.status, e?.response?.data || e?.message)
+      throw e
     }
-    throw lastErr || new Error('Check-In-With-Contract endpoint not found')
   },
 
   /**
