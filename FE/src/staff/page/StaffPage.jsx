@@ -88,17 +88,54 @@ export default function StaffPage() {
   }
 
   // Update a booking's status in local state (used by modal after payment sync)
-  const handleStatusUpdated = (bookingId, nextStatus) => {
-    const label = nextStatus === 'pending' ? 'Pending'
-                : nextStatus === 'booked' ? 'Active Rental'
-                : nextStatus === 'waiting-checkin' ? 'Waiting Check-in'
-                : nextStatus === 'checked-in' ? 'Checked-in'
-                : nextStatus === 'checkout-pending' ? 'Check-out Pending'
-                : nextStatus === 'completed' ? 'Completed'
-                : nextStatus === 'cancelled-pending' ? 'Cancelled (Pending Refund)'
-                : nextStatus === 'cancelled' ? 'Cancelled'
-                : nextStatus
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: nextStatus, statusLabel: label } : b))
+  const handleStatusUpdated = async (bookingId, nextStatus) => {
+    // If caller didn't provide a nextStatus, try to fetch the booking from server
+    let resolvedStatus = nextStatus
+    try {
+      if (resolvedStatus === undefined || resolvedStatus === null) {
+        try {
+          const fresh = await staffApi.getBookingById(bookingId)
+          const rawStatus = fresh?.statusCode ?? fresh?.StatusCode ?? fresh?.bookingStatus ?? fresh?.BookingStatus ?? fresh?.status ?? fresh?.Status
+          if (rawStatus != null && (typeof rawStatus === 'number' || /^\d+$/.test(String(rawStatus)))) {
+            const code = Number(rawStatus)
+            if (code === 0) resolvedStatus = 'pending'
+            else if (code === 1) resolvedStatus = 'booked'
+            else if (code === 2) resolvedStatus = 'waiting-checkin'
+            else if (code === 3) resolvedStatus = 'checked-in'
+            else if (code === 4) resolvedStatus = 'checkout-pending'
+            else if (code === 5) resolvedStatus = 'completed'
+            else if (code === 6) resolvedStatus = 'cancelled-pending'
+            else if (code === 7) resolvedStatus = 'cancelled'
+          } else {
+            const s = String(rawStatus || '').toLowerCase()
+            if (s.includes('pending') || s.includes('wait')) resolvedStatus = 'pending'
+            else if (s.includes('check') && s.includes('in')) resolvedStatus = 'checked-in'
+            else if (s.includes('complete') || s.includes('finish')) resolvedStatus = 'completed'
+            else if (s.includes('cancel')) resolvedStatus = 'cancelled'
+            else resolvedStatus = 'booked'
+          }
+        } catch (e) {
+          // If we fail to fetch, keep nextStatus as undefined so UI won't overwrite with wrong value
+          console.warn('⚠️ Failed to refresh booking status for', bookingId, e?.message || e)
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Error resolving status for booking update:', e?.message || e)
+    }
+
+    const label = resolvedStatus === 'pending' ? 'Pending'
+                : resolvedStatus === 'booked' ? 'Active Rental'
+                : resolvedStatus === 'waiting-checkin' ? 'Waiting Check-in'
+                : resolvedStatus === 'checked-in' ? 'Checked-in'
+                : resolvedStatus === 'checkout-pending' ? 'Check-out Pending'
+                : resolvedStatus === 'completed' ? 'Completed'
+                : resolvedStatus === 'cancelled-pending' ? 'Cancelled (Pending Refund)'
+                : resolvedStatus === 'cancelled' ? 'Cancelled'
+                : resolvedStatus
+
+    if (resolvedStatus !== undefined) {
+      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: resolvedStatus, statusLabel: label } : b))
+    }
   }
 
   // Handle FormData from CreateIncidentModal and call staffApi.createIncident

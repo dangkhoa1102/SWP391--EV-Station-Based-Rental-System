@@ -27,24 +27,44 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
   // Poll for checkout payment completion
   React.useEffect(() => {
     if (!checkOutFor?.id) return
-    
-    // Just wait for payment success page redirect, then close modal after a short delay
+
+    // Track whether we've seen the active key in storage for this booking.
+    // Only treat the key being removed as completion if it was previously present.
+    const seenCheckOutKey = { current: false }
+
     const pollInterval = setInterval(async () => {
       try {
         const bookingIdFromStorage = localStorage.getItem('activeCheckOutBookingId')
-        if (!bookingIdFromStorage) {
-          // Payment was successful and redirected, close the modal
-          console.log('✅ Checkout payment completed (user redirected)')
-          clearInterval(pollInterval)
-          setCheckOutFor(null)
-          memoStatusUpdated(checkOutFor?.id)
-          return
+
+        if (!seenCheckOutKey.current) {
+          // Not yet seen the key for this booking. Mark as seen only when it equals this booking id.
+          if (bookingIdFromStorage === String(checkOutFor.id)) {
+            seenCheckOutKey.current = true
+            console.log('⏱️ Detected active check-out payment flow for', checkOutFor.id)
+          } else {
+            // Payment not started for this booking; do nothing.
+            return
+          }
+        } else {
+          // Previously saw the key for this booking. Now if it's gone, consider it completed.
+          if (!bookingIdFromStorage) {
+            console.log('✅ Checkout payment completed (user redirected)')
+            clearInterval(pollInterval)
+            setCheckOutFor(null)
+            memoStatusUpdated(checkOutFor?.id)
+            return
+          }
+
+          // If storage contains a different booking id, reset seen flag
+          if (bookingIdFromStorage && bookingIdFromStorage !== String(checkOutFor.id)) {
+            seenCheckOutKey.current = false
+          }
         }
       } catch (err) {
         console.warn('⏱️ Polling error:', err?.message)
       }
     }, 2000)
-    
+
     return () => clearInterval(pollInterval)
   }, [checkOutFor?.id, memoStatusUpdated])
 
