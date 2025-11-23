@@ -20,8 +20,11 @@ export default function AdminIncidentSection() {
         id: it.id || it.Id || it.incidentId || it.IncidentId || (it._id && String(it._id)),
         description: it.description || it.Description || it.details || '',
         stationId: it.stationId || it.StationId || null,
+        // expose status so IncidentCard can render the badge
+        status: it.status || it.Status || 'Pending',
         bookingId: it.bookingId || it.BookingId || it.booking?.id || it.booking?.BookingId || null,
         reportedAt: it.reportedAt || it.ReportedAt || it.createdAt || it.CreatedAt || it.date || null,
+        costIncurred: it.costIncurred ?? it.CostIncurred ?? it.cost ?? null,
         renterName: it.renterName || it.RenterName || it.raw?.renterName || it.raw?.RenterName || it.booking?.user?.fullName || null,
         renterPhone: it.renterPhone || it.RenterPhone || it.raw?.renterPhone || it.raw?.RenterPhone || it.booking?.user?.phoneNumber || null,
         staffId: it.staffId || it.StaffId || it.raw?.staffId || it.raw?.StaffId || null,
