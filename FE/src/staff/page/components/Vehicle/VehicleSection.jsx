@@ -4,6 +4,7 @@ import AddVehicleModal from './AddVehicleModal';
 import UpdateVehicleModal from './UpdateVehicleModal';
 import VehicleDetailsModal from './VehicleDetailsModal';
 import StationSlotCard from './StationSlotCard';
+import VehicleTable from './VehicleTable';
 import './Vehicle.css';
 
 export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate, stationId, canDelete = true, stationSlots = null }) {
@@ -56,17 +57,26 @@ export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate, st
         )}
       </div>
 
-      <div className="vehicle-grid" id="vehicleGrid">
-        {(!filteredVehicles || filteredVehicles.length === 0) && (
-          <div style={{padding:'12px 8px', color:'#555'}}>
-            {searchQuery ? 'No vehicles match your search.' : 'No vehicles available to display.'}
-          </div>
-        )}
-        {filteredVehicles.map((v, i) => (
-          <div key={v.id || v.licensePlate || `${v.name}-${v.stationId || ''}-${i}`}>
-            <VehicleCard vehicle={v} onOpen={() => openDetails(v)} />
-          </div>
-        ))}
+      <div>
+        <VehicleTable
+          vehicles={filteredVehicles}
+          search={searchQuery}
+          setSearch={setSearchQuery}
+          onRowClick={(v) => openDetails(v)}
+          onEdit={(idOrObj) => {
+            const v = typeof idOrObj === 'object' ? idOrObj : filteredVehicles.find(x => String(x.id) === String(idOrObj))
+            if (v) {
+              // Open the small update modal (same as Edit on card)
+              setSelected(v)
+              setUpdateOpen(true)
+            }
+          }}
+          onRemove={(idOrObj) => {
+            const id = typeof idOrObj === 'object' ? (idOrObj.id || idOrObj.carId) : idOrObj
+            if (id) onRemove(id)
+          }}
+          canDelete={canDelete}
+        />
       </div>
 
   <AddVehicleModal open={addOpen} onClose={() => setAddOpen(false)} onSubmit={onAdd} stationId={stationId} />

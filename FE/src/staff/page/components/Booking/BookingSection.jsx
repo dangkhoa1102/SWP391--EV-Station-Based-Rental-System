@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useRef } from 'react';
 import BookingCard from '../../../../components/Booking/BookingCard';
-import BookingModel from '../../../../components/Booking/BookingModel';
 import WaitingPaymentCard from './WaitingPaymentCard';
 import CheckInPaymentCard from './CheckInPaymentCard';
 import BookingModal from './BookingModal';
+import BookingTable from './BookingTable';
 import CheckInCard from './CheckInCard';
 import CheckOutCard from './CheckOutCard';
 import IncidentsModal from './IncidentsModal';
@@ -129,13 +129,13 @@ export default function BookingSection({ bookings, search, setSearch, statusFilt
 
   return (
     <>
-      <BookingModel
+      <BookingTable
         bookings={filtered}
-        renderBookingCard={renderBookingCard}
         search={search}
         setSearch={setSearch}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        onRowClick={(b) => setSelected(b)}
       />
 
       <BookingModal

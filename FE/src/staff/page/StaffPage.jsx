@@ -679,8 +679,12 @@ export default function StaffPage() {
             return dateInput
           }
           
-          const pickupDate = formatRentalDate(b.pickupDate || b.rentalStartDate || b.startDateTime || b.startDate)
-          const returnDate = formatRentalDate(b.returnDate || b.rentalEndDate || b.endDateTime || b.endDate)
+          const pickupDate = formatRentalDate(
+            b.PickupDateTime || b.pickupDate || b.rentalStartDate || b.startDateTime || b.startDate || b.StartTime || b.startTime || b.Start || b.start
+          )
+          const returnDate = formatRentalDate(
+            b.ExpectedReturnDateTime || b.returnDate || b.rentalEndDate || b.endDateTime || b.endDate || b.EndTime || b.endTime || b.End || b.end || b.ActualReturnDateTime || b.actualReturnDateTime
+          )
           
           return {
             id,

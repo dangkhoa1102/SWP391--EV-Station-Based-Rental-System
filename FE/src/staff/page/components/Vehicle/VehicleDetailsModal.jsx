@@ -22,6 +22,8 @@ export default function VehicleDetailsModal({ open, vehicle, onClose, onEdit, on
     setIsEditing(true);
   };
 
+  // no autoEdit behavior here; calling component may open update modal instead
+
   const handleSave = async () => {
     if (!onUpdate) return;
     
