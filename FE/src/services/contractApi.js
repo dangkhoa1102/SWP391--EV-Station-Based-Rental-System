@@ -630,6 +630,30 @@ const contractApi = {
   },
 
   /**
+   * Download my latest contract (based on login token - no parameter needed)
+   * Automatically extracts userId from JWT token
+   */
+  downloadMyLatestContract: async () => {
+    const attempts = [
+      '/Contracts/download-my-contract',
+      '/Contracts/download-latest'
+    ]
+    
+    for (const url of attempts) {
+      try {
+        const res = await apiClient.get(url, { 
+          responseType: 'blob' 
+        })
+        return res.data
+      } catch (e) {
+        const code = e?.response?.status
+        if (code && code !== 404 && code !== 405) throw e
+      }
+    }
+    throw new Error('Download my latest contract endpoint not found')
+  },
+
+  /**
    * Get contract by token (from src_hopdong)
    * @param {string} token - Contract token
    */
