@@ -52,16 +52,16 @@ namespace Monolithic.Services.Implementation
 
         public async Task<ResponseDto<CarDto>> CreateCarAsync(CreateCarDto request)
         {
-            // Ki?m tra station có ?? ch? không
+            // Ki?m tra station cï¿½ ?? ch? khï¿½ng
             var canAddCar = await _stationService.CanAddCarToStationAsync(request.CurrentStationId);
             if (!canAddCar)
             {
-                return ResponseDto<CarDto>.Failure("Station ?ã ??y, không th? thêm xe m?i vào station này.");
+                return ResponseDto<CarDto>.Failure("Station Ä‘Ã£ Ä‘áº§y, khÃ´ng thá»ƒ thÃªm xe má»›i vÃ o station lÃºc nÃ y.");
             }
 
             var car = _mapper.Map<Car>(request);
 
-            // X? lý upload ?nh n?u có
+            // X? lï¿½ upload ?nh n?u cï¿½
             if (request.CarImage != null && request.CarImage.Length > 0)
             {
                 var uploadResult = await _photoService.AddPhotoAsync(request.CarImage, "rental_app/cars");
@@ -84,22 +84,22 @@ namespace Monolithic.Services.Implementation
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
             {
-                // X? lý l?i DbUpdateException/Khóa Trùng L?p
+                // X? lï¿½ l?i DbUpdateException/Khï¿½a Trï¿½ng L?p
 
-                // Th??ng là mã l?i 2627 ho?c 2601 trong SQL Server
+                // Th??ng lï¿½ mï¿½ l?i 2627 ho?c 2601 trong SQL Server
                 if (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx &&
                     (sqlEx.Number == 2627 || sqlEx.Number == 2601))
                 {
-                    // Trích xu?t thông tin c?n thi?t t? yêu c?u ?? t?o thông báo rõ ràng h?n
-                    string licensePlate = request.LicensePlate; // Gi? s? CreateCarDto có thu?c tính CarNumber
+                    // Trï¿½ch xu?t thï¿½ng tin c?n thi?t t? yï¿½u c?u ?? t?o thï¿½ng bï¿½o rï¿½ rï¿½ng h?n
+                    string licensePlate = request.LicensePlate; // Gi? s? CreateCarDto cï¿½ thu?c tï¿½nh CarNumber
 
-                    // Tr? v? ResponseDto.Failure v?i thông báo l?i rõ ràng
+                    // Tr? v? ResponseDto.Failure v?i thï¿½ng bï¿½o l?i rï¿½ rï¿½ng
                     return ResponseDto<CarDto>.Failure($"Error: The license plate '{licensePlate}' already exists in the system. Please check again.");
                 }
                 else
                 {
-                    // X? lý các l?i DbUpdateException khác không ph?i do khóa trùng l?p
-                    // Ghi log l?i và tr? v? thông báo l?i chung
+                    // X? lï¿½ cï¿½c l?i DbUpdateException khï¿½c khï¿½ng ph?i do khï¿½a trï¿½ng l?p
+                    // Ghi log l?i vï¿½ tr? v? thï¿½ng bï¿½o l?i chung
                     // Logger.LogError(ex, "L?i khi t?o xe.");
                     return ResponseDto<CarDto>.Failure("An error occurred while saving the data.");
                 }
@@ -223,24 +223,24 @@ namespace Monolithic.Services.Implementation
 
         public async Task<ResponseDto<string>> UpdateCarLocationAsync(Guid id, Guid stationId)
         {
-            // L?y thông tin xe hi?n t?i
+            // L?y thï¿½ng tin xe hi?n t?i
             var car = await _carRepository.GetByIdAsync(id);
             if (car == null || !car.IsActive)
             {
                 return ResponseDto<string>.Failure("Car not found");
             }
 
-            // N?u không ph?i chuy?n station thì không c?n validation
+            // N?u khï¿½ng ph?i chuy?n station thï¿½ khï¿½ng c?n validation
             if (car.CurrentStationId == stationId)
             {
                 return ResponseDto<string>.Success(string.Empty, "Car is already at this station");
             }
 
-            // Ki?m tra station ?ích có ?? ch? không
+            // Ki?m tra station ?ï¿½ch cï¿½ ?? ch? khï¿½ng
             var canAddCar = await _stationService.CanAddCarToStationAsync(stationId);
             if (!canAddCar)
             {
-                return ResponseDto<string>.Failure("Station ?ích ?ã ??y, không th? chuy?n xe vào station này.");
+                return ResponseDto<string>.Failure("Station ?ï¿½ch ?ï¿½ ??y, khï¿½ng th? chuy?n xe vï¿½o station nï¿½y.");
             }
 
             var oldStationId = car.CurrentStationId;
@@ -280,7 +280,7 @@ namespace Monolithic.Services.Implementation
             var photoUrls = new List<string>();
             var photoPublicIds = new List<string>();
 
-            // Upload các ?nh bàn giao
+            // Upload cï¿½c ?nh bï¿½n giao
             if (request.HandoverPhotos != null && request.HandoverPhotos.Any())
             {
                 foreach (var photo in request.HandoverPhotos)
@@ -288,7 +288,7 @@ namespace Monolithic.Services.Implementation
                     var uploadResult = await _photoService.AddPhotoAsync(photo, $"rental_app/handovers/{request.BookingId}");
                     if (uploadResult.Error != null)
                     {
-                        // N?u có l?i, xóa các ?nh ?ã upload tr??c ?ó
+                        // N?u cï¿½ l?i, xï¿½a cï¿½c ?nh ?ï¿½ upload tr??c ?ï¿½
                         foreach (var publicId in photoPublicIds)
                         {
                             await _photoService.DeletePhotoAsync(publicId);
