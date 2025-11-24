@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../../styles/modals.css';
 
-export default function VehicleDetailsModal({ open, vehicle, onClose, onEdit, onTransfer, onUpdate }) {
+export default function VehicleDetailsModal({ open, vehicle, onClose, onEdit, onTransfer, onUpdate, onDelete }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedBattery, setEditedBattery] = useState('');
   const [editedTech, setEditedTech] = useState('');
@@ -297,8 +297,36 @@ export default function VehicleDetailsModal({ open, vehicle, onClose, onEdit, on
                     alignItems: 'center',
                     gap: '8px'
                   }}
-                >
+                  >
                   <i className="fas fa-exchange-alt"></i> Transfer Station
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={async () => {
+                    if (!confirm('Delete this vehicle?')) return
+                    try {
+                      await onDelete(vehicle.id || vehicle.Id || vehicle.carId)
+                      onClose && onClose()
+                    } catch (err) {
+                      alert(err?.message || 'Delete failed')
+                    }
+                  }}
+                  style={{
+                    padding: '10px 24px',
+                    background: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '15px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <i className="fas fa-trash"></i> Delete Vehicle
                 </button>
               )}
             </>

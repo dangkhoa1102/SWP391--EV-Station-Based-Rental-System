@@ -14,16 +14,18 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background: linear-gradient(90deg, #ff6b35 60%, #f7931e 100%);
+  height: 64px;
+  background: linear-gradient(90deg, #5bb8ff 0%, #6fd3c7 60%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   padding: 0 32px;
-  z-index: 2000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 2200;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.06);
   margin-left: 0;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 .header-bar::before {
@@ -84,28 +86,31 @@ body {
 /* NOTE: z-index increased above header so "FEC Staff" sits visually in front */
 .sidebar-wrapper {
   position: fixed;
-  top: 60px;
-  left: 0;
-  width: 240px;
-  height: calc(100vh - 60px);
+  top: 64px;
+  left: 16px;
+  width: 260px;
+  height: calc(100vh - 80px);
   z-index: 2100; /* intentionally above header's 2000 so it visually overlays */
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  transform: translateX(-120%);
+  transition: transform 0.36s cubic-bezier(.2,.8,.2,1);
 }
 .sidebar-wrapper.visible {
   transform: translateX(0);
 }
 
 .sidebar {
-  width: 240px;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  color: white;
+  width: 260px;
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.95) 100%);
+  color: #0b1720;
   display: flex;
   flex-direction: column;
-  padding-top: 20px;
+  padding-top: 14px;
   height: 100%;
-  transition: left 0.3s;
+  transition: box-shadow 0.28s;
   z-index: 2100; /* ensure sidebar content (FEC Staff) is stacked above header */
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.06);
+  border: 1px solid rgba(10,16,20,0.04);
 }
 
 .sidebar h2 {
@@ -136,16 +141,16 @@ body {
 /* === Main Content === */
 .main-content {
   flex: 1;
-  padding: 30px;
+  padding: 28px;
   margin-top: 80px;
   margin-left: 0;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.35s cubic-bezier(.2,.8,.2,1);
   text-align: left;
 }
 
 /* shift main content only when sidebar is visible (via .sidebar-wrapper.visible) */
 .sidebar-wrapper.visible ~ .main-content {
-  margin-left: 240px;
+  margin-left: 292px;
 }
 
 @media (max-width: 720px) {
@@ -417,7 +422,7 @@ body {
 /* === Section Wrapper === */
 .section {
   position: relative;
-  margin-left: 250px;
+  margin-left: 292px;
   margin-top: 70px;
   padding: 20px 40px;
   min-height: calc(100vh - 70px);

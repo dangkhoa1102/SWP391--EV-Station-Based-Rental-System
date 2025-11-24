@@ -104,6 +104,7 @@ export default function VehicleSection({ vehicles, onAdd, onRemove, onUpdate, st
         onEdit={selected ? () => openForUpdate(selected) : null}
         onTransfer={onTransferCar && selected ? () => openTransfer(selected) : null}
         onUpdate={onUpdate}
+        onDelete={onRemove}
       />
       <TransferVehicleModal
         open={transferOpen}

@@ -11,60 +11,65 @@ const authApi = {
   // Login -> POST /Auth/Login
   // This replicates the old behavior: save tokens, decode JWT to extract userId and role
   login: async (email, password) => {
-    const res = await apiClient.post('/Auth/Login', { Email: email, Password: password })
-    const payload = res.data?.data || res.data || {}
-
-    const token = payload.token || payload.accessToken || res.data?.token
-    const refreshToken = payload.refreshToken || res.data?.refreshToken
-
-    if (token) {
-      localStorage.setItem('token', token)
-      try {
-        const decoded = decodeJwt(token)
-        const userId = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
-          || decoded.nameidentifier || decoded.UserId || decoded.userId || decoded.uid || decoded.nameid || decoded.sub || decoded.id || decoded.Id
-        if (userId) localStorage.setItem('userId', userId)
-
-        const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded.role || decoded.Role
-        if (role) localStorage.setItem('userRole', role)
-      } catch (e) {
-        console.error('❌ Error decoding JWT in authApi.login:', e)
-      }
-    }
-
-    if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
-
-    // Also store user object if present
-    if (payload.user) localStorage.setItem('user', JSON.stringify(payload.user))
-    
-    // Store email for display (either from payload.user.email or from login input email parameter)
-    if (payload.user?.email) {
-      localStorage.setItem('userEmail', payload.user.email)
-    } else if (email) {
-      localStorage.setItem('userEmail', email)
-    }
-    
-    // Store email for display (either from payload.user.email or from login input)
-    if (payload.user?.email) {
-      localStorage.setItem('userEmail', payload.user.email)
-    } else if (email) {
-      localStorage.setItem('userEmail', email)
-    }
-
-    // For staff users, attempt to fetch profile (stationId) - best-effort
     try {
-      const userRole = localStorage.getItem('userRole')
-      const isStaff = userRole && (userRole.includes('Staff') || userRole.includes('staff') || userRole === 'StationManager' || userRole.includes('Manager'))
-      if (isStaff) {
-        const profile = await authApi.getMyProfile()
-        const stationId = profile?.stationId || profile?.StationId
-        if (stationId) localStorage.setItem('stationId', stationId)
-      }
-    } catch (e) {
-      console.warn('⚠️ Could not fetch staff profile after login:', e)
-    }
+      const res = await apiClient.post('/Auth/Login', { Email: email, Password: password })
+      const payload = res.data?.data || res.data || {}
 
-    return { raw: res.data, token, refreshToken, payload }
+      const token = payload.token || payload.accessToken || res.data?.token
+      const refreshToken = payload.refreshToken || res.data?.refreshToken
+
+      if (token) {
+        localStorage.setItem('token', token)
+        try {
+          const decoded = decodeJwt(token)
+          const userId = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+            || decoded.nameidentifier || decoded.UserId || decoded.userId || decoded.uid || decoded.nameid || decoded.sub || decoded.id || decoded.Id
+          if (userId) localStorage.setItem('userId', userId)
+
+          const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded.role || decoded.Role
+          if (role) localStorage.setItem('userRole', role)
+        } catch (e) {
+          console.error('❌ Error decoding JWT in authApi.login:', e)
+        }
+      }
+
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
+
+      // Also store user object if present
+      if (payload.user) localStorage.setItem('user', JSON.stringify(payload.user))
+      
+      // Store email for display (either from payload.user.email or from login input email parameter)
+      if (payload.user?.email) {
+        localStorage.setItem('userEmail', payload.user.email)
+      } else if (email) {
+        localStorage.setItem('userEmail', email)
+      }
+
+      // For staff users, attempt to fetch profile (stationId) - best-effort
+      try {
+        const userRole = localStorage.getItem('userRole')
+        const isStaff = userRole && (userRole.includes('Staff') || userRole.includes('staff') || userRole === 'StationManager' || userRole.includes('Manager'))
+        if (isStaff) {
+          const profile = await authApi.getMyProfile()
+          const stationId = profile?.stationId || profile?.StationId
+          if (stationId) localStorage.setItem('stationId', stationId)
+        }
+      } catch (e) {
+        console.warn('⚠️ Could not fetch staff profile after login:', e)
+      }
+
+      return { raw: res.data, token, refreshToken, payload }
+    } catch (err) {
+      // Extract a friendly server message when possible
+      const serverMsg = err.response?.data?.message
+        || (err.response?.data && typeof err.response.data === 'string' ? err.response.data : null)
+        || (err.response?.data?.errors && Object.values(err.response.data.errors).flat().join('; '))
+        || err.message || 'Login failed'
+
+      const e = new Error(serverMsg)
+      e.status = err.response?.status
+      throw e
+    }
   },
 
   // Logout -> POST /Auth/Logout

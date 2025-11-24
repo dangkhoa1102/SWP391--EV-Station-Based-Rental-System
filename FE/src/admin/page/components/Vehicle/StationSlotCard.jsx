@@ -2,10 +2,9 @@ import React from 'react';
 
 export default function StationSlotCard({ stationSlots }) {
   if (!stationSlots) return null;
-
-  // API returns: totalCars = available slots, availableCars = total slots taken
-  const availableSlots = stationSlots?.totalCars || 0;
-  const slotsTaken = stationSlots?.availableCars || 0;
+  // Expect stationSlots: { totalSlots, carsCount }
+  const totalSlots = stationSlots?.totalSlots ?? 0;
+  const carsCount = stationSlots?.carsCount ?? 0;
 
   return (
     <div style={{
@@ -17,7 +16,7 @@ export default function StationSlotCard({ stationSlots }) {
       fontWeight: '500',
       color: '#0369a1'
     }}>
-      <i className="fas fa-parking"></i> {availableSlots} Slot / {slotsTaken} Slot Taken
+      <i className="fas fa-parking"></i> {totalSlots} Slot / {carsCount} Slot Taken
     </div>
   );
 }

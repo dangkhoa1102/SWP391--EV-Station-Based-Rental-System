@@ -100,7 +100,31 @@ export default function AddVehicleModal({ open, onClose, onSubmit, stationId }) 
       setSeats(''); setCarImage(null);
       onClose()
     } catch (e) {
-      setError(e?.message || 'Failed to create vehicle')
+      console.error('Create vehicle error:', e)
+      // Prefer server-provided message when available (response body),
+      // fallback to generic error.message otherwise.
+      const resp = e?.response?.data
+      let msg = e?.message || 'Failed to create vehicle'
+      if (resp) {
+        // Common patterns: { message: '...', data: ... } or { errors: {...} }
+        if (typeof resp === 'string') msg = resp
+        else if (resp.message) msg = resp.message
+        else if (resp.errors) {
+          try {
+            // If errors is an object of arrays, pick the first message
+            const firstKey = Object.keys(resp.errors)[0]
+            const firstVal = resp.errors[firstKey]
+            msg = Array.isArray(firstVal) ? firstVal[0] : String(firstVal)
+          } catch (ex) {
+            msg = JSON.stringify(resp.errors)
+          }
+        } else {
+          // Fallback: stringify the response body
+          msg = JSON.stringify(resp)
+        }
+      }
+
+      setError(msg || 'Failed to create vehicle')
     }
   }
 

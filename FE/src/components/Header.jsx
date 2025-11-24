@@ -63,7 +63,7 @@ export default function Header(){
               )}
             </div>
             <div className="navbar-right">
-              {!user && <button id="loginBtn" onClick={()=> setShowLogin(true)} className="login-nav-btn">Login</button>}
+              {!user && <button id="loginBtn" onClick={()=> setShowLogin(true)} className="login-nav-btn">Log in</button>}
 
               {user && (
                 <div className="user-menu">

@@ -29,7 +29,12 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [deletedUsers, setDeletedUsers] = useState([]);
   const [staffByStation, setStaffByStation] = useState([]);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(() => {
+    try {
+      const saved = localStorage.getItem('admin_sidebar_visible')
+      return saved == null ? true : saved === '1'
+    } catch (e) { return true }
+  });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [stations, setStations] = useState([]);
@@ -144,7 +149,26 @@ export default function AdminPage() {
       }
       return created
     } catch (e) {
-      setError(e?.message || 'Failed to create vehicle')
+      console.error('Add vehicle failed:', e)
+      // Prefer server-provided message when available (response body), fallback to generic message
+      const resp = e?.response?.data
+      let msg = e?.message || 'Failed to create vehicle'
+      if (resp) {
+        if (typeof resp === 'string') msg = resp
+        else if (resp.message) msg = resp.message
+        else if (resp.errors) {
+          try {
+            const firstKey = Object.keys(resp.errors)[0]
+            const firstVal = resp.errors[firstKey]
+            msg = Array.isArray(firstVal) ? firstVal[0] : String(firstVal)
+          } catch (ex) {
+            msg = JSON.stringify(resp.errors)
+          }
+        } else {
+          msg = JSON.stringify(resp)
+        }
+      }
+      setError(msg || 'Failed to create vehicle')
       throw e
     }
   }
@@ -379,9 +403,15 @@ export default function AdminPage() {
     try {
       const report = await adminApi.getCarStatusReport(sid, null);
       if (report) {
+        // Find station object to read configured total slots
+        const st = (stations || []).find(x => String(x.id || x.Id) === String(sid));
+        const totalSlots = st ? (st.totalSlots ?? st.TotalSlots ?? 0) : 0;
+        // report.totalCars contains current car count at station
         setStationSlots({
-          totalCars: report.totalCars || 0,
-          availableCars: report.availableCars || 0
+          totalSlots: totalSlots,
+          carsCount: report.totalCars || 0,
+          // keep raw cars array for any consumers
+          cars: report.cars || []
         });
       }
     } catch (e) {
@@ -518,6 +548,11 @@ export default function AdminPage() {
     }
   }, [sidebarVisible]);
 
+  // persist admin sidebar state
+  useEffect(() => {
+    try { localStorage.setItem('admin_sidebar_visible', sidebarVisible ? '1' : '0') } catch (e) {}
+  }, [sidebarVisible]);
+
   // Menu for admin sidebar (pages control which items appear and behavior)
   const adminMenu = [
     { key: 'booking', label: 'Booking', icon: 'fas fa-calendar-alt', onClick: () => setSection('booking') },
@@ -557,8 +592,8 @@ export default function AdminPage() {
         const s = await adminApi.getAllStations(1, 100)
         if (!mounted) return
         setStations(s || [])
-        const firstId = (s && s[0] && (s[0].id || s[0].Id)) || ''
-        setStationId(prev => prev || firstId)
+        // Do not default to the first station; keep empty (All stations) by default
+        setStationId(prev => prev || '')
       } catch (e) {
         if (!mounted) return
         setError(e?.message || 'Failed to load stations')
@@ -726,15 +761,19 @@ export default function AdminPage() {
             const uniqueIds = Array.from(new Set(needUser.map(x => x.userId)))
             const results = await Promise.all(uniqueIds.map(async uid => {
               try {
-                const u = await adminApi.getUserById(uid)
+                // Use authApi.getUserById to match other parts of the app (staff/profile)
+                const u = await authApi.getUserById(uid)
                 const first = u?.firstName || u?.FirstName || u?.givenName || u?.GivenName || null
                 const last  = u?.lastName  || u?.LastName  || u?.surname  || u?.Surname  || null
                 const full  = (u?.fullName || u?.FullName) || [first, last].filter(Boolean).join(' ') || null
                 const uname = u?.userName || u?.UserName || u?.username || u?.user_name || null
                 const addr = u?.address || u?.Address || ''
-                return { uid, firstName: first, lastName: last, fullName: full, userName: uname, address: addr }
+                // Try multiple possible identity number / phone fields from various backends
+                const idNum = u?.identityNumber || u?.identityNo || u?.idNumber || u?.IdNumber || u?.cmnd || u?.CMND || u?.citizenId || u?.CitizenId || ''
+                const phone = u?.phoneNumber || u?.phone || u?.Phone || u?.mobile || u?.Mobile || u?.PhoneNumber || ''
+                return { uid, firstName: first, lastName: last, fullName: full, userName: uname, address: addr, idNumber: idNum, phone }
               } catch {
-                return { uid, firstName: null, lastName: null, fullName: null, userName: null, address: '' }
+                return { uid, firstName: null, lastName: null, fullName: null, userName: null, address: '', idNumber: '', phone: '' }
               }
             }))
             if (!mounted) return
@@ -749,7 +788,11 @@ export default function AdminPage() {
                   lastName: b.lastName ?? r.lastName ?? null,
                   fullName: composed || b.customer || b.userName || null,
                   userName: b.userName ?? r.userName,
-                  address: b.address || r.address
+                  // prefer existing booking.address; otherwise use resolved user address
+                  address: b.address || r.address,
+                  // map identity number and phone from resolved user when missing on booking
+                  idString: b.idString || r.idNumber || b.idString || '',
+                  phone: b.phone || r.phone || b.phone || ''
                 }
               }
               return b
@@ -849,19 +892,10 @@ export default function AdminPage() {
 
   return (
     <div className="app-layout">
-      <Header />
+      <Header toggleSidebar={() => setSidebarVisible(v => !v)} sidebarVisible={sidebarVisible} />
 
-      {/* Hover trigger zone */}
-      <div
-        className="sidebar-hover-zone"
-        onMouseEnter={() => setSidebarVisible(true)}
-      />
-
-      {/* Sidebar that slides and affects content */}
-      <div
-        className={`sidebar-wrapper ${sidebarVisible ? 'visible' : ''}`}
-        onMouseLeave={() => setSidebarVisible(false)}
-      >
+      {/* Sidebar that slides and affects content (toggle via header button) */}
+      <div className={`sidebar-wrapper ${sidebarVisible ? 'visible' : ''}`}>
         <Sidebar
           title="FEC Admin"
           menuItems={adminMenu}

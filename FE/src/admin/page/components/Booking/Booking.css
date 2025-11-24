@@ -3,3 +3,18 @@
 /* Page-specific overrides for admin booking styles can go here. */
 /* Keep this file minimal: it imports the shared booking.css above. */
 
+/* Table status badge (use the same color classes as booking-status-*) */
+.table-status-badge {
+	display: inline-block;
+	padding: 6px 10px;
+	border-radius: 12px;
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: #fff;
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+}
+
+/* Prevent absolute positioning from shared .booking-status-chip */
+.table-status-badge.booking-status-chip { position: static; box-shadow: none; }
+

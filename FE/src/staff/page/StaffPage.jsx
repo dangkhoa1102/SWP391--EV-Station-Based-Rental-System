@@ -18,7 +18,12 @@ export default function StaffPage() {
   const [section, setSection] = useState('booking');
   const [bookings, setBookings] = useState(initialBookings);
   const [vehicles, setVehicles] = useState(initialVehicles);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(() => {
+    try {
+      const saved = localStorage.getItem('staff_sidebar_visible')
+      return saved == null ? true : saved === '1'
+    } catch (e) { return true }
+  });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [stations, setStations] = useState([]);
@@ -88,17 +93,54 @@ export default function StaffPage() {
   }
 
   // Update a booking's status in local state (used by modal after payment sync)
-  const handleStatusUpdated = (bookingId, nextStatus) => {
-    const label = nextStatus === 'pending' ? 'Pending'
-                : nextStatus === 'booked' ? 'Active Rental'
-                : nextStatus === 'waiting-checkin' ? 'Waiting Check-in'
-                : nextStatus === 'checked-in' ? 'Checked-in'
-                : nextStatus === 'checkout-pending' ? 'Check-out Pending'
-                : nextStatus === 'completed' ? 'Completed'
-                : nextStatus === 'cancelled-pending' ? 'Cancelled (Pending Refund)'
-                : nextStatus === 'cancelled' ? 'Cancelled'
-                : nextStatus
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: nextStatus, statusLabel: label } : b))
+  const handleStatusUpdated = async (bookingId, nextStatus) => {
+    // If caller didn't provide a nextStatus, try to fetch the booking from server
+    let resolvedStatus = nextStatus
+    try {
+      if (resolvedStatus === undefined || resolvedStatus === null) {
+        try {
+          const fresh = await staffApi.getBookingById(bookingId)
+          const rawStatus = fresh?.statusCode ?? fresh?.StatusCode ?? fresh?.bookingStatus ?? fresh?.BookingStatus ?? fresh?.status ?? fresh?.Status
+          if (rawStatus != null && (typeof rawStatus === 'number' || /^\d+$/.test(String(rawStatus)))) {
+            const code = Number(rawStatus)
+            if (code === 0) resolvedStatus = 'pending'
+            else if (code === 1) resolvedStatus = 'booked'
+            else if (code === 2) resolvedStatus = 'waiting-checkin'
+            else if (code === 3) resolvedStatus = 'checked-in'
+            else if (code === 4) resolvedStatus = 'checkout-pending'
+            else if (code === 5) resolvedStatus = 'completed'
+            else if (code === 6) resolvedStatus = 'cancelled-pending'
+            else if (code === 7) resolvedStatus = 'cancelled'
+          } else {
+            const s = String(rawStatus || '').toLowerCase()
+            if (s.includes('pending') || s.includes('wait')) resolvedStatus = 'pending'
+            else if (s.includes('check') && s.includes('in')) resolvedStatus = 'checked-in'
+            else if (s.includes('complete') || s.includes('finish')) resolvedStatus = 'completed'
+            else if (s.includes('cancel')) resolvedStatus = 'cancelled'
+            else resolvedStatus = 'booked'
+          }
+        } catch (e) {
+          // If we fail to fetch, keep nextStatus as undefined so UI won't overwrite with wrong value
+          console.warn('⚠️ Failed to refresh booking status for', bookingId, e?.message || e)
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Error resolving status for booking update:', e?.message || e)
+    }
+
+    const label = resolvedStatus === 'pending' ? 'Pending'
+                : resolvedStatus === 'booked' ? 'Active Rental'
+                : resolvedStatus === 'waiting-checkin' ? 'Waiting Check-in'
+                : resolvedStatus === 'checked-in' ? 'Checked-in'
+                : resolvedStatus === 'checkout-pending' ? 'Check-out Pending'
+                : resolvedStatus === 'completed' ? 'Completed'
+                : resolvedStatus === 'cancelled-pending' ? 'Cancelled (Pending Refund)'
+                : resolvedStatus === 'cancelled' ? 'Cancelled'
+                : resolvedStatus
+
+    if (resolvedStatus !== undefined) {
+      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: resolvedStatus, statusLabel: label } : b))
+    }
   }
 
   // Handle FormData from CreateIncidentModal and call staffApi.createIncident
@@ -315,6 +357,11 @@ export default function StaffPage() {
     } else {
       document.body.classList.remove('sidebar-open');
     }
+  }, [sidebarVisible]);
+
+  // persist preference so navigation/re-mounts keep the same state
+  useEffect(() => {
+    try { localStorage.setItem('staff_sidebar_visible', sidebarVisible ? '1' : '0') } catch (e) {}
   }, [sidebarVisible]);
 
   // Staff menu for sidebar
@@ -632,8 +679,12 @@ export default function StaffPage() {
             return dateInput
           }
           
-          const pickupDate = formatRentalDate(b.pickupDate || b.rentalStartDate || b.startDateTime || b.startDate)
-          const returnDate = formatRentalDate(b.returnDate || b.rentalEndDate || b.endDateTime || b.endDate)
+          const pickupDate = formatRentalDate(
+            b.PickupDateTime || b.pickupDate || b.rentalStartDate || b.startDateTime || b.startDate || b.StartTime || b.startTime || b.Start || b.start
+          )
+          const returnDate = formatRentalDate(
+            b.ExpectedReturnDateTime || b.returnDate || b.rentalEndDate || b.endDateTime || b.endDate || b.EndTime || b.endTime || b.End || b.end || b.ActualReturnDateTime || b.actualReturnDateTime
+          )
           
           return {
             id,
@@ -778,19 +829,10 @@ export default function StaffPage() {
 
   return (
     <div className="app-layout">
-      <Header />
+      <Header toggleSidebar={() => setSidebarVisible(v => !v)} sidebarVisible={sidebarVisible} />
 
-      {/* Hover trigger zone */}
-      <div
-        className="sidebar-hover-zone"
-        onMouseEnter={() => setSidebarVisible(true)}
-      />
-
-      {/* Sidebar that slides and affects content */}
-      <div
-        className={`sidebar-wrapper ${sidebarVisible ? 'visible' : ''}`}
-        onMouseLeave={() => setSidebarVisible(false)}
-      >
+      {/* Sidebar that slides and affects content (toggle via header button) */}
+      <div className={`sidebar-wrapper ${sidebarVisible ? 'visible' : ''}`}>
         <Sidebar
           title="FEC Staff"
           menuItems={staffMenu}

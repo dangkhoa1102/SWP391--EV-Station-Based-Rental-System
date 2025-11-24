@@ -38,12 +38,12 @@ export default function DocumentUpload({
     }
 
     // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 25 * 1024 * 1024) {
       setNotification({
         isOpen: true,
         type: 'error',
         title: 'File Too Large',
-        message: 'Please select a file smaller than 5MB'
+        message: 'Please select a file smaller than 25MB'
       })
       return
     }

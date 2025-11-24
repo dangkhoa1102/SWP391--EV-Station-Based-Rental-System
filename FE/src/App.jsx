@@ -13,6 +13,7 @@ import BookingHistory from './renter/page/components/Booking/BookingHistory'
 import TestApi from './renter/page/TestApi'
 import StaffPage from './staff/page/StaffPage'
 import AdminPage from './admin/page/AdminPage'
+import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import CreateContract from './renter/page/components/Contract/CreateContract'
@@ -45,8 +46,16 @@ function AppShell(){
           <Route path="/contract/:id" element={<ContractDetail />} />
           <Route path="/contract/download-latest" element={<DownloadLatestContract />} />
           <Route path="/xac-nhan-hop-dong" element={<ConfirmContract />} />
-          <Route path="/staff" element={<StaffPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/staff" element={
+            <ProtectedRoute requireStaff>
+              <StaffPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute requireAdmin>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
         </Routes>
       </main>
       {!hideChrome && <Footer />}

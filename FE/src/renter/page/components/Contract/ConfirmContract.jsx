@@ -16,6 +16,13 @@ const ConfirmContract = () => {
   const [agreed, setAgreed] = useState(false)
   const [showNotification, setShowNotification] = useState(false)
 
+const extractErrorMessage = (err) => {
+return err?.response?.data?.message
+|| err?.response?.data
+|| err?.message
+|| 'An error occurred while fetching contract.';
+}  
+
   useEffect(() => {
     if (!token) {
       setError('No confirmation token provided.')
@@ -54,11 +61,13 @@ const ConfirmContract = () => {
       // Accept any response (including empty string/null) - API likely returns empty string on success
       // Only fail if there's an explicit error indicator
       console.log('✅ Contract signed successfully!')
-      setSigned(true)
+      // Show notification immediately so the NotificationModal (rendered in main return)
+      // can become visible before we switch to the `signed` view.
       setShowNotification(true)
-      
-      // Redirect to booking history after 4 seconds (give notification time to show)
+
+      // After the notification duration, mark as signed and navigate.
       setTimeout(() => {
+        setSigned(true)
         console.log('🔄 Redirecting to booking history...')
         navigate('/booking-history')
       }, 4000)
@@ -77,7 +86,35 @@ const ConfirmContract = () => {
         </div>
       </div>
     )
-  if (error) return <p className="text-danger">Error: {error}</p>
+  // if (error) return <p className="text-danger">Error: {error}</p>
+  if (error)
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          zIndex: 1050
+        }}
+      >
+        <div style={{ textAlign: 'center', width: '100%', maxWidth: '680px' }}>
+          <p className="text-danger" style={{ fontWeight: 700, marginBottom: '1rem' }}>
+            {/* {typeof error === 'string' ? error : 'Bạn đã kí hợp đồng này rồi!!! Vui lòng xem lịch sử đặt xe của bạn'} */}
+            Bạn đã kí hợp đồng này rồi!!! Vui lòng xem lịch sử đặt xe của bạn
+          </p>
+          <button
+            className="btn btn-secondary"
+            style={{ display: 'block', margin: '0 auto', width: '100%', maxWidth: '280px' }}
+            onClick={() => navigate('/booking-history')}
+          >
+            XEM LỊCH SỬ ĐẶT XE
+          </button>
+        </div>
+      </div>
+    )
 
   if (signed) {
     return (
@@ -111,7 +148,7 @@ const ConfirmContract = () => {
             <div className="contract-info">
               <div className="row">
                 <div className="col-md-4">
-                  <strong>Renter:</strong> {contractInfo.nguoiKy || 'N/A'}
+                  {/* <strong>Renter:</strong> {contractInfo.nguoiKy || 'N/A'} */}
                 </div>
               </div>
             </div>

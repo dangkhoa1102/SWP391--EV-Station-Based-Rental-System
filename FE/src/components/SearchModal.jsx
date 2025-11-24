@@ -159,6 +159,12 @@ export default function SearchModal({
     }
     const pickup = new Date(`${searchData.pickupDate}T${searchData.pickupTime}`)
     const ret = new Date(`${searchData.returnDate}T${searchData.returnTime}`)
+    // Prevent pick-up datetime in the past
+    const now = new Date()
+    if (pickup < now) {
+      alert('Pick-up date and time must be in the future.')
+      return
+    }
     if(ret <= pickup){ 
       alert('Return date and time must be after pick-up date and time.')
       return 

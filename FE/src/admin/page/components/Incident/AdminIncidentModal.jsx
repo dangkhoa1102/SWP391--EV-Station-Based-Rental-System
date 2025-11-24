@@ -30,6 +30,8 @@ export default function AdminIncidentModal({ open = false, incident = null, onCl
     if (incident) setSelectedStation(incident.stationId || '');
   }, [incident]);
 
+  const isResolved = (incident?.status || incident?.Status || '').toString().toUpperCase() === 'RESOLVED';
+
   if (!open || !incident) return null;
 
   const handleAssign = async () => {
@@ -103,7 +105,15 @@ export default function AdminIncidentModal({ open = false, incident = null, onCl
 
       <div style={{margin:'12px 0'}}>
         <label style={{display:'block', marginBottom:6}}>Select station to assign</label>
-        <select value={selectedStation} onChange={e=>setSelectedStation(e.target.value)} style={{width:'100%', padding:8}}>
+        {isResolved && (
+          <div style={{color:'#b91c1c', marginBottom:8}}>Assignment disabled for resolved incidents.</div>
+        )}
+        <select
+          value={selectedStation}
+          onChange={e=>setSelectedStation(e.target.value)}
+          style={{width:'100%', padding:8}}
+          disabled={isResolved || loading}
+        >
           <option value="">-- Choose station --</option>
           {stations.map(s => (
             <option key={s.id || s.Id} value={s.id || s.Id}>{s.name || s.Name || s.stationName || s.station}</option>
@@ -132,7 +142,7 @@ export default function AdminIncidentModal({ open = false, incident = null, onCl
 
         <button
           onClick={handleAssign}
-          disabled={loading}
+          disabled={loading || isResolved}
           style={{
             padding: '10px 20px',
             background: '#10b981',
@@ -141,10 +151,10 @@ export default function AdminIncidentModal({ open = false, incident = null, onCl
             borderRadius: '8px',
             fontSize: '14px',
             fontWeight: '500',
-            cursor: loading ? 'not-allowed' : 'pointer'
+            cursor: (loading || isResolved) ? 'not-allowed' : 'pointer'
           }}
         >
-          <i className="fas fa-check-circle"></i> {loading ? 'Assigning…' : 'Assign'}
+          <i className="fas fa-check-circle"></i> {isResolved ? 'Assign (disabled)' : (loading ? 'Assigning…' : 'Assign')}
         </button>
       </div>
     </div>

@@ -1,23 +1,27 @@
 /* Base layout and page-wide styles */
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Inter, 'Segoe UI', Roboto, Arial, sans-serif;
   display: flex;
-  background: #f5f5f5;
-  transition: background 0.3s ease;
+  background: linear-gradient(180deg, #f7fafc 0%, #f3f6f9 100%);
+  transition: background 0.35s cubic-bezier(.2,.8,.2,1);
   overflow-x: hidden;
+  color: #223;
 }
 
 .main-content {
   flex: 1;
-  padding: 30px;
+  padding: 28px;
   margin-top: 80px;
   margin-left: 0;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.35s cubic-bezier(.2,.8,.2,1);
   text-align: left;
 }
 
-.sidebar-wrapper.visible ~ .main-content { margin-left: 240px; }
+/* When sidebar is visible, shift main content to avoid overlap.
+  Sidebar left offset = 16px, width = 260px => total shift = 276px.
+  Add a small gap (16px) -> 292px to align content nicely. */
+.sidebar-wrapper.visible ~ .main-content { margin-left: 292px; }
 
 @media (max-width: 720px) {
   .sidebar-wrapper.visible ~ .main-content { margin-left: 0; }
@@ -25,15 +29,42 @@ body {
 
 .section {
   position: relative;
-  margin-left: 250px;
+  margin-left: 292px;
   margin-top: 70px;
-  padding: 20px 40px;
+  padding: 20px 24px;
   min-height: calc(100vh - 70px);
   box-sizing: border-box;
-  background-color: #f5f5f5;
+  background-color: transparent;
   display: flex;
   flex-direction: column;
+  gap: 18px;
 }
+
+/* Reusable card style for softer UI */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(17,24,39,0.06);
+  transition: transform 0.28s cubic-bezier(.2,.8,.2,1), box-shadow 0.28s;
+  border: 1px solid rgba(20,24,28,0.04);
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(17,24,39,0.08); }
+
+/* Soft headings */
+.section h1, .section h2, .section h3 { color: #122; margin: 0 0 8px 0; }
+
+/* Buttons : softer */
+.btn-soft {
+  background: linear-gradient(90deg,#6fd3c7,#57b4ff);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(88,144,255,0.12);
+}
+.btn-soft:active { transform: translateY(1px); }
 
 /* Profile section should allow full-width content (not centered box) */
 #profile.section {
