@@ -14,37 +14,37 @@ namespace Monolithic.Services.Interfaces
 
         // --- HopDong Specific Methods ---
         /// <summary>
-        /// L?u h?p ??ng thuê xe và t?o file t? template
+        /// L?u h?p ??ng thuï¿½ xe vï¿½ t?o file t? template
         /// </summary>
         Task<Guid> LuuHopDongVaTaoFileAsync(/*TaoHopDongDto request, */Guid bookingId, Guid renterId);
 
         /// <summary>
-        /// G?i email xác nh?n h?p ??ng
+        /// G?i email xï¿½c nh?n h?p ??ng
         /// </summary>
         Task GuiEmailXacNhanAsync(Guid contractId, string email);
 
         /// <summary>
-        /// L?y h?p ??ng ?? xác nh?n (chuy?n sang HTML)
+        /// L?y h?p ??ng ?? xï¿½c nh?n (chuy?n sang HTML)
         /// </summary>
         Task<HopDongXacNhanDto> LayHopDongDeXacNhanAsync(string token);
 
         /// <summary>
-        /// Xác nh?n và ký h?p ??ng
+        /// Xï¿½c nh?n vï¿½ kï¿½ h?p ??ng
         /// </summary>
         Task XacNhanKyHopDongAsync(string token);
 
         /// <summary>
-        /// Xóa m?m h?p ??ng
+        /// Xï¿½a m?m h?p ??ng
         /// </summary>
         Task XoaMemHopDongAsync(Guid id);
 
         /// <summary>
-        /// L?y h?p ??ng theo token xác nh?n
+        /// L?y h?p ??ng theo token xï¿½c nh?n
         /// </summary>
         Task<ContractDto> GetContractByTokenAsync(string token);
 
         /// <summary>
-        /// L?y h?p ??ng ?ã ký theo contractId (?? xem l?i)
+        /// L?y h?p ??ng ?ï¿½ kï¿½ theo contractId (?? xem l?i)
         /// </summary>
         Task<HopDongXacNhanDto> LayHopDongDaKyAsync(Guid contractId);
 
@@ -64,8 +64,13 @@ namespace Monolithic.Services.Interfaces
         Task<(byte[] FileBytes, string FileName)> DownloadHopDongFileByContractIdAsync(Guid contractId, Guid? currentUserId, string? userRole);
 
         /// <summary>
-        /// Download h?p ??ng m?i nh?t c?a user theo RenterId
+        /// Download há»£p Ä‘á»“ng má»›i nháº¥t cá»§a user theo RenterId
         /// </summary>
         Task<(byte[] FileBytes, string FileName)> DownloadLatestContractByUserIdAsync(Guid userId, Guid? currentUserId, string? userRole);
+
+        /// <summary>
+        /// Download há»£p Ä‘á»“ng má»›i nháº¥t cá»§a user hiá»‡n táº¡i (dá»±a trÃªn token login)
+        /// </summary>
+        Task<(byte[] FileBytes, string FileName)> DownloadMyLatestContractAsync(Guid currentUserId);
     }
 }

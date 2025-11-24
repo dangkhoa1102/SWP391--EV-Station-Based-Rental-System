@@ -435,9 +435,8 @@ namespace Monolithic.Services.Implementation
             // Tạo link xác nhận
             var confirmationLink = $"{frontendBaseUrl}/xac-nhan-hop-dong?token={contract.ConfirmationToken}";
 
-            // Tạo link download file hợp đồng
-            //var downloadLink = $"{backendBaseUrl}/api/contracts/hopdong/download/{contract.ConfirmationToken}";
-            var downloadLink = $"{frontendBaseUrl}/api/contracts/user/download-latest-by-userId";
+            // Tạo link download file hợp đồng (dùng route React mới)
+            var downloadLink = $"{frontendBaseUrl}/contract/download-latest";
 
             // Gửi email với cả 2 link
             await _emailService.SendConfirmationEmailAsync(email, confirmationLink, downloadLink);
@@ -884,8 +883,40 @@ namespace Monolithic.Services.Implementation
             return ResponseDto<ContractDto>.Success(_mapper.Map<ContractDto>(contract));
         }
 
+        /// <summary>
+        /// Download hợp đồng mới nhất của user hiện tại (dựa trên token login)
+        /// </summary>
+        public async Task<(byte[] FileBytes, string FileName)> DownloadMyLatestContractAsync(Guid currentUserId)
+        {
+            // Tìm hợp đồng mới nhất của user hiện tại (RenterId)
+            var contracts = await _contractRepository.GetByRenterIdAsync(currentUserId);
+            var latestContract = contracts
+                .Where(c => !c.IsDeleted)
+                .OrderByDescending(c => c.NgayTao)
+                .FirstOrDefault();
+
+            if (latestContract == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy hợp đồng nào cho bạn.");
+            }
+
+            var docxPath = Path.Combine(_env.ContentRootPath, "Storage", $"{latestContract.ContractId}.docx");
+            if (!File.Exists(docxPath))
+            {
+                throw new FileNotFoundException($"File hợp đồng không tồn tại: {docxPath}");
+            }
+
+            var fileBytes = await File.ReadAllBytesAsync(docxPath);
+            var fileName = $"HopDong_{latestContract.SoHopDong}_{DateTime.Now:yyyyMMdd}.docx";
+            
+            _logger.LogInformation("Latest contract downloaded by user {UserId}", currentUserId);
+            
+            return (fileBytes, fileName);
+        }
+
         // Helpers
         private static string ComputeSha256Hash(string raw)
+
         {
             using var sha = SHA256.Create();
             var bytes = Encoding.UTF8.GetBytes(raw);
