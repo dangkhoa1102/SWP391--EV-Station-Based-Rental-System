@@ -7,6 +7,10 @@ namespace Monolithic.Services.Interfaces
     {
         Task<ResponseDto<LoginResponseDto>> LoginAsync(LoginRequestDto request);
         Task<ResponseDto<UserDto>> RegisterAsync(RegisterRequestDto request);
+        Task<ResponseDto<string>> VerifyEmailAsync(VerifyEmailDto request);
+        Task<ResponseDto<string>> ResendOtpAsync(string email);
+        Task<ResponseDto<string>> ForgotPasswordAsync(ForgotPasswordDto request);
+        Task<ResponseDto<string>> ResetPasswordAsync(ResetPasswordDto request);
         Task<ResponseDto<string>> LogoutAsync(string userId);
         Task<ResponseDto<string>> RefreshTokenAsync(string refreshToken);
         Task<ResponseDto<UserDto>> GetCurrentUserAsync(string userId);

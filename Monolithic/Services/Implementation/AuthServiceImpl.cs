@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Monolithic.Common;
 using Monolithic.Data;
 using Monolithic.DTOs.Auth;
@@ -14,11 +14,15 @@ namespace Monolithic.Services.Implementation
     {
         private readonly EVStationBasedRentalSystemDbContext _dbContext;
         private readonly IJwtTokenService _jwtTokenService;
+        private readonly IEmailService _emailService;
 
-        public AuthServiceImpl(EVStationBasedRentalSystemDbContext dbContext, IJwtTokenService jwtTokenService)
+        public AuthServiceImpl(EVStationBasedRentalSystemDbContext dbContext,
+                               IJwtTokenService jwtTokenService,
+                               IEmailService emailService)
         {
             _dbContext = dbContext;
             _jwtTokenService = jwtTokenService;
+            _emailService = emailService; // inject DI
         }
 
         public async Task<ResponseDto<LoginResponseDto>> LoginAsync(LoginRequestDto request)
@@ -58,29 +62,29 @@ namespace Monolithic.Services.Implementation
             }
         }
 
+
         public async Task<ResponseDto<UserDto>> RegisterAsync(RegisterRequestDto request)
         {
             try
             {
-                // Check if user already exists
+                // 1. Check nếu user/email đã tồn tại
                 var existingUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
                 if (existingUser != null)
-                {
                     return ResponseDto<UserDto>.Failure("User with this email already exists");
-                }
 
                 var existingUsername = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == request.Email);
                 if (existingUsername != null)
-                {
                     return ResponseDto<UserDto>.Failure("Username already exists");
-                }
+                var existingPhone = await _dbContext.Users.FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber);
+                if (existingPhone != null && !string.IsNullOrWhiteSpace(request.PhoneNumber))
+                    return ResponseDto<UserDto>.Failure("Phone number already exists");
 
-                // Parse FullName to FirstName and LastName
+                // 2. Parse tên
                 var nameParts = request.FullName.Trim().Split(' ', 2);
                 var firstName = nameParts.Length > 0 ? nameParts[0] : request.FullName;
                 var lastName = nameParts.Length > 1 ? nameParts[1] : "";
 
-                // Create new user
+                // 3. Tạo user
                 var user = new User
                 {
                     UserId = Guid.NewGuid(),
@@ -90,20 +94,146 @@ namespace Monolithic.Services.Implementation
                     LastName = lastName,
                     PhoneNumber = request.PhoneNumber,
                     PasswordHash = HashPassword(request.Password),
-                    UserRole = AppRoles.EVRenter, // Default role for new registrations
+                    UserRole = AppRoles.EVRenter,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    IsVerified = false,
                 };
 
+                // 4. Sinh OTP 6 số
+                user.VerificationToken = GenerateOtpCode();
+                user.VerificationTokenExpiry = DateTime.UtcNow.AddMinutes(5);
+
+                // 5. Lưu DB
                 _dbContext.Users.Add(user);
                 await _dbContext.SaveChangesAsync();
 
-                return ResponseDto<UserDto>.Success(MapToUserDto(user), "User registered successfully");
+                // 6. Gửi email OTP
+                await _emailService.SendEmailAsync(user.Email, "Xác minh tài khoản",
+                    $"Mã OTP của bạn là: {user.VerificationToken}. Mã có hiệu lực 5 phút.");
+
+                return ResponseDto<UserDto>.Success(MapToUserDto(user), "User registered successfully. Check your email to verify.");
             }
             catch (Exception ex)
             {
                 return ResponseDto<UserDto>.Failure($"Registration failed: {ex.Message}");
             }
+        }
+        public async Task<ResponseDto<string>> VerifyEmailAsync(VerifyEmailDto request)
+        {
+            try
+            {
+                var user = await _dbContext.Users.FirstOrDefaultAsync(u =>
+                    u.Email == request.Email && u.VerificationToken == request.Otp && u.IsActive);
+
+                if (user == null)
+                    return ResponseDto<string>.Failure("Invalid OTP or email");
+
+                if (user.VerificationTokenExpiry < DateTime.UtcNow)
+                    return ResponseDto<string>.Failure("OTP expired. Please request a new one.");
+
+                user.IsVerified = true;
+                user.VerificationToken = null;
+                user.VerificationTokenExpiry = null;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _dbContext.SaveChangesAsync();
+                return ResponseDto<string>.Success("", "Email verified successfully");
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<string>.Failure($"Email verification failed: {ex.Message}");
+            }
+        }
+
+        // ----------------- RESEND OTP -----------------
+        public async Task<ResponseDto<string>> ResendOtpAsync(string email)
+        {
+            try
+            {
+                var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
+                if (user == null)
+                    return ResponseDto<string>.Failure("User not found");
+
+                if (user.IsVerified)
+                    return ResponseDto<string>.Failure("Email already verified");
+
+                user.VerificationToken = GenerateOtpCode();
+                user.VerificationTokenExpiry = DateTime.UtcNow.AddMinutes(5);
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _dbContext.SaveChangesAsync();
+
+                await _emailService.SendEmailAsync(user.Email, "Resend OTP",
+                    $"Mã OTP mới của bạn là: {user.VerificationToken}. Mã có hiệu lực 5 phút.");
+
+                return ResponseDto<string>.Success("", "OTP resent successfully");
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<string>.Failure($"Resend OTP failed: {ex.Message}");
+            }
+        }
+
+        // ----------------- FORGOT PASSWORD -----------------
+        public async Task<ResponseDto<string>> ForgotPasswordAsync(ForgotPasswordDto request)
+        {
+            try
+            {
+                var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
+                if (user == null)
+                    return ResponseDto<string>.Failure("User not found");
+
+                user.ResetToken = GenerateOtpCode();
+                user.ResetTokenExpiry = DateTime.UtcNow.AddMinutes(15);
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _dbContext.SaveChangesAsync();
+
+                await _emailService.SendEmailAsync(user.Email, "Reset Password",
+                    $"Mã xác thực đặt lại mật khẩu của bạn là: {user.ResetToken}. Mã có hiệu lực 15 phút.");
+
+                return ResponseDto<string>.Success("", "Reset password OTP sent successfully");
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<string>.Failure($"Forgot password failed: {ex.Message}");
+            }
+        }
+
+        // ----------------- RESET PASSWORD -----------------
+        public async Task<ResponseDto<string>> ResetPasswordAsync(ResetPasswordDto request)
+        {
+            try
+            {
+                var user = await _dbContext.Users.FirstOrDefaultAsync(u =>
+                    u.Email == request.Email && u.ResetToken == request.Otp && u.IsActive);
+
+                if (user == null)
+                    return ResponseDto<string>.Failure("Invalid OTP or email");
+
+                if (user.ResetTokenExpiry < DateTime.UtcNow)
+                    return ResponseDto<string>.Failure("Reset token expired. Please request again.");
+
+                user.PasswordHash = HashPassword(request.NewPassword);
+                user.ResetToken = null;
+                user.ResetTokenExpiry = null;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _dbContext.SaveChangesAsync();
+                return ResponseDto<string>.Success("", "Password reset successfully");
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<string>.Failure($"Reset password failed: {ex.Message}");
+            }
+        }
+
+
+        // Hàm tạo OTP 6 số
+        private string GenerateOtpCode()
+        {
+            return RandomNumberGenerator.GetInt32(100000, 999999).ToString();
         }
 
         public async Task<ResponseDto<string>> LogoutAsync(string userId)
@@ -259,6 +389,7 @@ namespace Monolithic.Services.Implementation
                 GplxImageUrl_Back = user.GplxImageUrl_Back
             };
         }
+   
 
         // Helper methods for password hashing
         private string HashPassword(string password)

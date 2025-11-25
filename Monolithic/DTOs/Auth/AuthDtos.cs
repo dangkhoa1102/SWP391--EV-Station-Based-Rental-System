@@ -38,6 +38,10 @@ namespace Monolithic.DTOs.Auth
         [Phone]
         public string? PhoneNumber { get; set; }
     }
+    public class VerifyEmailDto { public string Email { get; set; } = null!; public string Otp { get; set; } = null!; }
+    public class ForgotPasswordDto { public string Email { get; set; } = null!; }
+    public class ResetPasswordDto { public string Email { get; set; } = null!; public string Otp { get; set; } = null!; [Required]
+        [MinLength(6)] public string NewPassword { get; set; } = null!; }
 
     public class UserDto
     {

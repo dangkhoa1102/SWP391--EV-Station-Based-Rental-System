@@ -80,6 +80,14 @@ namespace Monolithic.Models
         // Station assignment (for station staff)
         public Guid? StationId { get; set; }
         public virtual Station? Station { get; set; }
+        public string? VerificationToken { get; set; }
+        public DateTime? VerificationTokenExpiry { get; set; }
+        public string? ResetPasswordToken { get; set; }
+        public DateTime? ResetPasswordExpiry { get; set; }
+        public string? ResetToken { get; set; }
+        public DateTime? ResetTokenExpiry { get; set; }
+
+
 
         // Navigation properties
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();

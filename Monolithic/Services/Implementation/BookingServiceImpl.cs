@@ -164,21 +164,21 @@ namespace Monolithic.Services.Implementation
             }
 
             //2️⃣ Kiểm tra hợp đồng liên quan
-            var contract = await _contractRepository.GetByBookingIdAsync(request.BookingId);
-            if (contract == null)
-            {
-                return ResponseDto<BookingDto>.Failure("Contract not found for this booking");
-            }
+            //var contract = await _contractRepository.GetByBookingIdAsync(request.BookingId);
+            //if (contract == null)
+            //{
+            //    return ResponseDto<BookingDto>.Failure("Contract not found for this booking");
+            //}
 
-            if (!contract.IsConfirmed)
-            {
-                return ResponseDto<BookingDto>.Failure("Contract not confirmed");
-            }
+            //if (!contract.IsConfirmed)
+            //{
+            //    return ResponseDto<BookingDto>.Failure("Contract not confirmed");
+            //}
 
-            if (contract.RenterId != callerGuid)
-            {
-                return ResponseDto<BookingDto>.Failure("Forbidden: caller is not the renter who signed the contract");
-            }
+            //if (contract.RenterId != callerGuid)
+            //{
+            //    return ResponseDto<BookingDto>.Failure("Forbidden: caller is not the renter who signed the contract");
+            //}
 
             // 3️⃣ Handle photo upload if provided
             string? checkInPhotoUrl = null;

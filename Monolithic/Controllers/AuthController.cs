@@ -96,6 +96,7 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
 
+
         // Hàm helper để lấy ID của Renter đang đăng nhập từ JWT Token
     private string GetCurrentRenterId()
     {
@@ -127,8 +128,73 @@ namespace Monolithic.Controllers
 
             return Guid.TryParse(renterIdString, out renterId);
         }
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(typeof(ResponseDto<string>), 200)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ResponseDto<string>.Failure("Invalid request"));
 
-        [HttpPost("cccd")]
+            var result = await _authService.ForgotPasswordAsync(request);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Reset mật khẩu bằng OTP
+        /// </summary>
+        [HttpPost("reset-password")]
+        [ProducesResponseType(typeof(ResponseDto<string>), 200)]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ResponseDto<string>.Failure("Invalid request"));
+
+            var result = await _authService.ResetPasswordAsync(request);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Xác nhận email sau khi đăng ký (OTP)
+        /// </summary>
+        [HttpPost("verify-email")]
+        [ProducesResponseType(typeof(ResponseDto<string>), 200)]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ResponseDto<string>.Failure("Invalid request"));
+
+            var result = await _authService.VerifyEmailAsync(request);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Gửi lại OTP email xác thực
+        /// </summary>
+        [HttpPost("resend-otp")]
+        [ProducesResponseType(typeof(ResponseDto<string>), 200)]
+        public async Task<IActionResult> ResendOtp([FromBody] string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest(ResponseDto<string>.Failure("Email is required"));
+
+            var result = await _authService.ResendOtpAsync(email);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+    
+
+[HttpPost("cccd")]
     public async Task<IActionResult> UploadCccd(IFormFile fileFront, IFormFile fileBack)
     {
             // 1. Kiểm tra file

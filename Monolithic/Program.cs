@@ -229,6 +229,7 @@ builder.Services.AddScoped<IBookingRepository, BookingRepositoryImpl>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepositoryImpl>();
 builder.Services.AddScoped<IContractRepository, ContractRepositoryImpl>();
 builder.Services.AddHostedService<BookingAutoCancelService>();
+builder.Services.AddScoped<IEmailService, EmailServiceImpl>();
 
 
 // Services - Using separate implementation classes

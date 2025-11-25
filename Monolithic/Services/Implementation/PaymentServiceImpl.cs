@@ -35,9 +35,12 @@ namespace Monolithic.Services
             // prevent duplicate same-type payment
             var existing = await _dbContext.Payments
                 .FirstOrDefaultAsync(p => p.BookingId == dto.BookingId && p.PaymentType == dto.PaymentType);
+            if (dto.PaymentType != PaymentType.Refund && existing != null)
+                return existing;
 
             if (existing != null)
                 return existing;
+
 
             decimal amount = dto.PaymentType switch
             {
@@ -71,6 +74,7 @@ namespace Monolithic.Services
             if (dto.PaymentType == PaymentType.Refund)
             {
                 booking.BookingStatus = BookingStatus.Completed;
+               
                 booking.IsActive = false;
                 booking.DepositRefunded = true;
                 booking.UpdatedAt = DateTime.UtcNow;
@@ -85,6 +89,12 @@ namespace Monolithic.Services
         {
             var payment = await _dbContext.Payments.FirstOrDefaultAsync(p => p.PaymentId == paymentId);
             if (payment == null) return null;
+            if (payment.PaymentType == PaymentType.Refund)
+            {
+                status = PaymentStatus.Success;
+            }
+
+           
 
             payment.PaymentStatus = status;
             if (!string.IsNullOrEmpty(transactionId))
