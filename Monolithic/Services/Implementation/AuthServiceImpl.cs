@@ -30,9 +30,9 @@ namespace Monolithic.Services.Implementation
             try
             {
                 var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
-                if (user == null)
+                if (user is null)
                 {
-                    return ResponseDto<LoginResponseDto>.Failure("Invalid email or password");
+                    return ResponseDto<LoginResponseDto>.Failure("The email address you entered isn't connected to an account.");
                 }
 
                 // Verify password
@@ -54,11 +54,11 @@ namespace Monolithic.Services.Implementation
                     User = MapToUserDto(user)
                 };
 
-                return ResponseDto<LoginResponseDto>.Success(response, "Login successful");
+                return ResponseDto<LoginResponseDto>.Success(response, "Log in successful");
             }
             catch (Exception ex)
             {
-                return ResponseDto<LoginResponseDto>.Failure($"Login failed: {ex.Message}");
+                return ResponseDto<LoginResponseDto>.Failure($"Log in failed: {ex.Message}");
             }
         }
 

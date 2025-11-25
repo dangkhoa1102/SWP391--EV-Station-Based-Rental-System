@@ -56,7 +56,7 @@ const ConfirmContract = () => {
     };
 
     if (loading) return <p>Loading contract for confirmation...</p>;
-    if (error) return <p className="text-danger">Error: {error}</p>;
+    if (error) return <p className="text-danger">Error: ahihi{error}</p>;
 
     if (signed) {
         return (

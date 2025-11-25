@@ -41,7 +41,7 @@ namespace Monolithic.Services.Implementation
                 email.To.Add(MailboxAddress.Parse(toEmail));
                 email.Subject = "Xác Nhận Hợp Đồng Thuê Xe Của Bạn";
 
-                var senderName = emailSettings["SenderName"] ?? "Công ty cho thuê xe FEC";
+                var senderName = emailSettings["SenderName"] ?? "Công ty cho thuê xe FEC";                 
 
                 //var body = new BodyBuilder
                 //{

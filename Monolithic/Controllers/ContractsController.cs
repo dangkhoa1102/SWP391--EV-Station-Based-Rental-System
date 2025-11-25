@@ -331,5 +331,41 @@ namespace Monolithic.Controllers
                 return StatusCode(500, ResponseDto<ContractDto>.Failure($"Lỗi: {ex.Message}"));
             }
         }
+
+        /// <summary>
+        /// Download hợp đồng mới nhất dựa trên token login (không cần tham số)
+        /// </summary>
+        [HttpGet("download-my-contract")]
+        public async Task<IActionResult> DownloadMyLatestContract()
+        {
+            try
+            {
+                // Lấy userId từ claims của token JWT
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var currentUserId))
+                {
+                    return Unauthorized(ResponseDto<string>.Failure("Unauthorized: Token không hợp lệ"));
+                }
+
+                var (fileBytes, fileName) = await _contractService.DownloadMyLatestContractAsync(currentUserId);
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", fileName);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (FileNotFoundException ex)
+            {
+                return NotFound(ResponseDto<string>.Failure(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseDto<string>.Failure($"Lỗi: {ex.Message}"));
+            }
+        }
     }
 }
