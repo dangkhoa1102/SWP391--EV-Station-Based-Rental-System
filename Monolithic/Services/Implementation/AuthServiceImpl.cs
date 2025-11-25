@@ -35,6 +35,12 @@ namespace Monolithic.Services.Implementation
                     return ResponseDto<LoginResponseDto>.Failure("The email address you entered isn't connected to an account.");
                 }
 
+                // ✅ Check if email is verified
+                if (!user.IsVerified)
+                {
+                    return ResponseDto<LoginResponseDto>.Failure("Your email address has not been verified. Please verify your email first.");
+                }
+
                 // Verify password
                 if (!VerifyPassword(request.Password, user.PasswordHash ?? ""))
                 {
@@ -61,7 +67,6 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<LoginResponseDto>.Failure($"Log in failed: {ex.Message}");
             }
         }
-
 
         public async Task<ResponseDto<UserDto>> RegisterAsync(RegisterRequestDto request)
         {
