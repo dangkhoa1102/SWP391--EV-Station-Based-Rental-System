@@ -338,5 +338,61 @@ namespace Monolithic.Services.Implementation
 
             return ResponseDto<CarHandoverResponseDto>.Success(response, "Car handover recorded successfully");
         }
+
+        public async Task<ResponseDto<string>> SoftDeleteCarAsync(Guid id)
+        {
+            var car = await _carRepository.GetByIdAsync(id);
+            if (car == null)
+                return ResponseDto<string>.Failure("Xe không tìm thấy");
+
+            if (!car.IsActive)
+                return ResponseDto<string>.Failure("Xe này đã bị xóa trước đây");
+
+            var stationId = car.CurrentStationId;
+
+            car.IsActive = false;
+            car.UpdatedAt = DateTime.UtcNow;
+            await _carRepository.UpdateAsync(car);
+
+            // Cập nhật AvailableSlots của station (tăng 1 slot)
+            await _stationService.UpdateStationAvailableSlotsAsync(stationId, 1);
+
+            return ResponseDto<string>.Success(string.Empty, "Xe đã được xóa (soft delete)");
+        }
+
+        public async Task<ResponseDto<string>> RestoreCarAsync(Guid id)
+        {
+            var car = await _carRepository.GetByIdAsync(id);
+            if (car == null)
+                return ResponseDto<string>.Failure("Xe không tìm thấy");
+
+            if (car.IsActive)
+                return ResponseDto<string>.Failure("Xe này không bị xóa, không cần khôi phục");
+
+            var stationId = car.CurrentStationId;
+
+            // Kiểm tra xem station còn đủ slot không
+            var canAddCar = await _stationService.CanAddCarToStationAsync(stationId);
+            if (!canAddCar)
+            {
+                return ResponseDto<string>.Failure("Trạm đã đầy, không thể khôi phục xe vào trạm này. Vui lòng kiểm tra lại dung lượng trạm.");
+            }
+
+            car.IsActive = true;
+            car.UpdatedAt = DateTime.UtcNow;
+            await _carRepository.UpdateAsync(car);
+
+            // Cập nhật AvailableSlots của station (giảm 1 slot)
+            await _stationService.UpdateStationAvailableSlotsAsync(stationId, -1);
+
+            return ResponseDto<string>.Success(string.Empty, "Xe đã được khôi phục thành công");
+        }
+
+        public async Task<ResponseDto<List<CarDto>>> GetDeletedCarsAsync()
+        {
+            var cars = await _carRepository.FindAsync(c => !c.IsActive);
+            var dtos = _mapper.Map<List<CarDto>>(cars.ToList());
+            return ResponseDto<List<CarDto>>.Success(dtos);
+        }
     }
 }
