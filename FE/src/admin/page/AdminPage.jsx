@@ -56,7 +56,7 @@ export default function AdminPage() {
   const [loadingFeedbacks, setLoadingFeedbacks] = useState(false)
   const [feedbackSearch, setFeedbackSearch] = useState('')
   const [feedbackPage, setFeedbackPage] = useState(1)
-  const [feedbackPageSize, setFeedbackPageSize] = useState(10)
+  const [feedbackPageSize, setFeedbackPageSize] = useState(2)
 
   // Booking actions (call API then update locally)
   const confirmBooking = async (id) => {

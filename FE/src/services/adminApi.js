@@ -82,13 +82,15 @@ const adminApi = {
   // Feedbacks - with defensive fallback
   getFeedbacks: feedbackApi?.getFeedbacks || (async (params) => {
     try {
-      const res = await apiClient.get('/Feedback/Get-All', { 
-        params: { 
-          pageNumber: params?.page ?? 1, 
-          pageSize: params?.pageSize ?? 10,
-          search: params?.search || ''
-        } 
-      })
+      const page = params?.page ?? 1
+      const size = params?.pageSize ?? 1
+      // Send pageNumber and pageSize (pageSize only when explicitly provided)
+      const queryParams = {
+        pageNumber: page,
+        pageSize: params?.pageSize ?? size,
+        search: params?.search || ''
+      }
+      const res = await apiClient.get('/Feedback/Get-All', { params: queryParams })
       const body = res?.data
       if (body && typeof body === 'object' && 'data' in body) return body.data
       return body || { items: [], totalCount: 0 }
