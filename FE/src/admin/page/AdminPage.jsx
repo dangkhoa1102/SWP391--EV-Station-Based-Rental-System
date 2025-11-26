@@ -26,8 +26,10 @@ export default function AdminPage() {
   const [section, setSection] = useState('booking');
   const [bookings, setBookings] = useState(initialBookings);
   const [vehicles, setVehicles] = useState(initialVehicles);
+  const [deletedVehicles, setDeletedVehicles] = useState([]);
   const [users, setUsers] = useState([]);
   const [deletedUsers, setDeletedUsers] = useState([]);
+  const [loadingDeletedVehicles, setLoadingDeletedVehicles] = useState(false);
   const [staffByStation, setStaffByStation] = useState([]);
   const [sidebarVisible, setSidebarVisible] = useState(() => {
     try {
@@ -175,8 +177,11 @@ export default function AdminPage() {
   
   const removeVehicle = async (id) => {
     try {
-      await adminApi.deleteCar(id)
+      // Use new soft delete endpoint
+      await adminApi.softDeleteCar(id)
       setVehicles(prev => prev.filter(v => v.id !== id))
+      // Reload deleted vehicles to show the newly deleted one
+      await loadDeletedVehicles()
       // Update slot info after removing
       await updateStationSlots(stationId)
     } catch (e) {
@@ -186,25 +191,56 @@ export default function AdminPage() {
         setWarning("You don't have permission to delete vehicles. Please contact an administrator.")
         return
       }
-      // Fallback: some backends don't hard-delete; try setting a non-active status
-      try {
-        const candidates = ['Deleted', 'Inactive', 'Removed', 'Unavailable', 'Deactivated']
-        let success = false
-        for (const status of candidates) {
-          try {
-            await adminApi.updateStatus(id, status)
-            success = true
-            break
-          } catch {}
-        }
-        if (success) {
-          setVehicles(prev => prev.filter(v => v.id !== id))
-          return
-        }
-      } catch {}
       setError(e?.message || 'Failed to delete vehicle')
     }
   }
+
+  const loadDeletedVehicles = async () => {
+    setLoadingDeletedVehicles(true);
+    try {
+      const deleted = await adminApi.getDeletedCars();
+      setDeletedVehicles(deleted || []);
+    } catch (e) {
+      setError(e?.message || 'Failed to load deleted vehicles');
+    } finally {
+      setLoadingDeletedVehicles(false);
+    }
+  };
+
+  const handleRestoreVehicle = async (vehicle) => {
+    try {
+      const id = vehicle.id || vehicle.Id || vehicle.carId || vehicle.CarId;
+      // Call backend restore endpoint
+      await adminApi.restoreCar(id);
+      // Remove from deleted list
+      setDeletedVehicles(prev => prev.filter(v => String(v.id || v.Id) !== String(id)));
+      // Add back to active vehicles
+      setVehicles(prev => [vehicle, ...(prev || [])]);
+      // Update slot info
+      await updateStationSlots(stationId);
+      alert('Vehicle restored successfully');
+    } catch (e) {
+      const resp = e?.response?.data;
+      let msg = e?.message || 'Failed to restore vehicle';
+      if (resp) {
+        if (typeof resp === 'string') msg = resp;
+        else if (resp.message) msg = resp.message;
+        else if (resp.data && resp.data.message) msg = resp.data.message;
+        else if (resp.errors) {
+          try {
+            const firstKey = Object.keys(resp.errors)[0];
+            const firstVal = resp.errors[firstKey];
+            msg = Array.isArray(firstVal) ? firstVal[0] : String(firstVal);
+          } catch (ex) {
+            msg = JSON.stringify(resp.errors);
+          }
+        } else {
+          try { msg = JSON.stringify(resp); } catch { /* ignore */ }
+        }
+      }
+      alert(msg || 'Failed to restore vehicle');
+    }
+  };
   const updateVehicle = async (id, payload) => {
     try {
       if (payload.battery !== undefined && payload.battery !== '') {
@@ -604,6 +640,7 @@ export default function AdminPage() {
     loadRole();
     loadStations();
     loadUsers();
+    loadDeletedVehicles();
     return () => { mounted = false }
   }, [])
 
@@ -962,9 +999,11 @@ export default function AdminPage() {
             </div>
             <VehicleSection
               vehicles={vehicles}
+              deletedVehicles={deletedVehicles}
               onAdd={addVehicle}
               onRemove={removeVehicle}
               onUpdate={updateVehicle}
+              onRestore={handleRestoreVehicle}
               stationId={stationId}
               canDelete={true}
               stationSlots={stationSlots}

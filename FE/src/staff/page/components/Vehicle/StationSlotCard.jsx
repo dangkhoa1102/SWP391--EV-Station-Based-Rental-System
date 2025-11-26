@@ -17,7 +17,8 @@ export default function StationSlotCard({ stationSlots }) {
       fontWeight: '500',
       color: '#0369a1'
     }}>
-      <i className="fas fa-parking"></i> {availableSlots} Slot / {slotsTaken} Slot Taken
+      {/* <i className="fas fa-parking"></i> {availableSlots} Slot / {slotsTaken} Slot Taken */}
+      <i className="fas fa-parking"></i> {slotsTaken} Slot Taken / {availableSlots} Slot
     </div>
   );
 }
