@@ -4,7 +4,7 @@ import carApi from '../../../../services/carApi';
 import userApi from '../../../../services/userApi';
 import { getImageUrlOrIcon, applyCarIconFallback } from '../../../../utils/carIconSvg';
 
-export default function BookingTable({ bookings = [], search = '', setSearch = () => {}, statusFilter = '', setStatusFilter = () => {}, onRowClick = () => {} }) {
+export default function BookingTable({ bookings = [], search = '', setSearch = () => {}, statusFilter = '', setStatusFilter = () => {}, onRowClick = () => {}, onConfirmRefund = null }) {
   const filtered = (bookings || []).filter(b =>
     (b.title || '').toLowerCase().includes((search || '').toLowerCase()) ||
     (b.customer || '').toLowerCase().includes((search || '').toLowerCase()) ||
@@ -168,6 +168,7 @@ export default function BookingTable({ bookings = [], search = '', setSearch = (
           <option value="waiting_payment">Waiting Payment</option>
           <option value="checked-in">Checked In</option>
           <option value="completed">Completed</option>
+          <option value="cancelled-pending">Cancelled (Pending Refund)</option>
           <option value="cancelled">Cancelled</option>
         </select>
       </div>
@@ -224,7 +225,29 @@ export default function BookingTable({ bookings = [], search = '', setSearch = (
                   <span style={{ display: 'inline-block', padding: '6px 10px', borderRadius: 999, background: b.status === 'completed' ? '#e6f7ec' : b.status === 'cancelled' ? '#fff0f0' : '#f0f6ff', color: b.status === 'completed' ? '#2b8a3e' : b.status === 'cancelled' ? '#b00020' : '#1351b4', fontWeight: 600, fontSize: 12 }}>{b.statusLabel || b.status || ''}</span>
                 </td>
                 <td style={{ padding: '12px 10px' }}>
-                  <button onClick={(e) => { e.stopPropagation(); onRowClick(b); }} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', cursor: 'pointer' }}>Details</button>
+                  <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
+                    <button onClick={(e) => { e.stopPropagation(); onRowClick(b); }} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '12px' }}>Details</button>
+                    {b.status === 'cancelled-pending' && onConfirmRefund && (
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          onConfirmRefund(b); 
+                        }} 
+                        style={{ 
+                          padding: '6px 10px', 
+                          borderRadius: 6, 
+                          border: 'none', 
+                          background: '#4CAF50', 
+                          color: '#fff', 
+                          cursor: 'pointer', 
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        ✅ Confirm Refund
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

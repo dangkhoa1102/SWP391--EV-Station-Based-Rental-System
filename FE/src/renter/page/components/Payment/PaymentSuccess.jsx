@@ -45,6 +45,17 @@ export default function PaymentSuccess(){
     
     const syncPayment = async () => {
       try {
+        // Check URL params first - PayOS returns status in URL
+        const urlParams = new URLSearchParams(window.location.search)
+        const payosStatus = urlParams.get('status')
+        const payosCode = urlParams.get('code')
+        const orderCode = urlParams.get('orderCode')
+        
+        console.log('💳 PayOS callback params - status:', payosStatus, '| code:', payosCode, '| orderCode:', orderCode)
+        
+        // If PayOS returned status=PAID and code=00, payment was successful on PayOS side
+        const payosSuccess = payosStatus === 'PAID' && payosCode === '00'
+        
         // Get user role from localStorage
         const userRole = localStorage.getItem('userRole')
         console.log('👤 User role:', userRole)
@@ -71,9 +82,15 @@ export default function PaymentSuccess(){
         
         if (!bookingId) {
           console.warn('⚠️ No booking ID found in localStorage')
+          // If PayOS says payment succeeded, still show success message
+          if (payosSuccess) {
+            console.log('✅ PayOS confirmed payment success, showing success UI')
+            setSyncing(false)
+            setTimeout(() => redirectByRole(userRole), 2000)
+            return
+          }
           setError('Booking ID not found')
           setSyncing(false)
-          // Redirect based on role
           redirectByRole(userRole)
           return
         }
@@ -81,16 +98,28 @@ export default function PaymentSuccess(){
         console.log('🔄 Auto-syncing payment for booking:', bookingId)
         
         // Call /api/Payment/sync/{bookingId} to update payment status
-        await paymentApi.syncPayment(bookingId)
+        try {
+          await paymentApi.syncPayment(bookingId)
+          console.log('✅ Payment status synced successfully')
+        } catch (syncErr) {
+          console.warn('⚠️ Sync API call failed:', syncErr.message)
+          // If PayOS confirmed payment success, continue anyway - backend webhook may have already processed it
+          if (payosSuccess) {
+            console.log('ℹ️ PayOS confirmed payment was successful, continuing despite sync error')
+          } else {
+            throw syncErr
+          }
+        }
         
-        console.log('✅ Payment status synced successfully')
-        
-        // Fetch the updated booking to check status
-        console.log('📋 Fetching booking details to check status...')
-        const bookingDetails = await bookingApi.getBookingById(bookingId)
-        const bookingStatus = Number(bookingDetails?.bookingStatus || bookingDetails?.BookingStatus)
-        
-        console.log('📊 Booking status after payment:', bookingStatus, '(0=Pending, 1=Active, 2=Waiting Check-in, 3=Checked-in, 4=Check-out Pending, 5=Completed)')
+        // Try to fetch the updated booking to check status (optional - don't fail if this errors)
+        try {
+          console.log('📋 Fetching booking details to check status...')
+          const bookingDetails = await bookingApi.getBookingById(bookingId)
+          const bookingStatus = Number(bookingDetails?.bookingStatus || bookingDetails?.BookingStatus)
+          console.log('📊 Booking status after payment:', bookingStatus, '(0=Pending, 1=Active, 2=Waiting Check-in, 3=Checked-in, 4=Check-out Pending, 5=Completed)')
+        } catch (fetchErr) {
+          console.warn('⚠️ Could not fetch booking details:', fetchErr.message)
+        }
         
         setSyncing(false)
         
@@ -112,6 +141,29 @@ export default function PaymentSuccess(){
         
       } catch (err) {
         console.error('❌ Error in payment sync flow:', err)
+        
+        // Check if PayOS already confirmed success via URL params
+        const urlParams = new URLSearchParams(window.location.search)
+        const payosStatus = urlParams.get('status')
+        const payosCode = urlParams.get('code')
+        
+        if (payosStatus === 'PAID' && payosCode === '00') {
+          // PayOS confirmed success - payment went through even if our sync failed
+          console.log('✅ PayOS confirmed payment success, showing success message despite sync error')
+          setSyncing(false)
+          const userRole = localStorage.getItem('userRole')
+          setTimeout(() => {
+            try {
+              localStorage.removeItem('currentBookingId')
+              localStorage.removeItem('depositAmount')
+              localStorage.removeItem('activeCheckInBookingId')
+              localStorage.removeItem('activeCheckOutBookingId')
+            } catch (e) {}
+            redirectByRole(userRole)
+          }, 2000)
+          return
+        }
+        
         setError('Failed to process payment or create contract')
         setSyncing(false)
         

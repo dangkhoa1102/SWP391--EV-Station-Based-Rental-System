@@ -185,7 +185,7 @@ export default function BookingHistory(){
       return
     }
 
-    const confirmCancel = window.confirm(`Are you sure you want to cancel booking for "${booking.carInfo || 'this car'}"?`)
+    const confirmCancel = window.confirm(`Are you sure you want to cancel booking for "${booking.CarInfo || 'this vehicle'}"?`)
     if (!confirmCancel) return
 
     try {

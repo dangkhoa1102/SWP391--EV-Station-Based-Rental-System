@@ -4,11 +4,11 @@ import userApi from '../../../../services/userApi'
 import carApi from '../../../../services/carApi'
 
 export default function FeedbackDetailsModal({ open, onClose, feedback }) {
-  if (!open) return null
-  if (!feedback) return null
-
   const [displayName, setDisplayName] = useState(null)
   const [carLabel, setCarLabel] = useState(null)
+
+  if (!open) return null
+  if (!feedback) return null
 
   const id = feedback.id || feedback.Id
   const subject = feedback.subject || feedback.title || 'Feedback'

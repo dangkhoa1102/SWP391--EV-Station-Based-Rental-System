@@ -24,6 +24,7 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
   const [qrCode, setQrCode] = useState('')
   const [userDetails, setUserDetails] = useState(null)
   const [loadingUserDetails, setLoadingUserDetails] = useState(false)
+  const [confirmingRefund, setConfirmingRefund] = useState(false)
 
   useEffect(() => {
     if (!booking) return
@@ -199,6 +200,99 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
     }
   }
 
+  const handleConfirmRefund = async () => {
+    if (!booking?.id) return
+    
+    const confirmResult = window.confirm(
+      `Are you sure you want to confirm the refund for this booking?\n\n` +
+      `This action will process the refund and complete the cancellation.`
+    )
+    
+    if (!confirmResult) return
+    
+    setConfirmingRefund(true)
+    setErrorMsg('')
+    
+    try {
+      const result = await StaffAPI.confirmRefund(booking.id)
+      console.log('✅ Refund confirmed successfully:', result)
+      
+      // Show success message
+      alert('Refund confirmed successfully!')
+      
+      // Notify parent component about status update
+      if (typeof onStatusUpdated === 'function') {
+        onStatusUpdated(booking.id, 'cancelled')
+      }
+      
+      // Close modal
+      onClose()
+    } catch (e) {
+      console.error('❌ Failed to confirm refund:', e)
+      
+      const status = e?.response?.status
+      let errorMessage = 'Failed to confirm refund'
+      
+      if (status === 400) {
+        // Backend returns ResponseDto with either Message or Errors array
+        const responseData = e?.response?.data
+        if (responseData?.message) {
+          errorMessage = responseData.message
+        } else if (responseData?.errors && Array.isArray(responseData.errors) && responseData.errors.length > 0) {
+          errorMessage = responseData.errors[0]
+        } else if (e?.body?.message) {
+          errorMessage = e.body.message
+        } else {
+          errorMessage = 'Invalid request - Booking may not be in Pending Refund status or has no refund amount'
+        }
+      } else if (status === 401) {
+        errorMessage = 'Unauthorized - Please login again'
+      } else if (status === 403) {
+        errorMessage = 'Forbidden - You do not have permission (must be Station Staff)'
+      } else if (status === 404) {
+        errorMessage = 'Booking not found'
+      } else if (status === 500) {
+        errorMessage = e?.response?.data?.message || 'Server error - Please try again later'
+      } else {
+        errorMessage = e?.response?.data?.message || e?.body?.message || e?.message || 'Failed to confirm refund'
+      }
+      
+      setErrorMsg(errorMessage)
+    } finally {
+      setConfirmingRefund(false)
+    }
+  }
+
+  // Helper to check status - handle both number and string statuses
+  const getStatusString = (status) => {
+    if (!status && status !== 0) return 'unknown'
+    if (typeof status === 'string') {
+      // Backend returns PascalCase (e.g., "CancelledPendingRefund")
+      const lower = status.toLowerCase()
+      // Map backend string format to frontend format
+      if (lower === 'cancelledpendingrefund') return 'cancelled-pending'
+      if (lower === 'checkedoutpendingpayment') return 'checkout-pending'
+      if (lower === 'checkedinpendingpayment') return 'checkedin-pending'
+      return lower.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')
+    }
+    if (typeof status === 'number') {
+      switch (status) {
+        case 0: return 'pending'
+        case 1: return 'booked'
+        case 2: return 'waiting-checkin'
+        case 3: return 'checked-in'
+        case 4: return 'checkout-pending'
+        case 5: return 'completed'
+        case 6: return 'cancelled-pending'
+        case 7: return 'cancelled'
+        default: return 'unknown'
+      }
+    }
+    return 'unknown'
+  }
+
+  const statusStr = getStatusString(booking?.status)
+
   return (
     <div id="bookingModal" className="modal-overlay" style={{display: 'flex'}}>
       <div className="modal-content" style={{display:'flex', flexDirection:'column', width:'min(920px,95vw)', maxHeight:'90vh', overflow:'auto', margin:'0 auto'}}>
@@ -350,6 +444,25 @@ export default function BookingModal({ booking, onClose, onProceed, onCancel, on
               {booking.status === 'checked-in' && (
                 <button onClick={() => onProceed?.(booking, 'checkout')} style={{background:'#d32f2f', color:'#fff', width:'100%', padding:'12px', borderRadius:6, border:'none', cursor:'pointer', fontWeight:600, fontSize:14}}>
                   Check Out
+                </button>
+              )}
+              {statusStr === 'cancelled-pending' && (
+                <button 
+                  onClick={handleConfirmRefund}
+                  disabled={confirmingRefund}
+                  style={{
+                    background: confirmingRefund ? '#9e9e9e' : '#4CAF50',
+                    color:'#fff', 
+                    padding:'10px 20px', 
+                    borderRadius:6, 
+                    border:'none', 
+                    cursor: confirmingRefund ? 'not-allowed' : 'pointer', 
+                    fontWeight:600, 
+                    fontSize:14,
+                    minWidth: '140px'
+                  }}
+                >
+                  {confirmingRefund ? '⏳ Processing...' : '✅ Confirm Refund'}
                 </button>
               )}
               {/* For pending or other statuses, hide actions per requirements */}

@@ -599,7 +599,6 @@ export default function AdminPage() {
     { key: 'feedback', label: 'Feedback', icon: 'fas fa-comment-dots', onClick: () => setSection('feedback') },
     { key: 'incident', label: 'Incident', icon: 'fas fa-exclamation-triangle', onClick: () => setSection('incident') },
     { key: 'analytics', label: 'Analytics', icon: 'fas fa-chart-line', onClick: () => setSection('analytics') },
-    { key: 'profile', label: 'Profile', icon: 'fas fa-user-circle', onClick: () => setSection('profile') },
   ]
 
   // Load stations on mount, then load vehicles for first station
@@ -1193,7 +1192,6 @@ export default function AdminPage() {
             <AnalyticsSection />
           </>
         )}
-        {section === 'profile' && <ProfileSection />}
       </main>
     </div>
   );

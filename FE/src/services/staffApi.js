@@ -283,6 +283,55 @@ const staffApi = {
     }
   },
 
+  /**
+   * Confirm refund for a cancelled booking
+   * Used when booking status is "Cancelled (Pending Refund)"
+   */
+  confirmRefund: async (bookingId) => {
+    if (!bookingId) throw new Error('bookingId is required')
+    
+    try {
+      console.log('📤 Calling POST /Bookings/Confirm-Refund/' + bookingId)
+      // POST endpoint requires empty body {}
+      const res = await apiClient.post(`/Bookings/Confirm-Refund/${encodeURIComponent(bookingId)}`, {})
+      const body = res?.data
+      
+      console.log('✅ confirmRefund response:', body)
+      
+      if (body && typeof body === 'object' && 'isSuccess' in body) {
+        if (body.isSuccess === false) {
+          const msg = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : 'Request failed')
+          const err = new Error(msg)
+          err.response = { data: body }
+          throw err
+        }
+        return body.data
+      }
+      
+      return body
+    } catch (e) {
+      // Handle both network errors and API error responses
+      const errorData = e?.response?.data || {}
+      const errorMessage = 
+        errorData?.message || 
+        (Array.isArray(errorData?.errors) ? errorData.errors[0] : '') ||
+        e?.message ||
+        'Failed to confirm refund'
+      
+      console.error('❌ confirmRefund failed:', {
+        status: e?.response?.status,
+        statusText: e?.response?.statusText,
+        message: errorMessage,
+        fullError: e
+      })
+      
+      // Throw error with proper structure so caller can handle it
+      const err = new Error(errorMessage)
+      err.response = e?.response
+      throw err
+    }
+  },
+
 }
 
 export default staffApi

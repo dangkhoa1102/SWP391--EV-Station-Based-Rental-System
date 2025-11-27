@@ -1,27 +1,65 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import adminApi from '../../../../services/adminApi'
 import FeedbackDetailsModal from './FeedbackDetailsModal'
 
-export default function FeedbackSection({ initialSearch = '', initialPage = 1, pageSize = 10 }) {
+export default function FeedbackSection({ initialSearch = '', initialPage = 1, pageSize = 2 }) {
   const [feedbacks, setFeedbacks] = useState([])
   const [loading, setLoading] = useState(false)
+  const reqRef = useRef(0)
   const [search, setSearch] = useState(initialSearch)
   const [page, setPage] = useState(initialPage)
+  const [hasNext, setHasNext] = useState(false)
+  const [hasPrevious, setHasPrevious] = useState(false)
   const [selected, setSelected] = useState(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   const load = async (p = page, ps = pageSize, s = search) => {
+    // Increment request id and capture locally so we can ignore stale responses
+    const reqId = ++reqRef.current
     setLoading(true)
     try {
-      const res = await adminApi.getFeedbacks({ page: p, pageSize: ps, search: s })
-      const items = res?.items || res?.data || []
+      // Only send `page` to the API. Some backends interpret `pageSize` as the page
+      // number, and our service layer translates `page` -> `pageSize` for compatibility.
+      const res = await adminApi.getFeedbacks({ page: p, search: s })
+
+      // Normalize response shapes: some backends return PaginationDto directly,
+      // others wrap it under `data`. We try to support both.
+      let payload = res
+      if (res && res.data && (Array.isArray(res.data.items) || typeof res.data.hasNext !== 'undefined' || typeof res.data.totalCount !== 'undefined')) {
+        payload = res.data
+      }
+
+      const items = payload?.items || payload?.data || []
+      // Determine pagination flags with sensible fallbacks
+      const computedHasPrevious = typeof payload?.hasPrevious === 'boolean' ? payload.hasPrevious : (p > 1)
+      let computedHasNext
+      if (typeof payload?.hasNext === 'boolean') {
+        computedHasNext = payload.hasNext
+      } else if (typeof payload?.totalCount === 'number') {
+        // If totalCount is provided, compute from page and pageSize
+        computedHasNext = (p * ps) < Number(payload.totalCount)
+      } else {
+        // Fallback: if items length equals pageSize, assume there might be a next page
+        computedHasNext = Array.isArray(items) ? items.length >= ps : false
+      }
+
+      // Ignore this response if a newer request was started
+      if (reqId !== reqRef.current) return
+
       setFeedbacks(items)
-      setPage(p)
+      // Prefer server-provided page when available to keep client in sync
+      const serverPage = typeof payload?.currentPage === 'number' ? payload.currentPage : p
+      setPage(serverPage)
+      setHasPrevious(Boolean(payload?.hasPrevious ?? computedHasPrevious))
+      setHasNext(Boolean(payload?.hasNext ?? computedHasNext))
     } catch (e) {
       console.error('Failed to load feedbacks', e)
       setFeedbacks([])
+      setHasPrevious(false)
+      setHasNext(false)
     } finally {
-      setLoading(false)
+      // Only clear loading for the latest request
+      if (reqId === reqRef.current) setLoading(false)
     }
   }
 
@@ -132,7 +170,7 @@ export default function FeedbackSection({ initialSearch = '', initialPage = 1, p
                       WebkitBoxOrient:'vertical',
                       overflow:'hidden'
                     }}>
-                      {(f.message || f.description || f.content || 'No message').slice(0, 300)}
+                      {(f.message || f.description || f.content || '').slice(0, 300)}
                     </div>
                     <div style={{
                       fontSize:12,
@@ -141,7 +179,7 @@ export default function FeedbackSection({ initialSearch = '', initialPage = 1, p
                       gap:12,
                       alignItems:'center'
                     }}>
-                      <span>👤 {f.userName || f.user?.fullName || f.userEmail || f.email || 'Anonymous'}</span>
+                      <span>👤 {f.userName || f.user?.fullName || f.userEmail || f.email || ''}</span>
                       <span>📅 {new Date(f.createdAt || f.createdDate || f.created || Date.now()).toLocaleDateString('vi-VN')}</span>
                     </div>
                   </div>
@@ -189,18 +227,19 @@ export default function FeedbackSection({ initialSearch = '', initialPage = 1, p
               zIndex:10
             }}>
               <button 
-                disabled={page <= 1} 
-                onClick={() => load(Math.max(1, page-1), pageSize, search)}
+                disabled={!hasPrevious}
+                onClick={() => { if (hasPrevious) load(Math.max(1, page-1), pageSize, search) }}
                 style={{
                   padding:'8px 16px',
-                  backgroundColor:page <= 1 ? '#eee' : '#3498db',
-                  color:page <= 1 ? '#999' : 'white',
+                  backgroundColor: hasPrevious ? '#3498db' : '#eee',
+                  color: hasPrevious ? 'white' : '#999',
                   border:'none',
                   borderRadius:4,
-                  cursor:page <= 1 ? 'not-allowed' : 'pointer',
+                  cursor: hasPrevious ? 'pointer' : 'not-allowed',
                   fontWeight:600,
                   fontSize:13,
-                  transition:'background-color 0.2s'
+                  transition:'background-color 0.2s',
+                  opacity: hasPrevious ? 1 : 0.85
                 }}
               >
                 ← Previous
@@ -209,20 +248,22 @@ export default function FeedbackSection({ initialSearch = '', initialPage = 1, p
                 Page <strong>{page}</strong>
               </div>
               <button 
-                onClick={() => load(page+1, pageSize, search)}
+                disabled={!hasNext}
+                onClick={() => { if (hasNext) load(page+1, pageSize, search) }}
                 style={{
                   padding:'8px 16px',
-                  backgroundColor:'#3498db',
-                  color:'white',
+                  backgroundColor: hasNext ? '#3498db' : '#eee',
+                  color: hasNext ? 'white' : '#999',
                   border:'none',
                   borderRadius:4,
-                  cursor:'pointer',
+                  cursor: hasNext ? 'pointer' : 'not-allowed',
                   fontWeight:600,
                   fontSize:13,
-                  transition:'background-color 0.2s'
+                  transition:'background-color 0.2s',
+                  opacity: hasNext ? 1 : 0.85
                 }}
-                onMouseOver={(e) => e.target.style.backgroundColor='#2980b9'}
-                onMouseOut={(e) => e.target.style.backgroundColor='#3498db'}
+                onMouseOver={(e) => { if (hasNext) e.target.style.backgroundColor = '#2980b9'; }}
+                onMouseOut={(e) => { e.target.style.backgroundColor = hasNext ? '#3498db' : '#eee'; }}
               >
                 Next →
               </button>

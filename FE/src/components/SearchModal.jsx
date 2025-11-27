@@ -45,7 +45,7 @@ export default function SearchModal({
   const [rentalDurationText, setRentalDurationText] = useState('')
 
   // Time options (6:00 - 23:00)
-  const timeOptions = Array.from({ length: 18 }, (_,i)=> `${(6+i).toString().padStart(2,'0')}:00`)
+  const timeOptions = Array.from({ length: 18 }, (_,i)=> `${(0+i).toString().padStart(2,'0')}:00`)
 
   // Get unique provinces/cities from stations
   const provinces = React.useMemo(() => {
