@@ -230,7 +230,60 @@ const carApi = {
       console.error('Error updating car availability:', e)
       throw e
     }
+  },
+
+  // Soft delete car (set IsActive = false)
+  softDeleteCar: async (carId) => {
+    try {
+      const res = await apiClient.patch(`/Cars/Soft-Delete-By/${encodeURIComponent(carId)}`)
+      return res.data?.data || res.data
+    } catch (e) {
+      console.error('Error soft deleting car:', e)
+      throw e
+    }
+  },
+
+  // Restore car (set IsActive = true)
+  restoreCar: async (carId) => {
+    try {
+      const res = await apiClient.patch(`/Cars/Restore-By/${encodeURIComponent(carId)}`)
+      return res.data?.data || res.data
+    } catch (e) {
+      console.error('Error restoring car:', e)
+      throw e
+    }
+  },
+
+  // Get deleted cars
+  getDeletedCars: async () => {
+    try {
+      const res = await apiClient.get('/Cars/Get-Deleted')
+      const responseData = res.data
+      
+      if (Array.isArray(responseData)) {
+        return responseData
+      }
+      
+      if (responseData.data && Array.isArray(responseData.data)) {
+        return responseData.data
+      }
+      
+      if (responseData.data && responseData.data.data && Array.isArray(responseData.data.data)) {
+        return responseData.data.data
+      }
+      
+      if (responseData.items && Array.isArray(responseData.items)) {
+        return responseData.items
+      }
+      
+      console.warn('⚠️ No deleted cars found in response')
+      return []
+    } catch (e) {
+      console.error('❌ Error fetching deleted cars:', e.response?.data || e.message)
+      return []
+    }
   }
 }
 
 export default carApi
+

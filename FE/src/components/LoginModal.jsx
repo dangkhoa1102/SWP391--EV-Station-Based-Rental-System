@@ -5,7 +5,7 @@ import UpdateProfileModal from './UpdateProfileModal'
 import authApi from '../services/authApi'
 
 export default function LoginModal(){
-  const { showLogin, setShowLogin, login, setShowRegister } = useAuth()
+  const { showLogin, setShowLogin, login, setShowRegister, setShowForgotPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -132,7 +132,9 @@ export default function LoginModal(){
               {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
               <button type="submit" disabled={isLoading}>{isLoading ? 'Logging in...' : 'Log in'}</button>
               <p className="modal-footer-text">
-                <a href="#" onClick={(e)=>{ e.preventDefault(); switchToRegister(); }}>Create new account</a>
+                <a href="#" onClick={(e)=>{ e.preventDefault(); setShowLogin(false); setShowRegister(true); }}>Create new account</a>
+                {/* <br /> */}
+                <a href="#" onClick={(e)=>{ e.preventDefault(); setShowLogin(false); setShowForgotPassword(true); }}>Forgotten password?</a>
               </p>
             </form>
           </div>
@@ -146,6 +148,7 @@ export default function LoginModal(){
         title={notification.title}
         message={notification.message}
         onClose={() => setNotification({ ...notification, isOpen: false })}
+        autoCloseMs={notification.autoCloseMs || null}
       />
 
       {/* Update Profile Modal - shown directly when profile is incomplete */}

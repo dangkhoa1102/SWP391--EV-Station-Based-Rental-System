@@ -59,6 +59,9 @@ const adminApi = {
 
   createCar: carApi.createCar,
   deleteCar: carApi.deleteCar,
+  softDeleteCar: carApi.softDeleteCar,
+  restoreCar: carApi.restoreCar,
+  getDeletedCars: carApi.getDeletedCars,
   updateCar: carApi.updateCar,
   updateStatus: carApi.updateStatus,
   updateBatteryLevel: carApi.updateBatteryLevel,

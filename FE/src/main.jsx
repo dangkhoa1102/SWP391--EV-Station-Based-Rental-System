@@ -8,6 +8,8 @@ import './renter/page/components/Profile/user_profile.css'
 import { AuthProvider } from './context/AuthContext'
 import LoginModal from './components/LoginModal'
 import RegisterModal from './components/RegisterModal'
+import VerifyEmailModal from './components/VerifyEmailModal'
+import ForgotPasswordModal from './components/ForgotPasswordModal'
 import { ToastProvider } from './components/ToastProvider'
 
 const root = createRoot(document.getElementById('root'))
@@ -17,6 +19,8 @@ root.render(
 			<App />
 			<LoginModal />
 			<RegisterModal />
+			<VerifyEmailModal />
+			<ForgotPasswordModal />
 		</ToastProvider>
 	</AuthProvider>
 )

@@ -4,7 +4,7 @@ import NotificationModal from './NotificationModal'
 
 export default function RegisterModal(){
   const { showRegister, setShowRegister, register } = useAuth()
-  const { user, logout, setShowLogin} = useAuth()
+  const { user, logout, setShowLogin, setShowVerifyEmail} = useAuth()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -24,13 +24,13 @@ export default function RegisterModal(){
       console.log('📝 Registering user:', email)
       await register(username, email, phone, password)
       
-      // Show success notification
+      // Show success notification briefly
       setNotification({
         isOpen: true,
         type: 'success',
         title: 'Account Created Successfully! 🎉',
-        message: `Your account has been created.\nEmail: ${email}\n\nYou can now login and complete your profile.`,
-        autoCloseMs: 2500
+        message: `Check your email for verification code.`,
+        autoCloseMs: 2000
       })
 
       // Clear form
@@ -39,10 +39,11 @@ export default function RegisterModal(){
       setPhone('')
       setPassword('')
       
-      // Close register modal after 500ms to let notification show
+      // Close register modal and show verify email modal
       setTimeout(() => {
-        console.log('⏱️ Registration complete - closing register modal')
+        console.log('⏱️ Registration complete - showing verify email modal')
         setShowRegister(false)
+        setShowVerifyEmail({ email })
       }, 500)
 
     }catch(err){
