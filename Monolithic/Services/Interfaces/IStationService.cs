@@ -6,11 +6,13 @@ namespace Monolithic.Services.Interfaces
     public interface IStationService
     {
         Task<ResponseDto<PaginationDto<StationDto>>> GetStationsAsync(PaginationRequestDto request);
+        Task<ResponseDto<PaginationDto<StationDto>>> GetInactiveStationsAsync(PaginationRequestDto request);
         Task<ResponseDto<StationDto>> GetStationByIdAsync(Guid id);
         Task<ResponseDto<StationDto>> CreateStationAsync(CreateStationDto request);
         Task<ResponseDto<StationDto>> UpdateStationAsync(Guid id, UpdateStationDto request);
         Task<ResponseDto<string>> DeleteStationAsync(Guid id);
         Task<ResponseDto<List<StationCarDto>>> GetAvailableCarsAtStationAsync(Guid stationId);
+        Task<ResponseDto<List<StationCarDto>>> GetInactiveCarsAtStationAsync(Guid stationId);
         Task<ResponseDto<string>> RecalculateStationAvailableSlotsAsync(Guid stationId);
         Task<bool> CanAddCarToStationAsync(Guid stationId);
         Task<ResponseDto<string>> UpdateStationAvailableSlotsAsync(Guid stationId, int change);
