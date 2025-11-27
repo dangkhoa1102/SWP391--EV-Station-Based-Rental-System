@@ -444,21 +444,28 @@ namespace Monolithic.Services.Implementation
                 decimal refundAmount;
                 string note;
 
-                if (hoursBeforeStart >= 24 && booking.BookingStatus == BookingStatus.DepositPaid)
+                if (hoursBeforeStart >= 24)
                 {
-
-                    refundAmount = booking.DepositAmount;
-                    note = "Full refund (cancelled > 24h before start)";
-                    booking.BookingStatus = BookingStatus.CancelledPendingRefund;
-                    booking.IsActive = false;
+                    // Early cancellation (>24h)
+                    if (booking.BookingStatus == BookingStatus.DepositPaid)
+                    {
+                        refundAmount = booking.DepositAmount;
+                        note = "Full refund (cancelled > 24h before start and deposit paid)";
+                        booking.BookingStatus = BookingStatus.CancelledPendingRefund;
+                    }
+                    else
+                    {
+                        refundAmount = 0;
+                        note = "No refund (cancelled > 24h but deposit not paid)";
+                        booking.BookingStatus = BookingStatus.Cancelled;
+                    }
                 }
                 else
                 {
-                    // no refund
+                    // Late cancellation (<24h)
                     refundAmount = 0;
                     note = "No refund (cancelled < 24h before start)";
                     booking.BookingStatus = BookingStatus.Cancelled;
-                    booking.IsActive = false;
                 }
 
                 booking.RefundAmount = refundAmount;
