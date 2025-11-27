@@ -139,6 +139,32 @@ const authApi = {
         throw e2
       }
     }
+  },
+
+  // Verify email with OTP -> POST /Auth/verify-email
+  verifyEmail: async (email, otp) => {
+    const res = await apiClient.post('/Auth/verify-email', { Email: email, Otp: otp })
+    return res.data
+  },
+
+  // Forgot password -> POST /Auth/forgot-password
+  forgotPassword: async (email) => {
+    const res = await apiClient.post('/Auth/forgot-password', { Email: email })
+    return res.data
+  },
+
+  // Reset password with OTP -> POST /Auth/reset-password
+  resetPassword: async (email, otp, newPassword) => {
+    const res = await apiClient.post('/Auth/reset-password', { Email: email, Otp: otp, NewPassword: newPassword })
+    return res.data
+  },
+
+  // Resend OTP -> POST /Auth/resend-otp
+  resendOtp: async (email) => {
+    const res = await apiClient.post('/Auth/resend-otp', email, {
+      headers: { 'Content-Type': 'application/json' }
+    })
+    return res.data
   }
 }
 

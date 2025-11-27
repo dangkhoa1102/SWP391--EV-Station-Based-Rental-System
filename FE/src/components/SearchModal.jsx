@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import MapModal from './MapModal.jsx'
 import '../styles/SearchModal.css'
 
 export default function SearchModal({ 
@@ -10,7 +9,9 @@ export default function SearchModal({
   onSearch,
   currentSearchData = null
 }) {
-  const [showMapModal, setShowMapModal] = useState(false)
+  const [showProvinceDropdown, setShowProvinceDropdown] = useState(false)
+  const [showStationDropdown, setShowStationDropdown] = useState(false)
+  const [selectedProvince, setSelectedProvince] = useState('')
   const [searchData, setSearchData] = useState(() => {
     // If currentSearchData is provided, use it; otherwise use defaults
     if (currentSearchData) {
@@ -46,6 +47,33 @@ export default function SearchModal({
   // Time options (6:00 - 23:00)
   const timeOptions = Array.from({ length: 18 }, (_,i)=> `${(6+i).toString().padStart(2,'0')}:00`)
 
+  // Get unique provinces/cities from stations
+  const provinces = React.useMemo(() => {
+    const provinceSet = new Set()
+    stations.forEach(station => {
+      const address = station.address || station.Address || ''
+      const parts = address.split(',')
+      if (parts.length > 0) {
+        const suffix = parts[parts.length - 1].trim()
+        if (suffix) provinceSet.add(suffix)
+      }
+    })
+    return Array.from(provinceSet).sort()
+  }, [stations])
+
+  // Get stations filtered by selected province
+  const filteredStations = React.useMemo(() => {
+    if (!selectedProvince) return []
+    return stations.filter(station => {
+      const address = station.address || station.Address || ''
+      return address.endsWith(selectedProvince)
+    }).sort((a, b) => {
+      const nameA = a.stationName || a.name || a.Name || ''
+      const nameB = b.stationName || b.name || b.Name || ''
+      return nameA.localeCompare(nameB)
+    })
+  }, [stations, selectedProvince])
+
   // Update rental duration whenever dates/times change
   useEffect(() => {
     updateRentalDuration()
@@ -77,17 +105,9 @@ export default function SearchModal({
   }, [isOpen, currentSearchData])
 
   function handleClose() {
-    setShowMapModal(false)
+    setShowProvinceDropdown(false)
+    setShowStationDropdown(false)
     onClose()
-  }
-
-  function openMapModal() {
-    setShowMapModal(true)
-  }
-
-  function handleSelectStationFromMap(id, name, address) {
-    setSearchData(d => ({ ...d, location: id, locationName: name }))
-    setShowMapModal(false)
   }
 
   function toggleCalendar(mode) {
@@ -217,23 +237,10 @@ export default function SearchModal({
 
   return (
     <>
-      {/* Backdrop (only when map is not open) */}
-      {!showMapModal && (
-        <div className="search-modal-backdrop" onClick={handleClose}></div>
-      )}
-
-      {/* Map Modal */}
-      <MapModal 
-        isOpen={showMapModal} 
-        onClose={() => setShowMapModal(false)}
-        stations={stations}
-        onSelectStation={handleSelectStationFromMap}
-        selectedStationId={searchData.location}
-        userLocation={userLocation}
-      />
+      <div className="search-modal-backdrop" onClick={handleClose}></div>
 
       {/* Search Modal */}
-      <div className={`search-modal ${isOpen ? 'active' : ''} ${showMapModal ? 'with-map' : ''}`}>
+      <div className={`search-modal ${isOpen ? 'active' : ''}`}>
         <div className="search-modal-content">
           <div className="search-modal-header">
             <h3>Search Cars</h3>
@@ -241,12 +248,84 @@ export default function SearchModal({
           </div>
           
           <div className="search-modal-body">
-            {/* Pick-up Location */}
+            {/* Pick-up Location - Two Dropdowns */}
             <div className="search-field">
               <label><i className="fas fa-map-marker-alt"></i> Pick-up Location</label>
-              <div className="search-input" onClick={openMapModal}>
-                <i className="fas fa-map-marker-alt"></i>
-                <span>{searchData.locationName}</span>
+              <div className="location-dropdowns-row">
+                {/* Province Dropdown */}
+                <div className="dropdown-wrapper province-dropdown">
+                  <button
+                    className="dropdown-button"
+                    onClick={() => setShowProvinceDropdown(!showProvinceDropdown)}
+                  >
+                    <i className="fas fa-map-pin"></i>
+                    <span>{selectedProvince || 'Select Province'}</span>
+                    <i className={`fas fa-chevron-down ${showProvinceDropdown ? 'open' : ''}`}></i>
+                  </button>
+                  {showProvinceDropdown && (
+                    <div className="dropdown-list">
+                      {provinces.length === 0 ? (
+                        <div className="dropdown-item disabled">No provinces available</div>
+                      ) : (
+                        provinces.map(province => (
+                          <div
+                            key={province}
+                            className={`dropdown-item ${selectedProvince === province ? 'active' : ''}`}
+                            onClick={() => {
+                              setSelectedProvince(province)
+                              setShowProvinceDropdown(false)
+                              // Reset station when province changes
+                              setSearchData(d => ({ ...d, location: '', locationName: 'Select location' }))
+                            }}
+                          >
+                            <i className="fas fa-location-dot"></i>
+                            {province}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Station Dropdown */}
+                <div className="dropdown-wrapper station-dropdown">
+                  <button
+                    className="dropdown-button"
+                    onClick={() => setShowStationDropdown(!showStationDropdown)}
+                    disabled={!selectedProvince}
+                  >
+                    <i className="fas fa-location-dot"></i>
+                    <span>{searchData.locationName}</span>
+                    <i className={`fas fa-chevron-down ${showStationDropdown ? 'open' : ''}`}></i>
+                  </button>
+                  {showStationDropdown && selectedProvince && (
+                    <div className="dropdown-list">
+                      {filteredStations.length === 0 ? (
+                        <div className="dropdown-item disabled">No stations available</div>
+                      ) : (
+                        filteredStations.map(station => {
+                          const stationId = station.id || station.Id || station.stationId
+                          const name = station.stationName || station.name || station.Name || 'Unknown'
+                          const address = station.address || station.Address || ''
+                          return (
+                            <div
+                              key={stationId}
+                              className={`dropdown-item ${searchData.location === stationId ? 'active' : ''}`}
+                              onClick={() => {
+                                setSearchData(d => ({ ...d, location: stationId, locationName: name }))
+                                setShowStationDropdown(false)
+                              }}
+                              title={address}
+                            >
+                              <i className="fas fa-store"></i>
+                              {name}
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

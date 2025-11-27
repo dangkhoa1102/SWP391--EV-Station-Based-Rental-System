@@ -14,6 +14,8 @@ export function AuthProvider({ children }){
   const [token, setToken] = useState(() => localStorage.getItem('token') || null)
   const [showLogin, setShowLogin] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
+  const [showVerifyEmail, setShowVerifyEmail] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
 
   useEffect(()=>{
     if(token){ localStorage.setItem('token', token) } else { localStorage.removeItem('token') }
@@ -100,7 +102,11 @@ export function AuthProvider({ children }){
     showLogin,
     setShowLogin,
     showRegister,
-    setShowRegister
+    setShowRegister,
+    showVerifyEmail,
+    setShowVerifyEmail,
+    showForgotPassword,
+    setShowForgotPassword
   }
 
   return (
