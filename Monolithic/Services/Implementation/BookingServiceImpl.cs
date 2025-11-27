@@ -224,9 +224,9 @@ namespace Monolithic.Services.Implementation
             booking.CheckInPhotoUrl = checkInPhotoUrl;
 
             //5️⃣ Cập nhật slot trống của station(xe đã rời đi)
-            var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
-            if (!stationUpdateResult)
-                return ResponseDto<BookingDto>.Failure("Failed to update station slots");
+            // var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+            // if (!stationUpdateResult)
+            //     return ResponseDto<BookingDto>.Failure("Failed to update station slots");
 
             // 6️⃣ CẬP NHẬT DB
             var updated = await _bookingRepository.UpdateAsync(booking);
@@ -318,7 +318,7 @@ namespace Monolithic.Services.Implementation
                     booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
                     booking.UpdatedAt = DateTime.Now;
 
-                    await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+                    // await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
                     var updatedEarlyBooking = await _bookingRepository.UpdateAsync(booking);
                     var dto = _mapper.Map<BookingDto>(updatedEarlyBooking);
 
@@ -347,9 +347,9 @@ namespace Monolithic.Services.Implementation
                 booking.UpdatedAt = DateTime.Now;
 
                 // 9️⃣ Update station slot (+1 available)
-                var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
-                if (!stationUpdateResult)
-                    return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout.");
+                // var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+                // if (!stationUpdateResult)
+                //     return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout.");
                 // 🔟 Save changes
                 var updatedBooking = await _bookingRepository.UpdateAsync(booking);
                 var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
@@ -375,8 +375,8 @@ namespace Monolithic.Services.Implementation
             try
             {
                 var booking = await _bookingRepository.GetByIdAsync(bookingId);
-                if (booking == null || !booking.IsActive)
-                    return ResponseDto<BookingDto>.Failure("Booking not found.");
+                // if (booking == null || !booking.IsActive)
+                //     return ResponseDto<BookingDto>.Failure("Booking not found.");
 
                 // ✅ Chỉ xử lý nếu đúng 2 trạng thái này
                 if (booking.BookingStatus != BookingStatus.CheckedOutPendingPayment &&
@@ -553,7 +553,7 @@ namespace Monolithic.Services.Implementation
             var expiredBookings = await _bookingRepository.FindAsync(b =>
                 b.IsActive &&
                 b.BookingStatus == BookingStatus.Pending &&
-                b.CreatedAt.AddMinutes(1) < now
+                b.CreatedAt.AddMinutes(10) < now
             );
 
             await CancelBookingsAsync(expiredBookings, "Expired: pending more than 30 minutes");
