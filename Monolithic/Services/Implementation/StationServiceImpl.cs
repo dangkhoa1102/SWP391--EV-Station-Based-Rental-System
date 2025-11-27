@@ -15,12 +15,18 @@ namespace Monolithic.Services.Implementation
         private readonly IStationRepository _stationRepository;
         private readonly IMapper _mapper;
         private readonly EVStationBasedRentalSystemDbContext _dbContext;
+        private readonly IBookingRepository _bookingRepository;
 
-        public StationServiceImpl(IStationRepository stationRepository, IMapper mapper, EVStationBasedRentalSystemDbContext dbContext)
+        public StationServiceImpl(
+            IStationRepository stationRepository, 
+            IMapper mapper, 
+            EVStationBasedRentalSystemDbContext dbContext,
+            IBookingRepository bookingRepository)
         {
             _stationRepository = stationRepository;
             _mapper = mapper;
             _dbContext = dbContext;
+            _bookingRepository = bookingRepository;
         }
 
         public async Task<ResponseDto<PaginationDto<StationDto>>> GetStationsAsync(PaginationRequestDto request)
@@ -46,6 +52,33 @@ namespace Monolithic.Services.Implementation
             var dtoList = _mapper.Map<List<StationDto>>(items);
             var pagination = new PaginationDto<StationDto>(dtoList, request.Page, request.PageSize, totalCount);
             return ResponseDto<PaginationDto<StationDto>>.Success(pagination);
+        }
+
+        public async Task<ResponseDto<PaginationDto<StationDto>>> GetInactiveStationsAsync(PaginationRequestDto request)
+        {
+            Expression<Func<Station, bool>>? predicate = null;
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var search = request.Search.Trim().ToLower();
+                predicate = s => !s.IsActive && (s.Name.ToLower().Contains(search) || s.Address.ToLower().Contains(search));
+            }
+            else
+            {
+                predicate = s => !s.IsActive;
+            }
+
+            var (items, totalCount) = await _stationRepository.GetPagedAsync(
+                request.Page,
+                request.PageSize,
+                predicate,
+                s => s.UpdatedAt,
+                orderByDescending: true);
+
+            var dtoList = _mapper.Map<List<StationDto>>(items);
+            var pagination = new PaginationDto<StationDto>(dtoList, request.Page, request.PageSize, totalCount);
+            return ResponseDto<PaginationDto<StationDto>>.Success(
+                pagination, 
+                $"Found {totalCount} inactive stations");
         }
 
         public async Task<ResponseDto<StationDto>> GetStationByIdAsync(Guid id)
@@ -101,10 +134,28 @@ namespace Monolithic.Services.Implementation
                 return ResponseDto<string>.Failure("Station not found");
             }
 
+            // Kiểm tra số lượng booking đang hoạt động (chỉ để thông báo)
+            var activeBookings = await _bookingRepository.FindAsync(b => 
+                b.StationId == id && 
+                b.IsActive && 
+                (b.BookingStatus == BookingStatus.Pending || 
+                 b.BookingStatus == BookingStatus.DepositPaid ||
+                 b.BookingStatus == BookingStatus.CheckedIn ||
+                 b.BookingStatus == BookingStatus.CheckedInPendingPayment));
+
+            var activeBookingCount = activeBookings.Count();
+
+            // Soft delete: Luôn cho phép, chỉ đổi IsActive = false
             station.IsActive = false;
             station.UpdatedAt = DateTime.UtcNow;
             await _stationRepository.UpdateAsync(station);
-            return ResponseDto<string>.Success(string.Empty, "Station deleted");
+
+            // Thông báo khác nhau tùy vào có booking active hay không
+            var message = activeBookingCount > 0
+                ? $"Station soft deleted successfully. There are {activeBookingCount} active bookings that will continue to be processed. No new bookings can be created for this station."
+                : "Station soft deleted successfully. No new bookings can be created for this station.";
+            
+            return ResponseDto<string>.Success(string.Empty, message);
         }
 
         public async Task<ResponseDto<List<StationCarDto>>> GetAvailableCarsAtStationAsync(Guid stationId)
@@ -120,7 +171,22 @@ namespace Monolithic.Services.Implementation
             return ResponseDto<List<StationCarDto>>.Success(dto);
         }
 
-        // Removed UpdateStationSlotsAsync per requirements
+        public async Task<ResponseDto<List<StationCarDto>>> GetInactiveCarsAtStationAsync(Guid stationId)
+        {
+            var station = await _stationRepository.GetStationWithCarsAsync(stationId);
+            if (station == null)
+            {
+                return ResponseDto<List<StationCarDto>>.Failure("Station not found");
+            }
+
+            // Lấy tất cả xe không available (IsAvailable = false) nhưng vẫn IsActive = true
+            var inactiveCars = station.Cars.Where(c => c.IsActive && !c.IsAvailable).ToList();
+            var dto = _mapper.Map<List<StationCarDto>>(inactiveCars);
+            
+            return ResponseDto<List<StationCarDto>>.Success(
+                dto, 
+                $"Found {dto.Count} inactive cars at station {station.Name}");
+        }
 
         /// <summary>
         /// Tính toán lại AvailableSlots dựa trên số xe thực tế tại station

@@ -193,7 +193,7 @@ namespace Monolithic.Controllers
             return Ok(result);
         }
         [HttpPost("Confirm-Refund/{bookingId:guid}")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Station Staff")]
         public async Task<ActionResult<ResponseDto<BookingDto>>> ConfirmRefund(Guid bookingId)
         {
             try

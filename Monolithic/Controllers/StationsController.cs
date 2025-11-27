@@ -21,12 +21,24 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Lấy danh sách trạm sạc (có phân trang)
+        /// Lấy danh sách trạm sạc ĐANG HOẠT ĐỘNG (IsActive = true) - có phân trang
         /// </summary>
         [HttpGet("Get-All")]
         public async Task<ActionResult<ResponseDto<PaginationDto<StationDto>>>> GetStations([FromQuery] PaginationRequestDto request)
         {
             var result = await _stationService.GetStationsAsync(request);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy danh sách trạm sạc INACTIVE (IsActive = false) - Admin/Staff only
+        /// Show tất cả thông tin của station bao gồm: Name, Address, TotalSlots, AvailableSlots, xe trong station, etc.
+        /// </summary>
+        [HttpGet("Get-Inactive-Stations")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<PaginationDto<StationDto>>>> GetInactiveStations([FromQuery] PaginationRequestDto request)
+        {
+            var result = await _stationService.GetInactiveStationsAsync(request);
             return Ok(result);
         }
 
@@ -70,14 +82,16 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
-        /// Xóa trạm sạc (chỉ Admin)
+        /// Xóa trạm sạc (SOFT DELETE - chỉ đổi IsActive = false, không cho đặt booking mới)
+        /// Chỉ cho phép xóa nếu không còn booking đang hoạt động
+        /// Tất cả thông tin station vẫn được giữ nguyên trong database
         /// </summary>
         [HttpDelete("Delete-By-{id}")]
         [Authorize(Roles = AppRoles.Admin)]
         public async Task<ActionResult<ResponseDto<string>>> DeleteStation(Guid id)
         {
             var result = await _stationService.DeleteStationAsync(id);
-            if (!result.IsSuccess) return NotFound(result);
+            if (!result.IsSuccess) return BadRequest(result);
             return Ok(result);
         }
 
@@ -88,6 +102,18 @@ namespace Monolithic.Controllers
         public async Task<ActionResult<ResponseDto<List<StationCarDto>>>> GetAvailableCars(Guid id)
         {
             var result = await _stationService.GetAvailableCarsAtStationAsync(id);
+            if (!result.IsSuccess) return NotFound(result);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Xem danh sách xe INACTIVE (không khả dụng) tại trạm - Admin/Staff
+        /// </summary>
+        [HttpGet("Get-Inactive-Cars-By-{id}")]
+        [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.StationStaff}")]
+        public async Task<ActionResult<ResponseDto<List<StationCarDto>>>> GetInactiveCars(Guid id)
+        {
+            var result = await _stationService.GetInactiveCarsAtStationAsync(id);
             if (!result.IsSuccess) return NotFound(result);
             return Ok(result);
         }

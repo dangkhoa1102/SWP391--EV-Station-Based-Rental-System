@@ -136,6 +136,49 @@ namespace Monolithic.Controllers
         }
 
         /// <summary>
+        /// Soft delete xe (set IsActive = false) - Admin only
+        /// </summary>
+        [HttpPatch("Soft-Delete-By/{id}")]
+        [Authorize(Roles = AppRoles.Admin)]
+        public async Task<ActionResult<ResponseDto<string>>> SoftDeleteCar(Guid id)
+        {
+            var result = await _carService.SoftDeleteCarAsync(id);
+            if (!result.IsSuccess)
+            {
+                return NotFound(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Khôi phục xe đã xóa (set IsActive = true) - Admin only
+        /// </summary>
+        [HttpPatch("Restore-By/{id}")]
+        [Authorize(Roles = AppRoles.Admin)]
+        public async Task<ActionResult<ResponseDto<string>>> RestoreCar(Guid id)
+        {
+            var result = await _carService.RestoreCarAsync(id);
+            if (!result.IsSuccess)
+            {
+                return NotFound(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy danh sách xe đã xóa (IsActive = false) - Admin only
+        /// </summary>
+        [HttpGet("Get-Deleted")]
+        [Authorize(Roles = AppRoles.Admin)]
+        public async Task<ActionResult<ResponseDto<List<CarDto>>>> GetDeletedCars()
+        {
+            var result = await _carService.GetDeletedCarsAsync();
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Cập nhật trạng thái khả dụng của xe (Admin, Station Staff)
         /// </summary>
         [HttpPatch("Update-Status-By-{id}")]

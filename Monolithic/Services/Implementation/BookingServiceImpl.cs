@@ -553,7 +553,7 @@ namespace Monolithic.Services.Implementation
             var expiredBookings = await _bookingRepository.FindAsync(b =>
                 b.IsActive &&
                 b.BookingStatus == BookingStatus.Pending &&
-                b.CreatedAt.AddMinutes(30) < now
+                b.CreatedAt.AddMinutes(1) < now
             );
 
             await CancelBookingsAsync(expiredBookings, "Expired: pending more than 30 minutes");

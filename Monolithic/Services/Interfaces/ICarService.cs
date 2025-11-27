@@ -10,6 +10,9 @@ namespace Monolithic.Services.Interfaces
         Task<ResponseDto<CarDto>> CreateCarAsync(CreateCarDto request);
         Task<ResponseDto<CarDto>> UpdateCarAsync(Guid id, UpdateCarDto request);
         Task<ResponseDto<string>> DeleteCarAsync(Guid id);
+        Task<ResponseDto<string>> SoftDeleteCarAsync(Guid id);
+        Task<ResponseDto<string>> RestoreCarAsync(Guid id);
+        Task<ResponseDto<List<CarDto>>> GetDeletedCarsAsync();
         Task<ResponseDto<List<CarDto>>> GetAvailableCarsAsync(Guid stationId);
         Task<ResponseDto<List<CarDto>>> SearchAvailableCarsAsync(
             Guid? stationId, string? brand, string? model, 
