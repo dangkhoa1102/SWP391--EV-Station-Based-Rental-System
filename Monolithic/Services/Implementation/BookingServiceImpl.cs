@@ -250,126 +250,254 @@ namespace Monolithic.Services.Implementation
         /// <summary>
         /// Step 5: Check-out with rental payment (Check-out + thanh toán tiền thuê)
         /// </summary>
-        public async Task<ResponseDto<BookingDto>> CheckOutBookingAsync(CheckOutWithPaymentDto request)
-        {
-            try
-            {
-                // 1️⃣ Validate booking
-                var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
-                if (booking == null || !booking.IsActive)
-                    return ResponseDto<BookingDto>.Failure("Booking not found.");
+        // public async Task<ResponseDto<BookingDto>> CheckOutBookingAsync(CheckOutWithPaymentDto request)
+        // {
+        //     try
+        //     {
+        //         // 1️⃣ Validate booking
+        //         var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
+        //         if (booking == null || !booking.IsActive)
+        //             return ResponseDto<BookingDto>.Failure("Booking not found.");
 
-                if (booking.BookingStatus != BookingStatus.CheckedIn)
-                    return ResponseDto<BookingDto>.Failure($"Cannot checkout booking with status: {booking.BookingStatus}");
+        //         if (booking.BookingStatus != BookingStatus.CheckedIn)
+        //             return ResponseDto<BookingDto>.Failure($"Cannot checkout booking with status: {booking.BookingStatus}");
              
 
               
-                // 2️⃣ Record actual return info
-                booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.Now;
-                booking.CheckOutNotes = request.CheckOutNotes;
-                booking.CheckOutPhotoUrl = request.CheckOutPhotoUrl;
-                booking.DamageFee = Math.Round(request.DamageFee, 2);
-                booking.UpdatedAt = DateTime.Now;
+        //         // 2️⃣ Record actual return info
+        //         booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.Now;
+        //         booking.CheckOutNotes = request.CheckOutNotes;
+        //         booking.CheckOutPhotoUrl = request.CheckOutPhotoUrl;
+        //         booking.DamageFee = Math.Round(request.DamageFee, 2);
+        //         booking.UpdatedAt = DateTime.Now;
 
               
-                var actualReturn = booking.ActualReturnDateTime.Value;
-                if (actualReturn < booking.StartTime)
-                    return ResponseDto<BookingDto>.Failure("Actual return date cannot be earlier than pickup date.");
+        //         var actualReturn = booking.ActualReturnDateTime.Value;
+        //         if (actualReturn < booking.StartTime)
+        //             return ResponseDto<BookingDto>.Failure("Actual return date cannot be earlier than pickup date.");
 
                
-                // 3️⃣ Setup rental parameters
-                var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
-                var graceMinutes = 30;
+        //         // 3️⃣ Setup rental parameters
+        //         var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
+        //         var graceMinutes = 30;
 
                 
 
               
-                    if (booking.RentalAmount <= 0)
-                    {
+        //             if (booking.RentalAmount <= 0)
+        //             {
                        
-                        // fallback: if missing, calculate based on duration and rates
-                        var duration = (booking.EndTime ?? booking.StartTime.AddHours(1)) - booking.StartTime;
-                        var totalHours = (decimal)duration.TotalHours;
-                        var totalDays = (decimal)duration.TotalDays;
-                        booking.RentalAmount = totalDays >= 1
-                            ? Math.Ceiling(totalDays) * booking.DailyRate
-                            : Math.Ceiling(totalHours) * booking.HourlyRate;
-                        booking.RentalAmount = Math.Round(booking.RentalAmount, 2);
-                    }
-                booking.LateFee = 0m;
-                if (actualReturn > expectedReturn.AddMinutes(graceMinutes))
-                {
-                    var delayMinutes = (actualReturn - expectedReturn).TotalMinutes;
-                    var hoursLate = Convert.ToDecimal(delayMinutes / 60.0);
-                    booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
-                }
-                if (actualReturn <= expectedReturn)
-                {
-                    booking.LateFee = 0;
-                    booking.ExtraAmount = 0;
-                    booking.RefundAmount = booking.DepositAmount;
-                    booking.FinalPaymentAmount = -booking.DepositAmount;
-                    booking.DepositRefunded = true;
+        //                 // fallback: if missing, calculate based on duration and rates
+        //                 var duration = (booking.EndTime ?? booking.StartTime.AddHours(1)) - booking.StartTime;
+        //                 var totalHours = (decimal)duration.TotalHours;
+        //                 var totalDays = (decimal)duration.TotalDays;
+        //                 booking.RentalAmount = totalDays >= 1
+        //                     ? Math.Ceiling(totalDays) * booking.DailyRate
+        //                     : Math.Ceiling(totalHours) * booking.HourlyRate;
+        //                 booking.RentalAmount = Math.Round(booking.RentalAmount, 2);
+        //             }
+        //         booking.LateFee = 0m;
+        //         if (actualReturn > expectedReturn.AddMinutes(graceMinutes))
+        //         {
+        //             var delayMinutes = (actualReturn - expectedReturn).TotalMinutes;
+        //             var hoursLate = Convert.ToDecimal(delayMinutes / 60.0);
+        //             booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
+        //         }
+        //         if (actualReturn <= expectedReturn)
+        //         {
+        //             booking.LateFee = 0;
+        //             booking.ExtraAmount = 0;
+        //             booking.RefundAmount = booking.DepositAmount;
+        //             booking.FinalPaymentAmount = -booking.DepositAmount;
+        //             booking.DepositRefunded = true;
 
-                    // Cập nhật tổng tiền (totalAmount giống booking mẫu bạn đưa)
-                    booking.TotalAmount = booking.RentalAmount + booking.DamageFee + booking.LateFee;
+        //             // Cập nhật tổng tiền (totalAmount giống booking mẫu bạn đưa)
+        //             booking.TotalAmount = booking.RentalAmount + booking.DamageFee + booking.LateFee;
 
-                    // Trả về ngay vì không cần xử lý thêm
-                    booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
-                    booking.UpdatedAt = DateTime.Now;
+        //             // Trả về ngay vì không cần xử lý thêm
+        //             booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
+        //             booking.UpdatedAt = DateTime.Now;
 
-                    // await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
-                    var updatedEarlyBooking = await _bookingRepository.UpdateAsync(booking);
-                    var dto = _mapper.Map<BookingDto>(updatedEarlyBooking);
+        //             // await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+        //             var updatedEarlyBooking = await _bookingRepository.UpdateAsync(booking);
+        //             var dto = _mapper.Map<BookingDto>(updatedEarlyBooking);
 
-                    return ResponseDto<BookingDto>.Success(dto, "Early return: Deposit refunded.");
-                }
+        //             return ResponseDto<BookingDto>.Success(dto, "Early return: Deposit refunded.");
+        //         }
 
 
-                // 6️⃣ Compute total = rental + deposit + late + damage
-                var totalAmount = booking.RentalAmount + booking.DepositAmount + booking.LateFee + booking.DamageFee;
-                booking.TotalAmount = Math.Round(totalAmount, 2);
-
-               
-                // 7️⃣ Determine extra or refund
-                decimal alreadyPaid = booking.DepositAmount + booking.RentalAmount; // deposit + rental already paid
-                var difference = totalAmount - alreadyPaid;
+        //         // 6️⃣ Compute total = rental + deposit + late + damage
+        //         var totalAmount = booking.RentalAmount + booking.DepositAmount + booking.LateFee + booking.DamageFee;
+        //         booking.TotalAmount = Math.Round(totalAmount, 2);
 
                
-                booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0m;
-                booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0m;
-                booking.DepositRefunded = booking.RefundAmount > 0m;
-                booking.FinalPaymentAmount = Math.Round(difference, 2);
+        //         // 7️⃣ Determine extra or refund
+        //         decimal alreadyPaid = booking.DepositAmount + booking.RentalAmount; // deposit + rental already paid
+        //         var difference = totalAmount - alreadyPaid;
+
+               
+        //         booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0m;
+        //         booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0m;
+        //         booking.DepositRefunded = booking.RefundAmount > 0m;
+        //         booking.FinalPaymentAmount = Math.Round(difference, 2);
 
                 
-                // 8️⃣ Update status
-                booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
-                booking.UpdatedAt = DateTime.Now;
+        //         // 8️⃣ Update status
+        //         booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
+        //         booking.UpdatedAt = DateTime.Now;
 
-                // 9️⃣ Update station slot (+1 available)
-                // var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
-                // if (!stationUpdateResult)
-                //     return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout.");
-                // 🔟 Save changes
-                var updatedBooking = await _bookingRepository.UpdateAsync(booking);
-                var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
+        //         // 9️⃣ Update station slot (+1 available)
+        //         // var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+        //         // if (!stationUpdateResult)
+        //         //     return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout.");
+        //         // 🔟 Save changes
+        //         var updatedBooking = await _bookingRepository.UpdateAsync(booking);
+        //         var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
 
                
-                // 🪄 Response message
-                string message = bookingDto.FinalPaymentAmount switch
-                {
-                    > 0 => $"Checkout complete. Extra payment required: XDR{bookingDto.ExtraAmount:N2}. Please call Payment API with PaymentType = Extra.",
-                    < 0 => $"Checkout complete. Refund to process: XDR{bookingDto.RefundAmount:N2}. Please call Payment API with PaymentType = Refund.",
-                    _ => "Checkout complete. No extra payment or refund required."
-                };
+        //         // 🪄 Response message
+        //         string message = bookingDto.FinalPaymentAmount switch
+        //         {
+        //             > 0 => $"Checkout complete. Extra payment required: XDR{bookingDto.ExtraAmount:N2}. Please call Payment API with PaymentType = Extra.",
+        //             < 0 => $"Checkout complete. Refund to process: XDR{bookingDto.RefundAmount:N2}. Please call Payment API with PaymentType = Refund.",
+        //             _ => "Checkout complete. No extra payment or refund required."
+        //         };
 
-                return ResponseDto<BookingDto>.Success(bookingDto, message);
-            }
-            catch (Exception ex)
-            {
-                return ResponseDto<BookingDto>.Failure($"Error during checkout: {ex.Message}");
-            }
-        }
+        //         return ResponseDto<BookingDto>.Success(bookingDto, message);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return ResponseDto<BookingDto>.Failure($"Error during checkout: {ex.Message}");
+        //     }
+        // }
+
+        public async Task<ResponseDto<BookingDto>> CheckOutBookingAsync(CheckOutWithPaymentDto request)
+   {
+       try
+       {
+           // 1️⃣ Validate booking
+           var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
+           if (booking == null || !booking.IsActive)
+               return ResponseDto<BookingDto>.Failure("Booking not found.");
+
+           if (booking.BookingStatus != BookingStatus.CheckedIn)
+               return ResponseDto<BookingDto>.Failure($"Cannot checkout booking with status: {booking.BookingStatus}");
+        
+
+         
+           // 2️⃣ Record actual return info
+           booking.ActualReturnDateTime = request.ActualReturnDateTime ?? DateTime.Now;
+           booking.CheckOutNotes = request.CheckOutNotes;
+           booking.CheckOutPhotoUrl = request.CheckOutPhotoUrl;
+           booking.DamageFee = Math.Round(request.DamageFee, 2);
+           booking.UpdatedAt = DateTime.Now;
+
+         
+           var actualReturn = booking.ActualReturnDateTime.Value;
+           if (actualReturn < booking.StartTime)
+               return ResponseDto<BookingDto>.Failure("Actual return date cannot be earlier than pickup date.");
+
+          
+           // 3️⃣ Setup rental parameters
+           var expectedReturn = booking.EndTime ?? booking.StartTime.AddHours(1);
+           var graceMinutes = 30;
+
+           
+
+         
+               if (booking.RentalAmount <= 0)
+               {
+                  
+                   // fallback: if missing, calculate based on duration and rates
+                   var duration = (booking.EndTime ?? booking.StartTime.AddHours(1)) - booking.StartTime;
+                   var totalHours = (decimal)duration.TotalHours;
+                   var totalDays = (decimal)duration.TotalDays;
+                   booking.RentalAmount = totalDays >= 1
+                       ? Math.Ceiling(totalDays) * booking.DailyRate
+                       : Math.Ceiling(totalHours) * booking.HourlyRate;
+                   booking.RentalAmount = Math.Round(booking.RentalAmount, 2);
+               }
+           booking.LateFee = 0m;
+           if (actualReturn > expectedReturn.AddMinutes(graceMinutes))
+           {
+               var delayMinutes = (actualReturn - expectedReturn).TotalMinutes;
+               var hoursLate = Convert.ToDecimal(delayMinutes / 60.0);
+               booking.LateFee = Math.Round(hoursLate * booking.HourlyRate, 2);
+           }
+           if (actualReturn <= expectedReturn)
+           {
+               booking.LateFee = 0;
+               booking.ExtraAmount = 0;
+               var refund = booking.DepositAmount - booking.DamageFee;
+               booking.RefundAmount = refund > 0 ? refund : 0;
+               booking.FinalPaymentAmount = -booking.RefundAmount;
+               booking.DepositRefunded = booking.RefundAmount > 0;
+               booking.ExtraAmount = refund < 0 ? -refund : 0;
+
+               // Cập nhật tổng tiền (totalAmount giống booking mẫu bạn đưa)
+               booking.TotalAmount = booking.RentalAmount + booking.DamageFee + booking.LateFee;
+
+               // Trả về ngay vì không cần xử lý thêm
+               booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
+               booking.UpdatedAt = DateTime.Now;
+
+               await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+               var updatedEarlyBooking = await _bookingRepository.UpdateAsync(booking);
+               var dto = _mapper.Map<BookingDto>(updatedEarlyBooking);
+
+               string message1;
+               if (booking.ExtraAmount > 0)
+                   message1 = $"Early return: Deposit not enough to cover damage. Extra payment required: {booking.ExtraAmount:C}.";
+               else
+                   message1 = $"Early return: Deposit refunded {booking.RefundAmount:C} after deducting damage fee.";
+
+               return ResponseDto<BookingDto>.Success(dto, message1);
+           }                        
+
+           // 6️⃣ Compute total = rental + deposit + late + damage
+           var totalAmount = booking.RentalAmount + booking.DepositAmount + booking.LateFee + booking.DamageFee;
+           booking.TotalAmount = Math.Round(totalAmount, 2);
+
+          
+           // 7️⃣ Determine extra or refund
+           decimal alreadyPaid = booking.DepositAmount + booking.RentalAmount; // deposit + rental already paid
+           var difference = totalAmount - alreadyPaid;
+
+          
+           booking.ExtraAmount = difference > 0 ? Math.Round(difference, 2) : 0m;
+           booking.RefundAmount = difference < 0 ? Math.Round(-difference, 2) : 0m;
+           booking.DepositRefunded = booking.RefundAmount > 0m;
+           booking.FinalPaymentAmount = Math.Round(difference, 2);
+
+           
+           // 8️⃣ Update status
+           booking.BookingStatus = BookingStatus.CheckedOutPendingPayment;
+           booking.UpdatedAt = DateTime.Now;
+
+           // 9️⃣ Update station slot (+1 available)
+           var stationUpdateResult = await _stationRepository.UpdateAvailableSlotsAsync(booking.StationId, +1);
+           if (!stationUpdateResult)
+               return ResponseDto<BookingDto>.Failure("Failed to update station slots on checkout.");
+           // 🔟 Save changes
+           var updatedBooking = await _bookingRepository.UpdateAsync(booking);
+           var bookingDto = _mapper.Map<BookingDto>(updatedBooking);
+
+          
+           // 🪄 Response message
+           string message = bookingDto.FinalPaymentAmount switch
+           {
+               > 0 => $"Checkout complete. Extra payment required: XDR{bookingDto.ExtraAmount:N2}. Please call Payment API with PaymentType = Extra.",
+               < 0 => $"Checkout complete. Refund to process: XDR{bookingDto.RefundAmount:N2}. Please call Payment API with PaymentType = Refund.",
+               _ => "Checkout complete. No extra payment or refund required."
+           };
+
+           return ResponseDto<BookingDto>.Success(bookingDto, message);
+       }
+       catch (Exception ex)
+       {
+           return ResponseDto<BookingDto>.Failure($"Error during checkout: {ex.Message}");
+       }
+   }
         public async Task<ResponseDto<BookingDto>> ConfirmRefundAsync(Guid bookingId, string staffId)
         {
             try
